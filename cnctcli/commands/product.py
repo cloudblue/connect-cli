@@ -26,14 +26,17 @@ def grp_product():
     'output_file',
     required=True,
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
+    help='Path to the output Excel file.'
 )
 @pass_config
 def cmd_dump_products(config, product_ids, output_file):
     dump_products(config.api_url, config.api_key, product_ids, output_file)
 
 
-@grp_product.command(name='sync', 
-                  short_help='sync products from an excel file')
+@grp_product.command(
+    name='sync', 
+    short_help='sync products from an excel file',
+)
 
 @click.option(
     '--in',
@@ -41,6 +44,7 @@ def cmd_dump_products(config, product_ids, output_file):
     'input_file',
     required=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help='Input Excel file for product synchronization.'
 )
 @pass_config
 def cmd_sync_products(config, input_file):
