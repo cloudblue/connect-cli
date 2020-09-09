@@ -23,18 +23,16 @@ CCLI_VERSION = get_version()
 
 @click.group()
 @click.version_option(version=CCLI_VERSION)
-@click.option('-v', '--verbose', count=True, help='set the verbosity level')
-@click.option('-c', '--config-dir', 
+@click.option('-c', '--config-dir',
               default=os.path.join(os.path.expanduser('~'), '.ccli'),
               type=click.Path(file_okay=False),
               help='set the config directory')
 @pass_config
-def cli(config, verbose, config_dir):
+def cli(config, config_dir):
     """CloudBlue Connect Command Line Interface"""
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
     config.load(config_dir)
-    config.verbose = verbose
 
 
 @cli.command(short_help='configure the CloudBlue Connect API endpoint'
@@ -60,15 +58,15 @@ def configure(config, url, key):
     config.store()
 
 
-
 cli.add_command(grp_product)
 
 
 def main():
     try:
-        cli(prog_name='ccli', standalone_mode=False) # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
+        cli(prog_name='ccli', standalone_mode=False)  # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
     except click.ClickException as ce:
         ce.show()
+
 
 if __name__ == '__main__':
     main()

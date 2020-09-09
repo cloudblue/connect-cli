@@ -3,8 +3,6 @@
 # This file is part of the Ingram Micro Cloud Blue Connect product-sync.
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
-import os
-
 import click
 
 from cnctcli.actions.products import dump_products, sync_products
@@ -16,10 +14,12 @@ def grp_product():
     pass
 
 
-@grp_product.command(name='dump', 
-                  short_help='dump products to an excel file')
+@grp_product.command(
+    name='dump',
+    short_help='dump products to an excel file',
+)
 
-@click.argument('product_ids', metavar='product_id', nargs=-1, required=True)
+@click.argument('product_ids', metavar='product_id', nargs=-1, required=True)  # noqa: E304
 @click.option(
     '--out',
     '-o',
@@ -34,11 +34,11 @@ def cmd_dump_products(config, product_ids, output_file):
 
 
 @grp_product.command(
-    name='sync', 
+    name='sync',
     short_help='sync products from an excel file',
 )
 
-@click.option(
+@click.option(  # noqa: E304
     '--in',
     '-i',
     'input_file',

@@ -6,7 +6,7 @@
 import json
 import os
 
-from click import ClickException, make_pass_decorator
+from click import make_pass_decorator
 
 
 class Config(object):
@@ -14,7 +14,6 @@ class Config(object):
         self._config_path = None
         self._api_url = None
         self._api_key = None
-
 
     @property
     def api_url(self):
@@ -31,7 +30,7 @@ class Config(object):
     @api_key.setter
     def api_key(self, value):
         self._api_key = value
-  
+
     def load(self, config_dir):
         self._config_path = os.path.join(config_dir, 'config.json')
         if not os.path.isfile(self._config_path):
@@ -42,7 +41,6 @@ class Config(object):
             self.api_url = data['apiEndpoint']
             self.api_key = data.get('apiKey')
 
-
     def store(self):
         with open(self._config_path, 'w') as f:
             f.write(json.dumps({
@@ -52,7 +50,6 @@ class Config(object):
 
     def is_valid(self):
         pass
-
 
 
 pass_config = make_pass_decorator(Config, ensure=True)

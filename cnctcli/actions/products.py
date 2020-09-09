@@ -8,11 +8,9 @@ from zipfile import BadZipFile
 import click
 from connect.config import Config
 from connect.exceptions import ServerError
-from connect.models import UI, Commitment, Item, Unit
-from connect.models.schemas import ItemSchema
 from connect.resources.product import ProductsResource
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Alignment, PatternFill
+from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.exceptions import InvalidFileException
@@ -31,6 +29,7 @@ _COLS_HEADERS = {
     'J': 'Error Message',
 }
 
+
 def _setup_excel_sheet_header(ws):
     ws.sheet_properties.tabColor = '67389A'
     color = Color('d3d3d3')
@@ -42,6 +41,7 @@ def _setup_excel_sheet_header(ws):
         cel.fill = fill
         cel.value = _COLS_HEADERS[cel.column_letter]
 
+
 def _check_skipped(skipped):
     if skipped:
         click.echo(
@@ -49,6 +49,7 @@ def _check_skipped(skipped):
         )
         for pinfo in skipped:
             click.echo(f'\t{pinfo[0]}: {pinfo[1]}')
+
 
 def dump_products(api_url, api_key, product_ids, output_file):
     skipped = []
@@ -61,7 +62,7 @@ def dump_products(api_url, api_key, product_ids, output_file):
         ids.set_description('Processing product {}'.format(product_id))
         try:
             items = products.items(product_id).search()
-        except:
+        except:  # noqa: E722
             skipped.append(
                 (
                     product_id,
@@ -86,7 +87,7 @@ def dump_products(api_url, api_key, product_ids, output_file):
             ws.cell(row_idx, 8, value=item.id)
             for i in range(1, 9):
                 ws.column_dimensions[get_column_letter(i)].auto_size = True
-    
+
     if need_save:
         wb.remove_sheet(wb.worksheets[0])
         wb.save(output_file)
@@ -97,9 +98,9 @@ def dump_products(api_url, api_key, product_ids, output_file):
 def _validate_sheet(ws):
     cels = ws['A1': 'H1']
     for cel in cels[0]:
-        if cel.value !=  _COLS_HEADERS[cel.column_letter]:
+        if cel.value != _COLS_HEADERS[cel.column_letter]:
             return _COLS_HEADERS[cel.column_letter]
-            
+
 
 def _report_exception(ws, row_idx, exc):
     color = Color('d3d3d3')
@@ -119,18 +120,21 @@ def _report_exception(ws, row_idx, exc):
     ws.cell(row_idx, 10, value=msg)
     return code, msg
 
+
 def _get_product_item_by_id(items, item_id):
     try:
         return items.get(item_id)
-    except:
+    except:  # noqa: E722
         pass
+
 
 def _get_product_item_by_mpn(items, mpn):
     try:
         results = items.search(filters={'mpn': mpn})
         return results[0] if results else None
-    except:
+    except:  # noqa: E722
         pass
+
 
 def _create_product_item(items, data):
     if data[3] is True:
@@ -148,7 +152,7 @@ def _create_product_item(items, data):
             'commitment': {
                 'count': 12 if data[5] is True else 1,
             },
-            'unit': {'id': data[6]},  
+            'unit': {'id': data[6]},
             'type': 'reservation',
             'period': period,
         }
@@ -159,12 +163,13 @@ def _create_product_item(items, data):
             'mpn': data[1],
             'description': data[4],
             'ui': {'visibility': True},
-            'unit': {'id': data[6]},  
+            'unit': {'id': data[6]},
             'type': 'ppu',
             'precision': 'decimal(2)',
         }
-    
+
     return items.create(item)
+
 
 def sync_products(api_url, api_key, input_file):
     skipped = []
@@ -191,14 +196,14 @@ def sync_products(api_url, api_key, input_file):
         ids.set_description('Syncing product {}'.format(product_id))
         try:
             products.get(product_id)
-        except:
+        except:   # noqa: E722
             skipped.append(
                 (
                     product_id,
                     f'The product "{product_id}" does not exist.',
                 ),
             )
-            continue            
+            continue
         items = products.items(product_id)
         ws = wb[product_id]
         invalid_column = _validate_sheet(ws)
@@ -224,12 +229,14 @@ def sync_products(api_url, api_key, input_file):
                 row_indexes.set_description('Updating item {}'.format(item.mpn))
                 try:
                     items.update(
-                        item.id, {
-                        'name': data[0],
-                        'mpn': data[1],
-                        'description': data[4],
-                        'ui': {'visibility': True},
-                    })
+                        item.id,
+                        {
+                            'name': data[0],
+                            'mpn': data[1],
+                            'description': data[4],
+                            'ui': {'visibility': True},
+                        },
+                    )
                 except ServerError as se:
                     code, msg = _report_exception(ws, row_idx, se)
                     items_errors.append(
