@@ -1,0 +1,28 @@
+dist: trusty
+language: python
+jobs:
+  include:
+  - os: linux
+    python: 3.8
+    dist: xenial
+    sudo: true
+    env:
+    - BUILD=PYPI
+install:
+- pip install -r requirements/dev.txt
+- pip install flake8
+script:
+- flake8
+deploy:
+  skip_cleanup: true
+  skip_existing: true
+  provider: pypi
+  user: __token__
+  password:
+    secure: J3l9tWLorOaOi6IAkDJZde+27Er3dbVD0hKgXot8R7qIlcxtAl5STVsLo5Kuw7bbZ1A6gLX6QRhvp9zM6JsDD3B7Sd7oheSYIXCWW3bX1RgWJ+wjMAwYJgtHKo0wqc41Z86dEc9H5PfqZjoW3tv+QsRIsQbF6LW99rPRJJ+eevqz3GVFJXH/XFqmhuVLEIN4fyM6ZmZT//Hhd1TURwoDrkydSYSnDUbcltSjM94/yAw1e6q1iGM2MubP8ZfXZoli2KXfACCvunam+CllnE7Zj/aMB3Ng0CIyg/8hmNdTq1ZEgg9ibNOtLV0jBkDB/qmLODaSOEKjrHsGfWJKnJF1niqnNw+Za2VI96D00QU2Ogu6dq0Bbcl46SrazoHTdNLHLZ1n3/Fud2t1AXp7m09vIPuBS3CFq5aastIoUOoqHSjVlq/vKefwYA2eWbspvoJhYAv3LBXB5V+McDLbYhWhchIGLdXeJgEXoi5LrEr9zpVxRbwgpmgi1VG3pjLYJ4nG75/woaOOHRld3ux/oN41pn222Dx5XL9Iiuak0HE2XYhNh0w8fNPixya870D+pF6K1g6ksgWyJeRSENcNzQN9pyc0S6OGKehhaiHZ5AZHnTjtVzHzuPYWghyBJkporYekLxCqelLeCHbfslrhF/dnEO+l+Sq5H5EvqvPtyXpLjKE=
+  on:
+    tags: true
+    all_branches: true
+    distributions: sdist
+    condition: "$BUILD = PYPI"
+    repo: cloudblue/product-sync
