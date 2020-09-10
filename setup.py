@@ -13,6 +13,7 @@ setup(
     url='https://connect.cloudblue.com',
     description='CloudBlue Connect Product Synchronizer CLI',
     long_description=read_file('README.md'),
+    long_description_content_type='text/markdown',
     python_requires='>=3.6',
     zip_safe=True,
     packages=find_packages(),
