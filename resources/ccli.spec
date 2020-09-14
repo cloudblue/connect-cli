@@ -2,7 +2,6 @@
 
 block_cipher = None
 
-
 datas=[('./config.json', 'connect/logger')]
 
 a = Analysis(['../cnctcli/ccli.py'],
