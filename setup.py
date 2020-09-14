@@ -8,7 +8,7 @@ def read_file(name):
 
 
 setup(
-    name='product-sync',
+    name='connect-cli',
     author='CloudBlue',
     url='https://connect.cloudblue.com',
     description='CloudBlue Connect Product Synchronizer CLI',
@@ -35,6 +35,6 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Topic :: Utilities',
     ],
-    keywords='fulfillment products synchronizer vendor connect cloudblue',
+    keywords='fulfillment command line interface utility cli vendor connect cloudblue',
 
 )

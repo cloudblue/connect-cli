@@ -1,6 +1,6 @@
-# Connect Product Synchronizer
+# Connect Command Line Interface
 
-![pyversions](https://img.shields.io/pypi/pyversions/product-sync.svg)  [![PyPi Status](https://img.shields.io/pypi/v/product-sync.svg)](https://pypi.org/project/product-sync/)  [![Build Status](https://travis-ci.org/cloudblue/product-sync.svg?branch=master)](https://travis-ci.org/cloudblue/product-sync)
+![pyversions](https://img.shields.io/pypi/pyversions/connect-cli.svg)  [![PyPi Status](https://img.shields.io/pypi/v/connect-cli.svg)](https://pypi.org/project/connect-cli/)  [![Build Status](https://travis-ci.org/cloudblue/connect-cli.svg?branch=master)](https://travis-ci.org/cloudblue/connect-cli)
 
 
 ## Introduction
@@ -25,41 +25,41 @@ Service providers can use CloudBlue Connect to:
 * Transform perpetual licensed products into a subscription model
 * Onboard new products into their portfolio quickly to build and deliver unique solutions to end customers
 
-`product-sync` allow users to export/synchronize the items of a product to/from an Excel workbook.
+`connect-cli` allow users to export/synchronize the items of a product to/from an Excel workbook.
 
 
 ## Install
 
 ### Using a virtualenv
 
-To use `product-sync` you need any *nix system with python 3.6 or later installed.
+To use `connect-cli` you need any *nix system with python 3.6 or later installed.
 
-The preferred way to install `product-sync` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
+The preferred way to install `connect-cli` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
 
 ```
     $ virtualenv psync
     $ source pysync/bin/activate
-    $ pip install product-synchronizer
+    $ pip install connect-cli
 ```    
 
 ### Binary distributions
 
 A single executable binary distribution is available for both linux and mac osx (amd64).
-You can it from the [Github Releases](https://github.com/cloudblue/product-sync/releases) page.
+You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/releases) page.
 
 To install under linux:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/product-sync/releases/download/1.2/product-sync_1.2_linux_amd64.tar.gz
-    $ tar xvfz product-sync_1.2_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/1.2/connect-cli_1.2_linux_amd64.tar.gz
+    $ tar xvfz connect-cli_1.2_linux_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
 To install under Mac OSX:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/product-sync/releases/download/1.2/product-sync_1.2_osx_amd64.tar.gz
-    $ tar xvfz product-sync_1.2_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/1.2/connect-cli_1.2_osx_amd64.tar.gz
+    $ tar xvfz connect-cli_1.2_linux_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
@@ -71,7 +71,7 @@ To install under Mac OSX:
 
 ### Configure
 
-First of all you need to configure the `product-sync` with the CloudBlue Connect API *endpoint* and *key*.
+First of all you need to configure the `connect-cli` with the CloudBlue Connect API *endpoint* and *key*.
 
 ```
     $ ccli configure --url https://api.connect.cloudblue.com/public/v1 --key "ApiKey XXXXX:YYYYY"
@@ -97,4 +97,4 @@ To sync products from Excel run:
 
 ## License
 
-`product-sync` is released under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+`connect-cli` is released under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
