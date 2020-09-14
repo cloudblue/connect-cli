@@ -8,15 +8,13 @@ jobs:
     - BUILD=PYPI
     - DIST=linux
   - os: osx
-    script: 
-      - brew install python@3.8
     osx_image: xcode12
     env:
     - BUILD=PYPI
     - DIST=osx
 install:
-- pip install -r requirements/dev.txt
-- pip install flake8 pyinstaller
+- pip3 install -r requirements/dev.txt
+- pip3 install flake8 pyinstaller
 script:
 - flake8
 - ./package.sh
