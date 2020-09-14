@@ -28,11 +28,11 @@ Service providers can use CloudBlue Connect to:
 `product-sync` allow users to export/synchronize the items of a product to/from an Excel workbook.
 
 
-## Requirements
+## Install
+
+### Using a virtualenv
 
 To use `product-sync` you need any *nix system with python 3.6 or later installed.
-
-## Install
 
 The preferred way to install `product-sync` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
 
@@ -41,6 +41,31 @@ The preferred way to install `product-sync` is using a [virtualenv](https://virt
     $ source pysync/bin/activate
     $ pip install product-synchronizer
 ```    
+
+### Binary distributions
+
+A single executable binary distribution is available for both linux and mac osx (amd64).
+You can it from the [Github Releases](https://github.com/cloudblue/product-sync/releases) page.
+
+To install under linux:
+
+```
+    $ curl -O -J https://github.com/cloudblue/product-sync/releases/download/1.2/product-sync_1.2_linux_amd64.tar.gz
+    $ tar xvfz product-sync_1.2_linux_amd64.tar.gz
+    $ sudo cp dist/ccli /usr/local/bin/ccli
+```
+
+To install under Mac OSX:
+
+```
+    $ curl -O -J https://github.com/cloudblue/product-sync/releases/download/1.2/product-sync_1.2_osx_amd64.tar.gz
+    $ tar xvfz product-sync_1.2_linux_amd64.tar.gz
+    $ sudo cp dist/ccli /usr/local/bin/ccli
+```
+
+> If your user is not a sudoer, you can copy the `ccli` executable from the dist directory to a directory of your choice
+> that is listed in the `PATH` variable.
+
 
 ## Usage
 
@@ -70,3 +95,6 @@ To sync products from Excel run:
 ```
 
 
+## License
+
+`product-sync` is released under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
