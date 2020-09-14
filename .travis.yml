@@ -10,7 +10,8 @@ jobs:
     - BUILD=PYPI
     - DIST=linux
   - os: osx
-    python: 3.7
+    osx_image: xcode12
+    python: 3.8
     env:
     - BUILD=PYPI
     - DIST=osx
