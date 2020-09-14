@@ -10,7 +10,7 @@ jobs:
     - BUILD=PYPI
     - DIST=linux
   - os: osx
-    python: 3.8
+    python: 3.7
     env:
     - BUILD=PYPI
     - DIST=osx
@@ -37,7 +37,7 @@ deploy:
     skip_cleanup: true
     api_key:
       secure: LYs1vRe6aIL1GQ9HY3HGYxkeSdsmk9Lncfli2LOu7tjr27w28WAlmRtmFouJJe/L4922v+DAuYD3hZReZ7sfLZQrhfUnm8C4EaEo9sHncYXq6DSdiT+R+fRbieIWObch5p2rhQUPL9t7nqxS9ZKvB1FXeNGyctNiL4Uo+MJSaK369/vBr0zymlD/sXJeN+1Ssfm1s0wuqryG0ttZxnIF/A4Me6U8WA2nWKvzchEo8vgM7k9W7PR+BinOS85nxc65mMe5THuXq2rbiB+DUs4d9Qg41SdgiR6oPDaQk69ZRyQMolGp/H6IgpQbErkBLf6VnpoydEEkKgRo0PThJ6qZCwBO71jR+DCgIsqf/iM4rvAuJ2DnuVgkKjdRiwOwBJqZIBxSqyq6J5JBixHAlFHM2rux0UjLXVbt404UzIbmXLYndhsak/WjGWhDOYeOhSqKIreF+3Gpd5Drg1JhApOshNNG1p7PfH4e1OeujLeF+9xoBKwJvE6ljkZaYQkDUhw0NK51sxHyB0bUQzHD+gSvkA1mAv68Ko/bKGbqqJ7soBxYeNNKrYEZvgYA3OALgfEEBo9R7Zk0Iw7IesiyT9Bz6wLp1AU62IDoaqqgeVWYEPSrqUjqMEgsClUFu/S7JEpRfJGZi8N/zkjApA7MF4GDkVA/BSiYl4wBFfR9xXr9hG8=
-      file: "product-sync_$TRAVIS_TAG_$TRAVIS_OS_NAME_$TRAVIS_CPU_ARCH.tar.gz"
+    file: "product-sync_$TRAVIS_TAG_$TRAVIS_OS_NAME_$TRAVIS_CPU_ARCH.tar.gz"
       on:
       tags: true
       condition: "$DIST = linux"
