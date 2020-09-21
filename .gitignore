@@ -12,7 +12,7 @@ dist/
 .vscode
 .devcontainer
 
-tests/reports/
+coverage/
 .coverage
 /htmlcov/
 docs/_build

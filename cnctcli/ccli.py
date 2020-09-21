@@ -15,6 +15,7 @@ import os
 import click
 
 from cnctcli import get_version
+from cnctcli.commands.account import grp_account
 from cnctcli.commands.product import grp_product
 from cnctcli.config import pass_config
 
@@ -35,37 +36,19 @@ def cli(config, config_dir):
     config.load(config_dir)
 
 
-@cli.command(short_help='configure the CloudBlue Connect API endpoint'
-                        ' and credentials')
-@click.option(
-    '--url',
-    '-u',
-    required=True,
-    prompt='Enter the API endpoint URL',
-    help='API endpoint URL',
-)
-@click.option(
-    '--key',
-    '-k',
-    required=True,
-    prompt='Enter the API authentication KEY',
-    help='API key',
-)
-@pass_config
-def configure(config, url, key):
-    config.api_url = url
-    config.api_key = key
-    config.store()
-
-
+cli.add_command(grp_account)
 cli.add_command(grp_product)
 
 
-def main():
+def main():  # noqa
+    print('')
     try:
         cli(prog_name='ccli', standalone_mode=False)  # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
     except click.ClickException as ce:
-        ce.show()
+        click.echo(
+            click.style(f'Error: {ce.message}', fg='red')
+        )
+    print('')
 
 
 if __name__ == '__main__':
