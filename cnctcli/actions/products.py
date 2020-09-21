@@ -2,7 +2,7 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect product-sync.
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
-
+import os
 from zipfile import BadZipFile
 
 import click
@@ -51,48 +51,42 @@ def _check_skipped(skipped):
             click.echo(f'\t{pinfo[0]}: {pinfo[1]}')
 
 
-def dump_products(api_url, api_key, product_ids, output_file):
-    skipped = []
+def dump_product(api_url, api_key, product_id, output_file):
+    if not output_file:
+        output_file = os.path.abspath(
+            os.path.join('.', f'{product_id}.xlsx'),
+        )
     config = Config(api_url=api_url, api_key=api_key)
     products = ProductsResource(config)
     wb = Workbook()
-    ids = tqdm(product_ids, position=0)
     need_save = False
-    for product_id in ids:
-        ids.set_description('Processing product {}'.format(product_id))
-        try:
-            items = products.items(product_id).search()
-        except:  # noqa: E722
-            skipped.append(
-                (
-                    product_id,
-                    f'Product "{product_id}"" does not exist.',
-                ),
-            )
-            continue
-        need_save = True
-        ws = wb.create_sheet(product_id)
-        _setup_excel_sheet_header(ws)
-        processing_items = tqdm(items, position=1, leave=None)
-        for row_idx, item in enumerate(processing_items, start=2):
-            processing_items.set_description('Processing item {}'.format(item.id))
-            ws.cell(row_idx, 1, value=item.display_name)
-            ws.cell(row_idx, 2, value=item.mpn)
-            ws.cell(row_idx, 3, value=item.period)
-            ws.cell(row_idx, 4, value=item.type == 'reservation')
-            ws.cell(row_idx, 5, value=item.description)
-            commitment = item.commitment.count == 12 if item.commitment else False
-            ws.cell(row_idx, 6, value=commitment)
-            ws.cell(row_idx, 7, value=item.unit.unit)
-            ws.cell(row_idx, 8, value=item.id)
-            for i in range(1, 9):
-                ws.column_dimensions[get_column_letter(i)].auto_size = True
+    try:
+        items = products.items(product_id).search()
+    except Exception as e:  # noqa: E722
+        raise click.ClickException(f'Cannot export product {product_id}: {str(e)}' )
+
+    ws = wb.create_sheet(product_id)
+    _setup_excel_sheet_header(ws)
+    processing_items = tqdm(items, position=1, leave=None)
+    for row_idx, item in enumerate(processing_items, start=2):
+        processing_items.set_description('Processing item {}'.format(item.id))
+        ws.cell(row_idx, 1, value=item.display_name)
+        ws.cell(row_idx, 2, value=item.mpn)
+        ws.cell(row_idx, 3, value=item.period)
+        ws.cell(row_idx, 4, value=item.type == 'reservation')
+        ws.cell(row_idx, 5, value=item.description)
+        commitment = item.commitment.count == 12 if item.commitment else False
+        ws.cell(row_idx, 6, value=commitment)
+        ws.cell(row_idx, 7, value=item.unit.unit)
+        ws.cell(row_idx, 8, value=item.id)
+        for i in range(1, 9):
+            ws.column_dimensions[get_column_letter(i)].auto_size = True
 
     if need_save:
         wb.remove_sheet(wb.worksheets[0])
         wb.save(output_file)
 
-    _check_skipped(skipped)
+    return output_file
 
 
 def _validate_sheet(ws):
@@ -171,7 +165,7 @@ def _create_product_item(items, data):
     return items.create(item)
 
 
-def sync_products(api_url, api_key, input_file):
+def sync_product(api_url, api_key, input_file):
     skipped = []
     items_errors = []
     need_save = False

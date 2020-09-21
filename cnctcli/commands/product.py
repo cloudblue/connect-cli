@@ -5,13 +5,13 @@
 
 import click
 
-from cnctcli.actions.products import dump_products, sync_products
+from cnctcli.actions.products import dump_product, sync_product
 from cnctcli.config import pass_config
 
 
 @click.group(name='product', short_help='commands related to product management')
 def grp_product():
-    pass
+    pass  # pragma: no cover
 
 
 @grp_product.command(
@@ -29,7 +29,19 @@ def grp_product():
 )
 @pass_config
 def cmd_dump_products(config, product_id, output_file):
-    dump_products(config.api_url, config.api_key, product_id, output_file)
+    config.validate()
+    outfile = dump_product(
+        config.active.endpoint,
+        config.active.api_key,
+        product_id,
+        output_file,
+    )
+    click.echo(
+        click.style(
+            f'Product {product_id} exported successfully to {outfile}',
+            fg='green',
+        )
+    )
 
 
 @grp_product.command(
@@ -47,4 +59,4 @@ def cmd_dump_products(config, product_id, output_file):
 )
 @pass_config
 def cmd_sync_products(config, input_file):
-    sync_products(config.api_url, config.api_key, input_file)
+    sync_product(config.active.endpoint, config.active.api_key, input_file)

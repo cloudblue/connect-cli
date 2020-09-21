@@ -1,12 +1,8 @@
-import json
-
 from click.testing import CliRunner
 
 from cnctcli.ccli import cli
 from cnctcli.config import Account
 from cnctcli.constants import DEFAULT_ENDPOINT
-
-from tests.data import CONFIG_DATA
 
 
 def test_add_account(mocker):
@@ -91,15 +87,8 @@ def test_activate_account(mocker):
     assert result.output == 'Current active account is: VA-000 - Account 0\n'
 
 
-def test_list_accounts(mocker):
-    mocker.patch(
-        'cnctcli.config.open',
-        mocker.mock_open(read_data=json.dumps(CONFIG_DATA)),
-    )
-    mocker.patch('os.path.isfile', return_value=True)
-
+def test_list_accounts(config_mocker, mocker):
     runner = CliRunner()
-
     result = runner.invoke(
         cli,
         [

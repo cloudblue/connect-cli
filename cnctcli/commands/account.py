@@ -11,7 +11,7 @@ from cnctcli.constants import DEFAULT_ENDPOINT
 
 @click.group(name='account', short_help='account configuration')
 def grp_account():
-    pass
+    pass  # pragma: no cover
 
 
 @grp_account.command(

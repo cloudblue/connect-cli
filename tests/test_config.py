@@ -6,16 +6,9 @@ import pytest
 from cnctcli.config import Config
 from cnctcli.constants import DEFAULT_ENDPOINT
 
-from tests.data import CONFIG_DATA
 
-
-def test_load(mocker):
+def test_load(config_mocker, mocker):
     config = Config()
-    mocker.patch(
-        'cnctcli.config.open',
-        mocker.mock_open(read_data=json.dumps(CONFIG_DATA)),
-    )
-    mocker.patch('os.path.isfile', return_value=True)
     config.load('/tmp')
     assert config.active is not None
     assert config.active.id == 'VA-000'
@@ -73,13 +66,8 @@ def test_add_account_custom_endpoint():
     assert config.active.endpoint == 'https://my_custom_endpoint'
 
 
-def test_activate(mocker):
+def test_activate(config_mocker, mocker):
     config = Config()
-    mocker.patch(
-        'cnctcli.config.open',
-        mocker.mock_open(read_data=json.dumps(CONFIG_DATA)),
-    )
-    mocker.patch('os.path.isfile', return_value=True)
     config.load('/tmp')
 
     assert config.active.id == 'VA-000'
@@ -128,13 +116,8 @@ def test_remove_non_existent_account():
     assert ex.value.message == 'The account identified by VA-999 does not exist.'
 
 
-def test_remove_activate_other(mocker):
+def test_remove_activate_other(config_mocker, mocker):
     config = Config()
-    mocker.patch(
-        'cnctcli.config.open',
-        mocker.mock_open(read_data=json.dumps(CONFIG_DATA)),
-    )
-    mocker.patch('os.path.isfile', return_value=True)
     config.load('/tmp')
 
     assert config.active.id == 'VA-000'
@@ -144,10 +127,13 @@ def test_remove_activate_other(mocker):
     assert config.active.id == 'VA-001'
 
 
-def test_config_is_valid():
+def test_config_validate():
     config = Config()
 
-    assert config.is_valid() is False
+    with pytest.raises(click.ClickException) as ex:
+        config.validate()
+
+    assert ex.value.message == 'connect-cli is not properly configured.'
 
     config.add_account(
         'VA-000',
@@ -156,4 +142,4 @@ def test_config_is_valid():
         endpoint='https://my_custom_endpoint',
     )
 
-    assert config.is_valid() is True
+    assert config.validate() is None

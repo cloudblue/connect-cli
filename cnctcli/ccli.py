@@ -7,7 +7,7 @@ try:
     import warnings
     from marshmallow.warnings import ChangedInMarshmallow3Warning
     warnings.filterwarnings('ignore', category=ChangedInMarshmallow3Warning)
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 import os
@@ -40,7 +40,7 @@ cli.add_command(grp_account)
 cli.add_command(grp_product)
 
 
-def main():  # noqa
+def main():  # pragma: no cover
     print('')
     try:
         cli(prog_name='ccli', standalone_mode=False)  # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
@@ -52,4 +52,4 @@ def main():  # noqa
 
 
 if __name__ == '__main__':
-    main()
+    main()  # pragma: no cover

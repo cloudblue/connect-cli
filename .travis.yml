@@ -22,9 +22,11 @@ jobs:
       - DIST=windows
 install:
 - pip3 install -r requirements/dev.txt
+- pip3 install -r requirements/test.txt
 - pip3 install flake8 pyinstaller
 script:
 - flake8
+- pytest
 - ./package.sh
 deploy:
   - provider: pypi

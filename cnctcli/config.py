@@ -82,8 +82,9 @@ class Config(object):
                 'accounts': accounts
             }))
 
-    def is_valid(self):
-        return bool(self._accounts and self._active)
+    def validate(self):
+        if not (self._accounts and self._active):
+            raise ClickException('connect-cli is not properly configured.')
 
 
 pass_config = make_pass_decorator(Config, ensure=True)
