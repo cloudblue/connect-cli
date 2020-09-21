@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# This file is part of the Ingram Micro Cloud Blue Connect product-sync.
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
 try:
