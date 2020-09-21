@@ -63,7 +63,7 @@ def dump_product(api_url, api_key, product_id, output_file):
     try:
         items = products.items(product_id).search()
     except Exception as e:  # noqa: E722
-        raise click.ClickException(f'Cannot export product {product_id}: {str(e)}' )
+        raise click.ClickException(f'Cannot export product {product_id}: {str(e)}')
 
     ws = wb.create_sheet(product_id)
     _setup_excel_sheet_header(ws)
