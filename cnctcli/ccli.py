@@ -46,8 +46,11 @@ def main():  # pragma: no cover
         cli(prog_name='ccli', standalone_mode=False)  # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
     except click.ClickException as ce:
         click.echo(
-            click.style(ce.message, fg='red')
+            click.style(str(ce), fg='red')
         )
+    except click.exceptions.Abort:
+        pass
+
     print('')
 
 

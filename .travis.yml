@@ -28,6 +28,8 @@ script:
 - flake8
 - pytest
 - ./package.sh
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 deploy:
   - provider: pypi
     skip_cleanup: true

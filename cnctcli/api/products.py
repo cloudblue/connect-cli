@@ -30,7 +30,7 @@ def get_product(endpoint, api_key, product_id):
     handle_http_error(res)
 
 
-def get_items(endpoint, api_key, product_id, limit=0, offset=100):
+def get_items(endpoint, api_key, product_id, limit=100, offset=0):
 
     res = requests.get(
         f'{endpoint}/products/{product_id}/items',

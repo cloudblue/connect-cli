@@ -40,4 +40,4 @@ def handle_http_error(res):
         message = ','.join(error_info['errors'])
         raise click.ClickException(f'{status}: {code} - {message}')
 
-    raise click.ClickException(f'{status}: Unexpected error.')
+    raise click.ClickException(f'{status}: unexpected error.')
