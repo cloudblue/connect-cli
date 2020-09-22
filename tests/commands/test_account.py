@@ -44,7 +44,7 @@ def test_add_account_custom_endpoint(mocker):
     assert result.exit_code == 0
     assert mock.mock_calls[0][1][1] == 'ApiKey XXX:YYY'
     assert mock.mock_calls[0][1][2] == 'https://custom_endpoint'
-    assert result.output == 'New account added: VA-000 - Account 0\n'
+    assert 'New account added: VA-000 - Account 0\n' in result.output
 
 
 def test_remove_account(mocker):
@@ -64,7 +64,7 @@ def test_remove_account(mocker):
 
     assert result.exit_code == 0
     assert mock.mock_calls[0][1][1] == 'VA-000'
-    assert result.output == 'Account removed: VA-000 - Account 0\n'
+    assert 'Account removed: VA-000 - Account 0\n' in result.output
 
 
 def test_activate_account(mocker):
@@ -84,7 +84,7 @@ def test_activate_account(mocker):
 
     assert result.exit_code == 0
     assert mock.mock_calls[0][1][1] == 'VA-000'
-    assert result.output == 'Current active account is: VA-000 - Account 0\n'
+    assert 'Current active account is: VA-000 - Account 0\n' in result.output
 
 
 def test_list_accounts(config_mocker, mocker):
@@ -98,7 +98,7 @@ def test_list_accounts(config_mocker, mocker):
     )
 
     assert result.exit_code == 0
-    assert result.output == (
+    assert (
         'VA-000 - Account 0 (active)\n'
         'VA-001 - Account 1\n'
-    )
+    ) in result.output

@@ -22,7 +22,7 @@ def test_export(config_mocker, mocker):
     assert mock.mock_calls[0][1][2] == 'PRD-000'
     assert mock.mock_calls[0][1][3] is None
     assert result.exit_code == 0
-    assert result.output == 'Product PRD-000 exported successfully to PRD-000.xlsx\n'
+    assert 'The product PRD-000 has been successfully exported to PRD-000.xlsx.\n' in result.output
 
 
 def test_export_custom_file(config_mocker, mocker):
@@ -46,4 +46,5 @@ def test_export_custom_file(config_mocker, mocker):
     assert mock.mock_calls[0][1][2] == 'PRD-000'
     assert mock.mock_calls[0][1][3] == '/tmp/my_product.xlsx'
     assert result.exit_code == 0
-    assert result.output == 'Product PRD-000 exported successfully to /tmp/my_product.xlsx\n'
+    assert 'The product PRD-000 has been successfully exported to /tmp/my_product.xlsx.\n' \
+        in result.output

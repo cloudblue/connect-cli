@@ -5,7 +5,7 @@
 
 import click
 
-from cnctcli.actions.products import dump_product, sync_product
+from cnctcli.actions.products import dump_product, sync_product, validate_input_file
 from cnctcli.config import pass_config
 
 
@@ -30,6 +30,14 @@ def grp_product():
 @pass_config
 def cmd_dump_products(config, product_id, output_file):
     config.validate()
+    acc_id = config.active.id
+    acc_name = config.active.name
+    click.echo(
+        click.style(
+            f'Current active account: {acc_id} - {acc_name}\n',
+            fg='blue',
+        )
+    )
     outfile = dump_product(
         config.active.endpoint,
         config.active.api_key,
@@ -38,7 +46,7 @@ def cmd_dump_products(config, product_id, output_file):
     )
     click.echo(
         click.style(
-            f'Product {product_id} exported successfully to {outfile}',
+            f'\nThe product {product_id} has been successfully exported to {outfile}.',
             fg='green',
         )
     )
@@ -49,14 +57,50 @@ def cmd_dump_products(config, product_id, output_file):
     short_help='sync a product from an excel file',
 )
 
+@click.argument('input_file', metavar='input_file', nargs=1, required=True)  # noqa: E304
 @click.option(  # noqa: E304
-    '--in',
-    '-i',
-    'input_file',
-    required=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
-    help='Input Excel file for product synchronization.'
+    '--yes',
+    '-y',
+    'yes',
+    is_flag=True,
+    help='Answer yes to all questions.'
 )
 @pass_config
-def cmd_sync_products(config, input_file):
-    sync_product(config.active.endpoint, config.active.api_key, input_file)
+def cmd_sync_products(config, input_file, yes):
+    config.validate()
+    acc_id = config.active.id
+    acc_name = config.active.name
+    click.echo(
+        click.style(
+            f'Current active account: {acc_id} - {acc_name}\n',
+            fg='blue',
+        )
+    )
+    product_id, wb = validate_input_file(
+        config.active.endpoint,
+        config.active.api_key,
+        input_file,
+    )
+
+    if not yes:
+        click.confirm(
+            'Are you sure you want to synchronize '
+            f'the items for the product {product_id} ?',
+            abort=True,
+        )
+        click.echo('')
+    sync_product(
+        config.active.endpoint,
+        config.active.api_key,
+        product_id,
+        wb,
+    )
+
+    wb.save(input_file)
+
+    click.echo(
+        click.style(
+            f'\nThe product {product_id} has been successfully synchronized.',
+            fg='green',
+        )
+    )
