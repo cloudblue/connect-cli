@@ -44,22 +44,22 @@ The preferred way to install `connect-cli` is using a [virtualenv](https://virtu
 
 ### Binary distributions
 
-A single executable binary distribution is available for both linux and mac osx (amd64).
+A single executable binary distribution is available for windows, linux and mac osx (amd64).
 You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/releases) page.
 
 To install under linux:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/1.2/connect-cli_1.2_linux_amd64.tar.gz
-    $ tar xvfz connect-cli_1.2_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_linux_amd64.tar.gz
+    $ tar xvfz connect-cli_21.0_linux_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
 To install under Mac OSX:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/1.2/connect-cli_1.2_osx_amd64.tar.gz
-    $ tar xvfz connect-cli_1.2_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_osx_amd64.tar.gz
+    $ tar xvfz connect-cli_21.0_osx_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
@@ -67,33 +67,87 @@ To install under Mac OSX:
 > that is listed in the `PATH` variable.
 
 
+To install under Windows
+
+Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_windows_amd64.tar.gz), extract it and place it in a folder that is included in your `path` system variable.
+
+
 ## Usage
 
-### Configure
+### Add a new account
 
-First of all you need to configure the `connect-cli` with the CloudBlue Connect API *endpoint* and *key*.
-
-```
-    $ ccli configure --url https://api.connect.cloudblue.com/public/v1 --key "ApiKey XXXXX:YYYYY"
-```
-
-### Dump products to Excel
-
-To dump products to Excel run:
+First of all you need to add an account the `connect-cli` with the CloudBlue Connect API *key*.
 
 ```
-    $ ccli product dump PRD-000-000-000 PRD-000-000-001 PRD-000-000-002 --out my_products.xlsx
+    $ ccli account add "ApiKey XXXXX:YYYYY"
+```
+
+### List configured accounts
+
+To get a list of all configured account run:
+
+```
+    $ ccli account list
 ```
 
 
-### Synchronize products 
+### Set the current active account
 
-To sync products from Excel run:
+To set the current active account run:
+
+```
+    $ ccli account activate VA-000-000
+```
+
+### Remove an account
+
+To remove an account run:
+
+```
+    $ ccli account remove VA-000-000
+```
+
+### List available products
+
+To get a list of available products run:
+
+```
+    $ ccli product list
+```
+
+This command will output a list of all products (id and name) available within the current active account.
+You can also filter the results by adding the ``--query`` flag followed by a RQL query.
+For more information about RQL see the [Resource Query Language](https://connect.cloudblue.com/community/api/rql/)
+article in the Connect community documentation portal.
+
+
+### Export a product to Excel
+
+To export a product to Excel run:
+
+```
+    $ ccli product export PRD-000-000-000
+```
+
+This command will generate a excel file named PRD-000-000-000.xlsx in the current working directory.
+
+
+### Synchronize a product from Excel
+
+To synchronize a product from Excel run:
 
 ```
     $ ccli product sync --in my_products.xlsx
 ```
 
+
+### Getting help
+
+To get help about the `connect-cli` commands type:
+
+```
+    $ ccli --help
+```
 
 ## License
 

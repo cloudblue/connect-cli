@@ -10,7 +10,18 @@ from cnctcli.api.utils import (
 
 
 def get_products(endpoint, api_key, query, limit, offset):
-    pass
+    url = f'{endpoint}/products'
+    if query:
+        url = f'{url}?{query}'
+    res = requests.get(
+        f'{endpoint}/products',
+        params={'limit': limit, 'offset': offset},
+        headers=get_headers(api_key),
+    )
+    if res.status_code == 200:
+        return res.json()
+
+    handle_http_error(res)
 
 
 def get_product(endpoint, api_key, product_id):

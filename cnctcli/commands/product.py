@@ -6,12 +6,66 @@
 import click
 
 from cnctcli.actions.products import dump_product, sync_product, validate_input_file
+from cnctcli.api.products import get_products
+from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
 
 
 @click.group(name='product', short_help='commands related to product management')
 def grp_product():
     pass  # pragma: no cover
+
+
+@grp_product.command(
+    name='list',
+    short_help='list products',
+)
+@click.option(
+    '--query',
+    '-q',
+    'query',
+    help='RQL query expression',
+)
+@click.option(
+    '--page-size',
+    '-p',
+    'page_size',
+    type=int,
+    help='Number of products per page',
+    default=25,
+)
+@pass_config
+def cmd_list_products(config, query, page_size):
+    acc_id = config.active.id
+    acc_name = config.active.name
+    click.echo(
+        click.style(
+            f'Current active account: {acc_id} - {acc_name}\n',
+            fg='blue',
+        )
+    )
+    offset = 0
+    has_more = True
+    while has_more:
+        products = get_products(
+            config.active.endpoint,
+            config.active.api_key,
+            query,
+            page_size,
+            offset,
+        )
+        if not products:
+            break
+
+        for prod in products:
+            click.echo(
+                f"{prod['id']} - {prod['name']}"
+            )
+        if not continue_or_quit():
+            return
+
+        has_more = len(products) == page_size
+        offset += page_size
 
 
 @grp_product.command(
