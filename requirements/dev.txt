@@ -1,5 +1,4 @@
 click==7.1.2
 openpyxl>=2.5.14
-setuptools-scm==3.5.0
-connect-sdk>=20.3
+setuptools-scm==4.1.2
 tqdm==4.48.2

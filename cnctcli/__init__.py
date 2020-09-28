@@ -1,8 +1,14 @@
-from setuptools_scm import get_version as scm_version
+# -*- coding: utf-8 -*-
+
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
+# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+
+import pkg_resources
+
 
 try:
-    __version__ = scm_version(root='..', relative_to=__file__)
-except:   # noqa: E722
+    __version__ = pkg_resources.require('connect-cli')[0].version
+except:  # noqa: E722
     __version__ = '0.0.1'
 
 

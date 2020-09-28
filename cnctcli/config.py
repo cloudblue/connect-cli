@@ -1,35 +1,64 @@
 # -*- coding: utf-8 -*-
 
-# This file is part of the Ingram Micro Cloud Blue Connect product-sync.
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
 import json
 import os
 
-from click import make_pass_decorator
+from dataclasses import dataclass
+
+from click import ClickException, make_pass_decorator
+
+
+from cnctcli.constants import DEFAULT_ENDPOINT
+
+
+@dataclass
+class Account:
+    id: str
+    name: str
+    api_key: str
+    endpoint: str
 
 
 class Config(object):
     def __init__(self):
         self._config_path = None
-        self._api_url = None
-        self._api_key = None
+        self._active = None
+        self._accounts = {}
+
+    def add_account(self, id, name, api_key, endpoint=DEFAULT_ENDPOINT):
+        self._accounts[id] = Account(id, name, api_key, endpoint)
+        if not self._active:
+            self._active = self._accounts[id]
 
     @property
-    def api_url(self):
-        return self._api_url
-
-    @api_url.setter
-    def api_url(self, value):
-        self._api_url = value
+    def active(self):
+        return self._active
 
     @property
-    def api_key(self):
-        return self._api_key
+    def accounts(self):
+        return self._accounts
 
-    @api_key.setter
-    def api_key(self, value):
-        self._api_key = value
+    def activate(self, id):
+        account = self._accounts.get(id)
+        if account:
+            self._active = account
+            return
+        raise ClickException(f'The account identified by {id} does not exist.')
+
+    def remove_account(self, id):
+        if id in self._accounts:
+            account = self._accounts[id]
+            del self._accounts[id]
+            if self._active.id == id:
+                if self._accounts:
+                    self._active = list(self._accounts.values())[0]
+                else:
+                    self._active = None
+            return account
+        raise ClickException(f'The account identified by {id} does not exist.')
 
     def load(self, config_dir):
         self._config_path = os.path.join(config_dir, 'config.json')
@@ -38,18 +67,24 @@ class Config(object):
 
         with open(self._config_path, 'r') as f:
             data = json.load(f)
-            self.api_url = data['apiEndpoint']
-            self.api_key = data.get('apiKey')
+            active_account_id = data['active']
+            for account_data in data['accounts']:
+                account = Account(**account_data)
+                self._accounts[account.id] = account
+                if account.id == active_account_id:
+                    self._active = account
 
     def store(self):
         with open(self._config_path, 'w') as f:
+            accounts = [account.__dict__ for account in self._accounts.values()]
             f.write(json.dumps({
-                'apiEndpoint': self.api_url,
-                'apiKey': self.api_key
+                'active': self._active.id if self._active else '',
+                'accounts': accounts
             }))
 
-    def is_valid(self):
-        pass
+    def validate(self):
+        if not (self._accounts and self._active):
+            raise ClickException('connect-cli is not properly configured.')
 
 
 pass_config = make_pass_decorator(Config, ensure=True)

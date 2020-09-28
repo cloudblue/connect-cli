@@ -2,12 +2,10 @@
 
 block_cipher = None
 
-datas=[('./config.json', 'connect/logger')]
-
 a = Analysis(['../cnctcli/ccli.py'],
              pathex=['/workspaces/product-sync'],
              binaries=[],
-             datas=datas,
+             datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
