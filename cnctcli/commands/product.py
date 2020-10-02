@@ -5,7 +5,7 @@
 
 import click
 
-from cnctcli.actions.products import dump_product, sync_product, validate_input_file
+from cnctcli.actions.products import ProductSynchronizer, dump_product
 from cnctcli.api.products import get_products
 from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
@@ -24,26 +24,34 @@ def grp_product():
     '--query',
     '-q',
     'query',
-    help='RQL query expression',
+    help='RQL query expression.',
 )
 @click.option(
     '--page-size',
     '-p',
     'page_size',
     type=int,
-    help='Number of products per page',
+    help='Number of products per page.',
     default=25,
 )
+@click.option(
+    '--always-continue',
+    '-c',
+    'always_continue',
+    is_flag=True,
+    help='Do not prompt to continue.',
+)
 @pass_config
-def cmd_list_products(config, query, page_size):
+def cmd_list_products(config, query, page_size, always_continue):
     acc_id = config.active.id
     acc_name = config.active.name
-    click.echo(
-        click.style(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Current active account: {acc_id} - {acc_name}\n',
+                fg='blue',
+            )
         )
-    )
     offset = 0
     has_more = True
     while has_more:
@@ -61,8 +69,9 @@ def cmd_list_products(config, query, page_size):
             click.echo(
                 f"{prod['id']} - {prod['name']}"
             )
-        if not continue_or_quit():
-            return
+        if not always_continue:
+            if not continue_or_quit():
+                return
 
         has_more = len(products) == page_size
         offset += page_size
@@ -86,24 +95,27 @@ def cmd_dump_products(config, product_id, output_file):
     config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
-    click.echo(
-        click.style(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Current active account: {acc_id} - {acc_name}\n',
+                fg='blue',
+            )
         )
-    )
     outfile = dump_product(
         config.active.endpoint,
         config.active.api_key,
         product_id,
         output_file,
+        config.silent,
     )
-    click.echo(
-        click.style(
-            f'\nThe product {product_id} has been successfully exported to {outfile}.',
-            fg='green',
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'\nThe product {product_id} has been successfully exported to {outfile}.',
+                fg='green',
+            )
         )
-    )
 
 
 @grp_product.command(
@@ -124,17 +136,19 @@ def cmd_sync_products(config, input_file, yes):
     config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
-    click.echo(
-        click.style(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Current active account: {acc_id} - {acc_name}\n',
+                fg='blue',
+            )
         )
-    )
-    product_id, wb = validate_input_file(
+    synchronizer = ProductSynchronizer(
         config.active.endpoint,
         config.active.api_key,
-        input_file,
+        config.silent,
     )
+    product_id = synchronizer.validate_input_file(input_file)
 
     if not yes:
         click.confirm(
@@ -143,18 +157,15 @@ def cmd_sync_products(config, input_file, yes):
             abort=True,
         )
         click.echo('')
-    sync_product(
-        config.active.endpoint,
-        config.active.api_key,
-        product_id,
-        wb,
-    )
 
-    wb.save(input_file)
+    synchronizer.sync_product()
 
-    click.echo(
-        click.style(
-            f'\nThe product {product_id} has been successfully synchronized.',
-            fg='green',
+    synchronizer.save(input_file)
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'\nThe product {product_id} has been successfully synchronized.',
+                fg='green',
+            )
         )
-    )

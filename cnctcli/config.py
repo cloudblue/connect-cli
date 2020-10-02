@@ -26,6 +26,7 @@ class Config(object):
     def __init__(self):
         self._config_path = None
         self._active = None
+        self._silent = True
         self._accounts = {}
 
     def add_account(self, id, name, api_key, endpoint=DEFAULT_ENDPOINT):
@@ -40,6 +41,14 @@ class Config(object):
     @property
     def accounts(self):
         return self._accounts
+
+    @property
+    def silent(self):
+        return self._silent
+
+    @silent.setter
+    def silent(self, val):
+        self._silent = val
 
     def activate(self, id):
         account = self._accounts.get(id)
