@@ -27,13 +27,20 @@ CCLI_VERSION = get_version()
 @click.option('-c', '--config-dir',
               default=os.path.join(os.path.expanduser('~'), '.ccli'),
               type=click.Path(file_okay=False),
-              help='set the config directory')
+              help='set the config directory.')
+@click.option(
+    '-s',
+    '--silent',
+    is_flag=True,
+    help='Prevent the output of informational messages.',
+)
 @pass_config
-def cli(config, config_dir):
+def cli(config, config_dir, silent):
     """CloudBlue Connect Command Line Interface"""
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
     config.load(config_dir)
+    config.silent = silent
 
 
 cli.add_command(grp_account)

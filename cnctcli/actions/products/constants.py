@@ -4,12 +4,16 @@
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
 ITEMS_COLS_HEADERS = {
-    'A': 'Name',
+    'A': 'ID',
     'B': 'MPN',
-    'C': 'Billing Period',
-    'D': 'Reservation',
-    'E': 'Description',
-    'F': 'Yearly Commitment',
+    'C': 'Name',
+    'D': 'Description',
+    'E': 'Type',
+    'F': 'Precision',
     'G': 'Unit',
-    'H': 'Connect Item ID',
+    'H': 'Billing Period',
+    'I': 'Commitment',
+    'J': 'Status',
+    'K': 'Created',
+    'L': 'Modified',
 }

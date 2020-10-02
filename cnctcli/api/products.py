@@ -9,6 +9,40 @@ from cnctcli.api.utils import (
 )
 
 
+def get_units(endpoint, api_key):
+    results = []
+
+    has_more = True
+    limit = 100
+    offset = 0
+
+    while has_more:
+        res = requests.get(
+            f'{endpoint}/settings/units',
+            params={'limit': limit, 'offset': offset},
+            headers=get_headers(api_key),
+        )
+        if res.status_code == 200:
+            page = res.json()
+            results.extend(page)
+            has_more = len(page) == 100
+            continue
+        handle_http_error(res)
+    return results
+
+
+def create_unit(endpoint, api_key, data):
+    res = requests.post(
+        f'{endpoint}/settings/units',
+        headers=get_headers(api_key),
+        json=data,
+    )
+    if res.status_code == 201:
+        return res.json()
+
+    handle_http_error(res)
+
+
 def get_products(endpoint, api_key, query, limit, offset):
     url = f'{endpoint}/products'
     if query:

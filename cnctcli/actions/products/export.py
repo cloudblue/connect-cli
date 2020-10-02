@@ -46,7 +46,7 @@ def _setup_cover_sheet(ws, product):
 def _setup_items_header(ws):
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
-    cels = ws['A1': 'H1']
+    cels = ws['A1': 'L1']
     for cel in cels[0]:
         ws.column_dimensions[cel.column_letter].width = 25
         ws.column_dimensions[cel.column_letter].auto_size = True
@@ -54,19 +54,49 @@ def _setup_items_header(ws):
         cel.value = ITEMS_COLS_HEADERS[cel.column_letter]
 
 
+def _calculate_commitment(item):
+    period = item.get('period')
+    if not period:
+        return '-'
+    commitment = item.get('commitment')
+    if not commitment:
+        return '-'
+    count = commitment['count']
+    if count == 1:
+        return '-'
+
+    multiplier = commitment['multiplier']
+
+    if multiplier == 'billing_period':
+        if period == 'monthly':
+            years = count // 12
+            return '{} year{}'.format(
+                years,
+                's' if years > 1 else '',
+            )
+        else:
+            return '{} years'.format(count)
+
+    # One-time
+    return '-'
+
+
 def _fill_item_row(ws, row_idx, item):
-    ws.cell(row_idx, 1, value=item['display_name'])
+    ws.cell(row_idx, 1, value=item['id'])
     ws.cell(row_idx, 2, value=item['mpn'])
-    ws.cell(row_idx, 3, value=item['period'])
-    ws.cell(row_idx, 4, value=item['type'] == 'reservation')
-    ws.cell(row_idx, 5, value=item['description'])
-    commitment = item['commitment']['count'] == 12 if item.get('commitment') else False
-    ws.cell(row_idx, 6, value=commitment)
+    ws.cell(row_idx, 3, value=item['display_name'])
+    ws.cell(row_idx, 4, value=item['description'])
+    ws.cell(row_idx, 5, value=item['type'])
+    ws.cell(row_idx, 6, value=item['precision'])
     ws.cell(row_idx, 7, value=item['unit']['unit'])
-    ws.cell(row_idx, 8, value=item['id'])
+    ws.cell(row_idx, 8, value=item.get('period', 'monthly'))
+    ws.cell(row_idx, 9, value=_calculate_commitment(item))
+    ws.cell(row_idx, 10, value=item['status'])
+    ws.cell(row_idx, 11, value=item['events']['created']['at'])
+    ws.cell(row_idx, 12, value=item['events'].get('updated', {}).get('at'))
 
 
-def _dump_items(ws, api_url, api_key, product_id):
+def _dump_items(ws, api_url, api_key, product_id, silent):
     _setup_items_header(ws)
 
     processed_items = 0
@@ -81,7 +111,7 @@ def _dump_items(ws, api_url, api_key, product_id):
 
     items = iter(items)
 
-    progress = trange(0, count, position=0)
+    progress = trange(0, count, position=0, disable=silent)
 
     while True:
         try:
@@ -100,7 +130,7 @@ def _dump_items(ws, api_url, api_key, product_id):
             break
 
 
-def dump_product(api_url, api_key, product_id, output_file):
+def dump_product(api_url, api_key, product_id, output_file, silent):
     if not output_file:
         output_file = os.path.abspath(
             os.path.join('.', f'{product_id}.xlsx'),
@@ -110,7 +140,7 @@ def dump_product(api_url, api_key, product_id, output_file):
     wb = Workbook()
     _setup_cover_sheet(wb.active, product)
 
-    _dump_items(wb.create_sheet('product_items'), api_url, api_key, product_id)
+    _dump_items(wb.create_sheet('product_items'), api_url, api_key, product_id, silent)
     wb.save(output_file)
 
     return output_file

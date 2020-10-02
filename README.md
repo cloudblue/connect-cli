@@ -137,7 +137,7 @@ This command will generate a excel file named PRD-000-000-000.xlsx in the curren
 To synchronize a product from Excel run:
 
 ```
-    $ ccli product sync --in my_products.xlsx
+    $ ccli product sync my_products.xlsx
 ```
 
 

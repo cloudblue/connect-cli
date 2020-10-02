@@ -34,9 +34,10 @@ def grp_account():
 @pass_config
 def cmd_add_account(config, api_key, endpoint):
     account_id, name = add_account(config, api_key, endpoint)
-    click.echo(
-        click.style(f'New account added: {account_id} - {name}', fg='green')
-    )
+    if not config.silent:
+        click.echo(
+            click.style(f'New account added: {account_id} - {name}', fg='green')
+        )
 
 
 @grp_account.command(
@@ -65,12 +66,13 @@ def cmd_list_account(config):
 @pass_config
 def cmd_activate_account(config, id):
     acc = activate_account(config, id)
-    click.echo(
-        click.style(
-            f'Current active account is: {acc.id} - {acc.name}',
-            fg='green',
-        ),
-    )
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Current active account is: {acc.id} - {acc.name}',
+                fg='green',
+            ),
+        )
 
 
 @grp_account.command(
