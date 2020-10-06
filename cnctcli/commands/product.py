@@ -148,7 +148,7 @@ def cmd_sync_products(config, input_file, yes):
         config.active.api_key,
         config.silent,
     )
-    product_id = synchronizer.validate_input_file(input_file)
+    product_id = synchronizer.open(input_file)
 
     if not yes:
         click.confirm(
@@ -158,14 +158,48 @@ def cmd_sync_products(config, input_file, yes):
         )
         click.echo('')
 
-    synchronizer.sync_product()
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    ok_actions = created + updated + deleted
+    errors_count = len(errors)
+    processed = skipped + ok_actions + errors_count
 
     synchronizer.save(input_file)
 
     if not config.silent:
+        msg = f'\nThe product {product_id} has been successfully synchronized.'
+        fg = 'green'
+
+        if ok_actions == 0:
+            msg = f'\nNo item has been synchronized for the product {product_id}.'
+            fg = 'red'
+        else:
+            if errors:
+                msg = f'\nThe product {product_id} has been partially synchronized.'
+                fg = 'yellow'
+
+        click.echo(click.style(msg, fg=fg))
+
         click.echo(
             click.style(
-                f'\nThe product {product_id} has been successfully synchronized.',
-                fg='green',
+                (
+                    f'\nProcessed rows: {processed}\n'
+                    f'  - Created: {created}\n'
+                    f'  - Updated: {updated}\n'
+                    f'  - Deleted: {deleted}\n'
+                    f'  - Skipped: {skipped}\n'
+                    f'  - Errors: {errors_count}\n'
+                ),
+                fg='blue'
             )
         )
+
+        if errors:
+            click.echo(
+                click.style('\nErrors:\n', fg='magenta')
+            )
+            for row_idx, messages in errors.items():
+                click.echo(f'  Errors at row #{row_idx}')
+                for msg in messages:
+                    click.echo(f'    - {msg}')
+                click.echo(' ')

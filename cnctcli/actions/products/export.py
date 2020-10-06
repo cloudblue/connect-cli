@@ -11,6 +11,7 @@ from click import ClickException
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.styles.colors import Color, WHITE
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from tqdm import trange
 
@@ -46,7 +47,7 @@ def _setup_cover_sheet(ws, product):
 def _setup_items_header(ws):
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
-    cels = ws['A1': 'L1']
+    cels = ws['A1': 'M1']
     for cel in cels[0]:
         ws.column_dimensions[cel.column_letter].width = 25
         ws.column_dimensions[cel.column_letter].auto_size = True
@@ -84,16 +85,20 @@ def _calculate_commitment(item):
 def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 1, value=item['id'])
     ws.cell(row_idx, 2, value=item['mpn'])
-    ws.cell(row_idx, 3, value=item['display_name'])
-    ws.cell(row_idx, 4, value=item['description'])
-    ws.cell(row_idx, 5, value=item['type'])
-    ws.cell(row_idx, 6, value=item['precision'])
-    ws.cell(row_idx, 7, value=item['unit']['unit'])
-    ws.cell(row_idx, 8, value=item.get('period', 'monthly'))
-    ws.cell(row_idx, 9, value=_calculate_commitment(item))
-    ws.cell(row_idx, 10, value=item['status'])
-    ws.cell(row_idx, 11, value=item['events']['created']['at'])
-    ws.cell(row_idx, 12, value=item['events'].get('updated', {}).get('at'))
+    ws.cell(row_idx, 3, value='-')
+    ws.cell(row_idx, 4, value=item['display_name'])
+    ws.cell(row_idx, 5, value=item['description'])
+    ws.cell(row_idx, 6, value=item['type'])
+    ws.cell(row_idx, 7, value=item['precision'])
+    ws.cell(row_idx, 8, value=item['unit']['unit'])
+    period = item.get('period', 'monthly')
+    if period.startswith('years_'):
+        period = f"{period.rsplit('_')[-1]} years"
+    ws.cell(row_idx, 9, value=period)
+    ws.cell(row_idx, 10, value=_calculate_commitment(item))
+    ws.cell(row_idx, 11, value=item['status'])
+    ws.cell(row_idx, 12, value=item['events']['created']['at'])
+    ws.cell(row_idx, 13, value=item['events'].get('updated', {}).get('at'))
 
 
 def _dump_items(ws, api_url, api_key, product_id, silent):
@@ -109,6 +114,40 @@ def _dump_items(ws, api_url, api_key, product_id, silent):
     if count == 0:
         raise ClickException(f"The product {product_id} doesn't have items.")
 
+    action_validation = DataValidation(
+        type='list',
+        formula1='"-,create,update,delete"',
+        allow_blank=False,
+    )
+    type_validation = DataValidation(
+        type='list',
+        formula1='"reservation,ppu"',
+        allow_blank=False,
+    )
+    period_validation = DataValidation(
+        type='list',
+        formula1='"onetime,monthly,yearly,2 years,3 years,4 years,5 years"',
+        allow_blank=False,
+    )
+
+    precision_validation = DataValidation(
+        type='list',
+        formula1='"integer,decimal(1),decimal(2),decimal(4),decimal(8)"',
+        allow_blank=False,
+    )
+
+    commitment_validation = DataValidation(
+        type='list',
+        formula1='"-,1 year,2 years,3 years,4 years,5 years"',
+        allow_blank=False,
+    )
+
+    ws.add_data_validation(action_validation)
+    ws.add_data_validation(type_validation)
+    ws.add_data_validation(period_validation)
+    ws.add_data_validation(precision_validation)
+    ws.add_data_validation(commitment_validation)
+
     items = iter(items)
 
     progress = trange(0, count, position=0, disable=silent)
@@ -119,6 +158,11 @@ def _dump_items(ws, api_url, api_key, product_id, silent):
             progress.set_description(f"Processing item {item['id']}")
             progress.update(1)
             _fill_item_row(ws, row_idx, item)
+            action_validation.add(f'C{row_idx}')
+            type_validation.add(f'F{row_idx}')
+            precision_validation.add(f'G{row_idx}')
+            period_validation.add(f'I{row_idx}')
+            commitment_validation.add(f'J{row_idx}')
             processed_items += 1
             row_idx += 1
         except StopIteration:
