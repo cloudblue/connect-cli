@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
+# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+
 import click
 import requests
 
@@ -146,4 +151,15 @@ def update_item(endpoint, api_key, product_id, item_id, data):
         json=data,
     )
     if res.status_code != 200:
+        handle_http_error(res)
+
+    return res.json()
+
+
+def delete_item(endpoint, api_key, product_id, item_id):
+    res = requests.delete(
+        f'{endpoint}/products/{product_id}/items/{item_id}',
+        headers=get_headers(api_key),
+    )
+    if res.status_code != 204:
         handle_http_error(res)

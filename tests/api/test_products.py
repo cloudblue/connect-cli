@@ -281,6 +281,7 @@ def test_update_item(requests_mock):
     mocked = requests_mock.put(
         'https://localhost/public/v1/products/PRD-000/items/PRD-000-0000',
         status_code=200,
+        json={'id': 'PRD-000-0000'},
     )
 
     update_item(

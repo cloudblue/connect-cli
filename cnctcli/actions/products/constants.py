@@ -6,14 +6,27 @@
 ITEMS_COLS_HEADERS = {
     'A': 'ID',
     'B': 'MPN',
-    'C': 'Name',
-    'D': 'Description',
-    'E': 'Type',
-    'F': 'Precision',
-    'G': 'Unit',
-    'H': 'Billing Period',
-    'I': 'Commitment',
-    'J': 'Status',
-    'K': 'Created',
-    'L': 'Modified',
+    'C': 'Action',
+    'D': 'Name',
+    'E': 'Description',
+    'F': 'Type',
+    'G': 'Precision',
+    'H': 'Unit',
+    'I': 'Billing Period',
+    'J': 'Commitment',
+    'K': 'Status',
+    'L': 'Created',
+    'M': 'Modified',
 }
+
+PRECISIONS = ('integer', 'decimal(1)', 'decimal(2)', 'decimal(4)', 'decimal(8)')
+COMMITMENT = ('-', '1 year', '2 years', '3 years', '4 years', '5 years')
+BILLING_PERIOD = (
+    'onetime',
+    'monthly',
+    'yearly',
+    '2 years',
+    '3 years',
+    '4 years',
+    '5 years',
+)
