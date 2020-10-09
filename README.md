@@ -36,7 +36,7 @@ To use `connect-cli` you need any *nix system with python 3.6 or later installed
 
 The preferred way to install `connect-cli` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
 
-```
+```sh
     $ virtualenv psync
     $ source pysync/bin/activate
     $ pip install connect-cli
@@ -50,16 +50,16 @@ You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/r
 To install under linux:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_linux_amd64.tar.gz
-    $ tar xvfz connect-cli_21.0_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_linux_amd64.tar.gz
+    $ tar xvfz connect-cli_21.3_linux_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
 To install under Mac OSX:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_osx_amd64.tar.gz
-    $ tar xvfz connect-cli_21.0_osx_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_osx_amd64.tar.gz
+    $ tar xvfz connect-cli_21.3_osx_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
@@ -69,7 +69,7 @@ To install under Mac OSX:
 
 To install under Windows
 
-Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.0/connect-cli_21.0_windows_amd64.tar.gz), extract it and place it in a folder that is included in your `path` system variable.
+Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_windows_amd64.tar.gz), extract it and place it in a folder that is included in your `path` system variable.
 
 
 ## Usage

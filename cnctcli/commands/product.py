@@ -52,8 +52,16 @@ def cmd_list_products(config, query, page_size, always_continue):
                 fg='blue',
             )
         )
+    if acc_id.startswith('VA'):
+        default_query = 'and(eq(visibility.owner,true),eq(version,null()))'
+    else:
+        default_query = 'or(eq(visibility.listing,true),eq(visibility.syndication,true))'
+
+    query = query or default_query
+
     offset = 0
     has_more = True
+
     while has_more:
         products = get_products(
             config.active.endpoint,
