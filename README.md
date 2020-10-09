@@ -36,7 +36,7 @@ To use `connect-cli` you need any *nix system with python 3.6 or later installed
 
 The preferred way to install `connect-cli` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
 
-```
+```sh
     $ virtualenv psync
     $ source pysync/bin/activate
     $ pip install connect-cli
