@@ -63,7 +63,7 @@ def cmd_list_products(config, query, page_size, always_continue):
     has_more = True
 
     while has_more:
-        products = get_products(
+        products, pagination = get_products(
             config.active.endpoint,
             config.active.api_key,
             query,
@@ -77,11 +77,16 @@ def cmd_list_products(config, query, page_size, always_continue):
             click.echo(
                 f"{prod['id']} - {prod['name']}"
             )
-        if not always_continue:
-            if not continue_or_quit():
-                return
+        if pagination:
+            has_more = pagination.last < pagination.count - 1
+        else:
+            has_more = len(products) == page_size
 
-        has_more = len(products) == page_size
+        if has_more:
+            if not always_continue:
+                if not continue_or_quit():
+                    return
+
         offset += page_size
 
 
