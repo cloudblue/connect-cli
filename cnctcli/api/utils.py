@@ -1,9 +1,13 @@
 import platform
+from collections import namedtuple
 from http import HTTPStatus
 
 import click
 
 from cnctcli import get_version
+
+
+ContentRange = namedtuple('ContentRange', ('first', 'last', 'count'))
 
 
 def _get_user_agent():
@@ -41,3 +45,12 @@ def handle_http_error(res):
         raise click.ClickException(f'{status}: {code} - {message}')
 
     raise click.ClickException(f'{status}: unexpected error.')
+
+
+def parse_content_range(value):
+    if not value:
+        return
+    _, info = value.split()
+    first_last, count = info.split('/')
+    first, last = first_last.split('-')
+    return ContentRange(int(first), int(last), int(count))

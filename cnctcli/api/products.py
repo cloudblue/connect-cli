@@ -6,11 +6,11 @@
 import click
 import requests
 
-
 from cnctcli.api.utils import (
     format_http_status,
     get_headers,
     handle_http_error,
+    parse_content_range,
 )
 
 
@@ -53,12 +53,13 @@ def get_products(endpoint, api_key, query, limit, offset):
     if query:
         url = f'{url}?{query}'
     res = requests.get(
-        f'{endpoint}/products',
+        url,
         params={'limit': limit, 'offset': offset},
         headers=get_headers(api_key),
     )
     if res.status_code == 200:
-        return res.json()
+        content_range = res.headers.get('Content-Range')
+        return res.json(), parse_content_range(content_range)
 
     handle_http_error(res)
 
