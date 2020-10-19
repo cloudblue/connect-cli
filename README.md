@@ -12,7 +12,7 @@ The CloudBlue Connect Command Line Interface (CLI) is a unified tool to perform 
 
 ## Install
 
-### Using a virtualenv
+### Using PIP
 
 To use `connect-cli` you need a system with python 3.6 or later installed.
 
