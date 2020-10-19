@@ -5,25 +5,7 @@
 
 ## Introduction
 
-CloudBlue Connect is a supply automation platform that manages your products and services, contracts, 
-ordering and fulfillment, usage and subscriptions. 
-
-It supports any product, from physical goods to cloud products, as well as any channel, including your 
-direct and indirect sales channels and internal procurement. 
-
-With its flexible APIs, it can connect to any commerce platform.
-
-Vendors can leverage CloudBlue Connect to:
-
-* Reduce the total cost of ownership for homegrown technology supporting their indirect channel
-* Standardize integrations with partners
-* Increase efficiencies and minimize redundancies by bridging their direct and indirect sales channels
-
-Service providers can use CloudBlue Connect to:
-
-* Define, manage and distribute any type of product (omni-product) through any channel (omni-channel)
-* Transform perpetual licensed products into a subscription model
-* Onboard new products into their portfolio quickly to build and deliver unique solutions to end customers
+The CloudBlue Connect Command Line Interface (CLI) is a unified tool to perform various automation scenarios. With just one tool, you can control multiple Connect modules from the command line and automate them through scripts.
 
 `connect-cli` allow users to export/synchronize the items of a product to/from an Excel workbook.
 
@@ -34,17 +16,13 @@ Service providers can use CloudBlue Connect to:
 
 To use `connect-cli` you need any *nix system with python 3.6 or later installed.
 
-The preferred way to install `connect-cli` is using a [virtualenv](https://virtualenv.pypa.io/en/latest/):
-
 ```sh
-    $ virtualenv psync
-    $ source pysync/bin/activate
-    $ pip install connect-cli
+    $ pip install --upgrade connect-cli
 ```    
 
 ### Binary distributions
 
-A single executable binary distribution is available for windows, linux and mac osx (amd64).
+A single executable binary distribution is available for windows, linux and mac os x.
 You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/releases) page.
 
 To install under linux:
@@ -55,7 +33,7 @@ To install under linux:
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
 
-To install under Mac OSX:
+To install under Mac OS X:
 
 ```
     $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_osx_amd64.tar.gz
