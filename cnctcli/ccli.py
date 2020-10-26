@@ -16,6 +16,7 @@ import click
 
 from cnctcli import get_version
 from cnctcli.commands.account import grp_account
+from cnctcli.commands.api import grp_api
 from cnctcli.commands.product import grp_product
 from cnctcli.config import pass_config
 
@@ -44,6 +45,7 @@ def cli(config, config_dir, silent):
 
 
 cli.add_command(grp_account)
+cli.add_command(grp_api)
 cli.add_command(grp_product)
 
 
