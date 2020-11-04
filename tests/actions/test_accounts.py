@@ -10,11 +10,15 @@ from cnctcli.actions.accounts import (
 from cnctcli.config import Config
 
 
-def test_add_account(mocker, requests_mock):
+def test_add_account(mocker, requests_mock, load_specs):
     mocker.patch.object(Config, 'store')
     config = Config()
+
     requests_mock.get(
         'https://localhost/public/v1/accounts',
+        headers={
+          'Content-Range': 'Items 0-1/1'
+        },
         json=[
             {
                 'id': 'VA-000',
@@ -36,7 +40,7 @@ def test_add_account(mocker, requests_mock):
     assert name == config.active.name
 
 
-def test_add_account_invalid_api_key(requests_mock):
+def test_add_account_invalid_api_key_http_error(requests_mock, load_specs):
     config = Config()
     requests_mock.get(
         'https://localhost/public/v1/accounts',
@@ -52,7 +56,45 @@ def test_add_account_invalid_api_key(requests_mock):
     assert ex.value.message == 'Unauthorized: the provided api key is invalid.'
 
 
-def test_add_account_internal_server_error(requests_mock):
+def test_add_account_http_generic_error(requests_mock, load_specs):
+    config = Config()
+    requests_mock.get(
+        'https://localhost/public/v1/accounts',
+        status_code=404,
+    )
+
+    with pytest.raises(click.ClickException) as ex:
+        add_account(
+            config,
+            'ApiKey SU-000:xxxx',
+            'https://localhost/public/v1',
+        )
+    assert ex.value.message == 'Unexpected error: 404 Client Error: None'
+
+
+def test_add_account_invalid_api_key(requests_mock, load_specs):
+    config = Config()
+    requests_mock.get(
+        'https://localhost/public/v1/accounts',
+        status_code=401,
+        json={
+            "error_code": "AUTH_001",
+            "errors": [
+                "API request is unauthorized."
+            ]
+        }
+    )
+
+    with pytest.raises(click.ClickException) as ex:
+        add_account(
+            config,
+            'ApiKey SU-000:xxxx',
+            'https://localhost/public/v1',
+        )
+    assert ex.value.message == 'Unexpected error: AUTH_001: API request is unauthorized.'
+
+
+def add_account_internal_server_error(requests_mock):
     config = Config()
     requests_mock.get(
         'https://localhost/public/v1/accounts',
