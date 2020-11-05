@@ -40,38 +40,6 @@ def test_add_account(mocker, requests_mock, load_specs):
     assert name == config.active.name
 
 
-def test_add_account_invalid_api_key_http_error(requests_mock, load_specs):
-    config = Config()
-    requests_mock.get(
-        'https://localhost/public/v1/accounts',
-        status_code=401,
-    )
-
-    with pytest.raises(click.ClickException) as ex:
-        add_account(
-            config,
-            'ApiKey SU-000:xxxx',
-            'https://localhost/public/v1',
-        )
-    assert ex.value.message == 'Unauthorized: the provided api key is invalid.'
-
-
-def test_add_account_http_generic_error(requests_mock, load_specs):
-    config = Config()
-    requests_mock.get(
-        'https://localhost/public/v1/accounts',
-        status_code=404,
-    )
-
-    with pytest.raises(click.ClickException) as ex:
-        add_account(
-            config,
-            'ApiKey SU-000:xxxx',
-            'https://localhost/public/v1',
-        )
-    assert ex.value.message == 'Unexpected error: 404 Client Error: None'
-
-
 def test_add_account_invalid_api_key(requests_mock, load_specs):
     config = Config()
     requests_mock.get(

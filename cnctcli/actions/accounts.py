@@ -5,7 +5,7 @@
 
 import click
 
-from cnct import APIError, HttpError, ConnectClient
+from cnct import ClientError, ConnectClient
 
 
 def add_account(config, api_key, endpoint):
@@ -25,12 +25,10 @@ def add_account(config, api_key, endpoint):
         config.store()
         return account_data['id'], account_data['name']
 
-    except HttpError as h:
+    except ClientError as h:
         if h.response.status_code == 401:
             raise click.ClickException('Unauthorized: the provided api key is invalid.')
         raise click.ClickException(f'Unexpected error: {h}')
-    except (APIError) as error:
-        raise click.ClickException(f'Unexpected error: {error}')
 
 
 def activate_account(config, id):
