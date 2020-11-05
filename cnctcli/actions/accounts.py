@@ -15,7 +15,7 @@ def add_account(config, api_key, endpoint):
             api_key=api_key,
             endpoint=endpoint
         )
-        account_data = client.accounts.filter().first()
+        account_data = client.accounts.all().first()
         config.add_account(
             account_data['id'],
             account_data['name'],
@@ -26,7 +26,7 @@ def add_account(config, api_key, endpoint):
         return account_data['id'], account_data['name']
 
     except ClientError as h:
-        if h.response.status_code == 401:
+        if h.status_code == 401:
             raise click.ClickException('Unauthorized: the provided api key is invalid.')
         raise click.ClickException(f'Unexpected error: {h}')
 

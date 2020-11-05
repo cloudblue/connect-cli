@@ -6,9 +6,10 @@
 import click
 
 from cnctcli.actions.products import ProductSynchronizer, dump_product
-from cnctcli.api.products import get_products
 from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
+from cnct import ConnectClient
+from cnct.rql import R
 
 
 @click.group(name='product', short_help='commands related to product management')
@@ -52,42 +53,29 @@ def cmd_list_products(config, query, page_size, always_continue):
                 fg='blue',
             )
         )
+    client = ConnectClient(
+        api_key=config.active.api_key,
+        endpoint=config.active.endpoint,
+    )
+
     if acc_id.startswith('VA'):
-        default_query = 'and(eq(visibility.owner,true),eq(version,null()))'
+        default_query = R().visibility.owner.eq(True) & R().version.null(True)
     else:
-        default_query = 'or(eq(visibility.listing,true),eq(visibility.syndication,true))'
+        default_query = R().visibility.listing.eq(True) | R().visibility.syndication.eq(True)
 
     query = query or default_query
+    paging = 0
+    query_products = client.products.filter(query).limit(page_size)
 
-    offset = 0
-    has_more = True
-
-    while has_more:
-        products, pagination = get_products(
-            config.active.endpoint,
-            config.active.api_key,
-            query,
-            page_size,
-            offset,
+    for prod in query_products:
+        paging += 1
+        click.echo(
+            f"{prod['id']} - {prod['name']}"
         )
-        if not products:
-            break
-
-        for prod in products:
-            click.echo(
-                f"{prod['id']} - {prod['name']}"
-            )
-        if pagination:
-            has_more = pagination.last < pagination.count - 1
-        else:
-            has_more = len(products) == page_size
-
-        if has_more:
+        if paging % page_size == 0 and paging != query_products.count():
             if not always_continue:
                 if not continue_or_quit():
                     return
-
-        offset += page_size
 
 
 @grp_product.command(
@@ -156,9 +144,14 @@ def cmd_sync_products(config, input_file, yes):
                 fg='blue',
             )
         )
+    # To be fixed specs_location when using new version of client
+    client = ConnectClient(
+        api_key=config.active.api_key,
+        endpoint=config.active.endpoint,
+        specs_location=None,
+    )
     synchronizer = ProductSynchronizer(
-        config.active.endpoint,
-        config.active.api_key,
+        client,
         config.silent,
     )
     product_id = synchronizer.open(input_file)

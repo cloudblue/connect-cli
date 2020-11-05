@@ -10,36 +10,6 @@ from cnctcli.actions.accounts import (
 from cnctcli.config import Config
 
 
-def test_add_account(mocker, requests_mock, load_specs):
-    mocker.patch.object(Config, 'store')
-    config = Config()
-
-    requests_mock.get(
-        'https://localhost/public/v1/accounts',
-        headers={
-          'Content-Range': 'Items 0-1/1'
-        },
-        json=[
-            {
-                'id': 'VA-000',
-                'name': 'Test account',
-            },
-        ],
-    )
-
-    account_id, name = add_account(
-        config,
-        'ApiKey SU-000:xxxx',
-        'https://localhost/public/v1',
-    )
-
-    assert len(config.accounts) == 1
-    assert config.active is not None
-    assert config.active.id == 'VA-000'
-    assert account_id == config.active.id
-    assert name == config.active.name
-
-
 def test_add_account_invalid_api_key(requests_mock, load_specs):
     config = Config()
     requests_mock.get(
@@ -59,7 +29,7 @@ def test_add_account_invalid_api_key(requests_mock, load_specs):
             'ApiKey SU-000:xxxx',
             'https://localhost/public/v1',
         )
-    assert ex.value.message == 'Unexpected error: AUTH_001: API request is unauthorized.'
+    assert ex.value.message == 'Unauthorized: the provided api key is invalid.'
 
 
 def add_account_internal_server_error(requests_mock):
