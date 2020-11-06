@@ -16,7 +16,11 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from tqdm import trange
 
 from cnctcli.actions.products.constants import ITEMS_COLS_HEADERS
-from cnctcli.api.products import get_items, get_product
+from cnctcli.api.utils import (
+    format_http_status,
+    handle_http_error,
+)
+from cnct import ConnectClient, ClientError
 
 
 def _setup_cover_sheet(ws, product):
@@ -101,15 +105,14 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 13, value=item['events'].get('updated', {}).get('at'))
 
 
-def _dump_items(ws, api_url, api_key, product_id, silent):
+def _dump_items(ws, client, product_id, silent):
     _setup_items_header(ws)
 
     processed_items = 0
     row_idx = 2
-    limit = 2
-    offset = 0
 
-    count, items = get_items(api_url, api_key, product_id, limit, offset)
+    items = client.products[product_id].items.all()
+    count = items.count()
 
     if count == 0:
         raise ClickException(f"The product {product_id} doesn't have items.")
@@ -148,30 +151,19 @@ def _dump_items(ws, api_url, api_key, product_id, silent):
     ws.add_data_validation(precision_validation)
     ws.add_data_validation(commitment_validation)
 
-    items = iter(items)
-
     progress = trange(0, count, position=0, disable=silent)
 
-    while True:
-        try:
-            item = next(items)
-            progress.set_description(f"Processing item {item['id']}")
-            progress.update(1)
-            _fill_item_row(ws, row_idx, item)
-            action_validation.add(f'C{row_idx}')
-            type_validation.add(f'F{row_idx}')
-            precision_validation.add(f'G{row_idx}')
-            period_validation.add(f'I{row_idx}')
-            commitment_validation.add(f'J{row_idx}')
-            processed_items += 1
-            row_idx += 1
-        except StopIteration:
-            if processed_items < count:
-                offset += limit
-                _, items = get_items(api_url, api_key, product_id, limit, offset)
-                items = iter(items)
-                continue
-            break
+    for item in items:
+        progress.set_description(f"Processing item {item['id']}")
+        progress.update(1)
+        _fill_item_row(ws, row_idx, item)
+        action_validation.add(f'C{row_idx}')
+        type_validation.add(f'F{row_idx}')
+        precision_validation.add(f'G{row_idx}')
+        period_validation.add(f'I{row_idx}')
+        commitment_validation.add(f'J{row_idx}')
+        processed_items += 1
+        row_idx += 1
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent):
@@ -179,12 +171,20 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
         output_file = os.path.abspath(
             os.path.join('.', f'{product_id}.xlsx'),
         )
+    try:
+        client = ConnectClient(api_key=api_key, endpoint=api_url)
+        product = client.products[product_id].get()
+        wb = Workbook()
+        _setup_cover_sheet(wb.active, product)
 
-    product = get_product(api_url, api_key, product_id)
-    wb = Workbook()
-    _setup_cover_sheet(wb.active, product)
+        _dump_items(wb.create_sheet('product_items'), client, product_id, silent)
+        wb.save(output_file)
 
-    _dump_items(wb.create_sheet('product_items'), api_url, api_key, product_id, silent)
-    wb.save(output_file)
+    except ClientError as error:
+        status = format_http_status(error.status_code)
+        if error.status_code == 404:
+            raise ClickException(f'{status}: Product {product_id} not found.')
+
+        handle_http_error(error)
 
     return output_file

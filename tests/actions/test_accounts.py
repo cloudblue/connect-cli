@@ -10,37 +10,17 @@ from cnctcli.actions.accounts import (
 from cnctcli.config import Config
 
 
-def test_add_account(mocker, requests_mock):
-    mocker.patch.object(Config, 'store')
-    config = Config()
-    requests_mock.get(
-        'https://localhost/public/v1/accounts',
-        json=[
-            {
-                'id': 'VA-000',
-                'name': 'Test account',
-            },
-        ],
-    )
-
-    account_id, name = add_account(
-        config,
-        'ApiKey SU-000:xxxx',
-        'https://localhost/public/v1',
-    )
-
-    assert len(config.accounts) == 1
-    assert config.active is not None
-    assert config.active.id == 'VA-000'
-    assert account_id == config.active.id
-    assert name == config.active.name
-
-
-def test_add_account_invalid_api_key(requests_mock):
+def test_add_account_invalid_api_key(requests_mock, load_specs):
     config = Config()
     requests_mock.get(
         'https://localhost/public/v1/accounts',
         status_code=401,
+        json={
+            "error_code": "AUTH_001",
+            "errors": [
+                "API request is unauthorized."
+            ]
+        }
     )
 
     with pytest.raises(click.ClickException) as ex:
@@ -52,7 +32,7 @@ def test_add_account_invalid_api_key(requests_mock):
     assert ex.value.message == 'Unauthorized: the provided api key is invalid.'
 
 
-def test_add_account_internal_server_error(requests_mock):
+def add_account_internal_server_error(requests_mock):
     config = Config()
     requests_mock.get(
         'https://localhost/public/v1/accounts',

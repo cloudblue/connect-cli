@@ -2,4 +2,5 @@ click==7.1.2
 openpyxl>=2.5.14
 setuptools-scm==4.1.2
 tqdm==4.48.2
-requests==2.21.0
+connect-openapi-client
+requests==2.24.0

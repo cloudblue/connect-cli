@@ -4,28 +4,10 @@ import pytest
 
 from click import ClickException
 
-from cnctcli import get_version
 from cnctcli.api.utils import (
     format_http_status,
-    get_headers,
     handle_http_error,
 )
-
-
-def test_get_headers():
-    headers = get_headers('MY API KEY')
-
-    assert 'Authorization' in headers
-    assert headers['Authorization'] == 'MY API KEY'
-    assert 'User-Agent' in headers
-
-    ua = headers['User-Agent']
-
-    cli, python, system = ua.split()
-
-    assert cli == f'connect-cli/{get_version()}'
-    assert python == f'{platform.python_implementation()}/{platform.python_version()}'
-    assert system == f'{platform.system()}/{platform.release()}'
 
 
 def test_format_http_status():
