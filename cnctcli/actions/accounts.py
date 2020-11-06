@@ -13,7 +13,8 @@ def add_account(config, api_key, endpoint):
     try:
         client = ConnectClient(
             api_key=api_key,
-            endpoint=endpoint
+            endpoint=endpoint,
+            validate_using_specs=False,
         )
         account_data = client.accounts.all().first()
         config.add_account(

@@ -15,7 +15,7 @@ def create_unit(client, data):
     try:
         res = (
             client.ns('settings')
-            .collection('units')
+            .units
             .create(data)
         )
     except ClientError as error:
@@ -26,10 +26,8 @@ def create_unit(client, data):
 def get_item(client, product_id, item_id):
     try:
         res = (
-            client.collection('products')
-            [product_id]
-            .collection('items')
-            [item_id]
+            client.products[product_id]
+            .items[item_id]
             .get()
         )
     except ClientError as error:
@@ -44,9 +42,8 @@ def get_item_by_mpn(client, product_id, mpn):
 
     try:
         res = (
-            client.collection('products')
-            [product_id]
-            .collection('items')
+            client.products[product_id]
+            .items
             .filter(rql)
         )
 
@@ -61,9 +58,8 @@ def get_item_by_mpn(client, product_id, mpn):
 def create_item(client, product_id, data):
     try:
         res = (
-            client.collection('products')
-            [product_id]
-            .collection('items')
+            client.products[product_id]
+            .items
             .create(data)
         )
     except ClientError as error:
@@ -75,10 +71,8 @@ def create_item(client, product_id, data):
 def update_item(client, product_id, item_id, data):
     try:
         res = (
-            client.collection('products')
-            [product_id]
-            .collection('items')
-            [item_id]
+            client.products[product_id]
+            .items[item_id]
             .update(data)
         )
     except ClientError as error:
@@ -89,12 +83,6 @@ def update_item(client, product_id, item_id, data):
 
 def delete_item(client, product_id, item_id):
     try:
-        (
-            client.collection('products')
-            [product_id]
-            .collection('items')
-            .delete(item_id)
-        )
+        client.products[product_id].items[item_id].delete()
     except ClientError as error:
-        if error.status_code != 204:
-            handle_http_error(error)
+        handle_http_error(error)

@@ -148,7 +148,7 @@ def cmd_sync_products(config, input_file, yes):
     client = ConnectClient(
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
-        specs_location=None,
+        validate_using_specs=False,
     )
     synchronizer = ProductSynchronizer(
         client,

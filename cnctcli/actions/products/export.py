@@ -111,7 +111,7 @@ def _dump_items(ws, client, product_id, silent):
     processed_items = 0
     row_idx = 2
 
-    items = client.products[product_id].items.filter()
+    items = client.products[product_id].items.all()
     count = items.count()
 
     if count == 0:

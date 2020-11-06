@@ -38,7 +38,7 @@ class ProductSynchronizer:
     def __init__(self, client, silent):
         self._client = client
         self._silent = silent
-        self._units = list(client.ns('settings').collection('units').filter())
+        self._units = list(client.ns('settings').units.all())
         self._product_id = None
         self._wb = None
 
@@ -48,9 +48,7 @@ class ProductSynchronizer:
             raise ClickException('Invalid input file: not enough sheets.')
         ws = self._wb[self._wb.sheetnames[0]]
         product_id = ws['B5'].value
-        try:
-            list(self._client.collection('products')[product_id].get())
-        except ClickException:
+        if not self._client.products[product_id].exists():
             raise ClickException(f'Product {product_id} not found, create it first.')
         ws = self._wb[self._wb.sheetnames[1]]
         self._validate_item_sheet(ws)
@@ -81,9 +79,8 @@ class ProductSynchronizer:
             if data.action == 'create':
                 rql = R().mpn.eq(data.mpn)
                 item = (
-                    self._client.collection('products')
-                    [self._product_id]
-                    .collection('items')
+                    self._client.products[self._product_id]
+                    .items
                     .filter(rql)
                     .first()
                 )
