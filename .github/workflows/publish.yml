@@ -21,6 +21,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
         pip install -r requirements/test.txt
+        pip install pyinstaller
     - name: Linting
       run: |
         flake8
@@ -77,6 +78,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
         pip install -r requirements/test.txt
+        pip install pyinstaller
     - name: Create Windows Distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -121,6 +123,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
         pip install -r requirements/test.txt
+        pip install pyinstaller
     - name: Create MacOS Distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
