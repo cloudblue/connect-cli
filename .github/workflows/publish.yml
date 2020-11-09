@@ -2,7 +2,6 @@ name: Publish Connect Command Line Client
 
 on:
   push:
-    branches: '*'
     tags:
         - '*'
 jobs:
