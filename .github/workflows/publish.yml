@@ -5,8 +5,32 @@ on:
     tags:
         - '*'
 jobs:
-  build:
+  Release:
+    steps:
+    - name: Create release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: linux
+        CPU_ARCH: amd64
+        PKG_TAG: ${{ steps.tag.outputs.result }}
+      with:
+        tag_name: ${{ steps.tag.outputs.result }}
+        release_name: Release ${{ steps.tag.outputs.result }}
+        draft: false
+        prerelease: false
+    - name: Create Release URL File
+      run: |
+        echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+    - name: Export Release URL
+      uses: actions/upload-artifact@v2
+      with:
+        name: release_url
+        path: release_url.txt
+  Linux:
     runs-on: ubuntu-latest
+    needs: [Release]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -33,37 +57,45 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
+    - name: Discover Assigned TAG
+      uses: actions/github-script@v3
+      id: tag
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        result-encoding: string
+        script: |
+          return context.payload.ref.replace(/refs\/tags\//, '')
+    - name: Echo
+      run: echo ${{ steps.tag.outputs.result }}
     - name: Create Linux Distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OS_NAME: linux
         CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
+        PKG_TAG: ${{ steps.tag.outputs.result }}
       run: |
         ./package.sh
-    - name: Publish Linux Distro
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OS_NAME: linux
-        CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
+    - name: Download release-url
+      uses: actions/download-artifact@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+        name: release_url
+    - name: Read URL from file
+      id: create_release
+      uses: actions/github-script@v3
+      run: |
+        echo ::set-env name=RELEASE_URL::$(cat release-url.txt)
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./connect-cli_${{ github.ref }}_linux_amd64.tar.gz
-        asset_name: connect-cli_${{ github.ref }}_linux_amd64.tar.gz
+        upload_url: ${{ env.RELEASE_URL }}
+        asset_path: ./connect-cli_${{ steps.tag.outputs.result }}_linux_amd64.tar.gz
+        asset_name: connect-cli_${{ steps.tag.outputs.result }}_linux_amd64.tar.gz
         asset_content_type: application/tar+gzip
   windows:
     runs-on: windows-latest
+    needs: [Release]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -78,37 +110,34 @@ jobs:
         pip install -r requirements/dev.txt
         pip install -r requirements/test.txt
         pip install pyinstaller
+    - name: Discover Assigned TAG
+      uses: actions/github-script@v3
+      id: tag
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        result-encoding: string
+        script: |
+          return context.payload.ref.replace(/refs\/tags\//, '')
     - name: Create Windows Distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OS_NAME: windows
         CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
+        PKG_TAG: ${{ steps.tag.outputs.result }}
       run: |
         ./package.sh
-    - name: Publish Windows Distro
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OS_NAME: windows
-        CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./connect-cli_${{ github.ref }}_windows_amd64.zip
-        asset_name: connect-cli_${{ github.ref }}_windows_amd64.zip
+        upload_url: ${{ env.RELEASE_URL }}
+        asset_path: ./connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
+        asset_name: connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
         asset_content_type: application/zip
   macos:
     runs-on: macos-latest
+    needs: [Release]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -123,32 +152,28 @@ jobs:
         pip install -r requirements/dev.txt
         pip install -r requirements/test.txt
         pip install pyinstaller
+    - name: Discover Assigned TAG
+      uses: actions/github-script@v3
+      id: tag
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        result-encoding: string
+        script: |
+          return context.payload.ref.replace(/refs\/tags\//, '')
     - name: Create MacOS Distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OS_NAME: osx
         CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
+        PKG_TAG: ${{ steps.tag.outputs.result }}
       run: |
         ./package.sh
-    - name: Publish MacOS Distro
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OS_NAME: osx
-        CPU_ARCH: amd64
-        TAG: ${{ github.ref }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./connect-cli_${{ github.ref }}_osx_amd64.zip
-        asset_name: connect-cli_${{ github.ref }}_osx_amd64.zip
+        upload_url: ${{ env.RELEASE_URL }}
+        asset_path: ./connect-cli_${{ steps.tag.outputs.result }}_osx_amd64.zip
+        asset_name: connect-cli_${{ steps.tag.outputs.result }}_osx_amd64.zip
         asset_content_type: application/zip
