@@ -10,7 +10,7 @@ from cnctcli.actions.accounts import (
 from cnctcli.config import Config
 
 
-def test_add_account_invalid_api_key(requests_mock, load_specs):
+def test_add_account_invalid_api_key(requests_mock):
     config = Config()
     requests_mock.get(
         'https://localhost/public/v1/accounts',

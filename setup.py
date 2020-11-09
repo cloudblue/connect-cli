@@ -19,7 +19,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=read_file('requirements/dev.txt').splitlines(),
-    setup_requires=['setuptools_scm', 'pytest-runner'],
+    setup_requires=['setuptools_scm', 'pytest-runner', 'wheel'],
     use_scm_version=True,
     entry_points={
         'console_scripts': [

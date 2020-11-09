@@ -72,10 +72,9 @@ def cmd_list_products(config, query, page_size, always_continue):
         click.echo(
             f"{prod['id']} - {prod['name']}"
         )
-        if paging % page_size == 0 and paging != query_products.count():
-            if not always_continue:
-                if not continue_or_quit():
-                    return
+        if paging % page_size == 0 and paging != query_products.count() and not always_continue:
+            if not continue_or_quit():
+                return
 
 
 @grp_product.command(

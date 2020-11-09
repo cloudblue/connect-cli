@@ -1,0 +1,152 @@
+name: Publish Connect Command Line Client
+
+on:
+  push:
+    branches: '*'
+    tags:
+        - '*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+        pip install -r requirements/test.txt
+    - name: Linting
+      run: |
+        flake8
+    - name: Testing
+      run: |
+        pytest
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Create Linux Distro
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: linux
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      run: |
+        ./package.sh
+    - name: Publish Linux Distro
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: linux
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./connect-cli_${{ github.ref }}_linux_amd64.tar.gz
+        asset_name: connect-cli_${{ github.ref }}_linux_amd64.tar.gz
+        asset_content_type: application/tar+gzip
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+        pip install -r requirements/test.txt
+    - name: Create Windows Distro
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: windows
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      run: |
+        ./package.sh
+    - name: Publish Windows Distro
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: windows
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./connect-cli_${{ github.ref }}_windows_amd64.zip
+        asset_name: connect-cli_${{ github.ref }}_windows_amd64.zip
+        asset_content_type: application/zip
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+        pip install -r requirements/test.txt
+    - name: Create MacOS Distro
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: osx
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      run: |
+        ./package.sh
+    - name: Publish MacOS Distro
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OS_NAME: osx
+        CPU_ARCH: amd64
+        TAG: ${{ github.ref }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./connect-cli_${{ github.ref }}_osx_amd64.zip
+        asset_name: connect-cli_${{ github.ref }}_osx_amd64.zip
+        asset_content_type: application/zip

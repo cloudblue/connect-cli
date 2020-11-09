@@ -13,11 +13,7 @@ from cnct.rql import R
 
 def create_unit(client, data):
     try:
-        res = (
-            client.ns('settings')
-            .units
-            .create(data)
-        )
+        res = client.ns('settings').units.create(data)
     except ClientError as error:
         handle_http_error(error)
     return res
@@ -25,11 +21,7 @@ def create_unit(client, data):
 
 def get_item(client, product_id, item_id):
     try:
-        res = (
-            client.products[product_id]
-            .items[item_id]
-            .get()
-        )
+        res = client.products[product_id].items[item_id].get()
     except ClientError as error:
         if error.status_code == 404:
             return
@@ -70,11 +62,7 @@ def create_item(client, product_id, data):
 
 def update_item(client, product_id, item_id, data):
     try:
-        res = (
-            client.products[product_id]
-            .items[item_id]
-            .update(data)
-        )
+        res = client.products[product_id].items[item_id].update(data)
     except ClientError as error:
         handle_http_error(error)
 
