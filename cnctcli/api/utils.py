@@ -5,12 +5,12 @@ from http import HTTPStatus
 import click
 
 from cnctcli import get_version
-
+from cnct import ClientError
 
 ContentRange = namedtuple('ContentRange', ('first', 'last', 'count'))
 
 
-def _get_user_agent():
+def get_user_agent():
     version = get_version()
     pimpl = platform.python_implementation()
     pver = platform.python_version()
@@ -20,28 +20,21 @@ def _get_user_agent():
     return {'User-Agent': ua}
 
 
-def get_headers(api_key):
-    headers = {'Authorization': api_key}
-    headers.update(_get_user_agent())
-    return headers
-
-
 def format_http_status(status_code):
     status = HTTPStatus(status_code)
     description = status.name.replace('_', ' ').title()
     return f'{status_code} - {description}'
 
 
-def handle_http_error(res):
+def handle_http_error(res: ClientError):
     status = format_http_status(res.status_code)
 
     if res.status_code in (401, 403):
         raise click.ClickException(f'{status}: please check your credentials.')
 
     if res.status_code == 400:
-        error_info = res.json()
-        code = error_info['error_code']
-        message = ','.join(error_info['errors'])
+        code = res.error_code if res.error_code else 'Generic error'
+        message = ','.join(res.errors) if res.errors else ''
         raise click.ClickException(f'{status}: {code} - {message}')
 
     raise click.ClickException(f'{status}: unexpected error.')

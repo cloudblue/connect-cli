@@ -2,7 +2,13 @@ import json
 
 import pytest
 
+import requests
+import yaml
+
 from tests.data import CONFIG_DATA
+from io import StringIO
+
+from requests_mock import Mocker
 
 
 @pytest.fixture()

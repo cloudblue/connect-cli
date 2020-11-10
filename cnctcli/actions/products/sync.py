@@ -4,7 +4,6 @@
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
 from collections import namedtuple
-# from pprint import pprint
 from zipfile import BadZipFile
 
 from click import ClickException
@@ -26,10 +25,9 @@ from cnctcli.api.products import (
     delete_item,
     get_item,
     get_item_by_mpn,
-    get_product,
-    get_units,
     update_item,
 )
+from cnct.rql import R
 
 fields = (v.replace(' ', '_').lower() for v in ITEMS_COLS_HEADERS.values())
 
@@ -37,11 +35,10 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ProductSynchronizer:
-    def __init__(self, endpoint, api_key, silent):
-        self._endpoint = endpoint
-        self._api_key = api_key
+    def __init__(self, client, silent):
+        self._client = client
         self._silent = silent
-        self._units = get_units(self._endpoint, self._api_key)
+        self._units = list(client.ns('settings').units.all())
         self._product_id = None
         self._wb = None
 
@@ -51,7 +48,8 @@ class ProductSynchronizer:
             raise ClickException('Invalid input file: not enough sheets.')
         ws = self._wb[self._wb.sheetnames[0]]
         product_id = ws['B5'].value
-        get_product(self._endpoint, self._api_key, product_id)
+        if not self._client.products[product_id].exists():
+            raise ClickException(f'Product {product_id} not found, create it first.')
         ws = self._wb[self._wb.sheetnames[1]]
         self._validate_item_sheet(ws)
 
@@ -79,7 +77,13 @@ class ProductSynchronizer:
                 continue
 
             if data.action == 'create':
-                item = get_item_by_mpn(self._endpoint, self._api_key, self._product_id, data.mpn)
+                rql = R().mpn.eq(data.mpn)
+                item = (
+                    self._client.products[self._product_id]
+                    .items
+                    .filter(rql)
+                    .first()
+                )
                 if item:
                     errors[row_idx] = [
                         f'Cannot create item: item with MPN `{data.mpn}`'
@@ -89,8 +93,7 @@ class ProductSynchronizer:
                 row_indexes.set_description(f"Creating item {data[1]}")
                 try:
                     item = create_item(
-                        self._endpoint,
-                        self._api_key,
+                        self._client,
                         self._product_id,
                         self._get_item_payload(data),
                     )
@@ -125,8 +128,7 @@ class ProductSynchronizer:
                         del payload['period']
                 try:
                     item = update_item(
-                        self._endpoint,
-                        self._api_key,
+                        self._client,
                         self._product_id,
                         item['id'],
                         payload,
@@ -149,8 +151,7 @@ class ProductSynchronizer:
                     continue
                 try:
                     delete_item(
-                        self._endpoint,
-                        self._api_key,
+                        self._client,
                         self._product_id,
                         item['id'],
                     )
@@ -329,8 +330,7 @@ class ProductSynchronizer:
                 return unit['id']
 
         created = create_unit(
-            self._endpoint,
-            self._api_key,
+            self._client,
             {
                 'description': data.unit,
                 'type': data.type,
@@ -341,9 +341,9 @@ class ProductSynchronizer:
 
     def _get_item(self, data):
         if data.id:
-            return get_item(self._endpoint, self._api_key, self._product_id, data.id)
+            return get_item(self._client, self._product_id, data.id)
         elif data.mpn:
-            return get_item_by_mpn(self._endpoint, self._api_key, self._product_id, data.mpn)
+            return get_item_by_mpn(self._client, self._product_id, data.mpn)
 
     def _get_item_payload(self, data):
         commitment = {
