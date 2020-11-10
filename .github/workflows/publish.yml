@@ -29,6 +29,13 @@ jobs:
     - name: Testing
       run: |
         pytest
+    - name: Build and publish to pypi.org
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
     - name: Extract tag name
       uses: actions/github-script@v3
       id: tag
@@ -46,6 +53,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        rm -f dist/*
         tar cvfz connect-cli_${{ steps.tag.outputs.result }}_linux_amd64.tar.gz dist
     - name: Upload distro package to artifacts
       uses: actions/upload-artifact@v2
@@ -53,13 +61,6 @@ jobs:
         name: linux_distro
         path: connect-cli_${{ steps.tag.outputs.result }}_linux_amd64.tar.gz
         retention-days: 5
-    - name: Build and publish to pypi.org
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
   windows:
     runs-on: windows-latest
     steps:
