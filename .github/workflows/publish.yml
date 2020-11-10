@@ -36,6 +36,7 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
+        rm -f dist/*
     - name: Extract tag name
       uses: actions/github-script@v3
       id: tag
@@ -53,7 +54,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        rm -f dist/*
         tar cvfz connect-cli_${{ steps.tag.outputs.result }}_linux_amd64.tar.gz dist
     - name: Upload distro package to artifacts
       uses: actions/upload-artifact@v2
