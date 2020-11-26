@@ -44,20 +44,20 @@ class ProductSynchronizer:
 
     def open(self, input_file):
         self._open_workbook(input_file)
-        if len(self._wb.sheetnames) != 2:
-            raise ClickException('Invalid input file: not enough sheets.')
+        if 'Items' not in self._wb.sheetnames:
+            raise ClickException('Invalid input file: File shall contain at least Items sheet.')
         ws = self._wb[self._wb.sheetnames[0]]
         product_id = ws['B5'].value
         if not self._client.products[product_id].exists():
             raise ClickException(f'Product {product_id} not found, create it first.')
-        ws = self._wb[self._wb.sheetnames[1]]
+        ws = self._wb['Items']
         self._validate_item_sheet(ws)
 
         self._product_id = product_id
         return self._product_id
 
     def sync(self):
-        ws = self._wb[self._wb.sheetnames[1]]
+        ws = self._wb["Items"]
         errors = {}
         skipped_count = 0
         created_items = []
