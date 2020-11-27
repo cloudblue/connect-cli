@@ -8,7 +8,7 @@ from datetime import datetime
 from copy import deepcopy
 
 from click import ClickException
-from json import dumps
+from json import dumps, loads
 from urllib import parse
 
 from openpyxl import Workbook
@@ -26,6 +26,8 @@ from cnctcli.actions.products.constants import (
     CAPABILITIES_COLS_HEADERS,
     STATIC_LINK_HEADERS,
     TEMPLATES_HEADERS,
+    CONFIGURATION_HEADERS,
+    ACTIONS_HEADERS,
     PARAM_TYPES,
 )
 from cnctcli.api.utils import (
@@ -133,6 +135,10 @@ def _get_col_limit_by_ws_type(ws_type):
         return 'D'
     elif ws_type == 'templates':
         return 'F'
+    elif ws_type == 'configurations':
+        return 'G'
+    elif ws_type == 'actions':
+        return 'G'
     return 'Z'
 
 
@@ -171,6 +177,10 @@ def _setup_ws_header(ws, ws_type=None):
                 ws.column_dimensions[cel.column_letter].width = 100
             if cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
+        elif ws_type == 'configurations':
+            cel.value = CONFIGURATION_HEADERS[cel.column_letter]
+        elif ws_type == 'actions':
+            cel.value = ACTIONS_HEADERS[cel.column_letter]
 
 
 def _calculate_commitment(item):
@@ -307,6 +317,33 @@ def _fill_template_row(ws, row_idx, template):
     )
 
 
+def _fill_action_row(ws, row_idx, action):
+    ws.cell(row_idx, 1, value=action['id'])
+    ws.cell(row_idx, 2, value=action['action'])
+    ws.cell(row_idx, 3, value='-')
+    ws.cell(row_idx, 4, value=action['name'])
+    ws.cell(row_idx, 5, value=action['title'])
+    ws.cell(row_idx, 6, value=action['description'])
+    ws.cell(row_idx, 7, value=action['scope'])
+
+
+def _fill_configuration_row(ws, row_idx, configuration, conf_id):
+    ws.cell(row_idx, 1, value=conf_id)
+    ws.cell(row_idx, 2, value=configuration['parameter']['id'])
+    ws.cell(row_idx, 3, value=configuration['parameter']['scope'])
+    ws.cell(row_idx, 4, value='-')
+    ws.cell(row_idx, 5, value=configuration['item']['id'] if 'item' in configuration else '-')
+    ws.cell(row_idx, 6, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
+    if 'structured_value' in configuration:
+        value = loads(configuration['structured_value'])
+        value = dumps(value, indent=4, sort_keys=True)
+        ws.cell(row_idx, 7, value=value).alignment = Alignment(wrap_text=True)
+    elif 'value' in configuration:
+        ws.cell(row_idx, 7, value=configuration['value'])
+    else:
+        ws.cell(row_idx, 7, value='-')
+
+
 def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 1, value=item['id'])
     ws.cell(row_idx, 2, value=item['mpn'])
@@ -324,6 +361,83 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 11, value=item['status'])
     ws.cell(row_idx, 12, value=item['events']['created']['at'])
     ws.cell(row_idx, 13, value=item['events'].get('updated', {}).get('at'))
+
+
+def _calculate_configuration_id(configuration):
+    conf_id = configuration['parameter']['id']
+    if 'item' in configuration and 'id' in configuration['item']:
+        conf_id = conf_id + '#' + configuration['item']['id']
+    else:
+        conf_id = conf_id + '#'
+    if 'marketplace' in configuration and 'id' in configuration['marketplace']:
+        conf_id = conf_id + '#' + configuration['marketplace']['id']
+    else:
+        conf_id = conf_id + '#'
+
+    return conf_id
+
+
+def _dump_actions(ws, client, product_id, silent):
+    _setup_ws_header(ws, 'actions')
+
+    processed_items = 0
+    row_idx = 2
+
+    actions = client.products[product_id].actions.all()
+    count = actions.count()
+
+    action_validation = DataValidation(
+        type='list',
+        formula1='"-,create,update,delete"',
+        allow_blank=False,
+    )
+
+    scope_validation = DataValidation(
+        type='list',
+        formula1='"asset,tier1,tier2"',
+        allow_blank=False,
+    )
+    ws.add_data_validation(action_validation)
+    ws.add_data_validation(scope_validation)
+
+    progress = trange(0, count, position=0, disable=silent)
+
+    for action in actions:
+        progress.set_description(f"Processing action {action['id']}")
+        progress.update(1)
+        _fill_action_row(ws, row_idx, action)
+        action_validation.add(f'C{row_idx}')
+        scope_validation.add(f'G{row_idx}')
+        processed_items += 1
+        row_idx += 1
+
+
+def _dump_configuration(ws, client, product_id, silent):
+    _setup_ws_header(ws, 'configurations')
+
+    processed_items = 0
+    row_idx = 2
+
+    configurations = client.products[product_id].configurations.all()
+    count = configurations.count()
+
+    action_validation = DataValidation(
+        type='list',
+        formula1='"-,create,update,delete"',
+        allow_blank=False,
+    )
+    ws.add_data_validation(action_validation)
+
+    progress = trange(0, count, position=0, disable=silent)
+
+    for configuration in configurations:
+        conf_id = _calculate_configuration_id(configuration)
+        progress.set_description(f"Processing parameter configuration {conf_id}")
+        progress.update(1)
+        _fill_configuration_row(ws, row_idx, configuration, conf_id)
+        action_validation.add(f'D{row_idx}')
+        processed_items += 1
+        row_idx += 1
 
 
 def _dump_parameters(ws, client, product_id, param_type, silent):
@@ -453,7 +567,7 @@ def _dump_external_static_links(ws, product, silent):
 
     progress = trange(0, count, position=0, disable=silent)
 
-    progress.set_description("Processing Static Links")
+    progress.set_description("Processing static links")
 
     for link in product['customer_ui_settings']['download_links']:
         progress.update(1)
@@ -479,7 +593,7 @@ def _dump_external_static_links(ws, product, silent):
 def _dump_capabilities(ws, product, silent):
     _setup_ws_header(ws, 'capabilities')
     progress = trange(0, 1, position=0, disable=silent)
-    progress.set_description("Processing Product Capabilities")
+    progress.set_description("Processing product capabilities")
     ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
     tiers = capabilities['tiers']
@@ -556,9 +670,13 @@ def _dump_capabilities(ws, product, silent):
     disabled_enabled.add(ws['C7'])
     ws['A8'].value = 'Reseller Authorization Level'
     ws['B8'].value = '-'
-    ws['C8'].value = (
-        tiers['configs']['level'] if tiers and 'configs' in tiers else 'Disabled'
-    )
+
+    def _get_reseller_authorization_level(tiers):
+        if tiers and 'configs' in tiers and tiers['configs']:
+            return tiers['configs']['level']
+        return 'Disabled'
+
+    ws['C8'].value = _get_reseller_authorization_level(tiers)
     tier_validation.add(ws['C8'])
     ws['A9'].value = 'Tier Accounts Sync'
     ws['B9'].value = '-'
@@ -568,9 +686,13 @@ def _dump_capabilities(ws, product, silent):
     disabled_enabled.add(ws['C9'])
     ws['A10'].value = 'Administrative Hold'
     ws['B10'].value = '-'
-    ws['C10'].value = (
-        'Enabled' if 'hold' in capabilities['subscription'] and capabilities['subscription']['hold'] else 'Disabled'
-    )
+
+    def _get_administrative_hold(capabilities):
+        if 'hold' in capabilities['subscription'] and capabilities['subscription']['hold']:
+            return 'Enabled'
+        return 'Disabled'
+
+    ws['C10'].value = _get_administrative_hold(capabilities)
     disabled_enabled.add(ws['C10'])
     idx = 2
     while idx < 11:
@@ -610,7 +732,7 @@ def _dump_templates(ws, client, product_id, silent):
     progress = trange(0, count, position=0, disable=silent)
 
     for template in templates:
-        progress.set_description(f"Processing Template {template['id']}")
+        progress.set_description(f"Processing template {template['id']}")
         progress.update(1)
         if 'type' in template:
             _fill_template_row(ws, row_idx, template)
@@ -733,6 +855,9 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
             'configuration',
             silent
         )
+        _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
+        _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
+
         wb.save(output_file)
 
     except ClientError as error:

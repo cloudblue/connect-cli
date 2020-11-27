@@ -65,6 +65,26 @@ TEMPLATES_HEADERS = {
     'F': 'Content',
 }
 
+CONFIGURATION_HEADERS = {
+    'A': 'ID',
+    'B': 'Parameter',
+    'C': 'Scope',
+    'D': 'Action',
+    'E': 'Item',
+    'F': 'Marketplace',
+    'G': 'Value',
+}
+
+ACTIONS_HEADERS = {
+    'A': 'Verbose ID',
+    'B': 'ID',
+    'C': 'Action',
+    'D': 'Name',
+    'E': 'Title',
+    'F': 'Description',
+    'G': 'Scope'
+}
+
 PARAM_TYPES = [
     'email',
     'address',
