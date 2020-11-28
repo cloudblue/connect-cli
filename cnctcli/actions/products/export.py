@@ -48,9 +48,12 @@ def _setup_cover_sheet(ws, product, location, client):
     cell.font = Font(sz=24, color=WHITE)
     cell.alignment = Alignment(horizontal='center', vertical='center')
     cell.value = 'Product information'
-    for i in range(3, 9):
-        ws[f'A{i}'].font = Font(sz=14)
-        ws[f'B{i}'].font = Font(sz=14, bold=True)
+    for i in range(3, 13):
+        ws[f'A{i}'].font = Font(sz=12)
+        if i < 9:
+            ws[f'B{i}'].font = Font(sz=12, bold=True)
+        else:
+            ws[f'B{i}'].font = Font(sz=12)
     ws['A3'].value = 'Account ID'
     ws['B3'].value = product['owner']['id']
     ws['A4'].value = 'Account Name'
@@ -64,10 +67,11 @@ def _setup_cover_sheet(ws, product, location, client):
     ws['A8'].value = 'Product Category'
     ws['B8'].value = product['category']['name']
     ws['A9'].value = 'Product Icon file name'
-    ws['B9'].value = product["icon"].split("/")[-1]
+    ws['A9'].font = Font(sz=14)
+    ws['B9'].value = product["id"] + "." + product["icon"].split(".")[-1]
     _dump_image(
         f'{location}{product["icon"]}',
-        product["id"] + "/" + product["icon"].split("/")[-1]
+        product["id"] + "/media/" + product["id"] + "." + product["icon"].split(".")[-1]
     )
     ws['A10'].value = 'Product Short Description'
     ws['A10'].alignment = Alignment(
@@ -87,12 +91,12 @@ def _setup_cover_sheet(ws, product, location, client):
     ws['B11'].alignment = Alignment(
         wrap_text=True,
     )
-    ws['A12'].value = 'Buyer short Description'
+    ws['A12'].value = 'Embedding description'
     ws['B12'].value = product['customer_ui_settings']['description']
     ws['B12'].alignment = Alignment(
         wrap_text=True,
     )
-    ws['A13'].value = 'Buyer Getting Started Description'
+    ws['A13'].value = 'Embedding getting started'
     ws['B13'].value = product['customer_ui_settings']['getting_started']
     ws['B13'].alignment = Alignment(
         wrap_text=True,
@@ -243,19 +247,31 @@ def _fill_param_row(ws, row_idx, param):
         horizontal='left',
         vertical='top',
     )
-    ws.cell(row_idx, 9, value=param['constraints']['required']).alignment = Alignment(
+    ws.cell(
+        row_idx, 9,
+        value=param['constraints']['required'] if param['constraints']['required'] else '-',
+    ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
-    ws.cell(row_idx, 10, value=param['constraints']['unique']).alignment = Alignment(
+    ws.cell(
+        row_idx, 10,
+        value=param['constraints']['unique'] if param['constraints']['unique'] else '-',
+    ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
-    ws.cell(row_idx, 11, value=param['constraints']['hidden']).alignment = Alignment(
+    ws.cell(
+        row_idx, 11,
+        value=param['constraints']['hidden'] if param['constraints']['hidden'] else '-',
+    ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
-    ws.cell(row_idx, 12, value=_get_json_object_for_param(param)).alignment = Alignment(
+    ws.cell(
+        row_idx, 12,
+        value=_get_json_object_for_param(param),
+    ).alignment = Alignment(
         wrap_text=True,
     )
 
@@ -283,10 +299,10 @@ def _fill_media_row(ws, row_idx, media, location, product):
     ws.cell(row_idx, 2, value=media['id'])
     ws.cell(row_idx, 3, value='-')
     ws.cell(row_idx, 4, value=media['type'])
-    ws.cell(row_idx, 5, value=media['thumbnail'].split("/")[-1])
+    ws.cell(row_idx, 5, value=media["id"] + "." + media["thumbnail"].split(".")[-1])
     _dump_image(
         f'{location}{media["thumbnail"]}',
-        f"./{product}/media/" + media["thumbnail"].split("/")[-1]
+        f"./{product}/media/" + media["id"] + "." + media["thumbnail"].split(".")[-1]
     )
     ws.cell(row_idx, 6, value='-' if media['type'] == 'image' else media['url'])
 
@@ -483,7 +499,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     )
     bool_validation = DataValidation(
         type='list',
-        formula1='"True,False"',
+        formula1='"True,-"',
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)
@@ -534,8 +550,6 @@ def _dump_media(ws, client, product_id, silent, media_location):
     ws.add_data_validation(type_validation)
 
     progress = trange(0, count, position=0, disable=silent)
-    if not os.path.exists(os.getcwd() + f'/{product_id}/media/'):
-        os.mkdir(os.getcwd() + f'/{product_id}/media/')
     for media in medias:
         progress.set_description(f"Processing media {media['id']}")
         progress.update(1)
@@ -812,6 +826,9 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
         raise ClickException(
             "Exists a file with product name but a directory is expected, please rename it"
         )
+    if not os.path.exists(os.getcwd() + f'/{product_id}/media/'):
+        os.mkdir(os.getcwd() + f'/{product_id}/media/')
+
     if not output_file:
         output_file = os.path.abspath(
             os.path.join(f'./{product_id}/', f'{product_id}.xlsx'),
@@ -830,26 +847,26 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
         )
 
         _dump_capabilities(wb.create_sheet('Capabilities'), product, silent)
-        _dump_external_static_links(wb.create_sheet('Buyer Static Resources'), product, silent)
+        _dump_external_static_links(wb.create_sheet('Embedding Static Resources'), product, silent)
         _dump_media(wb.create_sheet('Media'), client, product_id, silent, media_location)
         _dump_templates(wb.create_sheet('Templates'), client, product_id, silent)
         _dump_items(wb.create_sheet('Items'), client, product_id, silent)
         _dump_parameters(
-            wb.create_sheet('Params Ordering'),
+            wb.create_sheet('Ordering Parameters'),
             client,
             product_id,
             'ordering',
             silent
         )
         _dump_parameters(
-            wb.create_sheet('Params Fulfillment'),
+            wb.create_sheet('Fulfillment Parameters'),
             client,
             product_id,
             'fulfillment',
             silent
         )
         _dump_parameters(
-            wb.create_sheet('Params Configuration'),
+            wb.create_sheet('Configuration Parameters'),
             client,
             product_id,
             'configuration',
