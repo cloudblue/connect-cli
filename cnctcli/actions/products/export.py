@@ -820,21 +820,23 @@ def _dump_items(ws, client, product_id, silent):
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent):
-    if not os.path.exists(os.getcwd() + f'/{product_id}'):
-        os.mkdir(os.getcwd() + f'/{product_id}')
-    elif not os.path.isdir(os.getcwd() + f'/{product_id}'):
+    output_path = os.path.join(os.getcwd(), product_id)
+    media_path = os.path.join(output_path, 'media')
+
+    if not output_file:
+        output_file = os.path.join(output_path, f'{product_id}.xlsx')
+
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    elif not os.path.isdir(output_path):
         raise ClickException(
             "Exists a file with product name but a directory is expected, please rename it"
         )
-    if not os.path.exists(os.getcwd() + f'/{product_id}/media/'):
-        os.mkdir(os.getcwd() + f'/{product_id}/media/')
 
-    if not output_file:
-        output_file = os.path.abspath(
-            os.path.join(f'./{product_id}/', f'{product_id}.xlsx'),
-        )
+    if not os.path.exists(media_path):
+        os.mkdir(media_path)
     try:
-        client = ConnectClient(api_key=api_key, endpoint=api_url)
+        client = ConnectClient(api_key=api_key, endpoint=api_url, use_specs=False)
         product = client.products[product_id].get()
         wb = Workbook()
         connect_api_location = parse.urlparse(api_url)

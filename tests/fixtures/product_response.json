@@ -1,0 +1,112 @@
+{
+  "id": "PRD-276-377-545",
+  "name": "My Product",
+  "icon": "/media/VA-392-495/PRD-276-377-545/media/PRD-276-377-545-logo_aJD74iQ.png",
+  "status": "published",
+  "short_description": "The service directly enables service providers to add new revenue streams. This offering is a comprehensive solution that enables service providers to expand their market share, automate, grow recurring revenue, and increase customer stickiness.",
+  "detailed_description": "A text **description** of the product. This text will be seen by providers that have access to this product and can be used to populate other systems, like [CloudBlue Catalog](https://catalog.cloudblue.com).\n\nThe **first sentence** (about 3-4 lines) of this description **counts the most**. So please start with an attention-grabbing sentence that pitches users and clearly sets out what the product is intended for.\n\nTake into account the following recommendations regarding the product description:\n\n* Keep it concise, informative and easy-to-understand\n* Stick to the tone of your brand\n* Avoid specific terms, keep it simple\n* Make sure to describe target audience for this product\n* Outline key features and key differentiators\nPlease keep in mind that maximum allowed space is **up to 4,000 characters** - make sure to explain your product within that limit.\n\n# Use formatted text\nCloudBlue Connect allows you to enrich this description with the [markdown text](https://en.wikipedia.org/wiki/Markdown) formatting. **Markdown** allows including multiple elements, like* Unsorted lists of items, like this one\n* Sorted lists, like the one below\n    1. First point\n    2. Second point\n* Font styles, like *italic*, **bold** and `monospace`\n* Headings - note that we strongly recommend to use 2nd level only ## for this document\n\n# For more information\nPlease refer to our **[documentation](https://connect.cloudblue.com/documentation)** to learn more about product editor capabilities.",
+  "configurations": {
+    "suspend_resume_supported": false,
+    "requires_reseller_information": true
+  },
+  "customer_ui_settings": {
+    "description": "We are happy to provide you the Cloud Service - an ultimate solution for your company. Stop using the legacy on-premises solution on your computer. Move to the cloud with our help.",
+    "getting_started": "You are now ready to use the Cloud Service and migrate the files from your local computer and mobile devices to the cloud. Download apps for Windows Desktop, Windows Phone, Mac OS or Android following one of the links below, or access the service web interface directly.",
+    "download_links": [
+      {
+        "title": "Windows",
+        "url": "https://example.com/download/windows",
+        "visible_for": "admin"
+      },
+      {
+        "title": "macOS",
+        "url": "https://example.com/download/macos",
+        "visible_for": "admin"
+      },
+      {
+        "title": "iPhone",
+        "url": "https://example.com/download/iphone",
+        "visible_for": "admin"
+      },
+      {
+        "title": "Android",
+        "url": "https://example.com/download/android",
+        "visible_for": "admin"
+      }
+    ],
+    "documents": [
+      {
+        "title": "Admin Manual",
+        "url": "https://example.com/manual/admin"
+      }
+    ],
+    "languages": [],
+    "provisioning_message": "Please wait while your request is being fulfilled.",
+    "action": {
+      "url": "https://example.com/sso",
+      "jwt_secret": "ae25b4b876884a00be97defb8c08a0ec"
+    }
+  },
+  "category": {
+    "id": "CAT-59128",
+    "name": "Marketing"
+  },
+  "published_at": "2020-10-13T00:34:03+00:00",
+  "owner": {
+    "id": "VA-392-495",
+    "name": "Adrian Inc Oct 12"
+  },
+  "latest": true,
+  "media": {
+    "position": 1,
+    "id": "PRDM-276-377-545-67072",
+    "type": "image",
+    "thumbnail": "/media/VA-392-495/PRD-276-377-545/media/media.png",
+    "url": "/media/VA-392-495/PRD-276-377-545/media/media.png"
+  },
+  "usage_rule": {
+    "enabled": true
+  },
+  "stats": {
+    "versions": 4
+  },
+  "capabilities": {
+    "ppu": null,
+    "reservation": {
+      "consumption": false
+    },
+    "cart": {
+      "validation": true
+    },
+    "inquiring": {
+      "validation": true
+    },
+    "tiers": {
+      "updates": false,
+      "configs": {
+        "level": 2
+      }
+    },
+    "subscription": {
+      "hold": false,
+      "schema": "evergreen"
+    }
+  },
+  "visibility": {
+    "owner": true,
+    "listing": false,
+    "syndication": false,
+    "catalog": false
+  },
+  "changes_description": "",
+  "public": true,
+  "events": {
+    "created": {
+      "at": "2020-10-13T00:34:03+00:00",
+      "by": {
+        "id": "UR-539-008-555",
+        "name": "Robert Balboa Oct 12"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "PRM-276-377-545-0022",
+    "name": "asdf",
+    "title": "asdf",
+    "description": "asdf",
+    "type": "text",
+    "scope": "item",
+    "phase": "configuration",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "shared": null
+    },
+    "position": 220000,
+    "events": {
+      "created": {
+        "at": "2020-11-27T08:37:16+00:00",
+        "by": {
+          "id": "UR-841-574-187",
+          "name": "Marc Serrat"
+        }
+      },
+      "updated": {
+        "at": "2020-11-27T08:37:16+00:00"
+      }
+    }
+  }
+]

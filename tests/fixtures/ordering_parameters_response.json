@@ -1,0 +1,405 @@
+[
+  {
+    "id": "PRM-276-377-545-0008",
+    "name": "t0_o_email",
+    "title": "t0_o_email T",
+    "description": "t0_o_email D",
+    "type": "email",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": true,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 30000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:24:49+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-11-19T20:25:05+00:00",
+        "by": {
+          "id": "UR-841-574-187",
+          "name": "Marc Serrat"
+        }
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0003",
+    "name": "t0_o_address",
+    "title": "t0_o_address T",
+    "description": "t0_o_address D",
+    "type": "address",
+    "scope": "asset",
+    "phase": "ordering",
+    "default": {
+      "country": null
+    },
+    "constraints": {
+      "required": true,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 40000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:19:20+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:19:20+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0004",
+    "name": "t0_o_checkbox",
+    "title": "t0_o_checkbox T",
+    "description": "t0_o_checkbox D",
+    "type": "checkbox",
+    "scope": "asset",
+    "phase": "ordering",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "choices": [
+        {
+          "label": "L-1",
+          "value": "V-1"
+        },
+        {
+          "label": "L-2",
+          "value": "V-2"
+        },
+        {
+          "label": "L-3",
+          "value": "V-3"
+        }
+      ]
+    },
+    "position": 50000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:20:41+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:20:41+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0005",
+    "name": "t0_o_choice",
+    "title": "t0_o_choice T",
+    "description": "t0_o_choice D",
+    "type": "choice",
+    "scope": "asset",
+    "phase": "ordering",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "choices": [
+        {
+          "label": "L-1",
+          "value": "V-1"
+        },
+        {
+          "label": "L-2",
+          "value": "V-2"
+        },
+        {
+          "label": "L-3",
+          "value": "V-3",
+          "default": true
+        }
+      ]
+    },
+    "position": 60000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:22:01+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:22:01+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0006",
+    "name": "t0_o_domain",
+    "title": "t0_o_domain T",
+    "description": "t0_o_domain D",
+    "type": "domain",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 70000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:22:42+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:22:42+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0007",
+    "name": "t0_o_dropdown",
+    "title": "t0_o_dropdown  T",
+    "description": "t0_o_dropdown D",
+    "type": "dropdown",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "choices": [
+        {
+          "label": "L-1",
+          "value": "V-1"
+        },
+        {
+          "label": "L-2",
+          "value": "V-2"
+        },
+        {
+          "label": "C-3",
+          "value": "V-3",
+          "default": true
+        }
+      ]
+    },
+    "position": 80000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:24:03+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:24:03+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0009",
+    "name": "t0_o_object",
+    "title": "t0_o_object T",
+    "description": "t0_o_object D",
+    "type": "object",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "constraints": {
+      "required": false,
+      "hidden": true,
+      "unique": false
+    },
+    "position": 90000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:25:29+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:25:29+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0010",
+    "name": "t0_o_password",
+    "title": "t0_o_password T",
+    "description": "t0_o_password D",
+    "type": "password",
+    "scope": "asset",
+    "phase": "ordering",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "max_length": 100,
+      "min_length": 1
+    },
+    "position": 100000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:25:59+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:25:59+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0011",
+    "name": "t0_o_phone",
+    "title": "t0_o_phone T",
+    "description": "t0_o_phone D",
+    "type": "phone",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "default": {
+      "country": null
+    },
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 110000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:26:43+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:26:43+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0012",
+    "name": "t0_o_text",
+    "title": "t0_o_text  T",
+    "description": "t0_o_text D",
+    "type": "text",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 120000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:27:31+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:27:31+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0013",
+    "name": "t0_o_subdomain",
+    "title": "t0_o_subdomain T",
+    "description": "t0_o_subdomain D",
+    "type": "subdomain",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false,
+      "choices": [
+        {
+          "value": "AAA.COM",
+          "default": true,
+          "label": "AAA.COM"
+        },
+        {
+          "value": "BBB.COM",
+          "label": "BBB.COM"
+        }
+      ]
+    },
+    "position": 130000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:28:17+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:28:17+00:00"
+      }
+    }
+  },
+  {
+    "id": "PRM-276-377-545-0014",
+    "name": "t0_o_url",
+    "title": "t0_o_url T",
+    "description": "t0_o_url D",
+    "type": "url",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 140000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T01:29:01+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T01:29:01+00:00"
+      }
+    }
+  }
+]

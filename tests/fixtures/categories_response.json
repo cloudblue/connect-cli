@@ -1,0 +1,162 @@
+[
+  {
+    "id": "CAT-00000",
+    "name": "All Categories"
+  },
+  {
+    "id": "CAT-67642",
+    "name": "Backup and Disaster Recovery",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-75105",
+    "name": "Cloud Services",
+    "parent": {
+      "id": "CAT-00000",
+      "name": "All Categories"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-95793",
+    "name": "Communication and Collaboration",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-07415",
+    "name": "Customer Management",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-71994",
+    "name": "Digital Marketing",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-55878",
+    "name": "Finance",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-37312",
+    "name": "Human Resources",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-40123",
+    "name": "Infrastructure",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-06160",
+    "name": "IT Management",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-59128",
+    "name": "Marketing",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-57124",
+    "name": "Office Productivity",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-58673",
+    "name": "Sales",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  },
+  {
+    "id": "CAT-86929",
+    "name": "Security",
+    "parent": {
+      "id": "CAT-75105",
+      "name": "Cloud Services"
+    },
+    "family": {
+      "id": "FAM-000",
+      "name": "Root Family"
+    }
+  }
+]
