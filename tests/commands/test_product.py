@@ -2,12 +2,13 @@ from click.testing import CliRunner
 
 from cnctcli.ccli import cli
 from cnctcli.actions.products.export import dump_product
-import cnctcli.actions.products.export
+
 from click import ClickException
 from openpyxl import load_workbook
 
 import pytest
 import re
+
 
 def test_export(config_mocker, mocker):
     mock = mocker.patch(
