@@ -56,7 +56,6 @@ def test_export_custom_file(config_mocker, mocker):
         in result.output
 
 
-@pytest.mark.parametrize('fs', [[None, [cnctcli.actions.products.export]]], indirect=True)
 def test_export_product_not_exists(fs, mocked_responses):
     mocked_responses.add(
         method='GET',
@@ -98,7 +97,8 @@ def test_export_product(
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/PRD-276-377-545-logo_aJD74iQ.png',
+        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/PRD-276-377-545'
+            '-logo_aJD74iQ.png',
         body=open('./tests/fixtures/image.png', 'rb').read(),
         status=200,
     )
@@ -217,7 +217,7 @@ def test_export_product(
         product_sheet = product_wb[sheet]
         row_idx = 1
         letter_limit = _get_col_limit_by_type(sheet)
-        letter = lambda c: chr(ord('A')+c)
+        letter = lambda c: chr(ord('A') + c)
         letter_idx = 0
         while row_idx <= sample_sheet.max_row:
             while letter(letter_idx) != letter_limit:

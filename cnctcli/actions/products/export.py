@@ -4,11 +4,11 @@
 # Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
 
 import os
+import json
 from datetime import datetime
 from copy import deepcopy
 
 from click import ClickException
-from json import dumps, loads
 from urllib import parse
 
 from openpyxl import Workbook
@@ -68,10 +68,10 @@ def _setup_cover_sheet(ws, product, location, client):
     ws['B8'].value = product['category']['name']
     ws['A9'].value = 'Product Icon file name'
     ws['A9'].font = Font(sz=14)
-    ws['B9'].value = product["id"] + "." + product["icon"].split(".")[-1]
+    ws['B9'].value = f'{product["id"]}.{product["icon"].split(".")[-1]}'
     _dump_image(
         f'{location}{product["icon"]}',
-        product["id"] + "/media/" + product["id"] + "." + product["icon"].split(".")[-1]
+        f'{product["id"]}/media/{product["id"]}.{product["icon"].split(".")[-1]}'
     )
     ws['A10'].value = 'Product Short Description'
     ws['A10'].alignment = Alignment(
@@ -122,8 +122,11 @@ def _setup_cover_sheet(ws, product, location, client):
 
 def _dump_image(image_location, image_name):
     image = requests.get(image_location)
-    with open(image_name, 'wb') as f:
-        f.write(image.content)
+    if image.status_code == 200:
+        with open(image_name, 'wb') as f:
+            f.write(image.content)
+    else:
+        raise ClickException(f"Error obtaining image from {image_location}")
 
 
 def _get_col_limit_by_ws_type(ws_type):
@@ -291,7 +294,7 @@ def _get_json_object_for_param(original_param):
     del param['position']
     del param['events']
 
-    return dumps(param, indent=4, sort_keys=True)
+    return json.dumps(param, indent=4, sort_keys=True)
 
 
 def _fill_media_row(ws, row_idx, media, location, product):
@@ -299,10 +302,10 @@ def _fill_media_row(ws, row_idx, media, location, product):
     ws.cell(row_idx, 2, value=media['id'])
     ws.cell(row_idx, 3, value='-')
     ws.cell(row_idx, 4, value=media['type'])
-    ws.cell(row_idx, 5, value=media["id"] + "." + media["thumbnail"].split(".")[-1])
+    ws.cell(row_idx, 5, value=f'{media["id"]}.{media["thumbnail"].split(".")[-1]}')
     _dump_image(
         f'{location}{media["thumbnail"]}',
-        f"./{product}/media/" + media["id"] + "." + media["thumbnail"].split(".")[-1]
+        f'./{product}/media/{media["id"]}.{media["thumbnail"].split(".")[-1]}'
     )
     ws.cell(row_idx, 6, value='-' if media['type'] == 'image' else media['url'])
 
@@ -351,8 +354,8 @@ def _fill_configuration_row(ws, row_idx, configuration, conf_id):
     ws.cell(row_idx, 5, value=configuration['item']['id'] if 'item' in configuration else '-')
     ws.cell(row_idx, 6, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
     if 'structured_value' in configuration:
-        value = loads(configuration['structured_value'])
-        value = dumps(value, indent=4, sort_keys=True)
+        value = json.loads(configuration['structured_value'])
+        value = json.dumps(value, indent=4, sort_keys=True)
         ws.cell(row_idx, 7, value=value).alignment = Alignment(wrap_text=True)
     elif 'value' in configuration:
         ws.cell(row_idx, 7, value=configuration['value'])
@@ -371,7 +374,7 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 8, value=item['unit']['unit'])
     period = item.get('period', 'monthly')
     if period.startswith('years_'):
-        period = f"{period.rsplit('_')[-1]} years"
+        period = f'{period.rsplit("_")[-1]} years'
     ws.cell(row_idx, 9, value=period)
     ws.cell(row_idx, 10, value=_calculate_commitment(item))
     ws.cell(row_idx, 11, value=item['status'])
@@ -382,13 +385,13 @@ def _fill_item_row(ws, row_idx, item):
 def _calculate_configuration_id(configuration):
     conf_id = configuration['parameter']['id']
     if 'item' in configuration and 'id' in configuration['item']:
-        conf_id = conf_id + '#' + configuration['item']['id']
+        conf_id = f'{conf_id}#{configuration["item"]["id"]}'
     else:
-        conf_id = conf_id + '#'
+        conf_id = f'{conf_id}#'
     if 'marketplace' in configuration and 'id' in configuration['marketplace']:
-        conf_id = conf_id + '#' + configuration['marketplace']['id']
+        conf_id = f'{conf_id}#{configuration["marketplace"]["id"]}'
     else:
-        conf_id = conf_id + '#'
+        conf_id = f'{conf_id}#'
 
     return conf_id
 
@@ -419,7 +422,7 @@ def _dump_actions(ws, client, product_id, silent):
     progress = trange(0, count, position=0, disable=silent)
 
     for action in actions:
-        progress.set_description(f"Processing action {action['id']}")
+        progress.set_description(f'Processing action {action["id"]}')
         progress.update(1)
         _fill_action_row(ws, row_idx, action)
         action_validation.add(f'C{row_idx}')
@@ -448,7 +451,7 @@ def _dump_configuration(ws, client, product_id, silent):
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
-        progress.set_description(f"Processing parameter configuration {conf_id}")
+        progress.set_description(f'Processing parameter configuration {conf_id}')
         progress.update(1)
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
@@ -512,7 +515,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     progress = trange(0, count, position=0, disable=silent)
 
     for param in params:
-        progress.set_description(f"Processing {param_type} parameter {param['id']}")
+        progress.set_description(f'Processing {param_type} parameter {param["id"]}')
         progress.update(1)
         _fill_param_row(ws, row_idx, param)
         action_validation.add(f'C{row_idx}')
@@ -551,7 +554,7 @@ def _dump_media(ws, client, product_id, silent, media_location):
 
     progress = trange(0, count, position=0, disable=silent)
     for media in medias:
-        progress.set_description(f"Processing media {media['id']}")
+        progress.set_description(f'Processing media {media["id"]}')
         progress.update(1)
         _fill_media_row(ws, row_idx, media, media_location, product_id)
         action_validation.add(f'C{row_idx}')
@@ -746,7 +749,7 @@ def _dump_templates(ws, client, product_id, silent):
     progress = trange(0, count, position=0, disable=silent)
 
     for template in templates:
-        progress.set_description(f"Processing template {template['id']}")
+        progress.set_description(f'Processing template {template["id"]}')
         progress.update(1)
         if 'type' in template:
             _fill_template_row(ws, row_idx, template)
@@ -768,7 +771,7 @@ def _dump_items(ws, client, product_id, silent):
     count = items.count()
 
     if count == 0:
-        raise ClickException(f"The product {product_id} doesn't have items.")
+        raise ClickException(f'The product {product_id} doesn\'t have items.')
 
     action_validation = DataValidation(
         type='list',
@@ -807,7 +810,7 @@ def _dump_items(ws, client, product_id, silent):
     progress = trange(0, count, position=0, disable=silent)
 
     for item in items:
-        progress.set_description(f"Processing item {item['id']}")
+        progress.set_description(f'Processing item {item["id"]}')
         progress.update(1)
         _fill_item_row(ws, row_idx, item)
         action_validation.add(f'C{row_idx}')
@@ -840,7 +843,7 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
         product = client.products[product_id].get()
         wb = Workbook()
         connect_api_location = parse.urlparse(api_url)
-        media_location = connect_api_location.scheme + "://" + connect_api_location.netloc
+        media_location = f'{connect_api_location.scheme}://{connect_api_location.netloc}'
         _setup_cover_sheet(
             wb.active,
             product,
