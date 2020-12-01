@@ -1,0 +1,36 @@
+[
+  {
+    "action": "sso_action",
+    "name": "Action 1",
+    "type": "button",
+    "scope": "asset",
+    "description": "Sign in into the service by clicking at this button",
+    "id": "ACT-276-377-545-001",
+    "events": {
+      "created": {
+        "at": "2020-10-13T00:34:04+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T04:33:03+00:00"
+      }
+    },
+    "title": "Action 1"
+  },
+  {
+    "action": "action_2",
+    "name": "Action 2",
+    "type": "button",
+    "scope": "asset",
+    "description": "Action 2 Description",
+    "id": "ACT-276-377-545-002",
+    "events": {
+      "created": {
+        "at": "2020-10-13T04:37:29+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T04:37:29+00:00"
+      }
+    },
+    "title": "Action 2"
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "TL-551-876-782",
+    "title": "Template 1",
+    "name": "Template 1",
+    "body": "# Template 1\n\nThis is **template 1** with the following parameters:\n\n1. t0_o_email = {{ t0_o_email }}\n2. t0_f_password = {{ t0_f_password }}\n3. t0_f_text = {{ t0_f_text }}\n\nHave a nice day!",
+    "scope": "asset",
+    "type": "fulfillment",
+    "position": 10000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T00:34:04+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T05:17:13+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      }
+    }
+  },
+  {
+    "id": "TL-559-508-354",
+    "title": "Default Activation Template",
+    "name": "Default Activation Template",
+    "body": "# Sample Template For Setup of Tier 1\n\nThis template is used to share details of the **successful** setup configuration of reseller of 1st level.\n\nThis template uses **[Markdown](https://en.wikipedia.org/wiki/Markdown)** syntax and allows to use Parameters of the product which have scope 'Tier 1'.\n\n### Formatting\n\nMarkdown allows you to control various aspects of the document:\n\n1. Text formatting like **bold** or *italic*\n2. Images embedding\n3. Lists\n4. and more\n\n### Parameters\n\nYou can refer to the Parameters using their ID, like in the following example:\n\n* The value of **param_a** is **{{ param_a }}**\n* The value of **param_b** is **{{ param_b }}**\n\nYou can also embed pictures like the one below:\n\n![logo](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Ringworld_Waiting.jpg/270px-Ringworld_Waiting.jpg)",
+    "scope": "tier1",
+    "position": 20000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T00:34:04+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T00:34:04+00:00"
+      }
+    }
+  },
+  {
+    "id": "TL-518-222-757",
+    "title": "Default Activation Template",
+    "name": "Default Activation Template",
+    "body": "# Sample Template For Setup of Tier 2\n\nThis template is used to share details of the **successful** setup configuration of reseller of 2nd level.\n\nThis template uses **[Markdown](https://en.wikipedia.org/wiki/Markdown)** syntax and allows to use Parameters of the product which have scope 'Tier 2'.\n\n### Formatting\n\nMarkdown allows you to control various aspects of the document:\n\n1. Text formatting like **bold** or *italic*\n2. Images embedding\n3. Lists\n4. and more\n\n### Parameters\n\nYou can refer to the Parameters using their ID, like in the following example:\n\n* The value of **param_a** is **{{ param_a }}**\n* The value of **param_b** is **{{ param_b }}**\n\nYou can also embed pictures like the one below:\n\n![logo](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Ringworld_Waiting.jpg/270px-Ringworld_Waiting.jpg)",
+    "scope": "tier2",
+    "position": 30000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T00:34:04+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T00:34:04+00:00"
+      }
+    }
+  },
+  {
+    "id": "TL-139-014-284",
+    "title": "Additional information is required to process your request",
+    "name": "Additional information is required to process your request",
+    "body": "Please complete our **[Activation Form]({{ activation_form_url }})** to resume processing of your request",
+    "scope": "asset",
+    "type": "inquire",
+    "position": 40000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T00:34:04+00:00"
+      },
+      "updated": {
+        "at": "2020-10-13T00:34:04+00:00"
+      }
+    }
+  },
+  {
+    "id": "TL-912-979-059",
+    "title": "Template 2",
+    "name": "Template 2",
+    "body": "# Template 2\n\nThis is **template 2** with the following parameters:\n\n1. t0_o_email = {{ t0_o_email }}\n2. t0_f_password = {{ t0_f_password }}\n3. t0_f_text = {{ t0_f_text }}\n\nHave a nice day!",
+    "scope": "asset",
+    "type": "fulfillment",
+    "position": 50000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T05:16:56+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T05:17:05+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      }
+    }
+  },
+  {
+    "id": "TL-686-991-072",
+    "title": "Template 3",
+    "name": "Template 3",
+    "body": "# Template 3\n\nThis is **template 3** with the following parameters:\n\n1. t0_o_email = {{ t0_o_email }}\n2. t0_f_password = {{ t0_f_password }}\n3. t0_f_text = {{ t0_f_text }}\n\nHave a nice day!",
+    "scope": "asset",
+    "type": "fulfillment",
+    "position": 60000,
+    "events": {
+      "created": {
+        "at": "2020-10-13T05:17:19+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      },
+      "updated": {
+        "at": "2020-10-13T05:17:33+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      }
+    }
+  }
+]
