@@ -38,13 +38,13 @@ def get_item_by_mpn(client, product_id, mpn):
             .items
             .filter(rql)
         )
+        return res.first()
 
     except ClientError as error:
         if error.status_code == 404:
             return
         handle_http_error(error)
 
-    return res.first()
 
 
 def create_item(client, product_id, data):

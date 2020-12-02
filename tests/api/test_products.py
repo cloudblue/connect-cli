@@ -176,13 +176,13 @@ def test_get_item_by_mpn_500(
         endpoint='https://localhost/public/v1',
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(ClickException) as e:
         get_item_by_mpn(
             client=client,
             product_id='PRD-276-377-545',
             mpn='MPN-R-001',
         )
-    assert str(e.value) == "500 Internal Server Error"
+    assert str(e.value) == "500 - Internal Server Error: unexpected error."
 
 
 def test_get_item_by_mpn_404(
@@ -202,14 +202,14 @@ def test_get_item_by_mpn_404(
         endpoint='https://localhost/public/v1',
     )
 
-    with pytest.raises(ClientError) as e:
-        item = get_item_by_mpn(
-            client=client,
-            product_id='PRD-276-377-545',
-            mpn='MPN-R-001',
-        )
 
-    assert str(e.value) == "404 Not Found"
+    item = get_item_by_mpn(
+        client=client,
+        product_id='PRD-276-377-545',
+        mpn='MPN-R-001',
+    )
+
+    assert item is None
 
 
 def test_create_item(
