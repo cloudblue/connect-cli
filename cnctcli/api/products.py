@@ -46,7 +46,6 @@ def get_item_by_mpn(client, product_id, mpn):
         handle_http_error(error)
 
 
-
 def create_item(client, product_id, data):
     try:
         res = (

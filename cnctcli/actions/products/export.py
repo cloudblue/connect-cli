@@ -19,17 +19,8 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from tqdm import trange
 import requests
 
-from cnctcli.actions.products.constants import (
-    ITEMS_COLS_HEADERS,
-    PARAMS_COLS_HEADERS,
-    MEDIA_COLS_HEADERS,
-    CAPABILITIES_COLS_HEADERS,
-    STATIC_LINK_HEADERS,
-    TEMPLATES_HEADERS,
-    CONFIGURATION_HEADERS,
-    ACTIONS_HEADERS,
-    PARAM_TYPES,
-)
+from cnctcli.actions.products.utils import get_col_limit_by_ws_type, get_col_headers_by_ws_type
+from cnctcli.actions.products.constants import PARAM_TYPES
 from cnctcli.api.utils import (
     format_http_status,
     handle_http_error,
@@ -129,26 +120,6 @@ def _dump_image(image_location, image_name):
         raise ClickException(f"Error obtaining image from {image_location}")
 
 
-def _get_col_limit_by_ws_type(ws_type):
-    if ws_type == 'items':
-        return 'M'
-    elif ws_type == 'params':
-        return 'L'
-    elif ws_type == 'media':
-        return 'F'
-    elif ws_type == 'capabilities':
-        return 'C'
-    elif ws_type == 'static_links':
-        return 'D'
-    elif ws_type == 'templates':
-        return 'F'
-    elif ws_type == 'configurations':
-        return 'G'
-    elif ws_type == 'actions':
-        return 'G'
-    return 'Z'
-
-
 def _setup_ws_header(ws, ws_type=None):
     if not ws_type:
         ws_type = 'items'
@@ -156,38 +127,25 @@ def _setup_ws_header(ws, ws_type=None):
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
     cels = ws['A1': '{}1'.format(
-        _get_col_limit_by_ws_type(ws_type)
+        get_col_limit_by_ws_type(ws_type)
     )]
+    col_headers = get_col_headers_by_ws_type(ws_type)
     for cel in cels[0]:
         ws.column_dimensions[cel.column_letter].width = 25
         ws.column_dimensions[cel.column_letter].auto_size = True
         cel.fill = fill
-        if ws_type == 'items':
-            cel.value = ITEMS_COLS_HEADERS[cel.column_letter]
-        elif ws_type == 'params':
-            cel.value = PARAMS_COLS_HEADERS[cel.column_letter]
-            if cel.value == 'JSON Properties':
-                ws.column_dimensions[cel.column_letter].width = 100
-        elif ws_type == 'media':
-            cel.value = MEDIA_COLS_HEADERS[cel.column_letter]
-        elif ws_type == 'capabilities':
-            cel.value = CAPABILITIES_COLS_HEADERS[cel.column_letter]
-            if cel.value == 'Capability':
-                ws.column_dimensions[cel.column_letter].width = 50
-        elif ws_type == 'static_links':
-            cel.value = STATIC_LINK_HEADERS[cel.column_letter]
-            if cel.value == 'Url':
-                ws.column_dimensions[cel.column_letter].width = 100
+        cel.value = col_headers[cel.column_letter]
+        if ws_type == 'params' and cel.value == 'JSON Properties':
+            ws.column_dimensions[cel.column_letter].width = 100
+        elif ws_type == 'capabilities' and cel.value == 'Capability':
+            ws.column_dimensions[cel.column_letter].width = 50
+        elif ws_type == 'static_links' and cel.value == 'Url':
+            ws.column_dimensions[cel.column_letter].width = 100
         elif ws_type == 'templates':
-            cel.value = TEMPLATES_HEADERS[cel.column_letter]
             if cel.value == 'Content':
                 ws.column_dimensions[cel.column_letter].width = 100
             if cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
-        elif ws_type == 'configurations':
-            cel.value = CONFIGURATION_HEADERS[cel.column_letter]
-        elif ws_type == 'actions':
-            cel.value = ACTIONS_HEADERS[cel.column_letter]
 
 
 def _calculate_commitment(item):
