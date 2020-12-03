@@ -85,6 +85,7 @@ ACTIONS_HEADERS = {
     'G': 'Scope'
 }
 
+
 PARAM_TYPES = [
     'email',
     'address',
@@ -99,6 +100,7 @@ PARAM_TYPES = [
     'phone',
     'text',
 ]
+
 
 PRECISIONS = ('integer', 'decimal(1)', 'decimal(2)', 'decimal(4)', 'decimal(8)')
 COMMITMENT = ('-', '1 year', '2 years', '3 years', '4 years', '5 years')

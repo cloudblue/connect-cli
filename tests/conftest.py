@@ -96,3 +96,24 @@ def mocked_configurations_response(fs):
 def sample_product_workbook(fs):
     fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     return load_workbook('./tests/fixtures/comparation_product.xlsx')
+
+
+@pytest.fixture(scope='function')
+def get_sync_items_env(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/items_sync.xlsx')
+    fs.add_real_file('./tests/fixtures/units_response.json')
+    fs.add_real_file('./tests/fixtures/product_response.json')
+    with open('./tests/fixtures/units_response.json') as response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/settings/units',
+            json=json.load(response)
+        )
+        with open('./tests/fixtures/product_response.json') as prod_response:
+            mocked_responses.add(
+                method='GET',
+                url='https://localhost/public/v1/products/PRD-276-377-545',
+                json=json.load(prod_response)
+            )
+
+            return load_workbook('./tests/fixtures/items_sync.xlsx')

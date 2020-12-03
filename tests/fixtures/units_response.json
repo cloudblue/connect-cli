@@ -1,0 +1,254 @@
+[
+  {
+    "id": "boolean",
+    "unit": "unit",
+    "description": "Boolean",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "boxes",
+    "unit": "unit",
+    "description": "Boxes",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "calls",
+    "unit": "unit",
+    "description": "Calls",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "computers",
+    "unit": "unit",
+    "description": "Computers",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "connections",
+    "unit": "unit",
+    "description": "Connections",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "contacts",
+    "unit": "unit",
+    "description": "Contacts",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "credits",
+    "unit": "unit",
+    "description": "Credits",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "devices",
+    "unit": "unit",
+    "description": "Devices",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "documents",
+    "unit": "unit",
+    "description": "Documents",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "emails",
+    "unit": "unit",
+    "description": "Emails",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "employees",
+    "unit": "unit",
+    "description": "Employees",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "gb",
+    "unit": "unit",
+    "description": "Gb",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "hosts",
+    "unit": "unit",
+    "description": "Hosts",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "hours",
+    "unit": "unit",
+    "description": "Hours",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "images",
+    "unit": "unit",
+    "description": "Images",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "invoices",
+    "unit": "unit",
+    "description": "Invoices",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "ips",
+    "unit": "unit",
+    "description": "IPs",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "items",
+    "unit": "unit",
+    "description": "Items",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "kb",
+    "unit": "kb",
+    "description": "Kb",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "kbps",
+    "unit": "Kbit/sec",
+    "description": "Kb/sec",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "licenses",
+    "unit": "unit",
+    "description": "Licenses",
+    "type": "reservation",
+    "cumulative": true
+  },
+  {
+    "id": "mailboxes",
+    "unit": "unit",
+    "description": "Mailboxes",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "mbh",
+    "unit": "mb-h",
+    "description": "MB*H",
+    "type": "ppu",
+    "cumulative": false
+  },
+  {
+    "id": "messages",
+    "unit": "unit",
+    "description": "Messages",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "mhz",
+    "unit": "mhz",
+    "description": "MHz",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "mhzh",
+    "unit": "mhzh",
+    "description": "MHz*H",
+    "type": "ppu",
+    "cumulative": false
+  },
+  {
+    "id": "minutes",
+    "unit": "unit",
+    "description": "Minutes",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "mobile_devices",
+    "unit": "unit",
+    "description": "Mobile devices",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "pages",
+    "unit": "unit",
+    "description": "Pages",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "reports",
+    "unit": "unit",
+    "description": "Reports",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "servers",
+    "unit": "unit",
+    "description": "Servers",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "stores",
+    "unit": "unit",
+    "description": "Stores",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "unit",
+    "unit": "unit",
+    "description": "Units",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "unith",
+    "unit": "unit-h",
+    "description": "Unit*H",
+    "type": "ppu",
+    "cumulative": false
+  },
+  {
+    "id": "users",
+    "unit": "unit",
+    "description": "Users",
+    "type": "reservation",
+    "cumulative": false
+  },
+  {
+    "id": "websites",
+    "unit": "unit",
+    "description": "Websites",
+    "type": "reservation",
+    "cumulative": false
+  }
+]

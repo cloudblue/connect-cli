@@ -5,11 +5,16 @@
 
 import click
 
-from cnctcli.actions.products import ProductSynchronizer, dump_product
+from cnctcli.actions.products import (
+    GeneralSynchronizer,
+    ItemSynchronizer,
+    dump_product,
+)
 from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
 from cnct import ConnectClient
 from cnct.rql import R
+from cnctcli.actions.products.utils import SheetNotFoundError
 
 
 @click.group(name='product', short_help='commands related to product management')
@@ -143,17 +148,17 @@ def cmd_sync_products(config, input_file, yes):
                 fg='blue',
             )
         )
-    # To be fixed specs_location when using new version of client
     client = ConnectClient(
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
         validate_using_specs=False,
     )
-    synchronizer = ProductSynchronizer(
+
+    synchronizer = GeneralSynchronizer(
         client,
         config.silent,
     )
-    product_id = synchronizer.open(input_file)
+    product_id = synchronizer.open(input_file, 'General Information')
 
     if not yes:
         click.confirm(
@@ -162,6 +167,26 @@ def cmd_sync_products(config, input_file, yes):
             abort=True,
         )
         click.echo('')
+    # Sync Items first
+    try:
+        item_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+
+
+def item_sync(client, config, input_file):
+
+    synchronizer = ItemSynchronizer(
+        client,
+        config.silent,
+    )
+    product_id = synchronizer.open(input_file, 'Items')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
