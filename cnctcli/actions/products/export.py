@@ -357,7 +357,6 @@ def _calculate_configuration_id(configuration):
 def _dump_actions(ws, client, product_id, silent):
     _setup_ws_header(ws, 'actions')
 
-    processed_items = 0
     row_idx = 2
 
     actions = client.products[product_id].actions.all()
@@ -385,14 +384,12 @@ def _dump_actions(ws, client, product_id, silent):
         _fill_action_row(ws, row_idx, action)
         action_validation.add(f'C{row_idx}')
         scope_validation.add(f'G{row_idx}')
-        processed_items += 1
         row_idx += 1
 
 
 def _dump_configuration(ws, client, product_id, silent):
     _setup_ws_header(ws, 'configurations')
 
-    processed_items = 0
     row_idx = 2
 
     configurations = client.products[product_id].configurations.all()
@@ -413,7 +410,6 @@ def _dump_configuration(ws, client, product_id, silent):
         progress.update(1)
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
-        processed_items += 1
         row_idx += 1
 
 
@@ -422,7 +418,6 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
 
     rql = R().phase.eq(param_type)
 
-    processed_items = 0
     row_idx = 2
 
     params = client.products[product_id].parameters.filter(rql)
@@ -486,13 +481,11 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         bool_validation.add(f'I{row_idx}')
         bool_validation.add(f'J{row_idx}')
         bool_validation.add(f'K{row_idx}')
-        processed_items += 1
         row_idx += 1
 
 
 def _dump_media(ws, client, product_id, silent, media_location):
     _setup_ws_header(ws, 'media')
-    processed_items = 0
     row_idx = 2
 
     medias = client.products[product_id].media.all()
@@ -517,7 +510,6 @@ def _dump_media(ws, client, product_id, silent, media_location):
         _fill_media_row(ws, row_idx, media, media_location, product_id)
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'D{row_idx}')
-        processed_items += 1
         row_idx += 1
 
 
@@ -679,7 +671,6 @@ def _dump_capabilities(ws, product, silent):
 def _dump_templates(ws, client, product_id, silent):
     _setup_ws_header(ws, 'templates')
 
-    processed_items = 0
     row_idx = 2
 
     action_validation = DataValidation(
@@ -716,13 +707,10 @@ def _dump_templates(ws, client, product_id, silent):
             type_validation.add(f'E{row_idx}')
             row_idx += 1
 
-        processed_items += 1
-
 
 def _dump_items(ws, client, product_id, silent):
     _setup_ws_header(ws, 'items')
 
-    processed_items = 0
     row_idx = 2
 
     items = client.products[product_id].items.all()
@@ -776,7 +764,6 @@ def _dump_items(ws, client, product_id, silent):
         precision_validation.add(f'G{row_idx}')
         period_validation.add(f'I{row_idx}')
         commitment_validation.add(f'J{row_idx}')
-        processed_items += 1
         row_idx += 1
 
 
