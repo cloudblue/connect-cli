@@ -567,7 +567,7 @@ def _dump_capabilities(ws, product, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,update"',
         allow_blank=False,
     )
     ppu_validation = DataValidation(

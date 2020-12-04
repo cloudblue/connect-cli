@@ -113,3 +113,15 @@ BILLING_PERIOD = (
     '4 years',
     '5 years',
 )
+
+CAPABILITIES = (
+    'Pay-as-you-go support and schema',
+    'Pay-as-you-go dynamic items support',
+    'Pay-as-you-go future charges support',
+    'Consumption reporting for Reservation Items',
+    'Dynamic Validation of the Draft Requests',
+    'Dynamic Validation of the Inquiring Form',
+    'Reseller Authorization Level',
+    'Tier Accounts Sync',
+    'Administrative Hold',
+)

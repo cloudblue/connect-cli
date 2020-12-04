@@ -8,6 +8,7 @@ import click
 from cnctcli.actions.products import (
     GeneralSynchronizer,
     ItemSynchronizer,
+    CapabilitiesSyncronizer,
     dump_product,
 )
 from cnctcli.commands.utils import continue_or_quit
@@ -163,12 +164,13 @@ def cmd_sync_products(config, input_file, yes):
     if not yes:
         click.confirm(
             'Are you sure you want to synchronize '
-            f'the items for the product {product_id} ?',
+            f'the product {product_id} ?',
             abort=True,
         )
         click.echo('')
     # Sync Items first
     try:
+        print_next_task('Items', product_id, config.silent)
         item_sync(client, config, input_file)
     except SheetNotFoundError as e:
         if not config.silent:
@@ -178,6 +180,66 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
+    print_finished_task('Items', product_id, config.silent)
+    try:
+        print_next_task('Capabilities', product_id, config.silent)
+        capabilities_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+    print_finished_task('Capabilities', product_id, config.silent)
+
+
+def capabilities_sync(client, config, input_file):
+
+    synchronizer = CapabilitiesSyncronizer(
+        client,
+        config.silent,
+    )
+    product_id = synchronizer.open(input_file, 'Capabilities')
+
+    skipped, updated, errors = synchronizer.sync()
+
+    errors_count = len(errors)
+
+    processed = skipped + updated + errors_count
+
+    if not config.silent:
+        msg = f'\nThe capabilities of product {product_id} has been synchronized.'
+        fg = 'green'
+
+        if errors:
+            msg = f'\nThe capabilities of product {product_id} has been partially synchronized.'
+            fg = 'yellow'
+
+        click.echo(click.style(msg, fg=fg))
+
+        click.echo(
+            click.style(
+                (
+                    f'\nProcessed rows: {processed}\n'
+                    f'  - Updated: {updated}\n'
+                    f'  - Skipped: {skipped}\n'
+                    f'  - Errors: {errors_count}\n'
+                ),
+                fg='blue'
+            )
+        )
+
+        if errors:
+            click.echo(
+                click.style('\nErrors:\n', fg='magenta')
+            )
+            for row_idx, messages in errors.items():
+                click.echo(f'  Errors at row #{row_idx}')
+                for msg in messages:
+                    click.echo(f'    - {msg}')
+                click.echo(' ')
 
 
 def item_sync(client, config, input_file):
@@ -233,3 +295,15 @@ def item_sync(client, config, input_file):
                 for msg in messages:
                     click.echo(f'    - {msg}')
                 click.echo(' ')
+
+
+def print_next_task(task, product, silent):
+    if not silent:
+        click.echo(f'Going to synchronize tab from Excel workbook {task} for product {product}\n')
+
+
+def print_finished_task(task, product, silent):
+    if not silent:
+        click.echo(
+            f'Finished synchronization of tab from Excel workbook {task} for product {product}\n'
+        )

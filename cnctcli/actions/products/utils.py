@@ -73,5 +73,14 @@ def get_col_headers_by_ws_type(ws_type):
         return ACTIONS_HEADERS
 
 
+def cleanup_product_for_update(product):
+    del product['icon']
+    if product['capabilities']['subscription'] and 'schema' in product['capabilities']['subscription']:
+        del product['capabilities']['subscription']['schema']
+    if product['capabilities']['ppu'] and 'predictive' in product['capabilities']['ppu']:
+        product['capabilities']['ppu']['predictive']
+    return product
+
+
 class SheetNotFoundError(Exception):
     pass
