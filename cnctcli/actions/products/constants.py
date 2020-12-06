@@ -51,7 +51,7 @@ CAPABILITIES_COLS_HEADERS = {
 
 STATIC_LINK_HEADERS = {
     'A': 'Type',
-    'B': 'Tile',
+    'B': 'Title',
     'C': 'Action',
     'D': 'Url',
 }
@@ -63,6 +63,8 @@ TEMPLATES_HEADERS = {
     'D': 'Scope',
     'E': 'Type',
     'F': 'Content',
+    'G': 'Created',
+    'H': 'Modified'
 }
 
 CONFIGURATION_HEADERS = {

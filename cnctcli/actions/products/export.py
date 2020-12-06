@@ -292,6 +292,16 @@ def _fill_template_row(ws, row_idx, template):
     ws.cell(row_idx, 6, value=template['body']).alignment = Alignment(
         wrap_text=True,
     )
+    ws.cell(row_idx, 7, value=template['events']['created']['at']).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
+    ws.cell(
+        row_idx, 8, value=template['events'].get('updated', {}).get('at')
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
 
 
 def _fill_action_row(ws, row_idx, action):
@@ -521,7 +531,7 @@ def _dump_external_static_links(ws, product, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,create,delete"',
         allow_blank=False,
     )
     link_type = DataValidation(

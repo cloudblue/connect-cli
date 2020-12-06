@@ -1,4 +1,4 @@
-from cnctcli.actions.products.capabilities_sync import CapabilitiesSyncronizer
+from cnctcli.actions.products.capabilities_sync import CapabilitiesSynchronizer
 from cnct import ConnectClient
 from copy import deepcopy
 
@@ -6,7 +6,7 @@ import pytest
 
 
 def test_no_action(get_sync_capabilities_env):
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -28,7 +28,7 @@ def test_invalid_capability(get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['B2'].value = 'update'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -51,7 +51,7 @@ def test_invalid_usage_schema(get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C2'].value = 'magic'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -74,7 +74,7 @@ def test_invalid_tier_level(get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C8'].value = 'magic'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -97,7 +97,7 @@ def test_invalid_value(get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C10'].value = 'magic'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -124,7 +124,7 @@ def test_ppu_enable_qt(
     get_sync_capabilities_env['Capabilities']['C2'].value = 'QT'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -162,7 +162,7 @@ def test_ppu_change_schema(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C2'].value = 'TR'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -200,7 +200,7 @@ def test_ppu_disable(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C2'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -237,7 +237,7 @@ def test_ppu_dynamic_items_no_ppu(
     get_sync_capabilities_env['Capabilities']['C3'].value = 'Enabled'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -263,7 +263,7 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
     get_sync_capabilities_env['Capabilities']['C3'].value = 'Disabled'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -290,7 +290,7 @@ def test_ppu_enable_dynamic(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C3'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -328,7 +328,7 @@ def test_ppu_disable_dynamic(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C3'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -365,7 +365,7 @@ def test_ppu_future_no_ppu(
     get_sync_capabilities_env['Capabilities']['C4'].value = 'Enabled'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -393,7 +393,7 @@ def test_ppu_future_no_ppu_no_enabled(
     get_sync_capabilities_env['Capabilities']['C4'].value = 'Disabled'
     get_sync_capabilities_env.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -420,7 +420,7 @@ def test_ppu_enable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C4'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -458,7 +458,7 @@ def test_ppu_disable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C4'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -508,7 +508,7 @@ def test_ppu_disable_feature(
     get_sync_capabilities_env_ppu_enabled['Capabilities'][f'C{row_action}'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -552,7 +552,7 @@ def test_features_enable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities'][f'C{row_action}'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',
@@ -593,7 +593,7 @@ def test_tier_level_feature(
     get_sync_capabilities_env_ppu_enabled['Capabilities'][f'C8'].value = tier_level
     get_sync_capabilities_env_ppu_enabled.save('./test.xlsx')
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
             api_key='ApiKey SU:123',

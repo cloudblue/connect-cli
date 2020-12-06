@@ -15,7 +15,7 @@ fields = (v.replace(' ', '_').lower() for v in CAPABILITIES_COLS_HEADERS.values(
 _RowData = namedtuple('RowData', fields)
 
 
-class CapabilitiesSyncronizer(ProductSynchronizer):
+class CapabilitiesSynchronizer(ProductSynchronizer):
     def sync(self):
         ws = self._wb['Capabilities']
         errors = {}

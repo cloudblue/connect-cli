@@ -8,7 +8,9 @@ import click
 from cnctcli.actions.products import (
     GeneralSynchronizer,
     ItemSynchronizer,
-    CapabilitiesSyncronizer,
+    CapabilitiesSynchronizer,
+    StaticResourcesSynchronizer,
+    TemplatesSynchronizer,
     dump_product,
 )
 from cnctcli.commands.utils import continue_or_quit
@@ -194,10 +196,80 @@ def cmd_sync_products(config, input_file, yes):
             )
     print_finished_task('Capabilities', product_id, config.silent)
 
+    try:
+        print_next_task('Embedding resources', product_id, config.silent)
+        static_resources_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+    print_finished_task('Embedding resources', product_id, config.silent)
+
+    try:
+        print_next_task('Templates', product_id, config.silent)
+        templates_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+    print_finished_task('Embedding resources', product_id, config.silent)
+
+
+def templates_sync(client, config, input_file):
+    synchronizer = TemplatesSynchronizer(
+        client,
+        config.silent,
+    )
+
+    product_id = synchronizer.open(input_file, 'Templates')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    synchronizer.save(input_file)
+    print_action_result(
+        silent=config.silent,
+        obj_type='Templates',
+        product_id=product_id,
+        created=created,
+        updated=updated,
+        deleted=deleted,
+        skipped=skipped,
+        errors=errors,
+    )
+
+
+def static_resources_sync(client, config, input_file):
+    synchronizer = StaticResourcesSynchronizer(
+        client,
+        config.silent,
+    )
+    product_id = synchronizer.open(input_file, 'Embedding Static Resources')
+
+    skipped, created, deleted, errors = synchronizer.sync()
+
+    print_action_result(
+        silent=config.silent,
+        obj_type='Embedding resources',
+        product_id=product_id,
+        created=created,
+        updated=0,
+        deleted=deleted,
+        skipped=skipped,
+        errors=errors,
+    )
+
 
 def capabilities_sync(client, config, input_file):
 
-    synchronizer = CapabilitiesSyncronizer(
+    synchronizer = CapabilitiesSynchronizer(
         client,
         config.silent,
     )
@@ -205,41 +277,16 @@ def capabilities_sync(client, config, input_file):
 
     skipped, updated, errors = synchronizer.sync()
 
-    errors_count = len(errors)
-
-    processed = skipped + updated + errors_count
-
-    if not config.silent:
-        msg = f'\nThe capabilities of product {product_id} has been synchronized.'
-        fg = 'green'
-
-        if errors:
-            msg = f'\nThe capabilities of product {product_id} has been partially synchronized.'
-            fg = 'yellow'
-
-        click.echo(click.style(msg, fg=fg))
-
-        click.echo(
-            click.style(
-                (
-                    f'\nProcessed rows: {processed}\n'
-                    f'  - Updated: {updated}\n'
-                    f'  - Skipped: {skipped}\n'
-                    f'  - Errors: {errors_count}\n'
-                ),
-                fg='blue'
-            )
-        )
-
-        if errors:
-            click.echo(
-                click.style('\nErrors:\n', fg='magenta')
-            )
-            for row_idx, messages in errors.items():
-                click.echo(f'  Errors at row #{row_idx}')
-                for msg in messages:
-                    click.echo(f'    - {msg}')
-                click.echo(' ')
+    print_action_result(
+        silent=config.silent,
+        obj_type='Capabilities',
+        product_id=product_id,
+        created=0,
+        updated=updated,
+        deleted=0,
+        skipped=skipped,
+        errors=errors,
+    )
 
 
 def item_sync(client, config, input_file):
@@ -252,23 +299,51 @@ def item_sync(client, config, input_file):
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
-    ok_actions = created + updated + deleted
-    errors_count = len(errors)
-    processed = skipped + ok_actions + errors_count
-
     synchronizer.save(input_file)
+    print_action_result(
+        silent=config.silent,
+        obj_type='Items',
+        product_id=product_id,
+        created=created,
+        updated=updated,
+        deleted=deleted,
+        skipped=skipped,
+        errors=errors,
+    )
 
-    if not config.silent:
-        msg = f'\nThe product {product_id} has been successfully synchronized.'
+
+def print_next_task(task, product, silent):
+    if not silent:
+        click.echo(f'Going to synchronize tab from Excel workbook {task} for product {product}\n')
+
+
+def print_finished_task(task, product, silent):
+    if not silent:
+        click.echo(
+            f'Finished synchronization of tab from Excel workbook {task} for product {product}\n'
+        )
+
+
+def print_action_result(
+        silent,
+        obj_type,
+        product_id,
+        created,
+        updated,
+        deleted,
+        skipped,
+        errors,
+):
+    if not silent:
+        msg = f'\nThe {obj_type} of product {product_id} has been synchronized.'
         fg = 'green'
 
-        if ok_actions == 0:
-            msg = f'\nNo item has been synchronized for the product {product_id}.'
-            fg = 'red'
-        else:
-            if errors:
-                msg = f'\nThe product {product_id} has been partially synchronized.'
-                fg = 'yellow'
+        if errors:
+            msg = f'\nThe {obj_type} of product {product_id} has been partially synchronized.'
+            fg = 'yellow'
+
+        errors_count = len(errors)
+        processed = skipped + updated + errors_count
 
         click.echo(click.style(msg, fg=fg))
 
@@ -295,15 +370,3 @@ def item_sync(client, config, input_file):
                 for msg in messages:
                     click.echo(f'    - {msg}')
                 click.echo(' ')
-
-
-def print_next_task(task, product, silent):
-    if not silent:
-        click.echo(f'Going to synchronize tab from Excel workbook {task} for product {product}\n')
-
-
-def print_finished_task(task, product, silent):
-    if not silent:
-        click.echo(
-            f'Finished synchronization of tab from Excel workbook {task} for product {product}\n'
-        )

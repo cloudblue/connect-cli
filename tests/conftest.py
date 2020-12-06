@@ -134,6 +134,20 @@ def get_sync_capabilities_env(fs, mocked_responses):
 
 
 @pytest.fixture(scope='function')
+def get_sync_templates_env(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/templates_sync.xlsx')
+    fs.add_real_file('./tests/fixtures/product_response.json')
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response)
+        )
+
+        return load_workbook('./tests/fixtures/templates_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
 def get_sync_capabilities_env_ppu_enabled(fs, mocked_responses):
     fs.add_real_file('./tests/fixtures/capabilities_sync.xlsx')
     fs.add_real_file('./tests/fixtures/product_response_modifications.json')
