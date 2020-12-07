@@ -30,7 +30,7 @@ def get_col_limit_by_ws_type(ws_type):
     elif ws_type == 'configurations':
         return 'G'
     elif ws_type == 'actions':
-        return 'G'
+        return 'I'
     return 'Z'
 
 

@@ -309,6 +309,8 @@ def _fill_action_row(ws, row_idx, action):
     ws.cell(row_idx, 5, value=action['title'])
     ws.cell(row_idx, 6, value=action['description'])
     ws.cell(row_idx, 7, value=action['scope'])
+    ws.cell(row_idx, 8, value=action['events']['created']['at'])
+    ws.cell(row_idx, 9, value=action['events'].get('updated', {}).get('at'))
 
 
 def _fill_configuration_row(ws, row_idx, configuration, conf_id):

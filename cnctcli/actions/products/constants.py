@@ -86,7 +86,9 @@ ACTIONS_HEADERS = {
     'D': 'Name',
     'E': 'Title',
     'F': 'Description',
-    'G': 'Scope'
+    'G': 'Scope',
+    'H': 'Created',
+    'I': 'Modified',
 }
 
 

@@ -10,3 +10,4 @@ from cnctcli.actions.products.capabilities_sync import CapabilitiesSynchronizer 
 from cnctcli.actions.products.static_resources_sync import StaticResourcesSynchronizer  # noqa: F401
 from cnctcli.actions.products.templates_sync import TemplatesSynchronizer  # noqa: F401
 from cnctcli.actions.products.params_sync import ParamsSynchronizer  # noqa: F401
+from cnctcli.actions.products.actions_sync import ActionsSynchronizer  # noqa: F401
