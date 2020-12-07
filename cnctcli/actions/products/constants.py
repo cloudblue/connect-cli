@@ -32,6 +32,8 @@ PARAMS_COLS_HEADERS = {
     'J': 'Unique',
     'K': 'Hidden',
     'L': 'JSON Properties',
+    'M': 'Created',
+    'N': 'Modified',
 }
 
 MEDIA_COLS_HEADERS = {
@@ -64,7 +66,7 @@ TEMPLATES_HEADERS = {
     'E': 'Type',
     'F': 'Content',
     'G': 'Created',
-    'H': 'Modified'
+    'H': 'Modified',
 }
 
 CONFIGURATION_HEADERS = {

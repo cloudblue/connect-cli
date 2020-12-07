@@ -6,7 +6,6 @@
 import os
 import json
 from datetime import datetime
-from copy import deepcopy
 
 from click import ClickException
 from urllib import parse
@@ -19,7 +18,11 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from tqdm import trange
 import requests
 
-from cnctcli.actions.products.utils import get_col_limit_by_ws_type, get_col_headers_by_ws_type
+from cnctcli.actions.products.utils import (
+    get_col_limit_by_ws_type,
+    get_col_headers_by_ws_type,
+    get_json_object_for_param,
+)
 from cnctcli.actions.products.constants import PARAM_TYPES
 from cnctcli.api.utils import (
     format_http_status,
@@ -231,28 +234,22 @@ def _fill_param_row(ws, row_idx, param):
     )
     ws.cell(
         row_idx, 12,
-        value=_get_json_object_for_param(param),
+        value=get_json_object_for_param(param),
     ).alignment = Alignment(
         wrap_text=True,
     )
-
-
-def _get_json_object_for_param(original_param):
-    param = deepcopy(original_param)
-    del param['id']
-    del param['name']
-    del param['title']
-    del param['description']
-    del param['phase']
-    del param['scope']
-    del param['type']
-    del param['constraints']['required']
-    del param['constraints']['unique']
-    del param['constraints']['hidden']
-    del param['position']
-    del param['events']
-
-    return json.dumps(param, indent=4, sort_keys=True)
+    ws.cell(
+        row_idx, 13, value=param['events']['created']['at']
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
+    ws.cell(
+        row_idx, 14, value=param['events'].get('updated', {}).get('at')
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
 
 
 def _fill_media_row(ws, row_idx, media, location, product):
@@ -448,11 +445,6 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         ),
         allow_blank=False,
     )
-    phase_validation = DataValidation(
-        type='list',
-        formula1='"ordering,fulfillment,configuration"',
-        allow_blank=False,
-    )
     ordering_fulfillment_scope_validation = DataValidation(
         type='list',
         formula1='"asset,tier1,tier2"',
@@ -470,7 +462,6 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     )
     ws.add_data_validation(action_validation)
     ws.add_data_validation(type_validation)
-    ws.add_data_validation(phase_validation)
     ws.add_data_validation(ordering_fulfillment_scope_validation)
     ws.add_data_validation(configuration_scope_validation)
     ws.add_data_validation(bool_validation)
@@ -482,8 +473,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         progress.update(1)
         _fill_param_row(ws, row_idx, param)
         action_validation.add(f'C{row_idx}')
-        phase_validation.add(f'F{row_idx}')
-        if param['scope'] == 'configuration':
+        if param['phase'] == 'configuration':
             configuration_scope_validation.add(f'G{row_idx}')
         else:
             ordering_fulfillment_scope_validation.add(f'G{row_idx}')

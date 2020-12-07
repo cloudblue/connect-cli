@@ -11,6 +11,7 @@ from cnctcli.actions.products import (
     CapabilitiesSynchronizer,
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
+    ParamsSynchronizer,
     dump_product,
 )
 from cnctcli.commands.utils import continue_or_quit
@@ -222,6 +223,25 @@ def cmd_sync_products(config, input_file, yes):
             )
     print_finished_task('Embedding resources', product_id, config.silent)
 
+    param_task(client, config, input_file, product_id, 'Ordering Parameters')
+    param_task(client, config, input_file, product_id, 'Fulfillment Parameters')
+    param_task(client, config, input_file, product_id, 'Configuration Parameters')
+
+
+def param_task(client, config, input_file, product_id, param_type):
+    try:
+        print_next_task(param_type, product_id, config.silent)
+        params_sync(client, config, input_file, param_type)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+    print_finished_task(param_type, product_id, config.silent)
+
 
 def templates_sync(client, config, input_file):
     synchronizer = TemplatesSynchronizer(
@@ -237,6 +257,30 @@ def templates_sync(client, config, input_file):
     print_action_result(
         silent=config.silent,
         obj_type='Templates',
+        product_id=product_id,
+        created=created,
+        updated=updated,
+        deleted=deleted,
+        skipped=skipped,
+        errors=errors,
+    )
+
+
+def params_sync(client, config, input_file, param_type):
+    synchronizer = ParamsSynchronizer(
+        client,
+        config.silent,
+    )
+
+    product_id = synchronizer.open(input_file, param_type)
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    synchronizer.save(input_file)
+
+    print_action_result(
+        silent=config.silent,
+        obj_type=param_type,
         product_id=product_id,
         created=created,
         updated=updated,

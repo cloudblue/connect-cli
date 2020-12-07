@@ -9,12 +9,16 @@ from cnctcli.actions.products.constants import (
     ACTIONS_HEADERS,
 )
 
+from copy import deepcopy
+
+import json
+
 
 def get_col_limit_by_ws_type(ws_type):
     if ws_type == 'items':
         return 'M'
     elif ws_type == 'params':
-        return 'L'
+        return 'N'
     elif ws_type == 'media':
         return 'F'
     elif ws_type == 'capabilities':
@@ -82,5 +86,27 @@ def cleanup_product_for_update(product):
     return product
 
 
+def get_json_object_for_param(original_param):
+    param = deepcopy(original_param)
+    del param['id']
+    del param['name']
+    del param['title']
+    del param['description']
+    del param['phase']
+    del param['scope']
+    del param['type']
+    del param['constraints']['required']
+    del param['constraints']['unique']
+    del param['constraints']['hidden']
+    del param['position']
+    del param['events']
+
+    return json.dumps(param, indent=4, sort_keys=True)
+
+
 class SheetNotFoundError(Exception):
+    pass
+
+
+class ParamSwitchNotSupported(Exception):
     pass
