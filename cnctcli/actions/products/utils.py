@@ -28,7 +28,7 @@ def get_col_limit_by_ws_type(ws_type):
     elif ws_type == 'templates':
         return 'H'
     elif ws_type == 'configurations':
-        return 'G'
+        return 'I'
     elif ws_type == 'actions':
         return 'I'
     return 'Z'

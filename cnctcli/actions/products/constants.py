@@ -74,9 +74,11 @@ CONFIGURATION_HEADERS = {
     'B': 'Parameter',
     'C': 'Scope',
     'D': 'Action',
-    'E': 'Item',
-    'F': 'Marketplace',
-    'G': 'Value',
+    'E': 'Item ID',
+    'F': 'Item Name',
+    'G': 'Marketplace ID',
+    'H': 'Marketplace Name',
+    'I': 'Value',
 }
 
 ACTIONS_HEADERS = {

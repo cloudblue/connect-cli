@@ -319,15 +319,18 @@ def _fill_configuration_row(ws, row_idx, configuration, conf_id):
     ws.cell(row_idx, 3, value=configuration['parameter']['scope'])
     ws.cell(row_idx, 4, value='-')
     ws.cell(row_idx, 5, value=configuration['item']['id'] if 'item' in configuration else '-')
-    ws.cell(row_idx, 6, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
+    ws.cell(row_idx, 6, value=configuration['item']['name'] if 'item' in configuration else '-')
+    ws.cell(row_idx, 7, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
+    ws.cell(row_idx, 8,
+            value=configuration['marketplace']['name'] if 'marketplace' in configuration else '-')
     if 'structured_value' in configuration:
         value = json.loads(configuration['structured_value'])
         value = json.dumps(value, indent=4, sort_keys=True)
-        ws.cell(row_idx, 7, value=value).alignment = Alignment(wrap_text=True)
+        ws.cell(row_idx, 9, value=value).alignment = Alignment(wrap_text=True)
     elif 'value' in configuration:
-        ws.cell(row_idx, 7, value=configuration['value'])
+        ws.cell(row_idx, 9, value=configuration['value'])
     else:
-        ws.cell(row_idx, 7, value='-')
+        ws.cell(row_idx, 9, value='-')
 
 
 def _fill_item_row(ws, row_idx, item):
@@ -406,7 +409,7 @@ def _dump_configuration(ws, client, product_id, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,update,delete"',
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)

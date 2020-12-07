@@ -162,6 +162,20 @@ def get_sync_params_env(fs, mocked_responses):
 
 
 @pytest.fixture(scope='function')
+def get_sync_config_env(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/configuration_sync.xlsx')
+    fs.add_real_file('./tests/fixtures/product_response_modifications.json')
+    with open('./tests/fixtures/product_response_modifications.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response)
+        )
+
+        return load_workbook('./tests/fixtures/configuration_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
 def get_sync_templates_env(fs, mocked_responses):
     fs.add_real_file('./tests/fixtures/templates_sync.xlsx')
     fs.add_real_file('./tests/fixtures/product_response.json')

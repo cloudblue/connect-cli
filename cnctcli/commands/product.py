@@ -13,6 +13,7 @@ from cnctcli.actions.products import (
     TemplatesSynchronizer,
     ParamsSynchronizer,
     ActionsSynchronizer,
+    ConfigurationValuesSynchronizer,
     dump_product,
 )
 from cnctcli.commands.utils import continue_or_quit
@@ -241,6 +242,19 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
+    print_finished_task('Configuration', product_id, config.silent)
+
+    try:
+        print_next_task('Configuration', product_id, config.silent)
+        config_values_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
     print_finished_task('Actions', product_id, config.silent)
 
 
@@ -269,7 +283,6 @@ def actions_sync(client, config, input_file):
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
-    synchronizer.save(input_file)
     print_action_result(
         silent=config.silent,
         obj_type='Actions',
@@ -367,6 +380,27 @@ def capabilities_sync(client, config, input_file):
         created=0,
         updated=updated,
         deleted=0,
+        skipped=skipped,
+        errors=errors,
+    )
+
+
+def config_values_sync(client, config, input_file):
+    synchronizer = ConfigurationValuesSynchronizer(
+        client,
+        config.silent,
+    )
+    product_id = synchronizer.open(input_file, 'Configuration')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    print_action_result(
+        silent=config.silent,
+        obj_type='Configuration',
+        product_id=product_id,
+        created=created,
+        updated=updated,
+        deleted=deleted,
         skipped=skipped,
         errors=errors,
     )
