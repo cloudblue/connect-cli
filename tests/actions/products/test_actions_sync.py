@@ -189,6 +189,35 @@ def test_delete_404(get_sync_actions_env, mocked_responses):
     assert errors == {}
 
 
+def test_delete_500(get_sync_actions_env, mocked_responses):
+    get_sync_actions_env['Actions']['C2'] = 'delete'
+    get_sync_actions_env.save('./test.xlsx')
+
+    synchronizer = ActionsSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+    )
+
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions/ACT-276-377-545-001',
+        status=500,
+    )
+
+    synchronizer.open('./test.xlsx', 'Actions')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    assert skipped == 0
+    assert created == 0
+    assert updated == 0
+    assert deleted == 0
+    assert errors == {2: ['500 Internal Server Error']}
+
 def test_update(get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['C2'] = 'update'
 

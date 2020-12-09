@@ -296,6 +296,36 @@ def test_delete_404(get_sync_media_env, mocked_responses, mocked_media_response)
     assert errors == {}
 
 
+def test_delete_500(get_sync_media_env, mocked_responses, mocked_media_response):
+    get_sync_media_env['Media']['C2'] = 'delete'
+    get_sync_media_env.save('./test.xlsx')
+
+    synchronizer = MediaSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+    )
+
+    synchronizer.open('./test.xlsx', 'Media')
+
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/products/PRD-276-377-545/media/PRDM-276-377-545-67072',
+        status=500,
+    )
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    assert skipped == 0
+    assert created == 0
+    assert updated == 0
+    assert deleted == 0
+    assert errors == {2: ['500 Internal Server Error']}
+
+
 def test_update_image(get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'update'
     get_sync_media_env.save('./test.xlsx')

@@ -51,14 +51,18 @@ class TemplatesSynchronizer(ProductSynchronizer):
                     template = self._create_template(template_data)
                     created_items.append(template)
                     self._update_sheet_row(ws, row_idx, template)
+                    continue
                 except Exception as e:
                     errors[row_idx] = [str(e)]
-                continue
+                    continue
             try:
                 current = self._client.products[self._product_id].templates[data.id].get()
-            except ClientError:
+            except ClientError as e:
                 if data.action == 'delete':
-                    deleted_items.append(data)
+                    if e.status_code == 404:
+                        deleted_items.append(data)
+                        continue
+                    errors[row_idx] = [str(e)]
                     continue
                 errors[row_idx] = [
                     f'Cannot {data.action} template {data.id} since does not exist in the product.'

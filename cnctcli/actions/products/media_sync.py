@@ -55,10 +55,14 @@ class MediaSynchronizer(ProductSynchronizer):
             if data.action == 'delete':
                 try:
                     self._client.products[self._product_id].media[data.id].delete()
-                except ClientError:
-                    pass
-                deleted_items.append(data)
-                continue
+                    deleted_items.append(data)
+                    continue
+                except ClientError as e:
+                    if e.status_code == 404:
+                        deleted_items.append(data)
+                    else:
+                        errors[row_idx] = [str(e)]
+                    continue
             if data.type == 'image':
                 payload = MultipartEncoder(
                     fields={

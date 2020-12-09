@@ -46,10 +46,13 @@ class ActionsSynchronizer(ProductSynchronizer):
             if data.action == 'delete':
                 try:
                     self._client.products[self._product_id].actions[data.verbose_id].delete()
-                except ClientError:
-                    pass
-                deleted_items.append(data)
-                continue
+                    deleted_items.append(data)
+                except ClientError as e:
+                    if e.status_code == 404:
+                        deleted_items.append(data)
+                        continue
+                    errors[row_idx] = [str(e)]
+                    continue
 
             payload = {
                 "action": data.id,
@@ -74,7 +77,7 @@ class ActionsSynchronizer(ProductSynchronizer):
                     action = self._client.products[self._product_id].actions.create(payload)
                     self._update_sheet_row(ws, row_idx, action)
                     created_items.append(action)
-                except Exception as e:
+                except ClientError as e:
                     errors[row_idx] = [str(e)]
 
         return (
