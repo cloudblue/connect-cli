@@ -4,6 +4,9 @@ import pytest
 
 import responses
 
+import os
+from shutil import copy2
+
 from tests.data import CONFIG_DATA
 from openpyxl import load_workbook
 
@@ -187,6 +190,23 @@ def get_sync_templates_env(fs, mocked_responses):
         )
 
         return load_workbook('./tests/fixtures/templates_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
+def get_sync_media_env(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/media_sync.xlsx')
+    fs.add_real_file('./tests/fixtures/product_response.json')
+    fs.add_real_file('./tests/fixtures/image.png')
+    os.mkdir('./media')
+    copy2('./tests/fixtures/image.png', './media/image.png')
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response)
+        )
+
+        return load_workbook('./tests/fixtures/media_sync.xlsx')
 
 
 @pytest.fixture(scope='function')

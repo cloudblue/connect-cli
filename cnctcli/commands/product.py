@@ -14,6 +14,7 @@ from cnctcli.actions.products import (
     ParamsSynchronizer,
     ActionsSynchronizer,
     ConfigurationValuesSynchronizer,
+    MediaSynchronizer,
     dump_product,
 )
 from cnctcli.commands.utils import continue_or_quit
@@ -229,8 +230,6 @@ def cmd_sync_products(config, input_file, yes):
     param_task(client, config, input_file, product_id, 'Fulfillment Parameters')
     param_task(client, config, input_file, product_id, 'Configuration Parameters')
 
-    print_finished_task('Actions', product_id, config.silent)
-
     try:
         print_next_task('Actions', product_id, config.silent)
         actions_sync(client, config, input_file)
@@ -242,7 +241,20 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Configuration', product_id, config.silent)
+    print_finished_task('Actions', product_id, config.silent)
+
+    try:
+        print_next_task('Media', product_id, config.silent)
+        media_sync(client, config, input_file)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.echo(
+                click.style(
+                    str(e),
+                    fg='blue',
+                )
+            )
+    print_finished_task('Media', product_id, config.silent)
 
     try:
         print_next_task('Configuration', product_id, config.silent)
@@ -255,7 +267,7 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Actions', product_id, config.silent)
+    print_finished_task('Configuration', product_id, config.silent)
 
 
 def param_task(client, config, input_file, product_id, param_type):
@@ -271,6 +283,30 @@ def param_task(client, config, input_file, product_id, param_type):
                 )
             )
     print_finished_task(param_type, product_id, config.silent)
+
+
+def media_sync(client, config, input_file):
+    synchronizer = MediaSynchronizer(
+        client,
+        config.silent,
+    )
+
+    product_id = synchronizer.open(input_file, 'Media')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    synchronizer.save(input_file)
+
+    print_action_result(
+        silent=config.silent,
+        obj_type='Media',
+        product_id=product_id,
+        created=created,
+        updated=updated,
+        deleted=deleted,
+        skipped=skipped,
+        errors=errors,
+    )
 
 
 def actions_sync(client, config, input_file):

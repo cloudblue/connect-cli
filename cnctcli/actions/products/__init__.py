@@ -12,3 +12,4 @@ from cnctcli.actions.products.templates_sync import TemplatesSynchronizer  # noq
 from cnctcli.actions.products.params_sync import ParamsSynchronizer  # noqa: F401
 from cnctcli.actions.products.actions_sync import ActionsSynchronizer  # noqa: F401
 from cnctcli.actions.products.configuration_values_sync import ConfigurationValuesSynchronizer  # noqa: F401
+from cnctcli.actions.products.media_sync import MediaSynchronizer  # noqa: F401
