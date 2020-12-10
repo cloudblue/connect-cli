@@ -44,10 +44,7 @@ def _setup_cover_sheet(ws, product, location, client):
     cell.value = 'Product information'
     for i in range(3, 13):
         ws[f'A{i}'].font = Font(sz=12)
-        if i < 9:
-            ws[f'B{i}'].font = Font(sz=12, bold=True)
-        else:
-            ws[f'B{i}'].font = Font(sz=12)
+        ws[f'B{i}'].font = Font(sz=12)
     ws['A3'].value = 'Account ID'
     ws['B3'].value = product['owner']['id']
     ws['A4'].value = 'Account Name'
@@ -97,17 +94,14 @@ def _setup_cover_sheet(ws, product, location, client):
     )
 
     categories = client.categories.all()
-    # Poping categories that does not apply due endpoint has not such filter
-    if 'Cloud Services' in categories:
-        categories.pop('Cloud Services')
-    if 'All Categories' in categories:
-        categories.pop('All Categories')
-
-    categories_list = [cat['name'] for cat in categories]
+    unassignable_cat = ['Cloud Services', 'All Categories']
+    categories_list = [
+        cat['name'] for cat in categories if cat['name'] not in unassignable_cat
+    ]
     categories_formula = ','.join(categories_list)
     categories_validation = DataValidation(
         type='list',
-        formula1=f'"-,{categories_formula}"',
+        formula1=f'"{categories_formula}"',
         allow_blank=False,
     )
     ws.add_data_validation(categories_validation)
@@ -388,7 +382,7 @@ def _dump_actions(ws, client, product_id, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(scope_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     for action in actions:
         progress.set_description(f'Processing action {action["id"]}')
@@ -414,7 +408,7 @@ def _dump_configuration(ws, client, product_id, silent):
     )
     ws.add_data_validation(action_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
@@ -471,7 +465,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     ws.add_data_validation(configuration_scope_validation)
     ws.add_data_validation(bool_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     for param in params:
         progress.set_description(f'Processing {param_type} parameter {param["id"]}')
@@ -508,7 +502,7 @@ def _dump_media(ws, client, product_id, silent, media_location):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(type_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
     for media in medias:
         progress.set_description(f'Processing media {media["id"]}')
         progress.update(1)
@@ -537,7 +531,7 @@ def _dump_external_static_links(ws, product, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(link_type)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     progress.set_description("Processing static links")
 
@@ -564,7 +558,7 @@ def _dump_external_static_links(ws, product, silent):
 
 def _dump_capabilities(ws, product, silent):
     _setup_ws_header(ws, 'capabilities')
-    progress = trange(0, 1, position=0, disable=silent)
+    progress = trange(0, 1, disable=silent)
     progress.set_description("Processing product capabilities")
     ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
@@ -700,7 +694,7 @@ def _dump_templates(ws, client, product_id, silent):
     templates = client.products[product_id].templates.all()
     count = templates.count()
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     for template in templates:
         progress.set_description(f'Processing template {template["id"]}')
@@ -758,7 +752,7 @@ def _dump_items(ws, client, product_id, silent):
     ws.add_data_validation(precision_validation)
     ws.add_data_validation(commitment_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent)
 
     for item in items:
         progress.set_description(f'Processing item {item["id"]}')

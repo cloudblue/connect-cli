@@ -148,6 +148,10 @@ def cmd_sync_products(config, input_file, yes):
     config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
+
+    if '.xlsx' not in input_file:
+        input_file = f'{input_file}/{input_file}.xlsx'
+
     if not config.silent:
         click.echo(
             click.style(
@@ -174,7 +178,18 @@ def cmd_sync_products(config, input_file, yes):
             abort=True,
         )
         click.echo('')
-    # Sync Items first
+
+    print_next_task('General Information', product_id, config.silent)
+    general_errors = synchronizer.sync()
+    if general_errors and not config.silent:
+        click.echo(
+            click.style(
+                f'\nError synchronizing general product information: {".".join(general_errors)}\n',
+                fg='magenta'
+            )
+        )
+    print_finished_task('General Information', product_id, config.silent)
+
     try:
         print_next_task('Items', product_id, config.silent)
         item_sync(client, config, input_file)

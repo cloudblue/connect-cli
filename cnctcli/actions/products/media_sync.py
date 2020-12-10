@@ -29,7 +29,7 @@ class MediaSynchronizer(ProductSynchronizer):
 
     def open(self, input_file, worksheet):
         self._media_path = input_file.rsplit('/', 1)[0]
-        super(MediaSynchronizer, self).open(input_file, worksheet)
+        return super(MediaSynchronizer, self).open(input_file, worksheet)
 
     def sync(self):
         ws = self._wb['Media']

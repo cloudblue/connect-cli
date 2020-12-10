@@ -10,6 +10,7 @@ from shutil import copy2
 from tests.data import CONFIG_DATA
 from openpyxl import load_workbook
 
+
 @pytest.fixture(scope='function')
 def config_mocker(mocker):
     mocker.patch('os.path.isfile', return_value=True)
@@ -190,6 +191,30 @@ def get_sync_templates_env(fs, mocked_responses):
         )
 
         return load_workbook('./tests/fixtures/templates_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
+def get_general_env(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
+    fs.add_real_file('./tests/fixtures/categories_response.json')
+    fs.add_real_file('./tests/fixtures/product_response.json')
+    fs.add_real_file('./tests/fixtures/image.png')
+    os.mkdir('./media')
+    copy2('./tests/fixtures/image.png', './media/PRD-276-377-545.png')
+    with open('./tests/fixtures/categories_response.json') as cat_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/categories',
+            json=json.load(cat_response),
+        )
+        with open('./tests/fixtures/product_response.json') as prod_response:
+            mocked_responses.add(
+                method='GET',
+                url='https://localhost/public/v1/products/PRD-276-377-545',
+                json=json.load(prod_response)
+            )
+
+        return load_workbook('./tests/fixtures/comparation_product.xlsx')
 
 
 @pytest.fixture(scope='function')
