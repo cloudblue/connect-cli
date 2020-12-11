@@ -5,7 +5,7 @@ from tqdm import trange
 from cnctcli.actions.products.sync import ProductSynchronizer
 
 from cnctcli.actions.products.utils import cleanup_product_for_update
-from cnctcli.actions.products.constants import STATIC_LINK_HEADERS
+from cnctcli.actions.products.constants import STATIC_LINK_HEADERS, DEFAULT_BAR_FORMAT
 from urllib.parse import urlparse
 
 
@@ -22,7 +22,9 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
         created_items = []
         deleted_items = []
 
-        row_indexes = trange(2, ws.max_row + 1, position=0, disable=self._silent)
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
         download = []
         documentation = []
         for row_idx in row_indexes:

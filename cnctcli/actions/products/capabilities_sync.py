@@ -4,7 +4,8 @@ from tqdm import trange
 
 from cnctcli.actions.products.sync import ProductSynchronizer
 from cnctcli.actions.products.constants import (
-    CAPABILITIES
+    CAPABILITIES,
+    DEFAULT_BAR_FORMAT,
 )
 
 from cnctcli.actions.products.utils import cleanup_product_for_update
@@ -22,7 +23,9 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
         skipped_count = 0
         updated_items = []
 
-        row_indexes = trange(2, ws.max_row + 1, position=0, disable=self._silent)
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
         for row_idx in row_indexes:
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 4)])
             row_indexes.set_description(f'Processing Product capabilities {data.capability}')

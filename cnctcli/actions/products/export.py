@@ -23,7 +23,7 @@ from cnctcli.actions.products.utils import (
     get_col_headers_by_ws_type,
     get_json_object_for_param,
 )
-from cnctcli.actions.products.constants import PARAM_TYPES
+from cnctcli.actions.products.constants import PARAM_TYPES, DEFAULT_BAR_FORMAT
 from cnctcli.api.utils import (
     format_http_status,
     handle_http_error,
@@ -32,10 +32,7 @@ from cnct import ConnectClient, ClientError
 from cnct.rql import R
 
 
-DEFAULT_BAR_FORMAT = '{desc:<70.69}{percentage:3.0f}%|{bar:30}{r_bar}'
-
-
-def _setup_cover_sheet(ws, product, location, client):
+def _setup_cover_sheet(ws, product, location, client, media_path):
     ws.title = 'General Information'
     ws.column_dimensions['A'].width = 50
     ws.column_dimensions['B'].width = 180
@@ -65,7 +62,8 @@ def _setup_cover_sheet(ws, product, location, client):
     ws['B9'].value = f'{product["id"]}.{product["icon"].split(".")[-1]}'
     _dump_image(
         f'{location}{product["icon"]}',
-        f'{product["id"]}/media/{product["id"]}.{product["icon"].split(".")[-1]}'
+        f'{product["id"]}.{product["icon"].split(".")[-1]}',
+        media_path,
     )
     ws['A10'].value = 'Product Short Description'
     ws['A10'].alignment = Alignment(
@@ -111,10 +109,10 @@ def _setup_cover_sheet(ws, product, location, client):
     categories_validation.add('B8')
 
 
-def _dump_image(image_location, image_name):
+def _dump_image(image_location, image_name, media_path):
     image = requests.get(image_location)
     if image.status_code == 200:
-        with open(image_name, 'wb') as f:
+        with open(os.path.join(media_path, image_name), 'wb') as f:
             f.write(image.content)
     else:
         raise ClickException(f"Error obtaining image from {image_location}")
@@ -249,7 +247,7 @@ def _fill_param_row(ws, row_idx, param):
     )
 
 
-def _fill_media_row(ws, row_idx, media, location, product):
+def _fill_media_row(ws, row_idx, media, location, product, media_path):
     ws.cell(row_idx, 1, value=media['position'])
     ws.cell(row_idx, 2, value=media['id'])
     ws.cell(row_idx, 3, value='-')
@@ -257,7 +255,8 @@ def _fill_media_row(ws, row_idx, media, location, product):
     ws.cell(row_idx, 5, value=f'{media["id"]}.{media["thumbnail"].split(".")[-1]}')
     _dump_image(
         f'{location}{media["thumbnail"]}',
-        f'./{product}/media/{media["id"]}.{media["thumbnail"].split(".")[-1]}'
+        f'{media["id"]}.{media["thumbnail"].split(".")[-1]}',
+        media_path,
     )
     ws.cell(row_idx, 6, value='-' if media['type'] == 'image' else media['url'])
 
@@ -498,7 +497,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     print()
 
 
-def _dump_media(ws, client, product_id, silent, media_location):
+def _dump_media(ws, client, product_id, silent, media_location, media_path):
     _setup_ws_header(ws, 'media')
     row_idx = 2
 
@@ -521,7 +520,7 @@ def _dump_media(ws, client, product_id, silent, media_location):
     for media in medias:
         progress.set_description(f'Processing media {media["id"]}')
         progress.update(1)
-        _fill_media_row(ws, row_idx, media, media_location, product_id)
+        _fill_media_row(ws, row_idx, media, media_location, product_id, media_path)
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'D{row_idx}')
         row_idx += 1
@@ -797,8 +796,16 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def dump_product(api_url, api_key, product_id, output_file, silent):
-    output_path = os.path.join(os.getcwd(), product_id)
+def dump_product(api_url, api_key, product_id, output_file, silent, output_path=None):
+    if not output_path:
+        output_path = os.path.join(os.getcwd(), product_id)
+    else:
+        if not os.path.exists(output_path):
+            raise ClickException(
+                "Output Path does not exist"
+            )
+        output_path = os.path.join(output_path, product_id)
+
     media_path = os.path.join(output_path, 'media')
 
     if not output_file:
@@ -824,11 +831,19 @@ def dump_product(api_url, api_key, product_id, output_file, silent):
             product,
             media_location,
             client,
+            media_path,
         )
 
         _dump_capabilities(wb.create_sheet('Capabilities'), product, silent)
         _dump_external_static_links(wb.create_sheet('Embedding Static Resources'), product, silent)
-        _dump_media(wb.create_sheet('Media'), client, product_id, silent, media_location)
+        _dump_media(
+            wb.create_sheet('Media'),
+            client,
+            product_id,
+            silent,
+            media_location,
+            media_path,
+        )
         _dump_templates(wb.create_sheet('Templates'), client, product_id, silent)
         _dump_items(wb.create_sheet('Items'), client, product_id, silent)
         _dump_parameters(
