@@ -105,7 +105,6 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     for cat in categories_list:
         ws[f'AA{cat_row_idx}'].value = cat
         cat_row_idx += 1
-    categories_formula = ','.join(categories_list)
     categories_validation = DataValidation(
         type='list',
         formula1=f'{quote_sheetname("General Information")}!$AA$2:$AA${len(categories_list)}',
