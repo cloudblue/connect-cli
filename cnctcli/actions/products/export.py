@@ -14,6 +14,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import quote_sheetname
 
 from tqdm import trange
 import requests
@@ -99,10 +100,15 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     categories_list = [
         cat['name'] for cat in categories if cat['name'] not in unassignable_cat
     ]
+    ws['AA1'].value = 'Categories'
+    cat_row_idx = 2
+    for cat in categories_list:
+        ws[f'AA{cat_row_idx}'].value = cat
+        cat_row_idx += 1
     categories_formula = ','.join(categories_list)
     categories_validation = DataValidation(
         type='list',
-        formula1=f'"{categories_formula}"',
+        formula1=f'{quote_sheetname("General Information")}!$AA$2:$AA${len(categories_list)}',
         allow_blank=False,
     )
     ws.add_data_validation(categories_validation)
@@ -381,8 +387,10 @@ def _dump_actions(ws, client, product_id, silent):
         formula1='"asset,tier1,tier2"',
         allow_blank=False,
     )
-    ws.add_data_validation(action_validation)
-    ws.add_data_validation(scope_validation)
+
+    if count > 0:
+        ws.add_data_validation(action_validation)
+        ws.add_data_validation(scope_validation)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
@@ -411,10 +419,11 @@ def _dump_configuration(ws, client, product_id, silent):
         formula1='"-,update,delete"',
         allow_blank=False,
     )
-    ws.add_data_validation(action_validation)
 
     if count == 0:
         return
+
+    ws.add_data_validation(action_validation)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
@@ -513,8 +522,9 @@ def _dump_media(ws, client, product_id, silent, media_location, media_path):
         formula1='"image,video"',
         allow_blank=False,
     )
-    ws.add_data_validation(action_validation)
-    ws.add_data_validation(type_validation)
+    if count > 0:
+        ws.add_data_validation(action_validation)
+        ws.add_data_validation(type_validation)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     for media in medias:
@@ -545,8 +555,9 @@ def _dump_external_static_links(ws, product, silent):
         formula1='"Download,Documentation"',
         allow_blank=False,
     )
-    ws.add_data_validation(action_validation)
-    ws.add_data_validation(link_type)
+    if count > 0:
+        ws.add_data_validation(action_validation)
+        ws.add_data_validation(link_type)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
@@ -711,12 +722,14 @@ def _dump_templates(ws, client, product_id, silent):
         formula1='"fulfillment,inquire"',
         allow_blank=False,
     )
-    ws.add_data_validation(action_validation)
-    ws.add_data_validation(scope_validation)
-    ws.add_data_validation(type_validation)
 
     templates = client.products[product_id].templates.all()
     count = templates.count()
+
+    if count > 0:
+        ws.add_data_validation(action_validation)
+        ws.add_data_validation(scope_validation)
+        ws.add_data_validation(type_validation)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
