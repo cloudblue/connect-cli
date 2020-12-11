@@ -68,6 +68,7 @@ def cmd_list_products(config, query, page_size, always_continue):
     client = ConnectClient(
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
+        use_specs=False,
     )
 
     if acc_id.startswith('VA'):
@@ -162,7 +163,7 @@ def cmd_sync_products(config, input_file, yes):
     client = ConnectClient(
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
-        validate_using_specs=False,
+        use_specs=False,
     )
 
     synchronizer = GeneralSynchronizer(
@@ -458,7 +459,6 @@ def config_values_sync(client, config, input_file):
 
 
 def item_sync(client, config, input_file):
-
     synchronizer = ItemSynchronizer(
         client,
         config.silent,

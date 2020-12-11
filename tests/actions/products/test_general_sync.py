@@ -4,7 +4,7 @@ from cnct import ConnectClient
 from openpyxl import load_workbook
 
 import pytest
-
+import json
 
 GENERAL_ERROR = "Errors has been detected on General Information tab:"
 
@@ -259,3 +259,55 @@ def test_open(get_general_env):
     )
 
     assert product_id == 'PRD-276-377-545'
+
+
+def test_sync_409(get_general_env, mocked_responses):
+    get_general_env.save('./test.xlsx')
+    synchronizer = GeneralSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+    )
+    product_id = synchronizer.open(
+        './test.xlsx', 'General Information'
+    )
+
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/products/PRD-276-377-545',
+        status=409,
+    )
+
+    errors = synchronizer.sync()
+
+    assert product_id == 'PRD-276-377-545'
+    assert errors == ['Error while updating general product information: 409 Conflict']
+
+
+def test_sync(fs, get_general_env, mocked_responses):
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='PUT',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response),
+        )
+        get_general_env.save('./test.xlsx')
+        synchronizer = GeneralSynchronizer(
+            client=ConnectClient(
+                use_specs=False,
+                api_key='ApiKey SU:123',
+                endpoint='https://localhost/public/v1',
+            ),
+            silent=True,
+        )
+        product_id = synchronizer.open(
+            './test.xlsx', 'General Information'
+        )
+
+        errors = synchronizer.sync()
+
+        assert product_id == 'PRD-276-377-545'
+        assert errors == []

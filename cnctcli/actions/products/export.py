@@ -32,6 +32,9 @@ from cnct import ConnectClient, ClientError
 from cnct.rql import R
 
 
+DEFAULT_BAR_FORMAT = '{desc:<70.69}{percentage:3.0f}%|{bar:30}{r_bar}'
+
+
 def _setup_cover_sheet(ws, product, location, client):
     ws.title = 'General Information'
     ws.column_dimensions['A'].width = 50
@@ -382,7 +385,7 @@ def _dump_actions(ws, client, product_id, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(scope_validation)
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for action in actions:
         progress.set_description(f'Processing action {action["id"]}')
@@ -391,6 +394,9 @@ def _dump_actions(ws, client, product_id, silent):
         action_validation.add(f'C{row_idx}')
         scope_validation.add(f'G{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_configuration(ws, client, product_id, silent):
@@ -408,7 +414,10 @@ def _dump_configuration(ws, client, product_id, silent):
     )
     ws.add_data_validation(action_validation)
 
-    progress = trange(0, count, disable=silent)
+    if count == 0:
+        return
+
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
@@ -417,6 +426,9 @@ def _dump_configuration(ws, client, product_id, silent):
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_parameters(ws, client, product_id, param_type, silent):
@@ -465,7 +477,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     ws.add_data_validation(configuration_scope_validation)
     ws.add_data_validation(bool_validation)
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for param in params:
         progress.set_description(f'Processing {param_type} parameter {param["id"]}')
@@ -481,6 +493,9 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         bool_validation.add(f'J{row_idx}')
         bool_validation.add(f'K{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_media(ws, client, product_id, silent, media_location):
@@ -502,7 +517,7 @@ def _dump_media(ws, client, product_id, silent, media_location):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(type_validation)
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     for media in medias:
         progress.set_description(f'Processing media {media["id"]}')
         progress.update(1)
@@ -510,6 +525,9 @@ def _dump_media(ws, client, product_id, silent, media_location):
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'D{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_external_static_links(ws, product, silent):
@@ -531,7 +549,7 @@ def _dump_external_static_links(ws, product, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(link_type)
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     progress.set_description("Processing static links")
 
@@ -555,10 +573,13 @@ def _dump_external_static_links(ws, product, silent):
         link_type.add(f'A{row_idx}')
         row_idx += 1
 
+    progress.close()
+    print()
+
 
 def _dump_capabilities(ws, product, silent):
     _setup_ws_header(ws, 'capabilities')
-    progress = trange(0, 1, disable=silent)
+    progress = trange(0, 1, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     progress.set_description("Processing product capabilities")
     ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
@@ -607,6 +628,10 @@ def _dump_capabilities(ws, product, silent):
     disabled_enabled.add(ws['C4'])
     ws['A5'].value = 'Consumption reporting for Reservation Items'
     ws['B5'].value = '-'
+
+    progress.update(1)
+    progress.close()
+    print()
 
     def _get_reporting_consumption(reservation_cap):
         if 'consumption' in reservation_cap and reservation_cap['consumption']:
@@ -694,7 +719,7 @@ def _dump_templates(ws, client, product_id, silent):
     templates = client.products[product_id].templates.all()
     count = templates.count()
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for template in templates:
         progress.set_description(f'Processing template {template["id"]}')
@@ -705,6 +730,9 @@ def _dump_templates(ws, client, product_id, silent):
             scope_validation.add(f'D{row_idx}')
             type_validation.add(f'E{row_idx}')
             row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_items(ws, client, product_id, silent):
@@ -752,7 +780,7 @@ def _dump_items(ws, client, product_id, silent):
     ws.add_data_validation(precision_validation)
     ws.add_data_validation(commitment_validation)
 
-    progress = trange(0, count, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for item in items:
         progress.set_description(f'Processing item {item["id"]}')
@@ -764,6 +792,9 @@ def _dump_items(ws, client, product_id, silent):
         period_validation.add(f'I{row_idx}')
         commitment_validation.add(f'J{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent):

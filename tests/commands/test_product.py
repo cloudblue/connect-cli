@@ -2,15 +2,103 @@ from click.testing import CliRunner
 
 from cnctcli.ccli import cli
 from cnctcli.actions.products.export import dump_product
-
+import cnctcli
 from click import ClickException
 from openpyxl import load_workbook
 
+from cnctcli.config import Config
+
+from unittest.mock import patch
+
 import pytest
+import json
 import re
+import os
+
+
+def test_sync_general_sync(fs, get_general_env, mocked_responses):
+    fs.add_real_file('./tests/fixtures/units_response.json')
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile('/config.json') is True
+
+    with open('./tests/fixtures/units_response.json') as units_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/settings/units',
+            json=json.load(units_response)
+        )
+
+        with open('./tests/fixtures/product_response.json') as prod_response:
+            mocked_responses.add(
+                method='PUT',
+                url='https://localhost/public/v1/products/PRD-276-377-545',
+                json=json.load(prod_response),
+            )
+            get_general_env.save('./test.xlsx')
+
+            runner = CliRunner()
+            result = runner.invoke(
+                cli,
+                [
+                    '-c',
+                    '/',
+                    'product',
+                    'sync',
+                    '--yes',
+                    './test.xlsx',
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert 'Finished synchronization of tab from Excel workbook Configuration for product ' \
+                   'PRD-276-377-545' in result.output
+
+
+def test_list_products(fs, mocked_responses):
+    fs.add_real_file('./tests/fixtures/product_response.json')
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products',
+            json=[json.load(prod_response)]
+        )
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile('/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/',
+            'product',
+            'list',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "PRD-276-377-545 - My Produc" in result.output
 
 
 def test_export(config_mocker, mocker):
+
     mock = mocker.patch(
         'cnctcli.commands.product.dump_product',
         side_effect=lambda *args: 'PRD-000.xlsx',
