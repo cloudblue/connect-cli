@@ -32,6 +32,8 @@ PARAMS_COLS_HEADERS = {
     'J': 'Unique',
     'K': 'Hidden',
     'L': 'JSON Properties',
+    'M': 'Created',
+    'N': 'Modified',
 }
 
 MEDIA_COLS_HEADERS = {
@@ -51,7 +53,7 @@ CAPABILITIES_COLS_HEADERS = {
 
 STATIC_LINK_HEADERS = {
     'A': 'Type',
-    'B': 'Tile',
+    'B': 'Title',
     'C': 'Action',
     'D': 'Url',
 }
@@ -63,6 +65,8 @@ TEMPLATES_HEADERS = {
     'D': 'Scope',
     'E': 'Type',
     'F': 'Content',
+    'G': 'Created',
+    'H': 'Modified',
 }
 
 CONFIGURATION_HEADERS = {
@@ -70,9 +74,11 @@ CONFIGURATION_HEADERS = {
     'B': 'Parameter',
     'C': 'Scope',
     'D': 'Action',
-    'E': 'Item',
-    'F': 'Marketplace',
-    'G': 'Value',
+    'E': 'Item ID',
+    'F': 'Item Name',
+    'G': 'Marketplace ID',
+    'H': 'Marketplace Name',
+    'I': 'Value',
 }
 
 ACTIONS_HEADERS = {
@@ -82,7 +88,9 @@ ACTIONS_HEADERS = {
     'D': 'Name',
     'E': 'Title',
     'F': 'Description',
-    'G': 'Scope'
+    'G': 'Scope',
+    'H': 'Created',
+    'I': 'Modified',
 }
 
 
@@ -112,4 +120,16 @@ BILLING_PERIOD = (
     '3 years',
     '4 years',
     '5 years',
+)
+
+CAPABILITIES = (
+    'Pay-as-you-go support and schema',
+    'Pay-as-you-go dynamic items support',
+    'Pay-as-you-go future charges support',
+    'Consumption reporting for Reservation Items',
+    'Dynamic Validation of the Draft Requests',
+    'Dynamic Validation of the Inquiring Form',
+    'Reseller Authorization Level',
+    'Tier Accounts Sync',
+    'Administrative Hold',
 )

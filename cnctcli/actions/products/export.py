@@ -6,7 +6,6 @@
 import os
 import json
 from datetime import datetime
-from copy import deepcopy
 
 from click import ClickException
 from urllib import parse
@@ -19,7 +18,11 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from tqdm import trange
 import requests
 
-from cnctcli.actions.products.utils import get_col_limit_by_ws_type, get_col_headers_by_ws_type
+from cnctcli.actions.products.utils import (
+    get_col_limit_by_ws_type,
+    get_col_headers_by_ws_type,
+    get_json_object_for_param,
+)
 from cnctcli.actions.products.constants import PARAM_TYPES
 from cnctcli.api.utils import (
     format_http_status,
@@ -27,6 +30,9 @@ from cnctcli.api.utils import (
 )
 from cnct import ConnectClient, ClientError
 from cnct.rql import R
+
+
+DEFAULT_BAR_FORMAT = '{desc:<70.69}{percentage:3.0f}%|{bar:30}{r_bar}'
 
 
 def _setup_cover_sheet(ws, product, location, client):
@@ -41,10 +47,7 @@ def _setup_cover_sheet(ws, product, location, client):
     cell.value = 'Product information'
     for i in range(3, 13):
         ws[f'A{i}'].font = Font(sz=12)
-        if i < 9:
-            ws[f'B{i}'].font = Font(sz=12, bold=True)
-        else:
-            ws[f'B{i}'].font = Font(sz=12)
+        ws[f'B{i}'].font = Font(sz=12)
     ws['A3'].value = 'Account ID'
     ws['B3'].value = product['owner']['id']
     ws['A4'].value = 'Account Name'
@@ -94,17 +97,14 @@ def _setup_cover_sheet(ws, product, location, client):
     )
 
     categories = client.categories.all()
-    # Poping categories that does not apply due endpoint has not such filter
-    if 'Cloud Services' in categories:
-        categories.pop('Cloud Services')
-    if 'All Categories' in categories:
-        categories.pop('All Categories')
-
-    categories_list = [cat['name'] for cat in categories]
+    unassignable_cat = ['Cloud Services', 'All Categories']
+    categories_list = [
+        cat['name'] for cat in categories if cat['name'] not in unassignable_cat
+    ]
     categories_formula = ','.join(categories_list)
     categories_validation = DataValidation(
         type='list',
-        formula1=f'"-,{categories_formula}"',
+        formula1=f'"{categories_formula}"',
         allow_blank=False,
     )
     ws.add_data_validation(categories_validation)
@@ -231,28 +231,22 @@ def _fill_param_row(ws, row_idx, param):
     )
     ws.cell(
         row_idx, 12,
-        value=_get_json_object_for_param(param),
+        value=get_json_object_for_param(param),
     ).alignment = Alignment(
         wrap_text=True,
     )
-
-
-def _get_json_object_for_param(original_param):
-    param = deepcopy(original_param)
-    del param['id']
-    del param['name']
-    del param['title']
-    del param['description']
-    del param['phase']
-    del param['scope']
-    del param['type']
-    del param['constraints']['required']
-    del param['constraints']['unique']
-    del param['constraints']['hidden']
-    del param['position']
-    del param['events']
-
-    return json.dumps(param, indent=4, sort_keys=True)
+    ws.cell(
+        row_idx, 13, value=param['events']['created']['at']
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
+    ws.cell(
+        row_idx, 14, value=param['events'].get('updated', {}).get('at')
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
 
 
 def _fill_media_row(ws, row_idx, media, location, product):
@@ -292,6 +286,16 @@ def _fill_template_row(ws, row_idx, template):
     ws.cell(row_idx, 6, value=template['body']).alignment = Alignment(
         wrap_text=True,
     )
+    ws.cell(row_idx, 7, value=template['events']['created']['at']).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
+    ws.cell(
+        row_idx, 8, value=template['events'].get('updated', {}).get('at')
+    ).alignment = Alignment(
+        horizontal='left',
+        vertical='top',
+    )
 
 
 def _fill_action_row(ws, row_idx, action):
@@ -302,6 +306,8 @@ def _fill_action_row(ws, row_idx, action):
     ws.cell(row_idx, 5, value=action['title'])
     ws.cell(row_idx, 6, value=action['description'])
     ws.cell(row_idx, 7, value=action['scope'])
+    ws.cell(row_idx, 8, value=action['events']['created']['at'])
+    ws.cell(row_idx, 9, value=action['events'].get('updated', {}).get('at'))
 
 
 def _fill_configuration_row(ws, row_idx, configuration, conf_id):
@@ -310,15 +316,18 @@ def _fill_configuration_row(ws, row_idx, configuration, conf_id):
     ws.cell(row_idx, 3, value=configuration['parameter']['scope'])
     ws.cell(row_idx, 4, value='-')
     ws.cell(row_idx, 5, value=configuration['item']['id'] if 'item' in configuration else '-')
-    ws.cell(row_idx, 6, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
+    ws.cell(row_idx, 6, value=configuration['item']['name'] if 'item' in configuration else '-')
+    ws.cell(row_idx, 7, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
+    ws.cell(row_idx, 8,
+            value=configuration['marketplace']['name'] if 'marketplace' in configuration else '-')
     if 'structured_value' in configuration:
         value = json.loads(configuration['structured_value'])
         value = json.dumps(value, indent=4, sort_keys=True)
-        ws.cell(row_idx, 7, value=value).alignment = Alignment(wrap_text=True)
+        ws.cell(row_idx, 9, value=value).alignment = Alignment(wrap_text=True)
     elif 'value' in configuration:
-        ws.cell(row_idx, 7, value=configuration['value'])
+        ws.cell(row_idx, 9, value=configuration['value'])
     else:
-        ws.cell(row_idx, 7, value='-')
+        ws.cell(row_idx, 9, value='-')
 
 
 def _fill_item_row(ws, row_idx, item):
@@ -376,7 +385,7 @@ def _dump_actions(ws, client, product_id, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(scope_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for action in actions:
         progress.set_description(f'Processing action {action["id"]}')
@@ -385,6 +394,9 @@ def _dump_actions(ws, client, product_id, silent):
         action_validation.add(f'C{row_idx}')
         scope_validation.add(f'G{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_configuration(ws, client, product_id, silent):
@@ -397,12 +409,15 @@ def _dump_configuration(ws, client, product_id, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,update,delete"',
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    if count == 0:
+        return
+
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
@@ -411,6 +426,9 @@ def _dump_configuration(ws, client, product_id, silent):
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_parameters(ws, client, product_id, param_type, silent):
@@ -438,11 +456,6 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         ),
         allow_blank=False,
     )
-    phase_validation = DataValidation(
-        type='list',
-        formula1='"ordering,fulfillment,configuration"',
-        allow_blank=False,
-    )
     ordering_fulfillment_scope_validation = DataValidation(
         type='list',
         formula1='"asset,tier1,tier2"',
@@ -460,20 +473,18 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     )
     ws.add_data_validation(action_validation)
     ws.add_data_validation(type_validation)
-    ws.add_data_validation(phase_validation)
     ws.add_data_validation(ordering_fulfillment_scope_validation)
     ws.add_data_validation(configuration_scope_validation)
     ws.add_data_validation(bool_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for param in params:
         progress.set_description(f'Processing {param_type} parameter {param["id"]}')
         progress.update(1)
         _fill_param_row(ws, row_idx, param)
         action_validation.add(f'C{row_idx}')
-        phase_validation.add(f'F{row_idx}')
-        if param['scope'] == 'configuration':
+        if param['phase'] == 'configuration':
             configuration_scope_validation.add(f'G{row_idx}')
         else:
             ordering_fulfillment_scope_validation.add(f'G{row_idx}')
@@ -482,6 +493,9 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         bool_validation.add(f'J{row_idx}')
         bool_validation.add(f'K{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_media(ws, client, product_id, silent, media_location):
@@ -503,7 +517,7 @@ def _dump_media(ws, client, product_id, silent, media_location):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(type_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     for media in medias:
         progress.set_description(f'Processing media {media["id"]}')
         progress.update(1)
@@ -511,6 +525,9 @@ def _dump_media(ws, client, product_id, silent, media_location):
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'D{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_external_static_links(ws, product, silent):
@@ -521,7 +538,7 @@ def _dump_external_static_links(ws, product, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,create,delete"',
         allow_blank=False,
     )
     link_type = DataValidation(
@@ -532,7 +549,7 @@ def _dump_external_static_links(ws, product, silent):
     ws.add_data_validation(action_validation)
     ws.add_data_validation(link_type)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     progress.set_description("Processing static links")
 
@@ -556,10 +573,13 @@ def _dump_external_static_links(ws, product, silent):
         link_type.add(f'A{row_idx}')
         row_idx += 1
 
+    progress.close()
+    print()
+
 
 def _dump_capabilities(ws, product, silent):
     _setup_ws_header(ws, 'capabilities')
-    progress = trange(0, 1, position=0, disable=silent)
+    progress = trange(0, 1, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     progress.set_description("Processing product capabilities")
     ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
@@ -567,7 +587,7 @@ def _dump_capabilities(ws, product, silent):
 
     action_validation = DataValidation(
         type='list',
-        formula1='"-,create,update,delete"',
+        formula1='"-,update"',
         allow_blank=False,
     )
     ppu_validation = DataValidation(
@@ -608,6 +628,10 @@ def _dump_capabilities(ws, product, silent):
     disabled_enabled.add(ws['C4'])
     ws['A5'].value = 'Consumption reporting for Reservation Items'
     ws['B5'].value = '-'
+
+    progress.update(1)
+    progress.close()
+    print()
 
     def _get_reporting_consumption(reservation_cap):
         if 'consumption' in reservation_cap and reservation_cap['consumption']:
@@ -695,7 +719,7 @@ def _dump_templates(ws, client, product_id, silent):
     templates = client.products[product_id].templates.all()
     count = templates.count()
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for template in templates:
         progress.set_description(f'Processing template {template["id"]}')
@@ -706,6 +730,9 @@ def _dump_templates(ws, client, product_id, silent):
             scope_validation.add(f'D{row_idx}')
             type_validation.add(f'E{row_idx}')
             row_idx += 1
+
+    progress.close()
+    print()
 
 
 def _dump_items(ws, client, product_id, silent):
@@ -753,7 +780,7 @@ def _dump_items(ws, client, product_id, silent):
     ws.add_data_validation(precision_validation)
     ws.add_data_validation(commitment_validation)
 
-    progress = trange(0, count, position=0, disable=silent)
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
 
     for item in items:
         progress.set_description(f'Processing item {item["id"]}')
@@ -765,6 +792,9 @@ def _dump_items(ws, client, product_id, silent):
         period_validation.add(f'I{row_idx}')
         commitment_validation.add(f'J{row_idx}')
         row_idx += 1
+
+    progress.close()
+    print()
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent):
