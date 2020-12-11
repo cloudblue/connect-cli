@@ -13,6 +13,7 @@ from cnctcli.actions.products.constants import (
     COMMITMENT,
     ITEMS_COLS_HEADERS,
     PRECISIONS,
+    DEFAULT_BAR_FORMAT,
 )
 from cnctcli.api.products import (
     create_item,
@@ -42,7 +43,9 @@ class ItemSynchronizer(ProductSynchronizer):
         updated_items = []
         deleted_items = []
 
-        row_indexes = trange(2, ws.max_row + 1, position=0, disable=self._silent)
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
         for row_idx in row_indexes:
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 14)])
             row_indexes.set_description(f'Processing item {data.id or data.mpn}')

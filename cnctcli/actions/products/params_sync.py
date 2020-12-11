@@ -11,6 +11,7 @@ from cnctcli.actions.products.sync import ProductSynchronizer
 from cnctcli.actions.products.constants import (
     PARAM_TYPES,
     PARAMS_COLS_HEADERS,
+    DEFAULT_BAR_FORMAT,
 )
 from cnctcli.actions.products.utils import get_json_object_for_param, ParamSwitchNotSupported
 from cnct import ClientError
@@ -50,7 +51,9 @@ class ParamsSynchronizer(ProductSynchronizer):
         updated_items = []
         deleted_items = []
 
-        row_indexes = trange(2, ws.max_row + 1, position=0, disable=self._silent)
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
         for row_idx in row_indexes:
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 15)])
             row_indexes.set_description(f'Processing param {data.id}')

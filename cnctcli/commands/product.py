@@ -16,10 +16,11 @@ from cnctcli.actions.products import (
     ConfigurationValuesSynchronizer,
     MediaSynchronizer,
     dump_product,
+    ProductCloner,
 )
 from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
-from cnct import ConnectClient
+from cnct import ConnectClient, ClientError
 from cnct.rql import R
 from cnctcli.actions.products.utils import SheetNotFoundError
 
@@ -101,10 +102,17 @@ def cmd_list_products(config, query, page_size, always_continue):
     '-o',
     'output_file',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
-    help='Path to the output Excel file.'
+    help='Output Excel file name.'
+)
+@click.option(
+    '--output_path',
+    '-p',
+    'output_path',
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Directory where to store the export'
 )
 @pass_config
-def cmd_dump_products(config, product_id, output_file):
+def cmd_dump_products(config, product_id, output_file, output_path):
     config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
@@ -121,6 +129,7 @@ def cmd_dump_products(config, product_id, output_file):
         product_id,
         output_file,
         config.silent,
+        output_path,
     )
     if not config.silent:
         click.echo(
@@ -284,6 +293,155 @@ def cmd_sync_products(config, input_file, yes):
                 )
             )
     print_finished_task('Configuration', product_id, config.silent)
+
+
+@grp_product.command(
+    name='clone',
+    short_help='Clone a product',
+)
+
+@click.argument('source_product_id', metavar='product_id', nargs=1, required=True)  # noqa: E304
+@click.option(
+    '--source_account',
+    '-s',
+    'source_account',
+    help='Source account ID'
+)
+@click.option(
+    '--destination_account',
+    '-d',
+    'destination_account',
+    help='Destination account ID'
+)
+@click.option(
+    '--new-product-name',
+    '-n',
+    'name',
+    help='Cloned product name'
+)
+@click.option(  # noqa: E304
+    '--yes',
+    '-y',
+    'yes',
+    is_flag=True,
+    help='Answer yes to all questions.'
+)
+@pass_config
+def cmd_clone_products(config, source_product_id, source_account, destination_account, name, yes):
+    if name and len(name) > 32:
+        click.echo(
+            click.style(
+                f'New product name can not exceed 32 chracters, provided as name{name}',
+                fg='red',
+            )
+        )
+        exit(-1)
+    if destination_account:
+        config.activate(destination_account)
+        config.validate()
+    else:
+        destination_account = config.active.id
+
+    if source_account:
+        config.activate(source_account)
+        config.validate()
+    else:
+        source_account = config.active.id
+
+    config.validate()
+
+    acc_id = config.active.id
+    acc_name = config.active.name
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Current active account: {acc_id} - {acc_name}\n',
+                fg='blue',
+            )
+        )
+
+    client = ConnectClient(
+        api_key=config.active.api_key,
+        endpoint=config.active.endpoint,
+        use_specs=False,
+    )
+
+    if not yes:
+        click.confirm(
+            'Are you sure you want to Clone '
+            f'the product {source_product_id} ?',
+            abort=True,
+        )
+        click.echo('')
+
+    try:
+        client.products[source_product_id].get()
+    except ClientError:
+        click.echo(
+            click.style(
+                f'Product {source_product_id} does not exist',
+                fg='red',
+            )
+        )
+        exit(-1)
+
+    synchronizer = ProductCloner(
+        config=config,
+        source_account=source_account,
+        destination_account=destination_account,
+        product_id=source_product_id,
+
+    )
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Dumping Product {synchronizer.product_id} from account '
+                f'{synchronizer.source_account}\n',
+                fg='blue',
+            )
+        )
+
+    synchronizer.dump()
+    synchronizer.load_wb()
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Creating new Product on account {synchronizer.destination_account}',
+                fg='blue',
+            )
+        )
+
+    synchronizer.create_product(name=name)
+    synchronizer.clean_wb()
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                'Injecting Product information',
+                fg='blue',
+            )
+        )
+
+    synchronizer.inject()
+
+    if not config.silent:
+        click.echo(
+            click.style(
+                f'Finished cloning product {source_product_id} from account '
+                f'{synchronizer.source_account} to {synchronizer.destination_account}\n',
+                fg='green'
+            )
+        )
+
+        click.echo(
+            click.style(
+                f'New product id {synchronizer.destination_product}',
+                fg='green'
+            )
+        )
 
 
 def param_task(client, config, input_file, product_id, param_type):

@@ -9,8 +9,10 @@ from tqdm import trange
 
 from cnctcli.actions.products.sync import ProductSynchronizer
 from cnctcli.actions.products.constants import (
-    ACTIONS_HEADERS
+    ACTIONS_HEADERS,
+    DEFAULT_BAR_FORMAT,
 )
+
 
 from cnct import ClientError
 
@@ -30,7 +32,9 @@ class ActionsSynchronizer(ProductSynchronizer):
         created_items = []
         updated_items = []
         deleted_items = []
-        row_indexes = trange(2, ws.max_row + 1, position=0, disable=self._silent)
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
         for row_idx in row_indexes:
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 10)])
             row_indexes.set_description(f'Processing action {data.verbose_id or data.id}')
