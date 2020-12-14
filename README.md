@@ -47,7 +47,7 @@ To install under Mac OS X:
 
 To install under Windows
 
-Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_windows_amd64.tar.gz), extract it and place it in a folder that is included in your `path` system variable.
+Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.11/connect-cli_21.11_windows_amd64.zip), extract it and place it in a folder that is included in your `path` system variable.
 
 
 ## Usage
