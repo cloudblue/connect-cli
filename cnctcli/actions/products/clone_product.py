@@ -83,12 +83,12 @@ class ProductCloner:
             synchronizer.open(input_file, 'Templates')
             synchronizer.sync()
 
-            try:
-                for template in sample_templates:
+            for template in sample_templates:
+                try:
                     client.products[product_id].templates[template].delete()
-            except ClientError:
-                # done intentionally till fulfillment in progress template not on public api
-                pass
+                except ClientError:
+                    # done intentionally till fulfillment in progress template not on public api
+                    pass
 
             clickecho('\n')
             synchronizer = ParamsSynchronizer(

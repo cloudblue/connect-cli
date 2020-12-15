@@ -43,11 +43,12 @@ class TemplatesSynchronizer(ProductSynchronizer):
                 continue
             template_data = {
                 'name': data.title,
-                'title': data.title,
                 'scope': data.scope,
+                'body': data.content,
                 'type': data.type,
-                'body': data.content
             }
+            if data.scope == 'asset':
+                template_data['title'] = data.title
             if data.action == 'create':
                 row_indexes.set_description(f"Creating template {data[1]}")
                 try:
