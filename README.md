@@ -28,7 +28,7 @@ You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/r
 To install under linux:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_linux_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.12/connect-cli_21.12_linux_amd64.tar.gz
     $ tar xvfz connect-cli_21.3_linux_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
@@ -36,7 +36,7 @@ To install under linux:
 To install under Mac OS X:
 
 ```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.3/connect-cli_21.3_osx_amd64.tar.gz
+    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/21.12/connect-cli_21.12_osx_amd64.tar.gz
     $ tar xvfz connect-cli_21.3_osx_amd64.tar.gz
     $ sudo cp dist/ccli /usr/local/bin/ccli
 ```
@@ -47,7 +47,7 @@ To install under Mac OS X:
 
 To install under Windows
 
-Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.11/connect-cli_21.11_windows_amd64.zip), extract it and place it in a folder that is included in your `path` system variable.
+Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/21.12/connect-cli_21.12_windows_amd64.zip), extract it and place it in a folder that is included in your `path` system variable.
 
 
 ## Usage
@@ -115,7 +115,7 @@ This command will generate a excel file named PRD-000-000-000.xlsx in the curren
 To synchronize a product from Excel run:
 
 ```
-    $ ccli product sync PRD-000-000-000.xlsx
+    $ ccli product sync PRD-000-000-000
 ```
 
 
