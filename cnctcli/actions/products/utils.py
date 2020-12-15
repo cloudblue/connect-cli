@@ -82,7 +82,7 @@ def cleanup_product_for_update(product):
     if product['capabilities']['subscription'] and 'schema' in product['capabilities']['subscription']:
         del product['capabilities']['subscription']['schema']
     if product['capabilities']['ppu'] and 'predictive' in product['capabilities']['ppu']:
-        product['capabilities']['ppu']['predictive']
+        del product['capabilities']['ppu']['predictive']
     return product
 
 
