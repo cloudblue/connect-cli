@@ -283,7 +283,9 @@ def _fill_template_row(ws, row_idx, template):
         horizontal='left',
         vertical='top',
     )
-    ws.cell(row_idx, 5, value=template['type']).alignment = Alignment(
+    ws.cell(
+        row_idx, 5, value=template['type'] if 'type' in template else 'fulfillment'
+    ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
@@ -626,13 +628,13 @@ def _dump_capabilities(ws, product, silent):
     ws['A3'].value = 'Pay-as-you-go dynamic items support'
     ws['B3'].value = '-'
     ws['C3'].value = (
-        ppu['dynamic'] if ppu and 'dynamic' in ppu else 'Disabled'
+        'Enabled' if ppu and 'dynamic' in ppu and ppu['dynamic'] else 'Disabled'
     )
     disabled_enabled.add(ws['C3'])
     ws['A4'].value = 'Pay-as-you-go future charges support'
     ws['B4'].value = '-'
     ws['C4'].value = (
-        ppu['future'] if ppu and 'future' in ppu else 'Disabled'
+        'Enabled' if ppu and 'future' in ppu and ppu['future'] else 'Disabled'
     )
     disabled_enabled.add(ws['C4'])
     ws['A5'].value = 'Consumption reporting for Reservation Items'
@@ -735,12 +737,12 @@ def _dump_templates(ws, client, product_id, silent):
     for template in templates:
         progress.set_description(f'Processing template {template["id"]}')
         progress.update(1)
-        if 'type' in template:
-            _fill_template_row(ws, row_idx, template)
-            action_validation.add(f'C{row_idx}')
-            scope_validation.add(f'D{row_idx}')
-            type_validation.add(f'E{row_idx}')
-            row_idx += 1
+
+        _fill_template_row(ws, row_idx, template)
+        action_validation.add(f'C{row_idx}')
+        scope_validation.add(f'D{row_idx}')
+        type_validation.add(f'E{row_idx}')
+        row_idx += 1
 
     progress.close()
     print()
