@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from datetime import datetime
 from importlib import import_module
@@ -8,8 +9,11 @@ import click
 
 from cnct import R
 from interrogatio import dialogus
+from tqdm import tqdm
 
 from openpyxl import load_workbook
+
+from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
 
 
 def get_report_entrypoint(func_fqn):
@@ -57,7 +61,6 @@ def get_report_inputs(client, parameters):
                     ],
                 }
             )
-    click.echo(questions)
     answers = dialogus(
         questions,
         'Enter your report parameters',
@@ -82,7 +85,6 @@ def get_report_inputs(client, parameters):
 def execute_report(client, reports_dir, report, output_file):
     sys.path.append(reports_dir)
     entrypoint = get_report_entrypoint(report['entrypoint'])
-    click.echo(f'Entrypoint {entrypoint}')
     inputs = get_report_inputs(client, report['parameters'])
 
     template_workbook = load_workbook(
@@ -97,8 +99,29 @@ def execute_report(client, reports_dir, report, output_file):
     row_idx = report['start_row']
     start_col_idx = report['start_col']
 
-    for row in entrypoint(client, inputs, lambda p, m: None):
+    class Progress:
+        def __init__(self):
+            self.progress = None
+
+        def close(self):
+            if self.progress:
+                self.progress.close()
+
+        def progress_update(self, value, max_value):
+            if not self.progress:
+                self.progress = tqdm(
+                    desc=f'Processing report {report["name"]}...',
+                    total=max_value,
+                    leave=True,
+                    bar_format=DEFAULT_BAR_FORMAT,
+                )
+            self.progress.update(value)
+
+    progress = Progress()
+
+    for row in entrypoint(client, inputs, progress.progress_update):
         for col_idx, cell_value in enumerate(row, start=start_col_idx):
             ws.cell(row_idx, col_idx, value=cell_value)
 
     template_workbook.save(output_file)
+    progress.close()
