@@ -79,7 +79,7 @@ def product_list(config, client, param):
         default_query = R().visibility.owner.eq(True) & R().version.null(True)
     else:
         default_query = R().visibility.listing.eq(True) | R().visibility.syndication.eq(True)
-    products = client.products.filter(default_query)
+    products = client.products.filter(default_query).order_by('name')
     return {
         'name': param['id'],
         'type': 'selectmany',
