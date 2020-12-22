@@ -103,8 +103,6 @@ def execute_report(config, reports_dir, report, output_file):
     sys.path.append(reports_dir)
     validate_report_definition(report, reports_dir)
 
-
-
     client = ConnectClient(
         config.active.api_key,
         endpoint=config.active.endpoint,
@@ -163,7 +161,7 @@ def add_info_sheet(ws, config, report, report_values, start_time):
     ws['A1'].fill = PatternFill('solid', start_color=Color('1565C0'))
     ws['A1'].font = Font(sz=24, color=WHITE)
     ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-    for i in range (2,9):
+    for i in range(2, 9):
         ws[f'A{i}'].alignment = Alignment(
             horizontal='left',
             vertical='top',

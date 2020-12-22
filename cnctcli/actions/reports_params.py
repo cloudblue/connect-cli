@@ -15,7 +15,7 @@ def required_validator(param, validators=None):
 
 def date_range(param):
 
-    date_validator = [RegexValidator('\d{4}-\d{2}-\d{2}', 'Introduced date is invalid')]
+    date_validator = [RegexValidator('\\d{4}-\\d{2}-\\d{2}', 'Introduced date is invalid')]
 
     return [
         {
@@ -86,7 +86,7 @@ def product_list(config, client, param):
         'message': f'{param["name"]}',
         'question_mark': '',
         'values': [
-            ( p['id'], p['name'])
+            (p['id'], p['name'])
             for p in products
         ],
         'validators': required_validator(param),
