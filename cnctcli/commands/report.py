@@ -5,9 +5,7 @@ from datetime import datetime
 import click
 from click import ClickException
 
-from cnct import ConnectClient
-
-from cnctcli.actions.reports import execute_report
+from cnctcli.actions.reports import execute_report, validate_report_json
 from cnctcli.config import pass_config
 
 
@@ -25,7 +23,12 @@ def grp_report():
     '--reports-dir',
     '-d',
     'reports_dir',
-    default=os.getcwd(),
+    default=os.path.join(
+        os.getcwd(),
+        'cnctcli',
+        'reports',
+        'connect-reports'
+    ),
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Report project root directory.'
 )
@@ -46,14 +49,8 @@ def cmd_execute_report(config, report_id, reports_dir, output_file):
                 report_date=datetime.now().strftime('%Y%m%d_%H%M'),
             )
         )
-    descriptor = os.path.join(
-        reports_dir,
-        'reports.json',
-    )
-    if not os.path.exists(descriptor):
-        raise ClickException(f'The directory {reports_dir} is not a report project root directory.')
 
-    reports = json.load(open(descriptor, 'r'))
+    reports = load_reports(reports_dir)
 
     current_report = None
     for report in reports['reports']:
@@ -64,9 +61,58 @@ def cmd_execute_report(config, report_id, reports_dir, output_file):
     if not current_report:
         raise ClickException(f'No report with id {report_id} has been found.')
 
-    client = ConnectClient(
-        config.active.api_key,
-        endpoint=config.active.endpoint,
-        use_specs=False,
+    execute_report(config, reports_dir, report, output_file)
+
+
+@grp_report.command(
+    name='list',
+    short_help='list available reports',
+)
+@click.option(
+    '--reports-dir',
+    '-d',
+    'reports_dir',
+    default=os.path.join(
+        os.getcwd(),
+        'cnctcli',
+        'reports',
+        'connect-reports'
+    ),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Report project root directory. Do not specify for listing default reports'
+)
+def cmd_list_reports(reports_dir):
+    reports = load_reports(reports_dir)
+    if 'reports' in reports and len(reports["reports"]) > 0:
+        click.echo(f'{reports["name"]} version {reports["version"]}')
+        click.echo(f'{reports["description"]}')
+        click.echo('\n')
+        for report in reports["reports"]:
+            click.echo(
+                click.style(
+                    f'ID: {report["id"]} - {report["name"]}',
+                    fg='green'
+                )
+            )
+            click.echo(f'\t{report["description"]}')
+    else:
+        click.echo(
+            click.style(
+                f'No reports found in {reports_dir}',
+                fg='magenta',
+            ),
+        )
+
+
+def load_reports(reports_dir):
+    descriptor = os.path.join(
+        reports_dir,
+        'reports.json',
     )
-    execute_report(client, reports_dir, report, output_file)
+    if not os.path.exists(descriptor):
+        raise ClickException(f'The directory {reports_dir} is not a report project root directory.')
+
+    reports = json.load(open(descriptor, 'r'))
+    validate_report_json(reports, reports_dir)
+
+    return reports
