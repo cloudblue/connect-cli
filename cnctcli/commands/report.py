@@ -7,7 +7,7 @@ from click import ClickException
 
 from cnctcli.actions.reports import execute_report, validate_report_json
 from cnctcli.config import pass_config
-
+from cmr import render
 
 @click.group(name='report', short_help='commands related to report management')
 def grp_report():
@@ -84,17 +84,58 @@ def cmd_execute_report(config, report_id, reports_dir, output_file):
 def cmd_list_reports(reports_dir):
     reports = load_reports(reports_dir)
     if 'reports' in reports and len(reports["reports"]) > 0:
+        click.echo(f'{"*" * 60}\n')
         click.echo(f'{reports["name"]} version {reports["version"]}')
-        click.echo(f'{reports["description"]}')
-        click.echo('\n')
+        click.echo(f'{render(reports["description"])}')
+        click.echo(f'{"*" * 60}')
+        click.echo('\nList of available reports:\n')
         for report in reports["reports"]:
             click.echo(
                 click.style(
-                    f'ID: {report["id"]} - {report["name"]}',
-                    fg='green'
+                    f'Report ID: {report["id"]} - Report name: {report["name"]}',
+                    fg='green',
                 )
             )
-            click.echo(f'\t{report["description"]}')
+    else:
+        click.echo(
+            click.style(
+                f'No reports found in {reports_dir}',
+                fg='magenta',
+            ),
+        )
+
+@grp_report.command(
+    name='info',
+    short_help='Get additional information for a given report',
+)
+@click.argument('report_id', metavar='REPORT_ID', nargs=1, required=True)
+@click.option(
+    '--reports-dir',
+    '-d',
+    'reports_dir',
+    default=os.path.join(
+        os.getcwd(),
+        'cnctcli',
+        'reports',
+        'connect-reports'
+    ),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Report project root directory. Do not specify for listing default reports'
+)
+def get_report_info(report_id, reports_dir):
+    reports = load_reports(reports_dir)
+    if 'reports' in reports and len(reports["reports"]) > 0:
+        for report in reports["reports"]:
+            if report['id'] == report_id:
+                click.echo(f'{"*" * 60}\n')
+                click.echo(
+                    click.style(
+                        f'Report ID: {report["id"]}\nReport name: {report["name"]}\n',
+                        fg='green',
+                    )
+                )
+                click.echo(f'{"*" * 60}\n')
+                click.echo(f'{render(report["description"])}')
     else:
         click.echo(
             click.style(

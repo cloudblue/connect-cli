@@ -7,3 +7,4 @@ requests>=2.25.0
 requests_toolbelt>=0.9.1
 fs>=2.4.11
 interrogatio>=1.0.0b9
+connect-markdown-renderer>=1.0.1
