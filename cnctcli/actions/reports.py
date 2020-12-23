@@ -183,7 +183,7 @@ def add_info_sheet(ws, config, report, report_values, start_time):
     ws['A1'].fill = PatternFill('solid', start_color=Color('1565C0'))
     ws['A1'].font = Font(sz=24, color=WHITE)
     ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-    for i in range(2, 9):
+    for i in range(2, 10):
         ws[f'A{i}'].alignment = Alignment(
             horizontal='left',
             vertical='top',
@@ -194,21 +194,23 @@ def add_info_sheet(ws, config, report, report_values, start_time):
         )
     ws['A2'].value = "Report Start time"
     ws['B2'].value = start_time
-    ws['A3'].value = "Account ID"
-    ws['B3'].value = config.active.id
-    ws['A4'].value = "Account Name"
-    ws['B4'].value = config.active.name
-    ws['A5'].value = "Report ID"
-    ws['B5'].value = report['id']
-    ws['A6'].value = "Report Name"
-    ws['B6'].value = report['name']
-    ws['A7'].value = "Report Description"
-    ws['B7'].value = report['description']
-    ws['A8'].value = "Runtime environment"
-    ws['B8'].value = "CLI Tool"
-    ws['A9'].value = "Report execution paramters"
-    ws['B9'].value = json.dumps(report_values, indent=4, sort_keys=True)
-    ws['B9'].alignment = Alignment(
+    ws['A3'].value = "Report Finish time"
+    ws['B3'].value = datetime.now().isoformat()
+    ws['A4'].value = "Account ID"
+    ws['B4'].value = config.active.id
+    ws['A5'].value = "Account Name"
+    ws['B5'].value = config.active.name
+    ws['A6'].value = "Report ID"
+    ws['B6'].value = report['id']
+    ws['A7'].value = "Report Name"
+    ws['B7'].value = report['name']
+    ws['A8'].value = "Report Description"
+    ws['B8'].value = report['description']
+    ws['A9'].value = "Runtime environment"
+    ws['B9'].value = "CLI Tool"
+    ws['A10'].value = "Report execution paramters"
+    ws['B10'].value = json.dumps(report_values, indent=4, sort_keys=True)
+    ws['B10'].alignment = Alignment(
         horizontal='left',
         vertical='top',
         wrap_text=True,
