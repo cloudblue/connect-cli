@@ -28,6 +28,8 @@ from cnctcli.actions.reports_params import (
     connection_type,
 )
 
+from cnct import ClientError
+
 
 def get_report_entrypoint(func_fqn):
     module_name, func_name = func_fqn.rsplit('.', 1)
@@ -103,6 +105,16 @@ def execute_report(config, reports_dir, report, output_file):
     sys.path.append(reports_dir)
     validate_report_definition(report, reports_dir)
 
+    if config.active.id.startswith('VA') and 'vendor' not in report['audience']:
+        raise ClickException(
+            "This report is not expected to be executed on vendor accounts"
+        )
+
+    if config.active.id.startswith('PA') and 'provider' not in report['audience']:
+        raise ClickException(
+            "This report is not expected to be executed on provider accounts"
+        )
+
     client = ConnectClient(
         config.active.api_key,
         endpoint=config.active.endpoint,
@@ -144,10 +156,20 @@ def execute_report(config, reports_dir, report, output_file):
     progress = Progress()
 
     start_time = datetime.now().isoformat()
-    for row in entrypoint(client, inputs, progress):
-        for col_idx, cell_value in enumerate(row, start=start_col_idx):
-            ws.cell(row_idx, col_idx, value=cell_value)
-        row_idx += 1
+    try:
+        for row in entrypoint(client, inputs, progress):
+            for col_idx, cell_value in enumerate(row, start=start_col_idx):
+                ws.cell(row_idx, col_idx, value=cell_value)
+            row_idx += 1
+    except ClientError as e:
+        raise ClickException(
+            f'Error returned by Connect when executing the report: {str(e)}'
+        )
+    except Exception as e:
+        raise ClickException(
+            f'Unknown error while executing the report: {str(e)}'
+        )
+
     add_info_sheet(template_workbook.create_sheet('Info'), config, report, inputs, start_time)
     template_workbook.save(output_file)
     progress.close()
@@ -216,12 +238,18 @@ def validate_report_definition(definition, reports_dir):
         'start_row',
         'start_col',
         'entrypoint',
+        'report_spec',
+        'audience',
     ]
     for required_prop in required_properties:
         if required_prop not in definition:
             raise ClickException(
                 f'Property {required_prop} not found for report {definition["id"]}'
             )
+    if definition['report_spec'] != 1:
+        raise ClickException(
+            'Supported report specification by Connect CLI tool is 1'
+        )
     if 'parameters' not in definition:
         raise ClickException(
             f'Missing parameters list for report {definition["id"]}'
