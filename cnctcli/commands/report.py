@@ -5,7 +5,13 @@ from datetime import datetime
 import click
 from click import ClickException
 
-from cnctcli.actions.reports import execute_report, validate_report_json
+from cnctcli.actions.reports import (
+    execute_report,
+    validate_report_json,
+    get_report_id,
+    get_report_description,
+)
+
 from cnctcli.config import pass_config
 from cmr import render
 
@@ -87,7 +93,8 @@ def cmd_list_reports(reports_dir):
     if 'reports' in reports and len(reports["reports"]) > 0:
         click.echo(f'{"*" * 60}\n')
         click.echo(f'{reports["name"]} version {reports["version"]}')
-        click.echo(f'{render(reports["description"])}')
+        click.echo(f'\n{"*" * 60}\n')
+        click.echo(f'{get_report_description(reports_dir, reports["description_file"])}')
         click.echo(f'{"*" * 60}')
         click.echo('\nList of available reports:\n')
         for report in reports["reports"]:
@@ -137,7 +144,7 @@ def get_report_info(report_id, reports_dir):
                     )
                 )
                 click.echo(f'{"*" * 60}\n')
-                click.echo(f'{render(report["description"])}')
+                click.echo(f'{get_report_description(reports_dir, report["readme_file"])}')
     else:
         click.echo(
             click.style(
@@ -155,7 +162,13 @@ def load_reports(reports_dir):
     if not os.path.exists(descriptor):
         raise ClickException(f'The directory {reports_dir} is not a report project root directory.')
 
-    reports = json.load(open(descriptor, 'r'))
-    validate_report_json(reports, reports_dir)
+    reports_descriptor = json.load(open(descriptor, 'r'))
+    validate_report_json(reports_descriptor, reports_dir)
+    reports = []
+    for report in reports_descriptor['reports']:
+        report['id'] = get_report_id(report['entrypoint'])
+        reports.append(report)
 
-    return reports
+    reports_descriptor['reports'] = reports
+
+    return reports_descriptor

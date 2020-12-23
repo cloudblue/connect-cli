@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from cnct import ConnectClient
+from cmr import render
 
 from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
 from cnctcli.constants import REPORT_PARAM_TYPES
@@ -40,6 +41,13 @@ def get_report_entrypoint(func_fqn):
         pass
     except AttributeError:
         pass
+
+
+def get_report_id(func_fqn):
+    tokens = func_fqn.split('.')
+    if len(tokens) < 3:
+        raise ClickException("Reports project does not conform with specification")
+    return tokens[1]
 
 
 def get_report_inputs(config, client, parameters):
@@ -122,6 +130,7 @@ def execute_report(config, reports_dir, report, output_file):
     )
 
     entrypoint = get_report_entrypoint(report['entrypoint'])
+    report_id = get_report_id(report['entrypoint'])
     inputs = get_report_inputs(config, client, report['parameters'])
 
     template_workbook = load_workbook(
@@ -151,7 +160,7 @@ def execute_report(config, reports_dir, report, output_file):
             self.update(value - self.current_value)
             self.current_value = value
 
-    click.echo(f'Preparing to run report {report["id"]}. Please wait...\n')
+    click.echo(f'Preparing to run report {report_id}. Please wait...\n')
 
     progress = Progress()
 
@@ -170,12 +179,19 @@ def execute_report(config, reports_dir, report, output_file):
             f'Unknown error while executing the report: {str(e)}'
         )
 
-    add_info_sheet(template_workbook.create_sheet('Info'), config, report, inputs, start_time)
+    add_info_sheet(
+        template_workbook.create_sheet('Info'),
+        config,
+        report,
+        inputs,
+        start_time,
+        report_id,
+    )
     template_workbook.save(output_file)
     progress.close()
 
 
-def add_info_sheet(ws, config, report, report_values, start_time):
+def add_info_sheet(ws, config, report, report_values, start_time, report_id):
     ws.column_dimensions['A'].width = 50
     ws.column_dimensions['B'].width = 180
     ws['A1'].value = "Report Execution Information"
@@ -201,26 +217,36 @@ def add_info_sheet(ws, config, report, report_values, start_time):
     ws['A5'].value = "Account Name"
     ws['B5'].value = config.active.name
     ws['A6'].value = "Report ID"
-    ws['B6'].value = report['id']
+    ws['B6'].value = report_id
     ws['A7'].value = "Report Name"
     ws['B7'].value = report['name']
-    ws['A8'].value = "Report Description"
-    ws['B8'].value = report['description']
-    ws['A9'].value = "Runtime environment"
-    ws['B9'].value = "CLI Tool"
-    ws['A10'].value = "Report execution paramters"
-    ws['B10'].value = json.dumps(report_values, indent=4, sort_keys=True)
-    ws['B10'].alignment = Alignment(
+    ws['A8'].value = "Runtime environment"
+    ws['B8'].value = "CLI Tool"
+    ws['A9'].value = "Report execution paramters"
+    ws['B9'].value = json.dumps(report_values, indent=4, sort_keys=True)
+    ws['B9'].alignment = Alignment(
         horizontal='left',
         vertical='top',
         wrap_text=True,
     )
 
 
+def get_report_description(reports_dir, readme_file):
+    with open(
+        os.path.join(
+            reports_dir,
+            readme_file
+        )
+    ) as file:
+        readme = file.read()
+        file.close()
+        return render(readme)
+
+
 def validate_report_json(descriptor, reports_dir):
     if 'name' not in descriptor:
         raise ClickException('Name property is required for reports.json')
-    if 'description' not in descriptor:
+    if 'description_file' not in descriptor:
         raise ClickException('Description property is required for reports.json')
     if 'version' not in descriptor:
         raise ClickException('Version property is required for reports.json')
@@ -231,11 +257,9 @@ def validate_report_json(descriptor, reports_dir):
 
 
 def validate_report_definition(definition, reports_dir):
-    if 'id' not in definition:
-        raise ClickException("Report without ID found on reports.json")
     required_properties = [
         'name',
-        'description',
+        'readme_file',
         'template',
         'start_row',
         'start_col',
@@ -246,7 +270,7 @@ def validate_report_definition(definition, reports_dir):
     for required_prop in required_properties:
         if required_prop not in definition:
             raise ClickException(
-                f'Property {required_prop} not found for report {definition["id"]}'
+                f'Property {required_prop} not found for report {definition["name"]}'
             )
     if definition['report_spec'] != 1:
         raise ClickException(
@@ -254,10 +278,10 @@ def validate_report_definition(definition, reports_dir):
         )
     if 'parameters' not in definition:
         raise ClickException(
-            f'Missing parameters list for report {definition["id"]}'
+            f'Missing parameters list for report {definition["name"]}'
         )
     for param in definition['parameters']:
-        validate_report_parameters(param, definition['id'])
+        validate_report_parameters(param, definition['name'])
     if not os.path.isfile(os.path.join(
         reports_dir,
         definition['template']
@@ -265,19 +289,26 @@ def validate_report_definition(definition, reports_dir):
         raise ClickException(
             f'Template {definition["template"]} not found on {reports_dir}'
         )
+    if not os.path.isfile(os.path.join(
+        reports_dir,
+        definition['readme_file']
+    )):
+        raise ClickException(
+            f'Template {definition["readme_file"]} not found on {reports_dir}'
+        )
 
 
-def validate_report_parameters(report_parameters, report_id):
+def validate_report_parameters(report_parameters, report_name):
     if 'id' not in report_parameters:
         raise ClickException(
-            f'Missing id on parameters for report {report_id}'
+            f'Missing id on parameters for report {report_name}'
         )
     if 'type' not in report_parameters:
         raise ClickException(
-            f'Missing type for input parameter {report_parameters["id"]} on report {report_id}'
+            f'Missing type for input parameter {report_parameters["id"]} on report {report_name}'
         )
     if report_parameters['type'] not in REPORT_PARAM_TYPES:
         raise ClickException(
-            f'Report {report_id} has a unknown parameter type {report_parameters["type"]} defined '
-            f'for parameter {report_parameters["id"]}'
+            f'Report {report_name} has a unknown parameter type {report_parameters["type"]} '
+            f'defined for parameter {report_parameters["id"]}'
         )
