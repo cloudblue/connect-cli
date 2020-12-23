@@ -13,7 +13,6 @@ from cnctcli.actions.reports import (
 )
 
 from cnctcli.config import pass_config
-from cmr import render
 
 
 @click.group(name='report', short_help='commands related to report management')
