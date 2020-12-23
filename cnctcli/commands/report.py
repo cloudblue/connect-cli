@@ -9,6 +9,7 @@ from cnctcli.actions.reports import execute_report, validate_report_json
 from cnctcli.config import pass_config
 from cmr import render
 
+
 @click.group(name='report', short_help='commands related to report management')
 def grp_report():
     pass  # pragma: no cover
@@ -103,6 +104,7 @@ def cmd_list_reports(reports_dir):
                 fg='magenta',
             ),
         )
+
 
 @grp_report.command(
     name='info',
