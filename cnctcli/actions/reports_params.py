@@ -40,7 +40,7 @@ def marketplace_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'question_mark': '',
         'values': [
             (m['id'], m['name'])
@@ -64,7 +64,7 @@ def hubs_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'question_mark': '',
         'values': [
             (h['id'], h['name'])
@@ -83,7 +83,7 @@ def product_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'question_mark': '',
         'values': [
             (p['id'], p['name'])
@@ -97,7 +97,7 @@ def fulfillment_request_type(param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'question_mark': '',
         'values': [
             ('purchase', 'Purchase'),
@@ -114,7 +114,7 @@ def fulfillment_request_status(param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'question_mark': '',
         'values': [
             ('tiers_setup', 'Tiers Setup'),
@@ -133,7 +133,7 @@ def connection_type(param):
         'name': param['id'],
         'type': 'selectmany',
         'question_mark': '',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'values': [
             ('preview', 'Preview'),
             ('test', 'Test'),
@@ -148,7 +148,7 @@ def subscription_status(param):
         'name': param['id'],
         'type': 'selectmany',
         'question_mark': '',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'values': [
             ('active', 'Active'),
             ('processing', 'Processing'),
@@ -165,7 +165,7 @@ def billing_period(param):
         'name': param['id'],
         'type': 'selectmany',
         'question_mark': '',
-        'message': f'{param["name"]}',
+        'message': f'{param["description"]}',
         'values': [
             ('monthly', '1 Month'),
             ('yearly', '1 Year'),

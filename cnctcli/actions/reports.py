@@ -68,7 +68,7 @@ def get_report_inputs(config, client, parameters):
 
         answers = dialogus(
             questions,
-            'Enter your report parameters',
+            param['name'],
             confirm='Run' if i == len(parameters) else 'Next',
         )
 
@@ -292,6 +292,14 @@ def validate_report_parameters(report_parameters, report_name):
     if 'type' not in report_parameters:
         raise ClickException(
             f'Missing type for input parameter {report_parameters["id"]} on report {report_name}'
+        )
+    if 'name' not in report_parameters:
+        raise ClickException(
+            f'Missing name for input parameter {report_parameters["id"]} on report {report_name}'
+        )
+    if 'description' not in report_parameters:
+        raise ClickException(
+            f'Missing description for input parameter {report_parameters["id"]} on report {report_name}'
         )
     if report_parameters['type'] not in REPORT_PARAM_TYPES:
         raise ClickException(
