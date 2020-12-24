@@ -254,6 +254,7 @@ def validate_report_json(descriptor, reports_dir):
         raise ClickException('"No reports declared in reports.json')
     for report in descriptor['reports']:
         validate_report_definition(report, reports_dir)
+    validate_entry_points(descriptor['reports'])
 
 
 def validate_report_definition(definition, reports_dir):
@@ -312,3 +313,11 @@ def validate_report_parameters(report_parameters, report_name):
             f'Report {report_name} has a unknown parameter type {report_parameters["type"]} '
             f'defined for parameter {report_parameters["id"]}'
         )
+
+def validate_entry_points(reports):
+    entry_points = []
+    for report in reports:
+        if report['entrypoint'] not in entry_points:
+            entry_points.append(report['entrypoint'])
+        else:
+            raise ClickException("There is a duplicated entrypoint on reports.json")
