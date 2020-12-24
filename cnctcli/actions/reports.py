@@ -314,6 +314,7 @@ def validate_report_parameters(report_parameters, report_name):
             f'defined for parameter {report_parameters["id"]}'
         )
 
+
 def validate_entry_points(reports):
     entry_points = []
     for report in reports:
