@@ -14,4 +14,6 @@ REPORT_PARAM_TYPES = [
     'marketplace_list',
     'hubs_list',
     'connection_type',
+    'billing_period',
+    'subscription_status',
 ]

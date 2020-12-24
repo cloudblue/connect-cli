@@ -21,12 +21,8 @@ from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
 from cnctcli.constants import REPORT_PARAM_TYPES
 from cnctcli.actions.reports_params import (
     date_range,
-    product_list,
-    fulfillment_request_type,
-    fulfillment_request_status,
-    marketplace_list,
-    hubs_list,
-    connection_type,
+    dynamic_params,
+    static_params,
 )
 
 from cnct import ClientError
@@ -57,30 +53,19 @@ def get_report_inputs(config, client, parameters):
         questions = []
         if param['type'] == 'daterange':
             questions.extend(date_range(param))
-        if param['type'] == 'product_list':
+        elif dynamic_params.get(param['type']):
+            handler = dynamic_params[param['type']]
             questions.append(
-                product_list(config.active, client, param)
+                handler(config.active, client, param)
             )
-        if param['type'] == 'fulfillment_type_list':
+        elif static_params.get(param['type']):
+            handler = static_params[param['type']]
             questions.append(
-                fulfillment_request_type(param)
+                handler(param)
             )
-        if param['type'] == 'fulfillment_status_list':
-            questions.append(
-                fulfillment_request_status(param)
-            )
-        if param['type'] == 'marketplace_list':
-            questions.append(
-                marketplace_list(client, param)
-            )
-        if param['type'] == 'hubs_list':
-            questions.append(
-                hubs_list(client, param)
-            )
-        if param['type'] == 'connection_type':
-            questions.append(
-                connection_type(param)
-            )
+        else:
+            raise ClickException(f'Unknown parameter type {param["type"]}')
+
         answers = dialogus(
             questions,
             'Enter your report parameters',

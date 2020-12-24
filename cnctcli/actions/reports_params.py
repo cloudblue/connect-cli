@@ -35,7 +35,7 @@ def date_range(param):
     ]
 
 
-def marketplace_list(client, param):
+def marketplace_list(config, client, param):
     marketplaces = client.marketplaces.all()
     return {
         'name': param['id'],
@@ -50,7 +50,7 @@ def marketplace_list(client, param):
     }
 
 
-def hubs_list(client, param):
+def hubs_list(config, client, param):
     marketplaces = client.marketplaces.all()
     hub_ids = []
     hubs = []
@@ -141,3 +141,53 @@ def connection_type(param):
         ],
         'validators': required_validator(param),
     }
+
+
+def subscription_status(param):
+    return {
+        'name': param['id'],
+        'type': 'selectmany',
+        'question_mark': '',
+        'message': f'{param["name"]}',
+        'values': [
+            ('active', 'Active'),
+            ('processing', 'Processing'),
+            ('suspended', 'Suspended'),
+            ('terminating', 'Terminating'),
+            ('terminated', 'Terminated'),
+        ],
+        'validators': required_validator(param),
+    }
+
+
+def billing_period(param):
+    return {
+        'name': param['id'],
+        'type': 'selectmany',
+        'question_mark': '',
+        'message': f'{param["name"]}',
+        'values': [
+            ('monthly', '1 Month'),
+            ('yearly', '1 Year'),
+            ('years_2', '2 Years'),
+            ('years_3', '3 Years'),
+            ('years_4', '4 Years'),
+            ('years_5', '5 Years'),
+        ],
+        'validators': required_validator(param),
+    }
+
+
+static_params = {
+    "fulfillment_type_list": fulfillment_request_type,
+    "fulfillment_status_list": fulfillment_request_status,
+    "connection_type": connection_type,
+    "billing_period": billing_period,
+    "subscription_status": subscription_status,
+}
+
+dynamic_params = {
+    "product_list": product_list,
+    "marketplace_list": marketplace_list,
+    "hubs_list": hubs_list,
+}
