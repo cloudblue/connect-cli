@@ -21,6 +21,7 @@ from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
 from cnctcli.constants import REPORT_PARAM_TYPES
 from cnctcli.actions.reports_params import (
     date_range,
+    date,
     dynamic_params,
     static_params,
 )
@@ -46,25 +47,33 @@ def get_report_id(func_fqn):
     return tokens[1]
 
 
+def handle_param_input(config, client, param):
+    questions = []
+    if param['type'] == 'date_range':
+        questions.extend(date_range(param))
+    elif param['type'] == 'date':
+        questions.append(date(param))
+    elif dynamic_params.get(param['type']):
+        handler = dynamic_params[param['type']]
+        questions.append(
+            handler(config.active, client, param)
+        )
+    elif static_params.get(param['type']):
+        handler = static_params[param['type']]
+        questions.append(
+            handler(param)
+        )
+    else:
+        raise ClickException(f'Unknown parameter type {param["type"]}')
+
+    return questions
+
+
 def get_report_inputs(config, client, parameters):
     parameters_values = {}
     i = 0
     for param in parameters:
-        questions = []
-        if param['type'] == 'daterange':
-            questions.extend(date_range(param))
-        elif dynamic_params.get(param['type']):
-            handler = dynamic_params[param['type']]
-            questions.append(
-                handler(config.active, client, param)
-            )
-        elif static_params.get(param['type']):
-            handler = static_params[param['type']]
-            questions.append(
-                handler(param)
-            )
-        else:
-            raise ClickException(f'Unknown parameter type {param["type"]}')
+        questions = handle_param_input(config, client, param)
 
         answers = dialogus(
             questions,
@@ -75,7 +84,7 @@ def get_report_inputs(config, client, parameters):
         if not answers:
             raise ClickException("Aborted by user input")
 
-        if param['type'] == 'daterange':
+        if param['type'] == 'date_range':
             after_str = answers[f"{param['id']}_after"]
             before_str = answers[f"{param['id']}_before"]
             after = datetime.strptime(after_str, '%Y-%m-%d').isoformat()
@@ -293,19 +302,39 @@ def validate_report_parameters(report_parameters, report_name):
         raise ClickException(
             f'Missing type for input parameter {report_parameters["id"]} on report {report_name}'
         )
+    if report_parameters['type'] == 'choice':
+        validate_choices(report_parameters, report_name)
+
     if 'name' not in report_parameters:
         raise ClickException(
             f'Missing name for input parameter {report_parameters["id"]} on report {report_name}'
         )
     if 'description' not in report_parameters:
         raise ClickException(
-            f'Missing description for input parameter {report_parameters["id"]} on report {report_name}'
+            f'Missing description for input parameter {report_parameters["id"]} '
+            f'on report {report_name}'
         )
     if report_parameters['type'] not in REPORT_PARAM_TYPES:
         raise ClickException(
             f'Report {report_name} has a unknown parameter type {report_parameters["type"]} '
             f'defined for parameter {report_parameters["id"]}'
         )
+
+
+def validate_choices(param, report_name):
+    if 'choices' not in param:
+        raise ClickException(
+            f'Missing choices for parameter {param["id"]} on report {report_name}'
+        )
+    for choice in param['choices']:
+        if 'value' not in choice:
+            raise ClickException(
+                f'Missing value in one of the choices for {param["id"]} on report {report_name}'
+            )
+        if 'label' not in choice:
+            raise ClickException(
+                f'Missing label in one of the choices for {param["id"]} on report {report_name}'
+            )
 
 
 def validate_entry_points(reports):

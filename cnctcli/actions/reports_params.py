@@ -1,5 +1,19 @@
 from cnct import R
-from interrogatio.validators import RegexValidator, RequiredValidator
+from interrogatio.validators import RegexValidator, RequiredValidator, Validator
+from interrogatio.core.exceptions import ValidationError
+
+import json
+
+
+class ObjectValidator(Validator):
+
+    def validate(self, value):
+        if not value or value == "":
+            return
+        try:
+            json.loads(value)
+        except ValueError:
+            raise ValidationError("Introduced data is not a valid json object")
 
 
 def required_validator(param, validators=None):
@@ -11,6 +25,32 @@ def required_validator(param, validators=None):
             message="Please select at least one value"
         ))
     return validators
+
+
+def single_line(param):
+
+    return {
+        'name': param['id'],
+        'type': 'input',
+        'question_mark': '',
+        'message': f'{param["description"]}',
+        'validators': required_validator(param),
+    }
+
+
+def object_param(param):
+    validators = required_validator(param)
+    validators.append(ObjectValidator())
+
+    return {
+        'name': param['id'],
+        'type': 'input',
+        'multiline': True,
+        'default': "{}",
+        'question_mark': '',
+        'message': f'{param["description"]}',
+        'validators': validators,
+    }
 
 
 def date_range(param):
@@ -35,6 +75,19 @@ def date_range(param):
     ]
 
 
+def date(param):
+
+    date_validator = [RegexValidator('\\d{4}-\\d{2}-\\d{2}', 'Introduced date is invalid')]
+
+    return {
+        'name': f'{param["id"]}',
+        'type': 'input',
+        'message': f'{param["description"]}:',
+        'question_mark': '',
+        'validators': required_validator(param, date_validator),
+    }
+
+
 def marketplace_list(config, client, param):
     marketplaces = client.marketplaces.all()
     return {
@@ -50,7 +103,7 @@ def marketplace_list(config, client, param):
     }
 
 
-def hubs_list(config, client, param):
+def hub_list(config, client, param):
     marketplaces = client.marketplaces.all()
     hub_ids = []
     hubs = []
@@ -93,101 +146,41 @@ def product_list(config, client, param):
     }
 
 
-def fulfillment_request_type(param):
+def checkbox(param):
+    values = []
+    for choice in param['choices']:
+        values.append(
+            (choice['value'], choice['label'])
+        )
+    if param['type'] == 'checkbox':
+        input_type = 'selectmany'
+    else:
+        input_type = 'selectone'
+
     return {
         'name': param['id'],
-        'type': 'selectmany',
-        'message': f'{param["description"]}',
-        'question_mark': '',
-        'values': [
-            ('purchase', 'Purchase'),
-            ('change', 'Change'),
-            ('suspend', 'Suspend'),
-            ('resume', 'Resume'),
-            ('cancel', 'Cancel'),
-        ],
-        'required': param.get('required', False),
-    }
-
-
-def fulfillment_request_status(param):
-    return {
-        'name': param['id'],
-        'type': 'selectmany',
-        'message': f'{param["description"]}',
-        'question_mark': '',
-        'values': [
-            ('tiers_setup', 'Tiers Setup'),
-            ('inquiring', 'Inquiring'),
-            ('pending', 'Pending'),
-            ('approved', 'Approved'),
-            ('failed', 'Failed'),
-            ('draft', 'Draft'),
-        ],
-        'validators': required_validator(param),
-    }
-
-
-def connection_type(param):
-    return {
-        'name': param['id'],
-        'type': 'selectmany',
+        'type': input_type,
         'question_mark': '',
         'message': f'{param["description"]}',
-        'values': [
-            ('preview', 'Preview'),
-            ('test', 'Test'),
-            ('production', 'Production'),
-        ],
-        'validators': required_validator(param),
-    }
-
-
-def subscription_status(param):
-    return {
-        'name': param['id'],
-        'type': 'selectmany',
-        'question_mark': '',
-        'message': f'{param["description"]}',
-        'values': [
-            ('active', 'Active'),
-            ('processing', 'Processing'),
-            ('suspended', 'Suspended'),
-            ('terminating', 'Terminating'),
-            ('terminated', 'Terminated'),
-        ],
-        'validators': required_validator(param),
-    }
-
-
-def billing_period(param):
-    return {
-        'name': param['id'],
-        'type': 'selectmany',
-        'question_mark': '',
-        'message': f'{param["description"]}',
-        'values': [
-            ('monthly', '1 Month'),
-            ('yearly', '1 Year'),
-            ('years_2', '2 Years'),
-            ('years_3', '3 Years'),
-            ('years_4', '4 Years'),
-            ('years_5', '5 Years'),
-        ],
+        'values': values,
         'validators': required_validator(param),
     }
 
 
 static_params = {
-    "fulfillment_type_list": fulfillment_request_type,
-    "fulfillment_status_list": fulfillment_request_status,
-    "connection_type": connection_type,
-    "billing_period": billing_period,
-    "subscription_status": subscription_status,
+    "checkbox": checkbox,
+    "choice": checkbox,
+    "single_line": single_line,
+    "object": object_param,
 }
 
 dynamic_params = {
-    "product_list": product_list,
-    "marketplace_list": marketplace_list,
-    "hubs_list": hubs_list,
+    "product": product_list,
+    "marketplace": marketplace_list,
+    "hub": hub_list,
+}
+
+date_params = {
+    "date_range": date_range,
+    "date": date,
 }
