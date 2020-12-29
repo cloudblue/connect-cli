@@ -254,8 +254,9 @@ def validate_report_json(descriptor, reports_dir):
 def validate_report_definition(definition, reports_dir):
     if 'name' not in definition:
         raise ClickException(
-            f'Property name not found in report'
+            'Property name not found in report'
         )
+
     required_properties = [
         'name',
         'readme_file',
