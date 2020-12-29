@@ -1,0 +1,108 @@
+{
+  "name": "Connect Reports",
+  "description_file": "Readme.md",
+  "version": "1.0.0",
+  "language": "python",
+  "reports": [
+    {
+      "name": "Fulfillment requests report",
+      "readme_file": "reports/fulfillment_requests/Readme.md",
+      "template": "reports/fulfillment_requests/template.xlsx",
+      "start_row": 2,
+      "start_col": 1,
+      "entrypoint": "reports.fulfillment_requests.entrypoint.generate",
+      "audience": [
+        "provider",
+        "vendor"
+      ],
+      "report_spec": 1,
+      "parameters": [
+        {
+          "id": "date",
+          "type": "date_range",
+          "name": "Report period",
+          "description": "Provide the time period to create the report",
+          "required": true
+        },
+        {
+          "id": "product",
+          "type": "product",
+          "name": "Product list",
+          "description": "Select the products you want to include in report"
+        },
+        {
+          "id": "rr_type",
+          "type": "checkbox",
+          "name": "Types of requests",
+          "description": "Select the requests types you want to include in report",
+          "choices": [
+            {
+              "value": "purchase",
+              "label": "Purchase"
+            },
+            {
+              "value": "change",
+              "label": "Change"
+            },
+            {
+              "value": "suspend",
+              "label": "Suspend"
+            },
+            {
+              "value": "resume",
+              "label": "Resume"
+            },
+            {
+              "value": "cancel",
+              "label": "Cancel"
+            }
+          ]
+        },
+        {
+          "id": "rr_status",
+          "type": "checkbox",
+          "name": "Request status",
+          "description": "Select the status of the requests you want to include in report",
+          "choices": [
+            {
+              "value": "tiers_setup",
+              "label": "Tier Setup"
+            },
+            {
+              "value": "inquiring",
+              "label": "Inquiring"
+            },
+            {
+              "value": "pending",
+              "label": "Pending"
+            },
+            {
+              "value": "approved",
+              "label": "Approved"
+            },
+            {
+              "value": "failed",
+              "label": "Failed"
+            },
+            {
+              "value": "draft",
+              "label": "Draft"
+            }
+          ]
+        },
+        {
+          "id": "mkp",
+          "type": "marketplace",
+          "name": "Marketplaces",
+          "description": "Select the marketplaces you want to include in report"
+        },
+        {
+          "id": "hub",
+          "type": "hub",
+          "name": "Hubs",
+          "description": "Select the hubs you want to include in report"
+        }
+      ]
+    }
+  ]
+}

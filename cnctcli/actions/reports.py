@@ -252,6 +252,10 @@ def validate_report_json(descriptor, reports_dir):
 
 
 def validate_report_definition(definition, reports_dir):
+    if 'name' not in definition:
+        raise ClickException(
+            f'Property name not found in report'
+        )
     required_properties = [
         'name',
         'readme_file',
@@ -302,7 +306,7 @@ def validate_report_parameters(report_parameters, report_name):
         raise ClickException(
             f'Missing type for input parameter {report_parameters["id"]} on report {report_name}'
         )
-    if report_parameters['type'] == 'choice':
+    if report_parameters['type'] == 'choice' or report_parameters['type'] == 'checkbox':
         validate_choices(report_parameters, report_name)
 
     if 'name' not in report_parameters:
