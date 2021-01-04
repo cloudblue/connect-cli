@@ -164,13 +164,24 @@ def execute_report(config, reports_dir, report, output_file):
             for col_idx, cell_value in enumerate(row, start=start_col_idx):
                 ws.cell(row_idx, col_idx, value=cell_value)
             row_idx += 1
-    except ClientError as e:
+    except (ClientError, Exception) as e:
+        if isinstance(e, ClientError):
+            message = f'\nError returned by Connect when executing the report: {str(e)}'
+        else:
+            message = f'\nUnknown error while executing the report: {str(e)}'
+        trace = []
+        tb = e.__traceback__
+        while tb is not None:
+            trace.append({
+                "filename": tb.tb_frame.f_code.co_filename,
+                "name": tb.tb_frame.f_code.co_name,
+                "lineno": tb.tb_lineno
+            })
+            tb = tb.tb_next
+        trace_string = json.dumps(trace, sort_keys=True, indent=4)
         raise ClickException(
-            f'Error returned by Connect when executing the report: {str(e)}'
-        )
-    except Exception as e:
-        raise ClickException(
-            f'Unknown error while executing the report: {str(e)}'
+            f'{message}\n'
+            f'Trace: {trace_string}'
         )
 
     add_info_sheet(
