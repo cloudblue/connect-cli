@@ -94,7 +94,8 @@ def test_basic_report(fs):
     fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
 
     config = Config()
-    config._config_path = '/config.json'
+    os.mkdir('/config/')
+    config._config_path = '/config/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -108,7 +109,7 @@ def test_basic_report(fs):
         cli,
         [
             '-c',
-            '/',
+            '/config/',
             'report',
             'list',
             '-d',
@@ -123,7 +124,7 @@ def test_basic_report(fs):
         cli,
         [
             '-c',
-            '/',
+            '/config/',
             'report',
             'info',
             'entrypoint',
@@ -132,14 +133,14 @@ def test_basic_report(fs):
         ],
     )
 
-    assert result.exit_code == 0    
+    assert result.exit_code == 0
     assert "Basic report info" in result.output
 
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/',
+            '/config/',
             'report',
             'execute',
             'invalid',
@@ -156,7 +157,7 @@ def test_basic_report(fs):
         cli,
         [
             '-c',
-            '/',
+            '/config/',
             'report',
             'execute',
             'entrypoint',
@@ -284,7 +285,6 @@ def test_input_parameters(fs):
             }
         ]
     ):
-
         result = runner.invoke(
             cli,
             [
