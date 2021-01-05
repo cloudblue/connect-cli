@@ -1,18 +1,12 @@
 from click.testing import CliRunner
 
 from cnctcli.ccli import cli
-from cnctcli.actions.products.export import dump_product
-import cnctcli
-from click import ClickException
 from openpyxl import load_workbook
 
 from cnctcli.config import Config
 
 from unittest.mock import patch
 
-import pytest
-import json
-import re
 import os
 
 
@@ -217,8 +211,7 @@ def test_basic_report(fs):
     fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
 
     config = Config()
-    os.mkdir('/config/')
-    config._config_path = '/config/config.json'
+    config._config_path = '/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -232,7 +225,7 @@ def test_basic_report(fs):
         cli,
         [
             '-c',
-            '/config/',
+            '/',
             'report',
             'list',
             '-d',
@@ -243,11 +236,31 @@ def test_basic_report(fs):
     assert result.exit_code == 0
     assert "Report ID: entrypoint" in result.output
 
+
+def test_basic_report_2(fs):
+    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
+
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/config/',
+            '/',
             'report',
             'info',
             'entrypoint',
@@ -259,11 +272,31 @@ def test_basic_report(fs):
     assert result.exit_code == 0
     assert "Basic report info" in result.output
 
+
+def test_basic_report_3(fs):
+    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
+
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/config/',
+            '/',
             'report',
             'execute',
             'invalid',
@@ -275,12 +308,32 @@ def test_basic_report(fs):
     assert result.exit_code == 1
     assert "No report with id invalid has been found." in result.output
 
+
+def test_basic_report_4(fs):
+    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
+
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
     os.mkdir('/report')
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/config/',
+            '/',
             'report',
             'execute',
             'entrypoint',
