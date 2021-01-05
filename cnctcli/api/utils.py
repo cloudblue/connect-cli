@@ -35,4 +35,3 @@ def handle_http_error(res: ClientError):
         raise click.ClickException(f'{status}: {code} - {message}')
 
     raise click.ClickException(f'{status}: unexpected error.')
-
