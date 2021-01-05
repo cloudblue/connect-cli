@@ -107,6 +107,8 @@ def test_basic_report(fs):
     result = runner.invoke(
         cli,
         [
+            '-c',
+            '/',
             'report',
             'list',
             '-d',
@@ -120,6 +122,8 @@ def test_basic_report(fs):
     result = runner.invoke(
         cli,
         [
+            '-c',
+            '/',
             'report',
             'info',
             'entrypoint',
@@ -128,7 +132,7 @@ def test_basic_report(fs):
         ],
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 0    
     assert "Basic report info" in result.output
 
     result = runner.invoke(
