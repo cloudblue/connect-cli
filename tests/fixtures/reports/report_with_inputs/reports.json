@@ -1,0 +1,58 @@
+{
+   "name":"Connect Reports Fixture",
+   "description_file":"Readme.md",
+   "version":"1.0.0",
+   "language":"python",
+   "reports":[
+      {
+         "name":"test report",
+         "readme_file":"executor/Readme.md",
+         "template":"executor/template.xlsx",
+         "start_row":2,
+         "start_col":1,
+         "entrypoint":"executor.entrypoint.generate",
+         "audience":[
+            "provider",
+            "vendor"
+         ],
+         "report_spec":1,
+         "parameters":[
+            {
+               "id":"status",
+               "type":"checkbox",
+               "name":"Contract status",
+               "description": "Select the status of contracts to include in report",
+               "choices": [
+                  {
+                     "value": "active",
+                     "label": "Active"
+                  },
+                  {
+                     "value": "enrolling",
+                     "label": "Enrolling"
+                  },
+                  {
+                     "value": "rejected",
+                     "label": "Rejected"
+                  },
+                  {
+                     "value": "pending",
+                     "label": "Pending"
+                  },
+                  {
+                     "value": "terminated",
+                     "label": "Terminated"
+                  }
+               ]
+            },
+            {
+               "id":"date",
+               "type":"date_range",
+               "name":"Report period",
+               "description": "Provide the time period to create the report",
+               "required": true
+            }
+         ]
+      }
+   ]
+}
