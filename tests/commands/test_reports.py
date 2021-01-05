@@ -233,7 +233,7 @@ def test_basic_report(fs):
         ],
     )
 
-    assert "Report ID: entrypoint" in result.output
+    assert "Connect Reports Fixture version 1.0.0" in result.output
 
 
 def test_basic_report_2(fs):
