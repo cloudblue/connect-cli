@@ -85,100 +85,6 @@ def test_no_reports(fs):
     assert "No reports found in" in result.output
 
 
-def test_basic_report(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
-
-    config = Config()
-    os.mkdir('/config/')
-    config._config_path = '/config/config.json'
-    config.add_account(
-        'VA-000',
-        'Account 1',
-        'ApiKey XXXX:YYYY',
-        endpoint='https://localhost/public/v1',
-    )
-    config.activate('VA-000')
-    config.store()
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            '-c',
-            '/config/',
-            'report',
-            'list',
-            '-d',
-            './tests/fixtures/reports/basic_report',
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "Report ID: entrypoint" in result.output
-
-    result = runner.invoke(
-        cli,
-        [
-            '-c',
-            '/config/',
-            'report',
-            'info',
-            'entrypoint',
-            '-d',
-            './tests/fixtures/reports/basic_report',
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "Basic report info" in result.output
-
-    result = runner.invoke(
-        cli,
-        [
-            '-c',
-            '/config/',
-            'report',
-            'execute',
-            'invalid',
-            '-d',
-            './tests/fixtures/reports/basic_report',
-        ],
-    )
-
-    assert result.exit_code == 1
-    assert "No report with id invalid has been found." in result.output
-
-    os.mkdir('/report')
-    result = runner.invoke(
-        cli,
-        [
-            '-c',
-            '/config/',
-            'report',
-            'execute',
-            'entrypoint',
-            '-d',
-            './tests/fixtures/reports/basic_report',
-            '-o'
-            '/report/report.xlsx'
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "Processing report test report" in result.output
-
-    wb = load_workbook('/report/report.xlsx')
-
-    assert wb['Data']['A1'].value == 'Row'
-    assert wb['Data']['A2'].value == 1
-    assert wb['Data']['A3'].value == 2
-    assert wb['Data']['A4'].value is None
-
-
 def test_report_client_exception(fs):
     fs.add_real_file('./tests/fixtures/reports/connect_exception/reports.json')
     fs.add_real_file('./tests/fixtures/reports/connect_exception/README.md')
@@ -300,3 +206,97 @@ def test_input_parameters(fs):
 
         assert result.exit_code == 0
         assert "100%" in result.output
+
+
+def test_basic_report(fs):
+    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
+
+    config = Config()
+    os.mkdir('/config/')
+    config._config_path = '/config/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/config/',
+            'report',
+            'list',
+            '-d',
+            './tests/fixtures/reports/basic_report',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Report ID: entrypoint" in result.output
+
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/config/',
+            'report',
+            'info',
+            'entrypoint',
+            '-d',
+            './tests/fixtures/reports/basic_report',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Basic report info" in result.output
+
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/config/',
+            'report',
+            'execute',
+            'invalid',
+            '-d',
+            './tests/fixtures/reports/basic_report',
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "No report with id invalid has been found." in result.output
+
+    os.mkdir('/report')
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/config/',
+            'report',
+            'execute',
+            'entrypoint',
+            '-d',
+            './tests/fixtures/reports/basic_report',
+            '-o'
+            '/report/report.xlsx'
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Processing report test report" in result.output
+
+    wb = load_workbook('/report/report.xlsx')
+
+    assert wb['Data']['A1'].value == 'Row'
+    assert wb['Data']['A2'].value == 1
+    assert wb['Data']['A3'].value == 2
+    assert wb['Data']['A4'].value is None
