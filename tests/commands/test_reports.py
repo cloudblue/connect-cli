@@ -27,7 +27,7 @@ def test_not_valid_report_dir(fs):
     )
     config.activate('VA-000')
     config.store()
-    os.mkdir('/tmp')
+    os.mkdir('/tmp2')
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -35,12 +35,12 @@ def test_not_valid_report_dir(fs):
             'report',
             'list',
             '-d',
-            '/tmp',
+            '/tmp2',
         ],
     )
 
     assert result.exit_code == 1
-    assert "The directory /tmp is not a report project root directory." in result.output
+    assert "The directory /tmp2 is not a report project root directory." in result.output
 
 
 def test_no_reports(fs):
@@ -56,7 +56,6 @@ def test_no_reports(fs):
     )
     config.activate('VA-000')
     config.store()
-    os.mkdir('/tmp')
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -148,7 +147,7 @@ def test_basic_report(fs):
     assert result.exit_code == 1
     assert "No report with id invalid has been found." in result.output
 
-    os.mkdir('/tmp')
+    os.mkdir('/report')
     result = runner.invoke(
         cli,
         [
@@ -160,14 +159,14 @@ def test_basic_report(fs):
             '-d',
             './tests/fixtures/reports/basic_report',
             '-o'
-            '/tmp/report.xlsx'
+            '/report/report.xlsx'
         ],
     )
 
     assert result.exit_code == 0
     assert "Processing report test report" in result.output
 
-    wb = load_workbook('/tmp/report.xlsx')
+    wb = load_workbook('/report/report.xlsx')
 
     assert wb['Data']['A1'].value == 'Row'
     assert wb['Data']['A2'].value == 1
