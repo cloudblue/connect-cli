@@ -233,7 +233,6 @@ def test_basic_report(fs):
         ],
     )
 
-    assert result.exit_code == 0
     assert "Report ID: entrypoint" in result.output
 
 
