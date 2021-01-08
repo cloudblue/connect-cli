@@ -133,17 +133,29 @@ def cmd_list_reports(reports_dir):
 def get_report_info(report_id, reports_dir):
     reports = load_reports(reports_dir)
     if 'reports' in reports and len(reports["reports"]) > 0:
-        for report in reports["reports"]:
-            if report['id'] == report_id:
-                click.echo(f'{"*" * 60}\n')
-                click.echo(
-                    click.style(
-                        f'Report ID: {report["id"]}\nReport name: {report["name"]}\n',
-                        fg='green',
-                    )
+        report = None
+        for rep in reports["reports"]:
+            if rep['id'] == report_id:
+                report = rep
+                break
+
+        if report:
+            click.echo(f'{"*" * 60}\n')
+            click.echo(
+                click.style(
+                    f'Report ID: {report["id"]}\nReport name: {report["name"]}\n',
+                    fg='green',
                 )
-                click.echo(f'{"*" * 60}\n')
-                click.echo(f'{get_report_description(reports_dir, report["readme_file"])}')
+            )
+            click.echo(f'{"*" * 60}\n')
+            click.echo(f'{get_report_description(reports_dir, report["readme_file"])}')
+        else:
+            click.echo(
+                click.style(
+                    f'No report with id {report_id}',
+                    fg='magenta',
+                ),
+            )
     else:
         click.echo(
             click.style(

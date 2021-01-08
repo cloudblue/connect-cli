@@ -352,3 +352,39 @@ def test_basic_report_4(fs):
     assert wb['Data']['A2'].value == 1
     assert wb['Data']['A3'].value == 2
     assert wb['Data']['A4'].value is None
+
+
+def test_basic_report_5(fs):
+    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
+
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/',
+            'report',
+            'info',
+            'entrypoint_wrong',
+            '-d',
+            './tests/fixtures/reports/basic_report',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "No report with id entrypoint_wrong" in result.output

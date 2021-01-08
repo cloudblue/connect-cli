@@ -8,7 +8,7 @@ import json
 class ObjectValidator(Validator):
 
     def validate(self, value):
-        if not value or value == "":
+        if not value:
             return
         try:
             json.loads(value)
@@ -46,7 +46,7 @@ def object_param(param):
         'name': param['id'],
         'type': 'input',
         'multiline': True,
-        'default': "{}",
+        'default': '{}',
         'question_mark': '',
         'message': f'{param["description"]}',
         'validators': validators,
