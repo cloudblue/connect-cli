@@ -93,7 +93,7 @@ def cmd_list_reports(reports_dir):
         click.echo(f'{"*" * 60}\n')
         click.echo(f'{reports["name"]} version {reports["version"]}')
         click.echo(f'\n{"*" * 60}\n')
-        click.echo(f'{get_report_description(reports_dir, reports["description_file"])}')
+        click.echo(f'{get_report_description(reports_dir, reports["readme_file"])}')
         click.echo(f'{"*" * 60}')
         click.echo('\nList of available reports:\n')
         for report in reports["reports"]:

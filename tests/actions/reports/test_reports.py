@@ -212,7 +212,7 @@ def test_validate_report_definition_missing_readme_file(mock_isfile, mocked_repo
     ('property',),
     (
         ('name',),
-        ('description_file',),
+        ('readme_file',),
         ('version',),
         ('reports',),
     )

@@ -251,7 +251,7 @@ def get_report_description(reports_dir, readme_file):
 def validate_report_json(descriptor, reports_dir):
     if 'name' not in descriptor:
         raise ClickException('Name property is required for reports.json')
-    if 'description_file' not in descriptor:
+    if 'readme_file' not in descriptor:
         raise ClickException('Description property is required for reports.json')
     if 'version' not in descriptor:
         raise ClickException('Version property is required for reports.json')
