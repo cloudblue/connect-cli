@@ -1,8 +1,15 @@
 from cnct import R
-from interrogatio.validators import RegexValidator, RequiredValidator, Validator
+from interrogatio.validators import (
+    RequiredValidator,
+    Validator,
+    DateTimeRangeValidator,
+    DateTimeValidator,
+)
 from interrogatio.core.exceptions import ValidationError
 
 import json
+import time
+import datetime
 
 
 class ObjectValidator(Validator):
@@ -32,8 +39,7 @@ def single_line(param):
     return {
         'name': param['id'],
         'type': 'input',
-        'question_mark': '',
-        'message': f'{param["description"]}',
+        'description': f'{param["description"]}',
         'validators': required_validator(param),
     }
 
@@ -46,44 +52,39 @@ def object_param(param):
         'name': param['id'],
         'type': 'input',
         'multiline': True,
-        'default': '{}',
-        'question_mark': '',
-        'message': f'{param["description"]}',
+        'default': '{}',  # noqa
+        'description': f'{param["description"]}',
         'validators': validators,
     }
 
 
 def date_range(param):
-
-    date_validator = [RegexValidator('\\d{4}-\\d{2}-\\d{2}', 'Introduced date is invalid')]
-
-    return [
-        {
-            'name': f'{param["id"]}_after',
-            'type': 'input',
-            'message': f'{param["name"]} after:',
-            'question_mark': '',
-            'validators': required_validator(param, date_validator),
-        },
-        {
-            'name': f'{param["id"]}_before',
-            'type': 'input',
-            'message': f'{param["name"]} before:',
-            'question_mark': '',
-            'validators': required_validator(param, date_validator),
-        },
-    ]
+    note = '* Dates must be input in your local (UTC{offset}) {tz} timezone'.format(
+        offset=time.strftime("%z"),
+        tz=datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo,
+    )
+    description = '{param}\n\n\n{note}'.format(
+        param=param["description"],
+        note=note,
+    )
+    return {
+        'name': f'{param["id"]}',
+        'type': 'daterange',
+        'description': description,
+        'validators': required_validator(param, [DateTimeRangeValidator()]),
+    }
 
 
 def date(param):
 
-    date_validator = [RegexValidator('\\d{4}-\\d{2}-\\d{2}', 'Introduced date is invalid')]
+    date_validator = [DateTimeValidator(
+        format_pattern='%Y-%m-%d'
+    )]
 
     return {
         'name': f'{param["id"]}',
-        'type': 'input',
-        'message': f'{param["description"]}:',
-        'question_mark': '',
+        'type': 'date',
+        'description': f'{param["description"]}:',
         'validators': required_validator(param, date_validator),
     }
 
@@ -93,8 +94,7 @@ def marketplace_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["description"]}',
-        'question_mark': '',
+        'description': f'{param["description"]}',
         'values': [
             (m['id'], m['name'])
             for m in marketplaces
@@ -117,8 +117,7 @@ def hub_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["description"]}',
-        'question_mark': '',
+        'description': f'{param["description"]}',
         'values': [
             (h['id'], h['name'])
             for h in hubs
@@ -136,8 +135,7 @@ def product_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'message': f'{param["description"]}',
-        'question_mark': '',
+        'description': f'{param["description"]}',
         'values': [
             (p['id'], p['name'])
             for p in products
@@ -160,8 +158,7 @@ def checkbox(param):
     return {
         'name': param['id'],
         'type': input_type,
-        'question_mark': '',
-        'message': f'{param["description"]}',
+        'description': f'{param["description"]}',
         'values': values,
         'validators': required_validator(param),
     }

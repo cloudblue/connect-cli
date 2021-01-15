@@ -14,7 +14,7 @@ from cnctcli.actions.reports_params import (
 from cnctcli.config import Config
 from cnct import ConnectClient
 from interrogatio.core.exceptions import ValidationError
-from interrogatio.validators import RequiredValidator, RegexValidator
+from interrogatio.validators import RequiredValidator, DateTimeValidator, DateTimeRangeValidator
 
 
 import pytest
@@ -60,7 +60,7 @@ def test_single_line():
     result = single_line(param)
     assert result['name'] == 'date'
     assert result['type'] == 'input'
-    assert result['message'] == param['description']
+    assert result['description'] == param['description']
     assert isinstance(result['validators'][0], RequiredValidator)
 
 
@@ -76,7 +76,7 @@ def test_object_param():
     result = object_param(param)
     assert result['name'] == 'id'
     assert result['type'] == 'input'
-    assert result['message'] == param['description']
+    assert result['description'] == param['description']
     assert result['multiline'] is True
     assert isinstance(result['validators'][0], RequiredValidator)
     assert isinstance(result['validators'][1], ObjectValidator)
@@ -92,8 +92,9 @@ def test_date_range():
     }
 
     result = date_range(param)
-    assert len(result) == 2
-    assert isinstance(result[0]['validators'][1], RequiredValidator)
+    assert len(result) == 4
+    assert isinstance(result['validators'][0], DateTimeRangeValidator)
+    assert isinstance(result['validators'][1], RequiredValidator)
 
 
 def test_date():
@@ -106,9 +107,9 @@ def test_date():
     }
 
     result = date(param)
-    assert len(result) == 5
+    assert len(result) == 4
     assert isinstance(result['validators'][1], RequiredValidator)
-    assert isinstance(result['validators'][0], RegexValidator)
+    assert isinstance(result['validators'][0], DateTimeValidator)
 
 
 def test_checkbox():

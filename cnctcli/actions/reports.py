@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import import_module
 
 import click
@@ -20,8 +20,7 @@ from cmr import render
 from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
 from cnctcli.constants import REPORT_PARAM_TYPES
 from cnctcli.actions.reports_params import (
-    date_range,
-    date,
+    date_params,
     dynamic_params,
     static_params,
 )
@@ -49,10 +48,11 @@ def get_report_id(func_fqn):
 
 def handle_param_input(config, client, param):
     questions = []
-    if param['type'] == 'date_range':
-        questions.extend(date_range(param))
-    elif param['type'] == 'date':
-        questions.append(date(param))
+    if date_params.get(param['type']):
+        handler = date_params[param['type']]
+        questions.append(
+            handler(param)
+        )
     elif dynamic_params.get(param['type']):
         handler = dynamic_params[param['type']]
         questions.append(
@@ -67,6 +67,11 @@ def handle_param_input(config, client, param):
         raise ClickException(f'Unknown parameter type {param["type"]}')
 
     return questions
+
+
+def _convert_to_utc_input(date_string):
+    date = datetime.strptime(date_string, '%Y-%m-%d')
+    return date.astimezone().astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')
 
 
 def get_report_inputs(config, client, parameters):
@@ -85,14 +90,15 @@ def get_report_inputs(config, client, parameters):
             raise ClickException("Aborted by user input")
 
         if param['type'] == 'date_range':
-            after_str = answers[f"{param['id']}_after"]
-            before_str = answers[f"{param['id']}_before"]
-            after = datetime.strptime(after_str, '%Y-%m-%d').isoformat()
-            before = datetime.strptime(before_str, '%Y-%m-%d').isoformat()
-            parameters_values[param['id']] = {
-                'after': after,
-                'before': before,
-            }
+            if answers[param["id"]]["from"]:
+                after_str = answers[param["id"]]["from"]
+                before_str = answers[param["id"]]["to"]
+                after = _convert_to_utc_input(after_str)
+                before = _convert_to_utc_input(before_str)
+                parameters_values[param['id']] = {
+                    'after': after,
+                    'before': before,
+                }
             continue
         if questions[0]['type'] == 'selectmany' and \
                 len(questions[0]['values']) == len(answers[param['id']]):

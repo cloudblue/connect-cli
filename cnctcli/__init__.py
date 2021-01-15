@@ -8,7 +8,7 @@ import pkg_resources
 
 try:
     __version__ = pkg_resources.require('connect-cli')[0].version
-except:  # noqa: E722
+except BaseException:  # noqa: E722
     __version__ = '0.0.1'
 
 

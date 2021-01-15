@@ -129,8 +129,8 @@ def _setup_ws_header(ws, ws_type=None):
 
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
-    cels = ws['A1': '{}1'.format(
-        get_col_limit_by_ws_type(ws_type)
+    cels = ws['A1': '{cell}1'.format(
+        cell=get_col_limit_by_ws_type(ws_type)
     )]
     col_headers = get_col_headers_by_ws_type(ws_type)
     for cel in cels[0]:
@@ -167,12 +167,14 @@ def _calculate_commitment(item):
     if multiplier == 'billing_period':
         if period == 'monthly':
             years = count // 12
-            return '{} year{}'.format(
-                years,
-                's' if years > 1 else '',
+            return '{quantity} year{plural}'.format(
+                quantity=years,
+                plural='s' if years > 1 else '',
             )
         else:
-            return '{} years'.format(count)
+            return '{years} years'.format(
+                years=count,
+            )
 
     # One-time
     return '-'
@@ -460,8 +462,8 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     )
     type_validation = DataValidation(
         type='list',
-        formula1='"{}"'.format(
-            ','.join(PARAM_TYPES)
+        formula1='"{params}"'.format(
+            params=','.join(PARAM_TYPES)
         ),
         allow_blank=False,
     )

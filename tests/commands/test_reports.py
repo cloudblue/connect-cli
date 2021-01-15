@@ -180,9 +180,11 @@ def test_input_parameters(fs):
                 'status': 'Active'
             },
             {
-                'date_before': '2021-01-01',
-                'date_after': '2021-02-01',
-            }
+                'date': {
+                    'from': '2021-01-01',
+                    'to': '2021-02-01',
+                },
+            },
         ]
     ):
         result = runner.invoke(
