@@ -253,3 +253,10 @@ def get_sync_capabilities_env_ppu_enabled(fs, mocked_responses):
         )
 
         return load_workbook('./tests/fixtures/capabilities_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
+def mocked_reports(fs):
+    fs.add_real_file('./tests/fixtures/reports.json')
+    with open('./tests/fixtures/reports.json') as response:
+        return json.load(response)

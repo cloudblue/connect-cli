@@ -1,0 +1,22 @@
+{
+   "name":"Connect Reports Fixture",
+   "readme_file":"Readme.md",
+   "version":"1.0.0",
+   "language":"python",
+   "reports":[
+      {
+         "name":"test report",
+         "readme_file":"entrypoint/Readme.md",
+         "template":"entrypoint/template.xlsx",
+         "start_row":2,
+         "start_col":1,
+         "entrypoint":"entrypoint.entrypoint.generate",
+         "audience":[
+            "provider",
+            "vendor"
+         ],
+         "report_spec":1,
+         "parameters":[]
+      }
+   ]
+}

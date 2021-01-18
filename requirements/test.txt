@@ -1,5 +1,10 @@
 coverage
 flake8
+flake8-bugbear
+flake8-comprehensions
+flake8-debugger
+flake8-eradicate
+flake8-string-format
 pytest
 pytest-cov
 pytest-mock

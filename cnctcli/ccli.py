@@ -17,6 +17,7 @@ import click
 from cnctcli import get_version
 from cnctcli.commands.account import grp_account
 from cnctcli.commands.product import grp_product
+from cnctcli.commands.report import grp_report
 from cnctcli.config import pass_config
 
 CCLI_VERSION = get_version()
@@ -45,6 +46,7 @@ def cli(config, config_dir, silent):
 
 cli.add_command(grp_account)
 cli.add_command(grp_product)
+cli.add_command(grp_report)
 
 
 def main():  # pragma: no cover
