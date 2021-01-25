@@ -153,6 +153,43 @@ def test_report_generic_exception(fs):
     assert "Unknown error while executing the report" in result.output
 
 
+def test_report_custom_exception(fs):
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/reports.json')
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/README.md')
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/__init__.py')
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/entrypoint.py')
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/Readme.md')
+    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/template.xlsx')
+
+    config = Config()
+    config._config_path = '/config.json'
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli,
+        [
+            '-c',
+            '/',
+            'report',
+            'execute',
+            'entrypoint',
+            '-d',
+            './tests/fixtures/reports/custom_exception',
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Custom error" in result.output
+
+
 def test_input_parameters(fs):
     fs.add_real_file('./tests/fixtures/reports/report_with_inputs/reports.json')
     fs.add_real_file('./tests/fixtures/reports/report_with_inputs/README.md')
