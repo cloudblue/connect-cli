@@ -173,6 +173,8 @@ def execute_report(config, reports_dir, report, output_file):
     except (ClientError, Exception) as e:
         if isinstance(e, ClientError):
             message = f'\nError returned by Connect when executing the report: {str(e)}'
+        elif isinstance(e, RuntimeError):
+            message = f'\nReport error: {str(e)}'
         else:
             message = f'\nUnknown error while executing the report: {str(e)}'
         trace = []
