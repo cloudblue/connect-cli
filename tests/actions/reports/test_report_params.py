@@ -216,7 +216,7 @@ def test_marketplace_list(mocked_responses):
     result = marketplace_list(config, client, param)
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1
-    assert result['values'][0] == ('MKP-1', 'Marketplace')
+    assert result['values'][0] == ('MKP-1', 'Marketplace (MKP-1)')
 
 
 def test_hub_list(mocked_responses):
@@ -259,7 +259,7 @@ def test_hub_list(mocked_responses):
     result = hub_list(config, client, param)
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1
-    assert result['values'][0] == ('hub1', 'my_hub')
+    assert result['values'][0] == ('hub1', 'my_hub (hub1)')
 
 
 def test_product(mocked_responses, mocked_product_response):
@@ -289,7 +289,7 @@ def test_product(mocked_responses, mocked_product_response):
     result = product_list(config.active, client, param)
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1
-    assert result['values'][0] == ('PRD-276-377-545', 'My Product')
+    assert result['values'][0] == ('PRD-276-377-545', 'My Product (PRD-276-377-545)')
 
 
 def test_product_2(mocked_responses, mocked_product_response):
@@ -319,4 +319,4 @@ def test_product_2(mocked_responses, mocked_product_response):
     result = product_list(config.active, client, param)
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1
-    assert result['values'][0] == ('PRD-276-377-545', 'My Product')
+    assert result['values'][0] == ('PRD-276-377-545', 'My Product (PRD-276-377-545)')

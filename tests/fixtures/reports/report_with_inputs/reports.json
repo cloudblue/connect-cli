@@ -15,7 +15,7 @@
             "provider",
             "vendor"
          ],
-         "report_spec":1,
+         "report_spec": "1",
          "parameters":[
             {
                "id":"status",
