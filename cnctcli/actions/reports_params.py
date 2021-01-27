@@ -94,9 +94,9 @@ def marketplace_list(config, client, param):
     return {
         'name': param['id'],
         'type': 'selectmany',
-        'description': f'{param["description"]}',
+        'description': f'{param["description"]} ({param["id"]})',
         'values': [
-            (m['id'], m['name'])
+            (m['id'], f'{m["name"]} ({m["id"]})')
             for m in marketplaces
         ],
         'validators': required_validator(param),
@@ -119,7 +119,7 @@ def hub_list(config, client, param):
         'type': 'selectmany',
         'description': f'{param["description"]}',
         'values': [
-            (h['id'], h['name'])
+            (h['id'], f'{h["name"]} ({h["id"]})')
             for h in hubs
         ],
         'validators': required_validator(param),
@@ -137,7 +137,7 @@ def product_list(config, client, param):
         'type': 'selectmany',
         'description': f'{param["description"]}',
         'values': [
-            (p['id'], p['name'])
+            (p['id'], f'{p["name"]} ({p["id"]})')
             for p in products
         ],
         'validators': required_validator(param),

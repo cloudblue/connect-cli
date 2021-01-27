@@ -291,7 +291,7 @@ def validate_report_definition(definition, reports_dir):
             raise ClickException(
                 f'Property {required_prop} not found for report {definition["name"]}'
             )
-    if definition['report_spec'] != 1:
+    if definition['report_spec'] != "1":
         raise ClickException(
             'Supported report specification by Connect CLI tool is 1'
         )
