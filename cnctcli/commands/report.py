@@ -173,7 +173,10 @@ def load_reports(reports_dir):
     if not os.path.exists(descriptor):
         raise ClickException(f'The directory {reports_dir} is not a report project root directory.')
 
-    reports_descriptor = json.load(open(descriptor, 'r'))
+    try:
+        reports_descriptor = json.load(open(descriptor, 'r'))
+    except json.decoder.JSONDecodeError:
+        raise ClickException("Error reading reports.json, invalid JSON format")
     validate_report_json(reports_descriptor, reports_dir)
     reports = []
     for report in reports_descriptor['reports']:
