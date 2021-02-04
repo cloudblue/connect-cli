@@ -100,9 +100,18 @@ def get_report_inputs(config, client, parameters):
                     'before': before,
                 }
             continue
-        if questions[0]['type'] == 'selectmany' and \
+        elif questions[0]['type'] == 'selectmany' and \
                 len(questions[0]['values']) == len(answers[param['id']]):
-            parameters_values[param['id']] = None
+            parameters_values[param['id']] = {
+                "all": True,
+                "choices": [],
+            }
+        elif questions[0]['type'] == 'selectmany' and \
+                len(questions[0]['values']) != len(answers[param['id']]):
+            parameters_values[param['id']] = {
+                "all": False,
+                "choices": answers[param['id']],
+            }
         else:
             parameters_values[param['id']] = answers[param['id']]
         i += 1
@@ -127,6 +136,7 @@ def execute_report(config, reports_dir, report, output_file):
         config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
+        default_limit=10,
     )
 
     entrypoint = get_report_entrypoint(report['entrypoint'])
