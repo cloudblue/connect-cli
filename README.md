@@ -119,6 +119,43 @@ To synchronize a product from Excel run:
 ```
 
 
+### Clone a product
+
+To clone a product you can run this command:
+
+```
+    $ ccli product clone PRD-000-000-000
+```
+
+this command also accepts as additional parameters:
+
+* -s: to specify the source account
+* -d: to specify the destination account
+* -n: to specify the name for the cloned one 
+
+
+### Reports
+
+Multiple reports are available to the Connect-cli tool, additionally you can create your owns and run them
+
+to list available reports you can run:
+
+```
+    $ ccli report list
+```
+
+to execute a concrete report, you must get the id from the list before and execute:
+
+```
+    $ ccli report execute {ID}
+```
+
+for example:
+
+```
+    $ ccli report execute fulfillment_requests
+```
+
 ### Getting help
 
 To get help about the `connect-cli` commands type:
