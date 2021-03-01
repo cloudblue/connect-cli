@@ -59,8 +59,6 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses):
             )
 
             assert result.exit_code == 0
-            assert 'Finished synchronization of tab from Excel workbook Configuration for product ' \
-                   'PRD-276-377-545' in result.output
 
 
 def test_list_products(fs, mocked_responses):

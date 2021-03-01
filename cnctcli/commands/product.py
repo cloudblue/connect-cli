@@ -23,6 +23,7 @@ from cnctcli.config import pass_config
 from cnct import ConnectClient, ClientError
 from cnct.rql import R
 from cnctcli.actions.products.utils import SheetNotFoundError
+from cmr import render
 
 
 @click.group(name='product', short_help='commands related to product management')
@@ -189,7 +190,6 @@ def cmd_sync_products(config, input_file, yes):
         )
         click.echo('')
 
-    print_next_task('General Information', product_id, config.silent)
     general_errors = synchronizer.sync()
     if general_errors and not config.silent:
         click.echo(
@@ -198,11 +198,10 @@ def cmd_sync_products(config, input_file, yes):
                 fg='magenta'
             )
         )
-    print_finished_task('General Information', product_id, config.silent)
+    results_tracker = []
 
     try:
-        print_next_task('Items', product_id, config.silent)
-        item_sync(client, config, input_file)
+        results_tracker.append(item_sync(client, config, input_file))
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -211,10 +210,8 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Items', product_id, config.silent)
     try:
-        print_next_task('Capabilities', product_id, config.silent)
-        capabilities_sync(client, config, input_file)
+        results_tracker.append(capabilities_sync(client, config, input_file))
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -223,11 +220,9 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Capabilities', product_id, config.silent)
 
     try:
-        print_next_task('Embedding resources', product_id, config.silent)
-        static_resources_sync(client, config, input_file)
+        results_tracker.append(static_resources_sync(client, config, input_file))
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -236,11 +231,9 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Embedding resources', product_id, config.silent)
 
     try:
-        print_next_task('Templates', product_id, config.silent)
-        templates_sync(client, config, input_file)
+        results_tracker.append(templates_sync(client, config, input_file))
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -249,15 +242,43 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Embedding resources', product_id, config.silent)
 
-    param_task(client, config, input_file, product_id, 'Ordering Parameters')
-    param_task(client, config, input_file, product_id, 'Fulfillment Parameters')
-    param_task(client, config, input_file, product_id, 'Configuration Parameters')
+    results_tracker.append(
+        param_task(
+            client,
+            config,
+            input_file,
+            product_id,
+            'Ordering Parameters',
+        )
+    )
+    results_tracker.append(
+        param_task(
+            client,
+            config,
+            input_file,
+            product_id,
+            'Fulfillment Parameters',
+        )
+    )
+    results_tracker.append(
+        param_task(
+            client,
+            config,
+            input_file,
+            product_id,
+            'Configuration Parameters',
+        )
+    )
 
     try:
-        print_next_task('Actions', product_id, config.silent)
-        actions_sync(client, config, input_file)
+        results_tracker.append(
+            actions_sync(
+                client,
+                config,
+                input_file,
+            )
+        )
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -266,11 +287,15 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Actions', product_id, config.silent)
 
     try:
-        print_next_task('Media', product_id, config.silent)
-        media_sync(client, config, input_file)
+        results_tracker.append(
+            media_sync(
+                client,
+                config,
+                input_file,
+            )
+        )
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -279,11 +304,15 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Media', product_id, config.silent)
 
     try:
-        print_next_task('Configuration', product_id, config.silent)
-        config_values_sync(client, config, input_file)
+        results_tracker.append(
+            config_values_sync(
+                client,
+                config,
+                input_file
+            )
+        )
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -292,7 +321,12 @@ def cmd_sync_products(config, input_file, yes):
                     fg='blue',
                 )
             )
-    print_finished_task('Configuration', product_id, config.silent)
+
+    print_results(
+        product_id=product_id,
+        silent=config.silent,
+        results_tracker=results_tracker,
+    )
 
 
 @grp_product.command(
@@ -446,8 +480,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
 
 def param_task(client, config, input_file, product_id, param_type):
     try:
-        print_next_task(param_type, product_id, config.silent)
-        params_sync(client, config, input_file, param_type)
+        result = params_sync(client, config, input_file, param_type)
     except SheetNotFoundError as e:
         if not config.silent:
             click.echo(
@@ -456,7 +489,7 @@ def param_task(client, config, input_file, product_id, param_type):
                     fg='blue',
                 )
             )
-    print_finished_task(param_type, product_id, config.silent)
+    return result
 
 
 def media_sync(client, config, input_file):
@@ -465,22 +498,20 @@ def media_sync(client, config, input_file):
         config.silent,
     )
 
-    product_id = synchronizer.open(input_file, 'Media')
+    synchronizer.open(input_file, 'Media')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
     synchronizer.save(input_file)
 
-    print_action_result(
-        silent=config.silent,
-        obj_type='Media',
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Media",
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def actions_sync(client, config, input_file):
@@ -489,20 +520,18 @@ def actions_sync(client, config, input_file):
         config.silent,
     )
 
-    product_id = synchronizer.open(input_file, 'Actions')
+    synchronizer.open(input_file, 'Actions')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
-    print_action_result(
-        silent=config.silent,
-        obj_type='Actions',
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Actions",
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def templates_sync(client, config, input_file):
@@ -511,21 +540,19 @@ def templates_sync(client, config, input_file):
         config.silent,
     )
 
-    product_id = synchronizer.open(input_file, 'Templates')
+    synchronizer.open(input_file, 'Templates')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
     synchronizer.save(input_file)
-    print_action_result(
-        silent=config.silent,
-        obj_type='Templates',
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Templates",
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def params_sync(client, config, input_file, param_type):
@@ -534,22 +561,20 @@ def params_sync(client, config, input_file, param_type):
         config.silent,
     )
 
-    product_id = synchronizer.open(input_file, param_type)
+    synchronizer.open(input_file, param_type)
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
     synchronizer.save(input_file)
 
-    print_action_result(
-        silent=config.silent,
-        obj_type=param_type,
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": param_type,
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def static_resources_sync(client, config, input_file):
@@ -557,20 +582,18 @@ def static_resources_sync(client, config, input_file):
         client,
         config.silent,
     )
-    product_id = synchronizer.open(input_file, 'Embedding Static Resources')
+    synchronizer.open(input_file, 'Embedding Static Resources')
 
     skipped, created, deleted, errors = synchronizer.sync()
 
-    print_action_result(
-        silent=config.silent,
-        obj_type='Embedding resources',
-        product_id=product_id,
-        created=created,
-        updated=0,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Static Resources",
+        "created": created,
+        "updated": 0,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def capabilities_sync(client, config, input_file):
@@ -579,20 +602,18 @@ def capabilities_sync(client, config, input_file):
         client,
         config.silent,
     )
-    product_id = synchronizer.open(input_file, 'Capabilities')
+    synchronizer.open(input_file, 'Capabilities')
 
     skipped, updated, errors = synchronizer.sync()
 
-    print_action_result(
-        silent=config.silent,
-        obj_type='Capabilities',
-        product_id=product_id,
-        created=0,
-        updated=updated,
-        deleted=0,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Capabilities",
+        "created": 0,
+        "updated": updated,
+        "deleted": 0,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def config_values_sync(client, config, input_file):
@@ -600,20 +621,18 @@ def config_values_sync(client, config, input_file):
         client,
         config.silent,
     )
-    product_id = synchronizer.open(input_file, 'Configuration')
+    synchronizer.open(input_file, 'Configuration')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
-    print_action_result(
-        silent=config.silent,
-        obj_type='Configuration',
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Configuration",
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
 def item_sync(client, config, input_file):
@@ -621,78 +640,71 @@ def item_sync(client, config, input_file):
         client,
         config.silent,
     )
-    product_id = synchronizer.open(input_file, 'Items')
+    synchronizer.open(input_file, 'Items')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
     synchronizer.save(input_file)
-    print_action_result(
-        silent=config.silent,
-        obj_type='Items',
-        product_id=product_id,
-        created=created,
-        updated=updated,
-        deleted=deleted,
-        skipped=skipped,
-        errors=errors,
-    )
+    return {
+        "module": "Items",
+        "created": created,
+        "updated": updated,
+        "deleted": deleted,
+        "skipped": skipped,
+        "errors": errors
+    }
 
 
-def print_next_task(task, product, silent):
-    if not silent:
-        click.echo(f'Going to synchronize tab from Excel workbook {task} for product {product}\n')
-
-
-def print_finished_task(task, product, silent):
-    if not silent:
-        click.echo(
-            f'Finished synchronization of tab from Excel workbook {task} for product {product}\n'
-        )
-
-
-def print_action_result(
+def print_results(
         silent,
-        obj_type,
         product_id,
-        created,
-        updated,
-        deleted,
-        skipped,
-        errors,
+        results_tracker,
 ):
     if not silent:
-        msg = f'\nThe {obj_type} of product {product_id} has been synchronized.'
-        fg = 'green'
+        msg = f'''
+# Results of synchronizing {product_id}
 
-        if errors:
-            msg = f'\nThe {obj_type} of product {product_id} has been partially synchronized.'
-            fg = 'yellow'
 
-        errors_count = len(errors)
-        processed = skipped + updated + errors_count
-
-        click.echo(click.style(msg, fg=fg))
-
-        click.echo(
-            click.style(
-                (
-                    f'\nProcessed rows: {processed}\n'
-                    f'  - Created: {created}\n'
-                    f'  - Updated: {updated}\n'
-                    f'  - Deleted: {deleted}\n'
-                    f'  - Skipped: {skipped}\n'
-                    f'  - Errors: {errors_count}\n'
-                ),
-                fg='blue'
+| Module | Processed | Created | Updated | Deleted | Skipped | Errors |
+|:--------|--------:| --------:|--------:|----------:|----------:|----------:|
+        '''
+        errors = 0
+        for result in results_tracker:
+            errors_count = len(result['errors'])
+            errors += errors_count
+            processed = result['skipped'] + result['created']
+            processed += result['updated'] + result['deleted']
+            processed += errors_count
+            row = '|{module}|{processed}|{created}|{updated}|{deleted}|{skipped}|{errors}|\n'
+            msg += row.format(
+                module=result['module'],
+                processed=processed,
+                created=result['created'],
+                updated=result['updated'],
+                deleted=result['deleted'],
+                skipped=result['skipped'],
+                errors=errors_count
             )
+        click.echo(
+            f'\n{render(msg)}\n'
         )
 
-        if errors:
-            click.echo(
-                click.style('\nErrors:\n', fg='magenta')
-            )
-            for row_idx, messages in errors.items():
-                click.echo(f'  Errors at row #{row_idx}')
-                for msg in messages:
-                    click.echo(f'    - {msg}')
-                click.echo(' ')
+        if errors > 0:
+            msg = f'\nSync operation had {errors} errors, do you want to see them?'
+            fg = 'yellow'
+
+            click.echo(click.style(msg, fg=fg))
+
+            print_errors = continue_or_quit()
+
+            if print_errors:
+                for result in results_tracker:
+                    if len(result['errors']) > 0:
+                        click.echo(
+                            click.style(f'\nModule {result["module"]}:\n', fg='magenta')
+                        )
+                        for row_idx, messages in result["errors"].items():
+                            click.echo(f'  Errors at row #{row_idx}')
+                            for msg in messages:
+                                click.echo(f'    - {msg}')
+                            click.echo(' ')
