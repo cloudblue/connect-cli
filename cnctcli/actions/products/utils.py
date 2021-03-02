@@ -104,9 +104,5 @@ def get_json_object_for_param(original_param):
     return json.dumps(param, indent=4, sort_keys=True)
 
 
-class SheetNotFoundError(Exception):
-    pass
-
-
 class ParamSwitchNotSupported(Exception):
     pass

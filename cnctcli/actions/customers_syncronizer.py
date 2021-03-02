@@ -1,0 +1,261 @@
+from collections import namedtuple
+
+from click import ClickException
+from tqdm import trange
+
+from cnct import ClientError, R
+
+from zipfile import BadZipFile
+
+from openpyxl import load_workbook
+from openpyxl.utils.exceptions import InvalidFileException
+
+from cnctcli.actions.utils import SheetNotFoundError, DEFAULT_BAR_FORMAT
+from cnctcli.actions.customers import COL_HEADERS
+
+import phonenumbers
+import uuid
+
+fields = (v.replace(' ', '_').lower() for v in COL_HEADERS.values())
+
+_RowData = namedtuple('RowData', fields)
+
+
+class CustomerSynchronizer:
+    def __init__(self, client, silent, account_id):
+        self._client = client
+        self._silent = silent
+        self._wb = None
+        self.account_id = account_id
+        self.hubs = ['HB-0000-0000']
+
+    def populate_hubs(self):
+        if self.account_id.startswith('PA-'):
+            hubs = self._client.hubs.all()
+            for hub in hubs:
+                if hub['instance']['type'] != 'OA':
+                    self.hubs.append(hub['id'])
+
+    def open(self, input_file, worksheet):
+        self._open_workbook(input_file)
+        if worksheet not in self._wb.sheetnames:
+            raise SheetNotFoundError(f'File does not contain {worksheet} to synchronize, skipping')
+        ws = self._wb[worksheet]
+        self._validate_worksheet_sheet(ws)
+
+    def save(self, output_file):
+        self._wb.save(output_file)
+
+    def _open_workbook(self, input_file):
+        try:
+            self._wb = load_workbook(input_file)
+        except InvalidFileException as ife:
+            raise ClickException(str(ife))
+        except BadZipFile:
+            raise ClickException(f'{input_file} is not a valid xlsx file.')
+
+    @staticmethod
+    def _validate_worksheet_sheet(ws):
+        cels = ws['A1': 'T1']
+        for cel in cels[0]:
+            if cel.value != COL_HEADERS[cel.column_letter]:
+                raise ClickException(
+                    f'Column `{cel.coordinate}` must be {COL_HEADERS[cel.column_letter]}` '
+                    f'and is {cel.value} '
+                )
+
+    def sync(self):
+        ws = self._wb['Customers']
+        errors = {}
+        skipped_count = 0
+        created_items = []
+        updated_items = []
+        parent_uuid = {}
+        parent_external_id = {}
+        parent_id = []
+
+        self.populate_hubs()
+        row_indexes = trange(
+            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT
+        )
+        for row_idx in row_indexes:
+            data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 21)])
+            row_indexes.set_description(
+                f'Processing item {data.id or data.external_id or data.external_uid}'
+            )
+            if data.action == '-':
+                skipped_count += 1
+                continue
+            row_errors = self._validate_row(data)
+            if row_errors:
+                errors[row_idx] = row_errors
+                continue
+            if data.parent_search_criteria and not data.parent_search_value:
+                errors[row_idx] = ["Parent search value is needed if criteria is set"]
+                continue
+            if data.hub_id and (data.hub_id != '' or data.hub_id != '-'):
+                if data.hub_id not in self.hubs:
+                    errors[row_idx] = [f"Accounts on hub {data.hub_id} can not be modified"]
+                    continue
+            name = f'{data.technical_contact_first_name} {data.technical_contact_last_name}'
+            model = {
+                "type": data.type,
+                "name": data.company_name if data.company_name else name,
+                "contact_info": {
+                    "address_line1": data.address_line_1,
+                    "address_line2": data.address_line_2,
+                    "city": data.city,
+                    "country": data.country,
+                    "postal_code": data.zip,
+                    "state": data.state,
+                    "contact": {
+                        "first_name": data.technical_contact_first_name,
+                        "last_name": data.technical_contact_last_name,
+                        "email": data.technical_contact_email,
+                    }
+                }
+            }
+            if data.external_id:
+                model['external_id'] = data.external_id
+            if data.external_uid:
+                model['external_uid'] = data.external_uid
+            else:
+                model['external_uid'] = str(uuid.uuid4())
+            if data.technical_contact_phone:
+                try:
+                    phone = phonenumbers.parse(data.technical_contact_phone, data.country)
+                    phone_number = {
+                        "country_code": f'+{str(phone.country_code)}',
+                        "area_code": '',
+                        "extension": str(phone.extension) if phone.extension else '-',
+                        'phone_number': str(phone.national_number)
+                    }
+                    model['contact_info']['contact']['phone_number'] = phone_number
+                except Exception:
+                    pass
+            if data.parent_search_criteria != '-':
+                model['parent'] = {}
+                if data.parent_search_criteria == 'id':
+                    if data.parent_search_value not in parent_id:
+                        try:
+                            pacc = self._client.ns('tier').accounts[data.parent_search_value].get()
+                            parent_id.append(pacc['id'])
+                        except ClientError:
+                            errors[row_idx] = [
+                                f'Parent with id {data.parent_search_value} does not exist'
+                            ]
+                            continue
+                    model['parent']['id'] = data.parent_search_value
+                elif data.parent_search_criteria == 'external_id':
+                    if data.parent_search_value not in parent_external_id:
+                        try:
+                            r = R().external_id.eq(str(data.parent_search_value))
+                            pacc = self._client.ns('tier').accounts.filter(r).all()
+                            pacc_count = pacc.count()
+                            if pacc_count == 0:
+                                errors[row_idx] = [
+                                    f'Parent with external_id {data.parent_search_value} not found'
+                                ]
+                                continue
+                            elif pacc_count > 1:
+                                errors[row_idx] = [
+                                    f'More than one Parent with external_id {data.parent_search_value}'
+                                ]
+                                continue
+                            parent_external_id[data.parent_search_value] = pacc[0]['id']
+                        except ClientError:
+                            errors[row_idx] = ['Error when obtaining parent data from Connect']
+                            continue
+                    model['parent']['id'] = parent_external_id[data.parent_search_value]
+                else:
+                    if data.parent_search_value not in parent_uuid:
+                        try:
+                            r = R().external_uid.eq(str(data.parent_search_value))
+                            pacc = self._client.ns('tier').accounts.filter(r).all()
+                            if pacc.count() == 0:
+                                errors[row_idx] = [
+                                    f'Parent with external_uid {data.parent_search_value} not found'
+                                ]
+                                continue
+                            elif pacc.count() > 1:
+                                errors[row_idx] = [
+                                    f'More than one Parent with external_uid {data.parent_search_value}'
+                                ]
+                                continue
+                            parent_uuid[data.parent_search_value] = pacc[0]['id']
+                        except ClientError:
+                            errors[row_idx] = ['Error when obtaining parent data from Connect']
+                            continue
+                    model['parent']['id'] = parent_uuid[data.parent_search_value]
+            if data.action == 'create':
+                try:
+                    account = self._client.ns('tier').accounts.create(model)
+                except ClientError as e:
+                    errors[row_idx] = [f'Error when creating account: {str(e)}']
+                    continue
+                created_items.append(account)
+                self._update_sheet_row(ws, row_idx, account)
+            else:
+                try:
+                    model['id'] = data.id
+                    account = self._client.ns('tier').accounts[data.id].update(model)
+                except ClientError as e:
+                    errors[row_idx] = [f'Error when updating account: {str(e)}']
+                    continue
+                updated_items.append(account)
+                self._update_sheet_row(ws, row_idx, account)
+        return (
+            skipped_count,
+            len(created_items),
+            len(updated_items),
+            errors,
+        )
+
+    @staticmethod
+    def _update_sheet_row(ws, row_idx, account):
+        ws.cell(row_idx, 1, value=account['id'])
+        ws.cell(row_idx, 3, value=account['external_uid'])
+        ws.cell(row_idx, 4, value='-')
+
+    def _validate_row(self, row):
+        errors = []
+        if row.action not in ('-', 'create', 'update'):
+            errors.append(f'Action {row.action} is not supported')
+            return errors
+        if row.action == '-':
+            return
+        if row.type not in ('customer', 'reseller'):
+            errors.append(f'Customer type must be customer or reseller, not {row.type}')
+            return errors
+        if not all(
+                [
+                    row.address_line_1,
+                    row.city,
+                    row.state,
+                    row.zip,
+                    row.technical_contact_first_name,
+                    row.technical_contact_last_name,
+                    row.technical_contact_email,
+                ]
+        ):
+            errors.append('Address line 1, city, state and zip are mandatory')
+            return errors
+        if row.action == 'create' and row.id is not None:
+            errors.append(f'Create action must not have account id, is set to {row.id}')
+            return errors
+        if row.action == 'create' and row.type == 'customer' and (
+                row.parent_search_criteria == '' or row.parent_search_criteria == '-'
+        ):
+            errors.append('Customers requires a parent account')
+            return errors
+        if row.action == 'update' and not row.id.startswith('TA-'):
+            errors.append('Update operation requires account ID to be set')
+            return errors
+        if row.action == 'update':
+            try:
+                self._client.ns('tier').accounts[row.id].get()
+            except ClientError:
+                errors.append(
+                    f'Account with id {row.id} does not exist'
+                )
+                return errors

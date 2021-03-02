@@ -1,0 +1,46 @@
+{
+   "id":"TA-7374-0753-1907",
+   "version":1,
+   "name":"Walsh and Sons",
+   "type":"reseller",
+   "external_id":"39878",
+   "external_uid":"f7320e27-23ef-4c04-9296-fd01250120d5",
+   "scopes":[
+
+   ],
+   "hub":{
+      "id":"HB-0000-0000",
+      "name":"None"
+   },
+   "events":{
+      "created":{
+         "at":"2021-03-01T16:56:34+00:00",
+         "by":{
+            "id":"UR-024-000-000",
+            "name":"Marc vendor"
+         }
+      },
+      "updated":{
+         "at":"2021-03-01T16:56:34+00:00"
+      }
+   },
+   "contact_info":{
+      "address_line1":"Esperanza Ferry",
+      "address_line2":"Harris Pass",
+      "city":"al-Manamah",
+      "state":"al-Manamah",
+      "postal_code":"111111",
+      "country":"BH",
+      "contact":{
+         "first_name":"Hosea",
+         "last_name":"Pfannerstill",
+         "email":"mserrat+Hosea_Pfannerstill@connect.cloudblue.com",
+         "phone_number":{
+            "country_code":"+973",
+            "area_code":"170",
+            "phone_number":"01234",
+            "extension":""
+         }
+      }
+   }
+}

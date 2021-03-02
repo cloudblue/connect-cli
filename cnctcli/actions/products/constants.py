@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 ITEMS_COLS_HEADERS = {
     'A': 'ID',
@@ -133,5 +133,3 @@ CAPABILITIES = (
     'Tier Accounts Sync',
     'Administrative Hold',
 )
-
-DEFAULT_BAR_FORMAT = '{desc:<70.69}{percentage:3.0f}%|{bar:30}{r_bar}'

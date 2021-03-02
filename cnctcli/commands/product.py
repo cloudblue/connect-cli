@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import click
 
@@ -22,7 +22,7 @@ from cnctcli.commands.utils import continue_or_quit
 from cnctcli.config import pass_config
 from cnct import ConnectClient, ClientError
 from cnct.rql import R
-from cnctcli.actions.products.utils import SheetNotFoundError
+from cnctcli.actions.utils import SheetNotFoundError
 from cmr import render
 
 

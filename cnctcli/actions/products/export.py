@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import os
 import json
@@ -24,7 +24,8 @@ from cnctcli.actions.products.utils import (
     get_col_headers_by_ws_type,
     get_json_object_for_param,
 )
-from cnctcli.actions.products.constants import PARAM_TYPES, DEFAULT_BAR_FORMAT
+from cnctcli.actions.products.constants import PARAM_TYPES
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 from cnctcli.api.utils import (
     format_http_status,
     handle_http_error,
