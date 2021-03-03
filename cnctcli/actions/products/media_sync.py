@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 from collections import namedtuple
 
@@ -9,7 +9,8 @@ from tqdm import trange
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from cnctcli.actions.products.sync import ProductSynchronizer
-from cnctcli.actions.products.constants import MEDIA_COLS_HEADERS, DEFAULT_BAR_FORMAT
+from cnctcli.actions.products.constants import MEDIA_COLS_HEADERS
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 from cnct import ClientError
 
 from urllib.parse import urlparse

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 from zipfile import BadZipFile
 
@@ -14,8 +14,8 @@ from cnctcli.actions.products.utils import (
     get_col_limit_by_ws_type,
     get_ws_type_by_worksheet_name,
     get_col_headers_by_ws_type,
-    SheetNotFoundError,
 )
+from cnctcli.actions.utils import SheetNotFoundError
 
 
 class ProductSynchronizer:

@@ -260,3 +260,23 @@ def mocked_reports(fs):
     fs.add_real_file('./tests/fixtures/reports.json')
     with open('./tests/fixtures/reports.json') as response:
         return json.load(response)
+
+
+@pytest.fixture
+def mocked_customer(fs):
+    fs.add_real_file('./tests/fixtures/customer/customer.json')
+    with open('./tests/fixtures/customer/customer.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture
+def mocked_reseller(fs):
+    fs.add_real_file('./tests/fixtures/customer/reseller.json')
+    with open('./tests/fixtures/customer/reseller.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture
+def customers_workbook(fs):
+    fs.add_real_file('./tests/fixtures/customer/customers.xlsx')
+    return load_workbook('./tests/fixtures/customer/customers.xlsx')

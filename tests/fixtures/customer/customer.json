@@ -1,0 +1,51 @@
+{
+   "id":"TA-4889-0575-1415",
+   "version":2,
+   "name":"Kirlin LLC",
+   "type":"customer",
+   "external_id":"16547",
+   "external_uid":"5663c260-328b-4021-b7e5-d290afb19e9a",
+   "parent":{
+      "id":"TA-7374-0753-1907",
+      "name":"Walsh and Sons",
+      "external_id":"39878"
+   },
+   "scopes":[
+
+   ],
+   "hub":{
+      "id":"HB-0000-0000",
+      "name":"None"
+   },
+   "events":{
+      "created":{
+         "at":"2021-03-01T16:56:45+00:00",
+         "by":{
+            "id":"UR-024-000-000",
+            "name":"Marc vendor"
+         }
+      },
+      "updated":{
+         "at":"2021-03-01T16:56:45+00:00"
+      }
+   },
+   "contact_info":{
+      "address_line1":"McLaughlin Brooks",
+      "address_line2":"Christ Haven",
+      "city":"al-Balqa",
+      "state":"al-Balqa'",
+      "postal_code":"-",
+      "country":"JO",
+      "contact":{
+         "first_name":"Cory",
+         "last_name":"Marvin",
+         "email":"mserrat+Cory_Marvin@connect.cloudblue.com",
+         "phone_number":{
+            "country_code":"+962",
+            "area_code":"",
+            "phone_number":"62001234",
+            "extension":"-"
+         }
+      }
+   }
+}

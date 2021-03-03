@@ -5,7 +5,8 @@ from tqdm import trange
 from cnctcli.actions.products.sync import ProductSynchronizer
 
 from cnctcli.actions.products.utils import cleanup_product_for_update
-from cnctcli.actions.products.constants import STATIC_LINK_HEADERS, DEFAULT_BAR_FORMAT
+from cnctcli.actions.products.constants import STATIC_LINK_HEADERS
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 from urllib.parse import urlparse
 
 

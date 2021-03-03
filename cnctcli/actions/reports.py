@@ -17,7 +17,7 @@ from openpyxl.styles.colors import Color, WHITE
 from cnct import ConnectClient
 from cmr import render
 
-from cnctcli.actions.products.constants import DEFAULT_BAR_FORMAT
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 from cnctcli.constants import REPORT_PARAM_TYPES
 from cnctcli.actions.reports_params import (
     date_params,

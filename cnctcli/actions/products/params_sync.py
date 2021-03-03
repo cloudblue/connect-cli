@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2020 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 from collections import namedtuple
 
@@ -11,8 +11,8 @@ from cnctcli.actions.products.sync import ProductSynchronizer
 from cnctcli.actions.products.constants import (
     PARAM_TYPES,
     PARAMS_COLS_HEADERS,
-    DEFAULT_BAR_FORMAT,
 )
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 from cnctcli.actions.products.utils import get_json_object_for_param, ParamSwitchNotSupported
 from cnct import ClientError
 from openpyxl.styles import Alignment

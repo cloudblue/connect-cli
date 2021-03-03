@@ -5,8 +5,8 @@ from tqdm import trange
 from cnctcli.actions.products.sync import ProductSynchronizer
 from cnctcli.actions.products.constants import (
     CAPABILITIES,
-    DEFAULT_BAR_FORMAT,
 )
+from cnctcli.actions.utils import DEFAULT_BAR_FORMAT
 
 from cnctcli.actions.products.utils import cleanup_product_for_update
 from cnctcli.actions.products.constants import CAPABILITIES_COLS_HEADERS

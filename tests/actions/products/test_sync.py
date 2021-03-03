@@ -1,4 +1,4 @@
-from cnctcli.actions.products.utils import SheetNotFoundError
+from cnctcli.actions.utils import SheetNotFoundError
 from click import ClickException
 from cnctcli.actions.products.sync import ProductSynchronizer
 from cnct import ConnectClient
