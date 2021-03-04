@@ -136,7 +136,7 @@ def execute_report(config, reports_dir, report, output_file):
         config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
-        default_limit=10,
+        default_limit=500,
         max_retries=3,
     )
 
