@@ -211,7 +211,10 @@ def execute_report(config, reports_dir, report, output_file):
         report_id,
     )
     template_workbook.save(output_file)
+
     progress.close()
+
+    click.echo(f'\nReport has been completed and saved as {output_file}\n')
 
 
 def add_info_sheet(ws, config, report, report_values, start_time, report_id):
