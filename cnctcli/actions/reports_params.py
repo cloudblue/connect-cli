@@ -59,13 +59,14 @@ def object_param(param):
 
 
 def date_range(param):
-    note = '* Dates must be input in your local (UTC{offset}) {tz} timezone'.format(
+    note = '* Dates must be input in your local (UTC{offset}) {tz} timezone.'.format(
         offset=time.strftime("%z"),
         tz=datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo,
     )
-    description = '{param}\n\n\n{note}'.format(
+    description = '{param}\n\n\n{note}\n\n{input_format}'.format(
         param=param["description"],
         note=note,
+        input_format='Input format must be YYYY-MM-DD.'
     )
     return {
         'name': f'{param["id"]}',
