@@ -71,6 +71,7 @@ def cmd_list_products(config, query, page_size, always_continue):
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
+        max_retries=3,
     )
 
     if acc_id.startswith('VA'):
@@ -174,6 +175,7 @@ def cmd_sync_products(config, input_file, yes):
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
+        max_retries=3,
     )
 
     synchronizer = GeneralSynchronizer(
@@ -399,6 +401,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
+        max_retries=3,
     )
 
     if not yes:

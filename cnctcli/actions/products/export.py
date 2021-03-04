@@ -838,7 +838,12 @@ def dump_product(api_url, api_key, product_id, output_file, silent, output_path=
     if not os.path.exists(media_path):
         os.mkdir(media_path)
     try:
-        client = ConnectClient(api_key=api_key, endpoint=api_url, use_specs=False)
+        client = ConnectClient(
+            api_key=api_key,
+            endpoint=api_url,
+            use_specs=False,
+            max_retries=3,
+        )
         product = client.products[product_id].get()
         wb = Workbook()
         connect_api_location = parse.urlparse(api_url)

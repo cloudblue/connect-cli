@@ -44,6 +44,7 @@ class ProductCloner:
                 api_key=self.config.active.api_key,
                 endpoint=self.config.active.endpoint,
                 use_specs=False,
+                max_retries=3,
             )
             synchronizer = GeneralSynchronizer(
                 client,
@@ -143,7 +144,8 @@ class ProductCloner:
             client = ConnectClient(
                 api_key=self.config.active.api_key,
                 endpoint=self.config.active.endpoint,
-                use_specs=False
+                use_specs=False,
+                max_retries=3,
             )
             category = self._get_cat_id(client, ws['B8'].value)
             product = client.products.create(

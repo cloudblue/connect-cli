@@ -57,7 +57,12 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
             "Exists a file with account id as name but a directory is expected, please rename it"
         )
     try:
-        client = ConnectClient(api_key=api_key, endpoint=api_url, use_specs=False)
+        client = ConnectClient(
+            max_retries=3,
+            api_key=api_key,
+            endpoint=api_url,
+            use_specs=False
+        )
         wb = Workbook()
         _prepare_worksheet(wb.create_sheet('Customers'))
         _add_countries(wb.create_sheet('Countries'))

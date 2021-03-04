@@ -137,6 +137,7 @@ def execute_report(config, reports_dir, report, output_file):
         endpoint=config.active.endpoint,
         use_specs=False,
         default_limit=10,
+        max_retries=3,
     )
 
     entrypoint = get_report_entrypoint(report['entrypoint'])

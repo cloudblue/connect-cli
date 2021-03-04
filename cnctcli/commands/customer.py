@@ -98,6 +98,7 @@ def cmd_sync_customers(config, input_file, yes):
         api_key=config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
+        max_retries=3,
     )
 
     synchronizer = CustomerSynchronizer(
