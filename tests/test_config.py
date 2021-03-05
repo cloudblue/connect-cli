@@ -28,8 +28,7 @@ def test_store(mocker):
 
     config.store()
     assert mock_open.mock_calls[0][1][1] == 'w'
-    assert mock_open.mock_calls[2][1][0] == json.dumps(
-        {
+    expected_output = {
             'active': 'VA-000',
             'accounts': [
                 {
@@ -40,7 +39,7 @@ def test_store(mocker):
                 },
             ]
         }
-    )
+    assert json.loads(mock_open.mock_calls[2][1][0]) == expected_output
 
 
 def test_add_account():
