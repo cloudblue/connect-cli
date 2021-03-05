@@ -1,4 +1,14 @@
 from setuptools import find_packages, setup
+import os
+
+
+def package_files(directory):
+    paths = []
+    for path, _, filenames in os.walk(directory):
+        for filename in filenames:
+            if 'test' not in path:
+                paths.append(os.path.join('..', path, filename))
+    return paths
 
 
 def read_file(name):
@@ -6,6 +16,8 @@ def read_file(name):
         content = f.read().rstrip('\n')
     return content
 
+
+extra_files = package_files('cnctcli/reports/')
 
 setup(
     name='connect-cli',
@@ -18,6 +30,7 @@ setup(
     zip_safe=True,
     packages=find_packages(),
     include_package_data=True,
+    package_data={'': extra_files},
     install_requires=read_file('requirements/dev.txt').splitlines(),
     setup_requires=['setuptools_scm', 'pytest-runner', 'wheel'],
     use_scm_version=True,

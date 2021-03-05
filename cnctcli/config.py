@@ -86,10 +86,16 @@ class Config(object):
     def store(self):
         with open(self._config_path, 'w') as f:
             accounts = [account.__dict__ for account in self._accounts.values()]
-            f.write(json.dumps({
-                'active': self._active.id if self._active else '',
-                'accounts': accounts
-            }))
+            f.write(
+                json.dumps(
+                    {
+                        'active': self._active.id if self._active else '',
+                        'accounts': accounts
+                    },
+                    sort_keys=True,
+                    indent=4,
+                )
+            )
 
     def validate(self):
         if not (self._accounts and self._active):
