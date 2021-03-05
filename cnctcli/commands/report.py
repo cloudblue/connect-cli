@@ -124,7 +124,6 @@ def cmd_list_reports(reports_dir):
     default=os.path.join(
         os.path.dirname(__file__),
         '..',
-        'cnctcli',
         'reports',
         'connect-reports'
     ),
