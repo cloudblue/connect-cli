@@ -30,8 +30,8 @@ def grp_report():
     '-d',
     'reports_dir',
     default=os.path.join(
-        os.getcwd(),
-        'cnctcli',
+        os.path.dirname(__file__),
+        '..',
         'reports',
         'connect-reports'
     ),
@@ -79,8 +79,8 @@ def cmd_execute_report(config, report_id, reports_dir, output_file):
     '-d',
     'reports_dir',
     default=os.path.join(
-        os.getcwd(),
-        'cnctcli',
+        os.path.dirname(__file__),
+        '..',
         'reports',
         'connect-reports'
     ),
@@ -122,7 +122,8 @@ def cmd_list_reports(reports_dir):
     '-d',
     'reports_dir',
     default=os.path.join(
-        os.getcwd(),
+        os.path.dirname(__file__),
+        '..',
         'cnctcli',
         'reports',
         'connect-reports'
