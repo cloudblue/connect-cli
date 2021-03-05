@@ -5,7 +5,11 @@ block_cipher = None
 a = Analysis(['../cnctcli/ccli.py'],
              pathex=['/workspaces/product-sync'],
              binaries=[],
-             datas=[('../resources/theme_files','interrogatio/themes/theme_files')],
+             datas=[
+                ('../resources/theme_files','interrogatio/themes/theme_files'),
+                ('../cnctcli/reports/connect-reports', 'cnctcli/commands'),
+                ('../cnctcli/reports/connect-reports','cnctcli/reports/connect-reports'),
+             ],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],

@@ -10,3 +10,4 @@ interrogatio>=1.0.3
 connect-markdown-renderer>=1.0.1
 iso3166>=1.0.1
 phonenumbers>=8.12
+dataclasses==0.8; python_version<'3.8'
