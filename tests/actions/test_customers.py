@@ -16,16 +16,6 @@ def test_dump_customers(fs, mocked_responses, mocked_customer, mocked_reseller):
             'Content-Range': 'items 0-1/1',
         }
     )
-    mocked_responses.add(
-        method='GET',
-        url=f'https://localhost/public/v1/tier/accounts/{mocked_customer["id"]}',
-        json=mocked_customer,
-    )
-    mocked_responses.add(
-        method='GET',
-        url=f'https://localhost/public/v1/tier/accounts/{mocked_reseller["id"]}',
-        json=mocked_reseller,
-    )
 
     output_file = dump_customers(
         api_url='https://localhost/public/v1',

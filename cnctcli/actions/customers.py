@@ -61,7 +61,8 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
             max_retries=3,
             api_key=api_key,
             endpoint=api_url,
-            use_specs=False
+            use_specs=False,
+            default_limit=750,
         )
         wb = Workbook()
         _prepare_worksheet(wb.create_sheet('Customers'))
@@ -74,7 +75,7 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
         for customer in customers:
             progress.set_description(f'Processing customer {customer["id"]}')
             progress.update(1)
-            _fill_customer_row(wb['Customers'], row_idx, customer["id"], client)
+            _fill_customer_row(wb['Customers'], row_idx, customer)
             row_idx += 1
     except ClientError as error:
         handle_http_error(error)
@@ -86,7 +87,7 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
     return output_file
 
 
-def _fill_customer_row(ws, row_idx, customer_id, client):
+def _fill_customer_row(ws, row_idx, customer):
     action_validation = DataValidation(
         type='list',
         formula1='"-,create,update"',
@@ -122,9 +123,6 @@ def _fill_customer_row(ws, row_idx, customer_id, client):
     ws.add_data_validation(search_criteria_validation)
     ws.add_data_validation(countries_validation)
 
-    customer = client.ns('tier').accounts[
-        customer_id
-    ].get()
     ws.cell(row_idx, 1, value=customer.get('id', '-'))
     ws.cell(row_idx, 2, value=customer.get('external_id', '-'))
     ws.cell(row_idx, 3, value=customer.get('external_uid', '-'))
