@@ -47,7 +47,10 @@ class ProductSynchronizer:
 
     def _open_workbook(self, input_file):
         try:
-            self._wb = load_workbook(input_file)
+            self._wb = load_workbook(
+                input_file,
+                data_only=True,
+            )
         except InvalidFileException as ife:
             raise ClickException(str(ife))
         except BadZipFile:

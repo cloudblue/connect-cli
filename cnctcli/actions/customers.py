@@ -6,7 +6,6 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from openpyxl.worksheet.datavalidation import DataValidation
-from openpyxl.utils import quote_sheetname
 from cnctcli.api.utils import (
     handle_http_error,
 )
@@ -62,7 +61,7 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
             api_key=api_key,
             endpoint=api_url,
             use_specs=False,
-            default_limit=750,
+            default_limit=1000,
         )
         wb = Workbook()
         _prepare_worksheet(wb.create_sheet('Customers'))
@@ -106,22 +105,9 @@ def _fill_customer_row(ws, row_idx, customer):
     search_criteria_validation.errorTitle = str('Invalid search criteria')
     search_criteria_validation.prompt = str('Please choose search criteria from list')
     search_criteria_validation.promptTitle = str('List of choices')
-    countries_validation = DataValidation(
-        type='list',
-        formula1="{sheet}!$A$1:$A${max}".format(
-            sheet=quote_sheetname('Countries'),
-            max=len(countries) + 1,
-        ),
-        allow_blank=False,
-    )
-    countries_validation.error = 'Select country from list, must be 2 letter code'
-    countries_validation.errorTitle = str('Invalid entry')
-    countries_validation.prompt = str('Please choose country from list')
-    countries_validation.promptTitle = str('List of choices')
 
     ws.add_data_validation(action_validation)
     ws.add_data_validation(search_criteria_validation)
-    ws.add_data_validation(countries_validation)
 
     ws.cell(row_idx, 1, value=customer.get('id', '-'))
     ws.cell(row_idx, 2, value=customer.get('external_id', '-'))
@@ -153,7 +139,6 @@ def _fill_customer_row(ws, row_idx, customer):
 
     action_validation.add(f'D{row_idx}')
     search_criteria_validation.add(f'F{row_idx}')
-    countries_validation.add(f'P{row_idx}')
 
 
 def _get_phone_number(number):
