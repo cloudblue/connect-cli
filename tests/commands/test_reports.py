@@ -12,7 +12,7 @@ import os
 
 def test_not_valid_report_dir(fs):
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -21,27 +21,27 @@ def test_not_valid_report_dir(fs):
     )
     config.activate('VA-000')
     config.store()
-    os.mkdir('/tmp2')
+    os.mkdir(f'{fs.root_path}/tmp2')
     runner = CliRunner()
     result = runner.invoke(
         cli,
         [
+            '-c',
+            f'{fs.root_path}/',
             'report',
             'list',
             '-d',
-            '/tmp2',
+            f'{fs.root_path}/tmp2',
         ],
     )
 
     assert result.exit_code == 1
-    assert "The directory /tmp2 is not a report project root directory." in result.output
+    assert f"The directory {fs.root_path}/tmp2 is not a report project root directory." in result.output
 
 
 def test_no_reports(fs):
-    fs.add_real_file('./tests/fixtures/reports/no_reports/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/no_reports/README.md')
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -54,6 +54,8 @@ def test_no_reports(fs):
     result = runner.invoke(
         cli,
         [
+            '-c',
+            f'{fs.root_path}/',
             'report',
             'list',
             '-d',
@@ -80,15 +82,8 @@ def test_no_reports(fs):
 
 
 def test_report_client_exception(fs):
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/README.md')
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/entrypoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/entrypoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/entrypoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/connect_exception/entrypoint/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -103,7 +98,7 @@ def test_report_client_exception(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'execute',
             'entrypoint',
@@ -117,15 +112,8 @@ def test_report_client_exception(fs):
 
 
 def test_report_generic_exception(fs):
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/README.md')
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/entry_point/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/entry_point/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/entry_point/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/generic_exception/entry_point/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -140,7 +128,7 @@ def test_report_generic_exception(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'execute',
             'entrypoint',
@@ -154,15 +142,8 @@ def test_report_generic_exception(fs):
 
 
 def test_report_custom_exception(fs):
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/README.md')
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/custom_exception/entry__point/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -177,7 +158,7 @@ def test_report_custom_exception(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'execute',
             'entrypoint',
@@ -191,15 +172,8 @@ def test_report_custom_exception(fs):
 
 
 def test_input_parameters(fs):
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/README.md')
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/executor/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/executor/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/executor/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/report_with_inputs/executor/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -228,7 +202,7 @@ def test_input_parameters(fs):
             cli,
             [
                 '-c',
-                '/',
+                f'{fs.root_path}/',
                 'report',
                 'execute',
                 'entrypoint',
@@ -242,15 +216,8 @@ def test_input_parameters(fs):
 
 
 def test_basic_report(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -264,7 +231,7 @@ def test_basic_report(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'list',
             '-d',
@@ -276,15 +243,9 @@ def test_basic_report(fs):
 
 
 def test_basic_report_2(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
 
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -298,7 +259,7 @@ def test_basic_report_2(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'info',
             'entrypoint',
@@ -312,15 +273,8 @@ def test_basic_report_2(fs):
 
 
 def test_basic_report_3(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -334,7 +288,7 @@ def test_basic_report_3(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'execute',
             'invalid',
@@ -348,15 +302,8 @@ def test_basic_report_3(fs):
 
 
 def test_basic_report_4(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -366,26 +313,26 @@ def test_basic_report_4(fs):
     config.activate('VA-000')
     config.store()
     runner = CliRunner()
-    os.mkdir('/report')
+    os.mkdir(f'{fs.root_path}/report')
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'execute',
             'entrypoint',
             '-d',
             './tests/fixtures/reports/basic_report',
             '-o'
-            '/report/report.xlsx'
+            f'{fs.root_path}/report/report.xlsx'
         ],
     )
 
     assert result.exit_code == 0
     assert "Processing report test report" in result.output
 
-    wb = load_workbook('/report/report.xlsx')
+    wb = load_workbook(f'{fs.root_path}/report/report.xlsx')
 
     assert wb['Data']['A1'].value == 'Row'
     assert wb['Data']['A2'].value == 1
@@ -394,15 +341,8 @@ def test_basic_report_4(fs):
 
 
 def test_basic_report_5(fs):
-    fs.add_real_file('./tests/fixtures/reports/basic_report/reports.json')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/README.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/__init__.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/entrypoint.py')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/Readme.md')
-    fs.add_real_file('./tests/fixtures/reports/basic_report/endpoint/template.xlsx')
-
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -416,7 +356,7 @@ def test_basic_report_5(fs):
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'report',
             'info',
             'entrypoint_wrong',

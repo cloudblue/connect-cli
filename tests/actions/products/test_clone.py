@@ -38,7 +38,6 @@ def test_clean_wb(
         product_id='PRD-123'
     )
 
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     os.mkdir(
         os.path.join(
             cloner.fs.root_path,
@@ -97,7 +96,6 @@ def test_create_product(
         json=mocked_product_response
     )
 
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     os.mkdir(
         os.path.join(
             cloner.fs.root_path,
@@ -155,7 +153,6 @@ def test_create_product_errordef(
         status=500
     )
 
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     os.mkdir(
         os.path.join(
             cloner.fs.root_path,
@@ -194,7 +191,6 @@ def test_inject(
         product_id='PRD-123'
     )
 
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     os.mkdir(
         os.path.join(
             cloner.fs.root_path,

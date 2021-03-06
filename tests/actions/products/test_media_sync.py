@@ -177,12 +177,12 @@ def test_validate_wrong_file(get_sync_media_env):
     }
 
 
-def test_validate_invalid_no_video_url(get_sync_media_env):
+def test_validate_invalid_no_video_url(fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
     get_sync_media_env['Media']['F2'] = None
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -193,7 +193,7 @@ def test_validate_invalid_no_video_url(get_sync_media_env):
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
@@ -206,12 +206,12 @@ def test_validate_invalid_no_video_url(get_sync_media_env):
     }
 
 
-def test_validate_invalid_video_url(get_sync_media_env):
+def test_validate_invalid_video_url(fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
     get_sync_media_env['Media']['F2'] = 'http://goe.com/video.mov'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -222,7 +222,7 @@ def test_validate_invalid_video_url(get_sync_media_env):
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
@@ -236,9 +236,9 @@ def test_validate_invalid_video_url(get_sync_media_env):
     }
 
 
-def test_delete(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -249,7 +249,7 @@ def test_delete(get_sync_media_env, mocked_responses, mocked_media_response):
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='DELETE',
@@ -266,9 +266,9 @@ def test_delete(get_sync_media_env, mocked_responses, mocked_media_response):
     assert errors == {}
 
 
-def test_delete_404(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete_404(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -279,7 +279,7 @@ def test_delete_404(get_sync_media_env, mocked_responses, mocked_media_response)
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='DELETE',
@@ -296,9 +296,9 @@ def test_delete_404(get_sync_media_env, mocked_responses, mocked_media_response)
     assert errors == {}
 
 
-def test_delete_500(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete_500(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -309,7 +309,7 @@ def test_delete_500(get_sync_media_env, mocked_responses, mocked_media_response)
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='DELETE',
@@ -326,9 +326,9 @@ def test_delete_500(get_sync_media_env, mocked_responses, mocked_media_response)
     assert errors == {2: ['500 Internal Server Error']}
 
 
-def test_update_image(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_update_image(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'update'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -339,7 +339,7 @@ def test_update_image(get_sync_media_env, mocked_responses, mocked_media_respons
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='PUT',
@@ -356,9 +356,9 @@ def test_update_image(get_sync_media_env, mocked_responses, mocked_media_respons
     assert errors == {}
 
 
-def test_update_image_404(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_update_image_404(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'update'
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -369,7 +369,7 @@ def test_update_image_404(get_sync_media_env, mocked_responses, mocked_media_res
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='PUT',
@@ -386,13 +386,13 @@ def test_update_image_404(get_sync_media_env, mocked_responses, mocked_media_res
     assert errors == {2: ['404 Not Found']}
 
 
-def test_create_video(get_sync_media_env, mocked_responses, mocked_media_response):
+def test_create_video(fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
     get_sync_media_env['Media']['F2'] = 'https://youtu.be/test'
 
-    get_sync_media_env.save('./test.xlsx')
+    get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -403,7 +403,7 @@ def test_create_video(get_sync_media_env, mocked_responses, mocked_media_respons
         silent=True,
     )
 
-    synchronizer.open('./test.xlsx', 'Media')
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Media')
 
     mocked_responses.add(
         method='POST',

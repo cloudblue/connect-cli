@@ -17,9 +17,8 @@ import os
 
 
 def test_sync_general_sync(fs, get_general_env, mocked_responses):
-    fs.add_real_file('./tests/fixtures/units_response.json')
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -28,7 +27,7 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses):
     )
     config.activate('VA-000')
     config.store()
-    assert os.path.isfile('/config.json') is True
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
 
     with open('./tests/fixtures/units_response.json') as units_response:
         mocked_responses.add(
@@ -43,18 +42,18 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses):
                 url='https://localhost/public/v1/products/PRD-276-377-545',
                 json=json.load(prod_response),
             )
-            get_general_env.save('./test.xlsx')
+            get_general_env.save(f'{fs.root_path}/test.xlsx')
 
             runner = CliRunner()
             result = runner.invoke(
                 cli,
                 [
                     '-c',
-                    '/',
+                    f'{fs.root_path}/',
                     'product',
                     'sync',
                     '--yes',
-                    './test.xlsx',
+                    f'{fs.root_path}/test.xlsx',
                 ],
             )
 
@@ -62,7 +61,6 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses):
 
 
 def test_list_products(fs, mocked_responses):
-    fs.add_real_file('./tests/fixtures/product_response.json')
     with open('./tests/fixtures/product_response.json') as prod_response:
         mocked_responses.add(
             method='GET',
@@ -70,7 +68,7 @@ def test_list_products(fs, mocked_responses):
             json=[json.load(prod_response)]
         )
     config = Config()
-    config._config_path = '/config.json'
+    config._config_path = f'{fs.root_path}/config.json'
     config.add_account(
         'VA-000',
         'Account 1',
@@ -79,13 +77,13 @@ def test_list_products(fs, mocked_responses):
     )
     config.activate('VA-000')
     config.store()
-    assert os.path.isfile('/config.json') is True
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
     runner = CliRunner()
     result = runner.invoke(
         cli,
         [
             '-c',
-            '/',
+            f'{fs.root_path}/',
             'product',
             'list',
         ],
@@ -154,7 +152,7 @@ def test_export_product_not_exists(fs, mocked_responses):
             api_url='https://localhost/public/v1',
             api_key='ApiKey SU111:1111',
             product_id='PRD-0000',
-            output_file='output.xlsx',
+            output_file=f'{fs.root_path}/output.xlsx',
             silent=True,
         )
 
@@ -176,7 +174,6 @@ def test_export_product(
     mocked_configurations_response,
     sample_product_workbook,
 ):
-    fs.add_real_file('./tests/fixtures/image.png')
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545',
@@ -292,11 +289,11 @@ def test_export_product(
         api_url='https://localhost/public/v1',
         api_key='ApiKey SU111:1111',
         product_id='PRD-276-377-545',
-        output_file='output.xlsx',
+        output_file=f'{fs.root_path}/output.xlsx',
         silent=True,
     )
 
-    product_wb = load_workbook('output.xlsx')
+    product_wb = load_workbook(f'{fs.root_path}/output.xlsx')
     for name in sample_product_workbook.sheetnames:
         assert name in product_wb.sheetnames
     for sheet in sample_product_workbook.sheetnames:
