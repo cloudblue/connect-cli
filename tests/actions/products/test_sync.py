@@ -10,7 +10,6 @@ import os
 
 
 def test_open(fs, mocked_responses, mocked_product_response):
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -32,7 +31,6 @@ def test_open(fs, mocked_responses, mocked_product_response):
 
 
 def test_invalid_file_open(fs, mocked_responses, mocked_product_response):
-    fs.add_real_file('./tests/fixtures/configurations_response.json')
     copy2('./tests/fixtures/configurations_response.json', 'fake.xlsx')
 
     synchronizer = ProductSynchronizer(
@@ -51,7 +49,6 @@ def test_invalid_file_open(fs, mocked_responses, mocked_product_response):
 
 
 def test_invalid_zip_open(fs, mocked_responses, mocked_product_response):
-    fs.add_real_file('./tests/fixtures/configurations_response.json')
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -68,7 +65,6 @@ def test_invalid_zip_open(fs, mocked_responses, mocked_product_response):
 
 
 def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -91,10 +87,9 @@ def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
 
 
 def test_sheet_not_found(fs):
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     wb = load_workbook('./tests/fixtures/comparation_product.xlsx')
     wb.remove(wb['Items'])
-    wb.save('./test.xlsx')
+    wb.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
@@ -107,18 +102,17 @@ def test_sheet_not_found(fs):
 
     with pytest.raises(SheetNotFoundError) as e:
         synchronizer.open(
-            './test.xlsx', 'Items'
+            f'{fs.root_path}/test.xlsx', 'Items'
         )
 
     assert str(e.value) == 'File does not contain Items to synchronize, skipping'
 
 
 def test_invalid_items_sheet(fs, mocked_responses, mocked_product_response):
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     wb = load_workbook('./tests/fixtures/comparation_product.xlsx')
     ws = wb['Items']
     ws['A1'].value = 'Modified'
-    wb.save('./test.xlsx')
+    wb.save(f'{fs.root_path}//test.xlsx')
 
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
@@ -137,7 +131,7 @@ def test_invalid_items_sheet(fs, mocked_responses, mocked_product_response):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            './test.xlsx', 'Items'
+            f'{fs.root_path}/test.xlsx', 'Items'
         )
 
     assert str(e.value) == 'Invalid input file: column A must be ID'
@@ -161,7 +155,6 @@ def test_no_sync():
 
 def test_save(fs, mocked_responses, mocked_product_response):
 
-    fs.add_real_file('./tests/fixtures/comparation_product.xlsx')
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -181,6 +174,6 @@ def test_save(fs, mocked_responses, mocked_product_response):
         './tests/fixtures/comparation_product.xlsx', 'Items'
     )
 
-    synchronizer.save('./test.xlsx')
+    synchronizer.save(f'{fs.root_path}//test.xlsx')
 
-    assert os.path.isfile('./test.xlsx')
+    assert os.path.isfile(f'{fs.root_path}/test.xlsx')

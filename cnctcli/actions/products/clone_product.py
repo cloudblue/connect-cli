@@ -130,7 +130,10 @@ class ProductCloner:
             raise ClickException(f"Error while cloning product: {str(e)}")
 
     def load_wb(self):
-        self.wb = load_workbook(f'{self.fs.root_path}/{self.product_id}/{self.product_id}.xlsx')
+        self.wb = load_workbook(
+            f'{self.fs.root_path}/{self.product_id}/{self.product_id}.xlsx',
+            data_only=True,
+        )
 
     def create_product(self, name=None):
         if not name:

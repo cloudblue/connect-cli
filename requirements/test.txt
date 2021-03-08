@@ -11,5 +11,4 @@ pytest-mock
 requests-mock
 twine
 wheel
-pyfakefs
 responses
