@@ -1,15 +1,19 @@
 import json
+import os
+from shutil import copy2
 
 import pytest
 
 import responses
 
-import os
-from shutil import copy2
+from fs.tempfs import TempFS
+
+from openpyxl import load_workbook
+
+from connect.cli.core.base import cli
+from connect.cli.core.plugins import load_plugins
 
 from tests.data import CONFIG_DATA
-from openpyxl import load_workbook
-from fs.tempfs import TempFS
 
 
 @pytest.fixture(scope='function')
@@ -17,11 +21,17 @@ def fs():
     return TempFS()
 
 
+@pytest.fixture(scope='session')
+def ccli():
+    load_plugins(cli)
+    return cli
+
+
 @pytest.fixture(scope='function')
 def config_mocker(mocker):
     mocker.patch('os.path.isfile', return_value=True)
     return mocker.patch(
-        'cnctcli.config.open',
+        'connect.cli.core.config.open',
         mocker.mock_open(read_data=json.dumps(CONFIG_DATA)),
     )
 
@@ -103,13 +113,13 @@ def get_sync_items_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/settings/units',
-            json=json.load(response)
+            json=json.load(response),
         )
         with open('./tests/fixtures/product_response.json') as prod_response:
             mocked_responses.add(
                 method='GET',
                 url='https://localhost/public/v1/products/PRD-276-377-545',
-                json=json.load(prod_response)
+                json=json.load(prod_response),
             )
 
             return load_workbook('./tests/fixtures/items_sync.xlsx')
@@ -121,7 +131,7 @@ def get_sync_actions_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/actions_sync.xlsx')
@@ -133,7 +143,7 @@ def get_sync_capabilities_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/capabilities_sync.xlsx')
@@ -145,7 +155,7 @@ def get_sync_params_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/params_sync.xlsx')
@@ -157,7 +167,7 @@ def get_sync_config_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/configuration_sync.xlsx')
@@ -169,7 +179,7 @@ def get_sync_templates_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/templates_sync.xlsx')
@@ -189,7 +199,7 @@ def get_general_env(fs, mocked_responses):
             mocked_responses.add(
                 method='GET',
                 url='https://localhost/public/v1/products/PRD-276-377-545',
-                json=json.load(prod_response)
+                json=json.load(prod_response),
             )
 
         return load_workbook('./tests/fixtures/comparation_product.xlsx')
@@ -203,7 +213,7 @@ def get_sync_media_env(fs, mocked_responses):
         mocked_responses.add(
             method='GET',
             url='https://localhost/public/v1/products/PRD-276-377-545',
-            json=json.load(prod_response)
+            json=json.load(prod_response),
         )
 
         return load_workbook('./tests/fixtures/media_sync.xlsx')
