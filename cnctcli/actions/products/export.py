@@ -330,7 +330,7 @@ def _fill_configuration_row(ws, row_idx, configuration, conf_id):
     ws.cell(row_idx, 8,
             value=configuration['marketplace']['name'] if 'marketplace' in configuration else '-')
     if 'structured_value' in configuration:
-        value = json.loads(configuration['structured_value'])
+        value = configuration['structured_value']
         value = json.dumps(value, indent=4, sort_keys=True)
         ws.cell(row_idx, 9, value=value).alignment = Alignment(wrap_text=True)
     elif 'value' in configuration:
