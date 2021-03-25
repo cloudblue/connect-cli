@@ -1,0 +1,119 @@
+[tool.poetry]
+name = "connect-cli"
+version = "0.0.0"
+description = "CloudBlue Connect Command Line Interface"
+authors = ["CloudBlue LLC"]
+license = "Apache-2.0"
+
+packages = [
+    { include = "connect" },
+]
+exclude = [
+    "connect/.data/connect_reports/tests",
+    "connect/.data/connect_reports/.git",
+    "tests",
+]
+
+readme = "./README.md"
+documentation = "https://connect.cloudblue.com/community/sdk/cli/"
+homepage = "https://connect.cloudblue.com"
+repository = "https://github.com/cloudblue/connect-cli"
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Utilities"
+]
+keywords = [
+    "fulfillment",
+    "command",
+    "line",
+    "interface",
+    "utility",
+    "cli",
+    "vendor",
+    "connect",
+    "cloudblue"
+]
+
+[tool.poetry.scripts]
+ccli = 'connect.cli.ccli:main'
+
+[tool.poetry.plugins."connect.cli.plugins"]
+"customer" = "connect.cli.plugins.customer.commands:get_group"
+"product" = "connect.cli.plugins.product.commands:get_group"
+"report" = "connect.cli.plugins.report.commands:get_group"
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+lxml = "^4.6.2"
+click = "^7.1.2"
+openpyxl = "^3.0.7"
+connect-openapi-client = "~22"
+interrogatio = "^1.0.3"
+connect-markdown-renderer = "^1.0.1"
+iso3166 = "^1.0.1"
+phonenumbers = "^8.12.19"
+fs = "^2.4.12"
+tqdm = "^4.59.0"
+requests-toolbelt = "^0.9.1"
+pip = "^21.0.1"
+connect-reports-core = "~23"
+
+[tool.poetry.dev-dependencies]
+
+pytest = "^6.1.2"
+pytest-cov = "^2.10.1"
+pytest-mock = "^3.3.1"
+coverage = {extras = ["toml"], version = "^5.3"}
+responses = "^0.12.0"
+flake8 = "~3.8"
+flake8-bugbear = "~20"
+flake8-cognitive-complexity = "^0.1"
+flake8-commas = "~2.0"
+flake8-future-import = "~0.4"
+flake8-import-order = "~0.18"
+flake8-broken-line = "~0.3"
+flake8-comprehensions = "^3.3.1"
+flake8-debugger = "^4.0.0"
+flake8-eradicate = "^1.0.0"
+flake8-string-format = "^0.3.0"
+ipython = "^7.21.0"
+pyinstaller = "^4.2"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "setuptools>42"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "-p no:cacheprovider --cov=connect.cli --cov-report=html --cov-report xml --cov-report term"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+omit = [
+    "*/migrations/*",
+    "*/config/*",
+    "*/settings/*",
+    "*/manage.py",
+    "*/wsgi.py",
+    "*/urls.py"
+]
+
+exclude_lines = [
+    "pragma: no cover",
+    "def __str__",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

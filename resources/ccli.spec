@@ -1,36 +1,54 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files, copy_metadata
+
 block_cipher = None
 
-a = Analysis(['../cnctcli/ccli.py'],
-             pathex=['/workspaces/product-sync'],
-             binaries=[],
-             datas=[
-                ('../resources/theme_files','interrogatio/themes/theme_files'),
-                ('../cnctcli/reports/connect-reports', 'cnctcli/commands'),
-                ('../cnctcli/reports/connect-reports','cnctcli/reports/connect-reports'),
-             ],
-             hiddenimports=[],
-             hookspath=[],
-             runtime_hooks=[],
-             excludes=[],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
-             noarchive=False)
-pyz = PYZ(a.pure, a.zipped_data,
-             cipher=block_cipher)
-exe = EXE(pyz,
-          a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
-          [],
-          name='ccli',
-          debug=False,
-          bootloader_ignore_signals=False,
-          strip=False,
-          upx=True,
-          upx_exclude=[],
-          runtime_tmpdir=None,
-          console=True )
+
+datas=[
+    ('../connect/.data', 'connect/.data'),
+]
+
+datas += collect_data_files('cairocffi')
+datas += collect_data_files('cairosvg')
+datas += collect_data_files('connect.reports')
+datas += collect_data_files('interrogatio')
+datas += collect_data_files('pyphen')
+datas += copy_metadata('connect-cli')
+
+a = Analysis(
+    ['../connect/cli/ccli.py'],
+    binaries=[],
+    datas=datas,
+    hiddenimports=[
+        'connect.cli.plugins.customer.commands',
+        'connect.cli.plugins.product.commands',
+        'connect.cli.plugins.report.commands',
+    ],
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='ccli',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+)

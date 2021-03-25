@@ -1,6 +1,6 @@
 {
    "name":"Connect Reports fixture",
-   "readme_file":"Readme.md",
+   "readme_file":"README.md",
    "version":"1.0.0",
    "language":"python",
    "reports":[]

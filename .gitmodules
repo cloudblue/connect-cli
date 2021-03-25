@@ -1,3 +1,0 @@
-[submodule "cnctcli/reports/connect-reports"]
-	path = cnctcli/reports/connect-reports
-	url = https://github.com/cloudblue/connect-reports.git

@@ -4,7 +4,7 @@
 # All rights reserved.
 #
 
-from cnct import ClientError
+from connect.client import ClientError
 
 
 def generate(client, parameters, progress_callback):

@@ -21,23 +21,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dev.txt
-        pip install -r requirements/test.txt
-        pip install pyinstaller
+        pip install poetry
+        poetry install
     - name: Linting
       run: |
-        flake8
+        poetry run flake8
     - name: Testing
       run: |
-        pytest
-    - name: Build and publish to pypi.org
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        poetry run pytest
+    - name: Checkout latest reports repository
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
-        rm -f dist/*
+        poetry run python resources/get_latest_reports.py
     - name: Extract tag name
       uses: actions/github-script@v3
       id: tag
@@ -46,11 +40,19 @@ jobs:
         result-encoding: string
         script: |
           return context.payload.ref.replace(/refs\/tags\//, '')
+    - name: Build and publish to pypi.org
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        poetry version ${{ steps.tag.outputs.result }}
+        poetry build
+        poetry publish -u $TWINE_USERNAME -p $TWINE_PASSWORD
     - name: Build linux distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        pyinstaller resources/ccli.spec
+        poetry run pyinstaller resources/ccli.spec
     - name: Package linux distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,9 +79,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dev.txt
-        pip install -r requirements/test.txt
-        pip install pyinstaller
+        pip install poetry
+        poetry install
+    - name: Checkout latest reports repository
+      run: |
+        poetry run python resources/get_latest_reports.py
     - name: Extract tag name
       uses: actions/github-script@v3
       id: tag
@@ -92,7 +96,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        pyinstaller resources/ccli.spec
+        poetry run pyinstaller resources/ccli.spec
     - name: Package windows distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -122,9 +126,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dev.txt
-        pip install -r requirements/test.txt
-        pip install pyinstaller
+        pip install poetry
+        poetry install
+    - name: Linting
+      run: |
+        poetry run flake8
+    - name: Testing
+      run: |
+        poetry run pytest
+    - name: Checkout latest reports repository
+      run: |
+        poetry run python resources/get_latest_reports.py
     - name: Extract tag name
       uses: actions/github-script@v3
       id: tag
@@ -137,7 +149,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        pyinstaller resources/ccli.spec
+        poetry run pyinstaller resources/ccli.spec
     - name: Package osx distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
