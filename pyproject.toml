@@ -46,9 +46,9 @@ ccli = 'connect.cli.ccli:main'
 
 [tool.poetry.plugins."connect.cli.plugins"]
 "customer" = "connect.cli.plugins.customer.commands:get_group"
+"project" = "connect.cli.plugins.project.commands:get_group"
 "product" = "connect.cli.plugins.product.commands:get_group"
 "report" = "connect.cli.plugins.report.commands:get_group"
-
 
 [tool.poetry.dependencies]
 python = "^3.8"
