@@ -175,7 +175,7 @@ requests = ">=2.23,<3.0"
 
 [[package]]
 name = "connect-reports-core"
-version = "23.0.2"
+version = "23.0.3"
 description = "Connect Reports Core"
 category = "main"
 optional = false
@@ -1044,7 +1044,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b1888b9dc363ab65fb522c4c604b28c4783f40bf4a820b11e10c281fe8d9a233"
+content-hash = "eb97df67abc7dec819ce01911e300a1e597132cc0250d4cdd2bfa5c058a66afd"
 
 [metadata.files]
 altgraph = [
@@ -1149,8 +1149,8 @@ connect-openapi-client = [
     {file = "connect_openapi_client-22.0.5-py3-none-any.whl", hash = "sha256:21f27bd82d6e3a5a650daa636da5b02154dbc17987cdd01f97854e1811a7cdcb"},
 ]
 connect-reports-core = [
-    {file = "connect-reports-core-23.0.2.tar.gz", hash = "sha256:657c0864c2bac9d7554988fbddbc34d2fb237a24762538dd7bbda8e3059fffb4"},
-    {file = "connect_reports_core-23.0.2-py3-none-any.whl", hash = "sha256:9d07306fc3e1e2926dbe99def679b0c8309ca16a28bae905cebdb65ec225c57b"},
+    {file = "connect-reports-core-23.0.3.tar.gz", hash = "sha256:2d94830837e947b20ca3039d6e98b0fa34999636ea1a93d0dc4e1ab1e7d11606"},
+    {file = "connect_reports_core-23.0.3-py3-none-any.whl", hash = "sha256:fe4b71fd6a20fc4f8436f3b3e711b76ac82b805716262174f283c281a7c76232"},
 ]
 coverage = [
     {file = "coverage-5.5-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:b6d534e4b2ab35c9f93f46229363e17f63c53ad01330df9f2d6bd1187e5eaacf"},

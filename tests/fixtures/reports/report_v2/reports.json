@@ -27,6 +27,7 @@
                     "id": "pdf-portrait",
                     "type": "pdf",
                     "description": "Export data as PDF",
+                    "default": true,
                     "template": "reports/test_v2/templates/pdf/template.html.j2",
                     "args": {
                         "css_file": "reports/test_v2/templates/pdf/template.css"
@@ -34,7 +35,6 @@
                 }
 
             ],
-            "default_renderer": "pdf-portrait",
             "audience": [
                 "provider"
             ],
