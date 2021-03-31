@@ -5,6 +5,7 @@ import click
 from connect.cli.plugins.project.helpers import (
     bootstrap_project,
     list_projects,
+    validate_project,
 )
 
 import os
@@ -50,6 +51,20 @@ def cmd_bootstrap_report_project(data_dir):
 )
 def cmd_list_report_project(data_dir):
     list_projects(data_dir)
+
+
+@grp_project_report.command(
+    name='validate',
+    short_help='Validate given report project.',
+)
+@click.option(
+    '--project-dir', '-p',
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Project directory',
+)
+def cmd_validate_project(project_dir):
+    validate_project(project_dir)
 
 
 def get_group():

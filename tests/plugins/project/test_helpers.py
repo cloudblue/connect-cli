@@ -11,8 +11,10 @@ from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.exceptions import OutputDirExistsException
 
 from connect.cli.plugins.project.helpers import (
+    _entrypoint_validations,
     bootstrap_project,
     list_projects,
+    validate_project,
 )
 
 
@@ -99,3 +101,77 @@ def test_list_projects(fs, mocker, mocked_reports, capsys):
     mocked_glob.assert_called_once_with(f'{fs.root_path}/**/reports.json')
     captured = capsys.readouterr()
     assert 'Connect Reports' in captured.out
+
+
+def test_validate_project(capsys):
+    project_dir = './tests/fixtures/reports/basic_report'
+
+    validate_project(project_dir)
+
+    captured = capsys.readouterr()
+    assert 'successfully' in captured.out
+
+
+def test_no_descriptor_file(fs):
+    with pytest.raises(ClickException) as error:
+        validate_project(fs.root_path)
+
+    assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
+
+
+def test_wrong_descriptor_file(fs, mocked_reports):
+    wrong_data = f'{mocked_reports} - extrachar'
+
+    with open(f'{fs.root_path}/reports.json', 'w') as fp:
+        fp.write(wrong_data)
+
+    with pytest.raises(ClickException) as error:
+        validate_project(f'{fs.root_path}')
+
+    assert str(error.value) == 'The report project descriptor `reports.json` is not a valid json file.'
+
+
+def test_validate_schema(fs, mocked_reports):
+    wrong_data = mocked_reports
+    # no valid value for 'reports' field
+    wrong_data['reports'] = 'string'
+
+    with open(f'{fs.root_path}/reports.json', 'w') as fp:
+        json.dump(wrong_data, fp)
+
+    with pytest.raises(ClickException) as error:
+        validate_project(f'{fs.root_path}')
+
+    assert 'Invalid `reports.json`: \'string\' is not of type' in str(error.value)
+
+
+def test_validate_missing_files(fs, mocked_reports):
+    with open(f'{fs.root_path}/reports.json', 'w') as fp:
+        json.dump(mocked_reports, fp)
+
+    # validate function will fail due to missing project files
+    # like `readme.md` for instance, let's try it...
+    with pytest.raises(ClickException) as error:
+        validate_project(f'{fs.root_path}')
+
+    assert 'repository property `readme_file` cannot be resolved to a file' in str(error.value)
+
+
+def test_entrypoint_wrong_import(fs):
+    with open(f'{fs.root_path}/entrypoint.py', 'w') as fp:
+        fp.write('import foo')
+
+    with pytest.raises(ClickException):
+        _entrypoint_validations(fs.root_path, 'entrypoint', '1')
+
+
+@pytest.mark.parametrize(
+    'spec_version',
+    ('1', '2'),
+)
+def test_entrypoint_wrong_signature(fs, spec_version):
+    with open(f'{fs.root_path}/wrong_signature.py', 'w') as bad_signature:
+        bad_signature.write('def generate(client, parameters): pass')
+
+    with pytest.raises(ClickException):
+        _entrypoint_validations(fs.root_path, 'wrong_signature', spec_version)

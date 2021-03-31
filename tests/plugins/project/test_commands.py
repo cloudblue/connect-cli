@@ -51,3 +51,27 @@ def test_list_project_command(fs, ccli, mocker, capsys):
     mocked_list_project.assert_called_once_with(f'{fs.root_path}/projects')
     captured = capsys.readouterr()
     assert 'project_1' in captured.out
+
+
+def test_validate_command(fs, ccli, mocker, capsys):
+    mocked_validate_project = mocker.patch(
+        'connect.cli.plugins.project.commands.validate_project',
+        side_effect=print('Report Project connect/.data/logan has been successfully validated.'),
+    )
+    os.mkdir(f'{fs.root_path}/project')
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'project',
+            'report',
+            'validate',
+            '--project-dir',
+            f'{fs.root_path}/project',
+        ],
+    )
+
+    assert result.exit_code == 0
+    mocked_validate_project.assert_called_once_with(f'{fs.root_path}/project')
+    captured = capsys.readouterr()
+    assert 'Report Project connect/.data/logan has been successfully validated.' in captured.out
