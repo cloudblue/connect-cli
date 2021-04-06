@@ -1,0 +1,7 @@
+{
+    "report_name": "My Awesome Report",
+    "report_slug": "{{ cookiecutter.report_name.lower()|replace(' ', '_')|replace('-', '_')|replace('.', '_')|trim() }}",
+    "report_spec": ["v1", "v2"],
+    "report_description": "This report provides all data i need",
+    "author": "Globex Corporation"
+}

@@ -12,6 +12,7 @@ from cookiecutter.exceptions import OutputDirExistsException
 
 from connect.cli.plugins.project.helpers import (
     _entrypoint_validations,
+    add_report,
     bootstrap_project,
     list_projects,
     validate_project,
@@ -112,14 +113,14 @@ def test_validate_project(capsys):
     assert 'successfully' in captured.out
 
 
-def test_no_descriptor_file(fs):
+def test_validate_no_descriptor_file(fs):
     with pytest.raises(ClickException) as error:
         validate_project(fs.root_path)
 
     assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
 
 
-def test_wrong_descriptor_file(fs, mocked_reports):
+def test_validate_wrong_descriptor_file(fs, mocked_reports):
     wrong_data = f'{mocked_reports} - extrachar'
 
     with open(f'{fs.root_path}/reports.json', 'w') as fp:
@@ -175,3 +176,27 @@ def test_entrypoint_wrong_signature(fs, spec_version):
 
     with pytest.raises(ClickException):
         _entrypoint_validations(fs.root_path, 'wrong_signature', spec_version)
+
+
+def test_add_report(fs, mocker):
+
+    def cookiecutter_result(local_path):
+        os.mkdir(f'{local_path}/report_dir')
+        open(f'{local_path}/report_dir/Readme.md', 'w').write('# Report')
+
+    cookie_mocked = mocker.patch(
+        'connect.cli.plugins.project.helpers.cookiecutter',
+        side_effect=cookiecutter_result(fs.root_path),
+        return_value=f'{fs.root_path}/report_dir',
+    )
+
+    assert os.path.isdir(cookie_mocked.return_value)
+    assert os.path.isfile(f'{cookie_mocked.return_value}/Readme.md')
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as project_dir:
+        os.mkdir(f'{project_dir}/reports')
+        add_report(project_dir)
+        assert os.path.isdir(f'{project_dir}/reports/report_dir')
+
+    assert cookie_mocked.call_count == 1

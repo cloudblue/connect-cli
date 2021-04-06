@@ -3,6 +3,7 @@
 import click
 
 from connect.cli.plugins.project.helpers import (
+    add_report,
     bootstrap_project,
     list_projects,
     validate_project,
@@ -61,10 +62,24 @@ def cmd_list_report_project(data_dir):
     '--project-dir', '-p',
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help='Project directory',
+    help='Project directory.',
 )
 def cmd_validate_project(project_dir):
     validate_project(project_dir)
+
+
+@grp_project_report.command(
+    name='add',
+    short_help='Add new report to the given project.',
+)
+@click.option(
+    '--project-dir', '-p',
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Project directory.',
+)
+def cmd_add_report(project_dir):
+    add_report(project_dir)
 
 
 def get_group():

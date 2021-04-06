@@ -1138,7 +1138,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "d2f23813cbf74ddeed3c8feaf5350d319f795bda469f50b7b665c6f2540735d8"
+content-hash = "35ab74f734ba1848bd7357eae66eb6a36749e4544efeba99668456711841d3b2"
 
 [metadata.files]
 altgraph = [

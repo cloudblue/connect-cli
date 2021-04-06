@@ -74,4 +74,28 @@ def test_validate_command(fs, ccli, mocker, capsys):
     assert result.exit_code == 0
     mocked_validate_project.assert_called_once_with(f'{fs.root_path}/project')
     captured = capsys.readouterr()
-    assert 'Report Project connect/.data/logan has been successfully validated.' in captured.out
+    assert 'Report Project connect/.data/logan has been successfully validated.' == captured.out.strip()
+
+
+def test_add_report_command(fs, ccli, mocker, capsys):
+    mocked_add_report = mocker.patch(
+        'connect.cli.plugins.project.commands.add_report',
+        side_effect=print('successfully added'),
+    )
+    os.mkdir(f'{fs.root_path}/project')
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'project',
+            'report',
+            'add',
+            '--project-dir',
+            f'{fs.root_path}/project',
+        ],
+    )
+
+    assert result.exit_code == 0
+    mocked_add_report.assert_called_once_with(f'{fs.root_path}/project')
+    captured = capsys.readouterr()
+    assert 'successfully added' == captured.out.strip()

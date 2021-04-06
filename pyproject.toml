@@ -65,6 +65,7 @@ tqdm = "^4.59.0"
 requests-toolbelt = "^0.9.1"
 connect-reports-core = "^23.0.3"
 requests = "^2.25.1"
+cookiecutter = "^1.7.2"
 
 [tool.poetry.dev-dependencies]
 

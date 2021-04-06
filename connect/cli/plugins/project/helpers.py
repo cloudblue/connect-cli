@@ -7,7 +7,7 @@ from cookiecutter.exceptions import OutputDirExistsException
 
 from connect.cli.plugins.project.constants import (
     AVAILABLE_PROJECTS,
-    BOILERPLATE_URL,
+    PROJECT_BOILERPLATE_URL,
 )
 
 import glob
@@ -15,6 +15,9 @@ import json
 import os
 import sys
 import inspect
+import importlib
+import tempfile
+import shutil
 
 from cmr import render
 
@@ -28,6 +31,10 @@ from connect.reports.validator import (
 )
 from connect.reports.parser import parse
 
+REPORT_BOILERPLATE_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), '../../../.config/report-boilerplate'),
+)
+
 
 def bootstrap_project(data_dir: str):
     click.secho('Bootstraping report project...\n', fg='blue')
@@ -36,7 +43,7 @@ def bootstrap_project(data_dir: str):
     cookie_dir = DEFAULT_CONFIG['cookiecutters_dir']
     rmtree(cookie_dir)
     try:
-        project_dir = cookiecutter(BOILERPLATE_URL, output_dir=data_dir)
+        project_dir = cookiecutter(PROJECT_BOILERPLATE_URL, output_dir=data_dir)
         click.secho(f'\nReport Project location: {project_dir}', fg='blue')
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
@@ -90,6 +97,15 @@ def validate_project(project_dir):
     click.secho(f'Report Project {project_dir} has been successfully validated.', fg='green')
 
 
+def add_report(project_dir):
+    click.secho(f'Adding new report to project {project_dir}...\n', fg='blue')
+
+    with tempfile.TemporaryDirectory() as add_report_tmpdir:
+        report_dir = cookiecutter(REPORT_BOILERPLATE_DIR, output_dir=add_report_tmpdir)
+        shutil.move(report_dir, f'{project_dir}/reports/')
+        click.secho('\nReport has been successfully created.', fg='blue')
+
+
 def _file_descriptor_validations(project_dir):
     descriptor_file = os.path.join(project_dir, 'reports.json')
     if not os.path.isfile(descriptor_file):
@@ -111,8 +127,8 @@ def _entrypoint_validations(project_dir, entrypoint, report_spec):
     sys.path.append(os.path.join(os.getcwd(), project_dir))
     package = entrypoint.rsplit('.', 1)[0]
     try:
-        entrypoint_module = inspect.importlib.import_module(package)
-    except Exception as error:
+        entrypoint_module = importlib.import_module(package)
+    except (ImportError, AttributeError) as error:
         raise ClickException(f'\nErrors detected on entrypoint module: {error}')
 
     # Function validation
