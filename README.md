@@ -70,6 +70,20 @@ Download the windows single executable zipfile from [Github Releases](https://gi
 * [Reports](docs/reports_usage.md)
 
 
+## Run tests
+
+`connect-cli` uses [poetry](https://python-poetry.org/) for dependencies management and packaging.
+
+To run the `connect-cli` tests suite run:
+
+```
+$ pip install poetry
+$ poetry install
+$ poetry run pytest
+```
+
+
+
 ## License
 
 `connect-cli` is released under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
