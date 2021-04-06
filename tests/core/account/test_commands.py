@@ -4,7 +4,7 @@ from connect.cli.core.config import Account
 from connect.cli.core.constants import DEFAULT_ENDPOINT
 
 
-def test_add_account(mocker, ccli):
+def test_add_account(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.add_account',
         return_value=('VA-000', 'Account 0'),
@@ -24,7 +24,7 @@ def test_add_account(mocker, ccli):
     assert result.output == 'New account added: VA-000 - Account 0\n'
 
 
-def test_add_account_silent(mocker, ccli):
+def test_add_account_silent(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.add_account',
         return_value=('VA-000', 'Account 0'),
@@ -45,7 +45,7 @@ def test_add_account_silent(mocker, ccli):
     assert 'New account added: VA-000 - Account 0\n' not in result.output
 
 
-def test_add_account_custom_endpoint(mocker, ccli):
+def test_add_account_custom_endpoint(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.add_account',
         return_value=('VA-000', 'Account 0'),
@@ -67,7 +67,7 @@ def test_add_account_custom_endpoint(mocker, ccli):
     assert 'New account added: VA-000 - Account 0\n' in result.output
 
 
-def test_remove_account(mocker, ccli):
+def test_remove_account(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.remove_account',
         side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
@@ -87,7 +87,7 @@ def test_remove_account(mocker, ccli):
     assert 'Account removed: VA-000 - Account 0\n' in result.output
 
 
-def test_activate_account(mocker, ccli):
+def test_activate_account(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.activate_account',
         side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
@@ -107,7 +107,7 @@ def test_activate_account(mocker, ccli):
     assert 'Current active account is: VA-000 - Account 0\n' in result.output
 
 
-def test_activate_account_silent(mocker, ccli):
+def test_activate_account_silent(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.activate_account',
         side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
