@@ -11,3 +11,5 @@ CAIRO_NOT_FOUND_ERROR = """Connect CLI depends on Cairo which is not present on 
 If so, please follow the instructions to install it at https://github.com/cloudblue/connect-cli
 and make sure your PATH environment variable includes also the Cairo shared libraries folder.
 """
+
+PYPI_JSON_API_URL = 'https://pypi.org/pypi/connect-cli/json'

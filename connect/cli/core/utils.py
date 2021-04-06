@@ -2,10 +2,12 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
-import json
-import subprocess
-
 import click
+
+import requests
+
+from connect.cli import get_version
+from connect.cli.core.constants import PYPI_JSON_API_URL
 
 
 def continue_or_quit():
@@ -22,13 +24,16 @@ def continue_or_quit():
 
 def check_for_updates(*args):
     try:
-        out = subprocess.check_output(['pip', 'list', '-o', '--format', 'json'])
-        data = json.loads(out)
-        me = next(filter(lambda p: p['name'] == 'connect-cli', data))
-        click.secho(
-            f'\nYou are running CloudBlue Connect CLI version {me["version"]}. '
-            f'A newer version is available: {me["latest_version"]}.\n',
-            fg='yellow',
-        )
-    except (subprocess.CalledProcessError, StopIteration):
+        res = requests.get(PYPI_JSON_API_URL)
+        if res.status_code == 200:
+            data = res.json()
+            version = data['info']['version']
+            current = get_version()
+            if version != current:
+                click.secho(
+                    f'\nYou are running CloudBlue Connect CLI version {current}. '
+                    f'A newer version is available: {version}.\n',
+                    fg='yellow',
+                )
+    except requests.RequestException:
         pass

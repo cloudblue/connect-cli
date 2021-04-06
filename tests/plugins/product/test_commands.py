@@ -15,7 +15,7 @@ from connect.cli.plugins.product.export import dump_product
 
 def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -46,7 +46,7 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
                 ccli,
                 [
                     '-c',
-                    f'{fs.root_path}/',
+                    fs.root_path,
                     'product',
                     'sync',
                     '--yes',
@@ -65,7 +65,7 @@ def test_list_products(fs, mocked_responses, ccli):
             json=[json.load(prod_response)],
         )
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -80,7 +80,7 @@ def test_list_products(fs, mocked_responses, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'product',
             'list',
         ],

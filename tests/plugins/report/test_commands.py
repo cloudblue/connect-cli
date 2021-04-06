@@ -9,7 +9,7 @@ from connect.cli.core.config import Config
 
 def test_not_valid_report_dir(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -24,7 +24,7 @@ def test_not_valid_report_dir(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'list',
             '-d',
@@ -38,7 +38,7 @@ def test_not_valid_report_dir(fs, ccli):
 
 def test_no_reports(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -52,7 +52,7 @@ def test_no_reports(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'list',
             '-d',
@@ -63,24 +63,11 @@ def test_no_reports(fs, ccli):
     assert result.exit_code == 1
     assert 'Invalid `reports.json`: [] is too short' in result.output
 
-    result = runner.invoke(
-        ccli,
-        [
-            'report',
-            'info',
-            'test',
-            '-d',
-            './tests/fixtures/reports/no_reports',
-        ],
-    )
-
-    assert result.exit_code == 1
-    assert 'Invalid `reports.json`: [] is too short' in result.output
 
 
 def test_report_client_exception(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -95,7 +82,7 @@ def test_report_client_exception(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'entrypoint',
@@ -110,7 +97,7 @@ def test_report_client_exception(fs, ccli):
 
 def test_report_generic_exception(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -125,7 +112,7 @@ def test_report_generic_exception(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'entrypoint',
@@ -140,7 +127,7 @@ def test_report_generic_exception(fs, ccli):
 
 def test_report_custom_exception(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -155,7 +142,7 @@ def test_report_custom_exception(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'entrypoint',
@@ -170,7 +157,7 @@ def test_report_custom_exception(fs, ccli):
 
 def test_input_parameters(mocker, fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -199,7 +186,7 @@ def test_input_parameters(mocker, fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'entrypoint',
@@ -216,7 +203,7 @@ def test_input_parameters(mocker, fs, ccli):
 
 def test_basic_report(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -230,7 +217,7 @@ def test_basic_report(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'list',
             '-d',
@@ -244,7 +231,7 @@ def test_basic_report(fs, ccli):
 def test_basic_report_2(fs, ccli):
 
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -258,7 +245,7 @@ def test_basic_report_2(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'info',
             'entrypoint',
@@ -273,7 +260,7 @@ def test_basic_report_2(fs, ccli):
 
 def test_basic_report_3(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -287,7 +274,7 @@ def test_basic_report_3(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'invalid',
@@ -302,7 +289,7 @@ def test_basic_report_3(fs, ccli):
 
 def test_basic_report_4(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -317,7 +304,7 @@ def test_basic_report_4(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'execute',
             'entrypoint',
@@ -341,7 +328,7 @@ def test_basic_report_4(fs, ccli):
 
 def test_basic_report_5(fs, ccli):
     config = Config()
-    config._config_path = f'{fs.root_path}/config.json'
+    config.load(fs.root_path)
     config.add_account(
         'VA-000',
         'Account 1',
@@ -355,7 +342,7 @@ def test_basic_report_5(fs, ccli):
         ccli,
         [
             '-c',
-            f'{fs.root_path}/',
+            fs.root_path,
             'report',
             'info',
             'entrypoint_wrong',
