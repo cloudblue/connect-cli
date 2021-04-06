@@ -3,7 +3,6 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 import click
-
 import requests
 
 from connect.cli import get_version

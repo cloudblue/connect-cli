@@ -7,7 +7,6 @@ from collections import namedtuple
 from urllib.parse import urlparse
 
 from tqdm import trange
-
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT

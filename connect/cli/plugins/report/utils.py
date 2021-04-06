@@ -5,7 +5,6 @@ from importlib import import_module
 from threading import Lock
 
 from click import ClickException
-
 from tqdm import tqdm
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT

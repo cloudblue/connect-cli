@@ -3,21 +3,18 @@ import os
 from datetime import datetime
 
 import click
-
 import pytz
-
 from click import ClickException
-
 from cmr import render
 
 from connect.cli.core.http import get_user_agent
 from connect.cli.plugins.report.constants import AVAILABLE_RENDERERS, AVAILABLE_REPORTS
 from connect.cli.plugins.report.utils import (
-    Progress,
     get_renderer_by_id,
     get_report_by_id,
     get_report_entrypoint,
     handle_report_exception,
+    Progress,
 )
 from connect.cli.plugins.report.wizard import get_report_inputs
 from connect.client import ConnectClient

@@ -1,15 +1,11 @@
 import os
 
 from click import ClickException
-
-
 from iso3166 import countries
-
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from openpyxl.worksheet.datavalidation import DataValidation
-
 from tqdm import trange
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT

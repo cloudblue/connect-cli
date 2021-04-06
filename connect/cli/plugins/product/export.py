@@ -9,15 +9,12 @@ from datetime import datetime
 from urllib import parse
 
 import requests
-
 from click import ClickException
-
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
-
 from tqdm import trange
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT

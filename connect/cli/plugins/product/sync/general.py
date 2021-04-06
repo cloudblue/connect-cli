@@ -1,7 +1,6 @@
 import os
 
 from click import ClickException
-
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from connect.cli.plugins.product.sync.base import ProductSynchronizer

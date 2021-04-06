@@ -2,9 +2,7 @@ import uuid
 from collections import namedtuple
 
 import phonenumbers
-
 from click import ClickException
-
 from tqdm import trange
 
 from connect.client import ClientError, R

@@ -6,7 +6,6 @@
 from zipfile import BadZipFile
 
 from click import ClickException
-
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 

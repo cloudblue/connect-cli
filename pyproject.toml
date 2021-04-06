@@ -47,6 +47,7 @@ ccli = 'connect.cli.ccli:main'
 [tool.poetry.plugins."connect.cli.plugins"]
 "customer" = "connect.cli.plugins.customer.commands:get_group"
 "product" = "connect.cli.plugins.product.commands:get_group"
+"project" = "connect.cli.plugins.project.commands:get_group"
 "report" = "connect.cli.plugins.report.commands:get_group"
 
 
@@ -65,6 +66,7 @@ tqdm = "^4.59.0"
 requests-toolbelt = "^0.9.1"
 connect-reports-core = "^23.0.3"
 requests = "^2.25.1"
+cookiecutter = "^1.7.2"
 
 [tool.poetry.dev-dependencies]
 

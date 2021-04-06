@@ -5,7 +5,6 @@
 
 import click
 from click import ClickException
-
 from cmr import render
 
 from connect.cli.core.account.constants import AVAILABLE_ACCOUNTS

@@ -1,5 +1,4 @@
 import click
-
 import pkg_resources
 
 

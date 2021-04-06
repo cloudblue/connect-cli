@@ -3,7 +3,6 @@ import datetime
 import time
 
 from click import ClickException
-
 from interrogatio import dialogus
 from interrogatio.validators import (
     DateTimeRangeValidator,
