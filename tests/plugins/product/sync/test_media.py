@@ -1,3 +1,5 @@
+import pytest
+
 from connect.cli.plugins.product.sync.media import MediaSynchronizer
 from connect.client import ConnectClient
 
@@ -206,11 +208,12 @@ def test_validate_invalid_no_video_url(fs, get_sync_media_env):
     }
 
 
-def test_validate_invalid_video_url(fs, get_sync_media_env):
+@pytest.mark.parametrize('video_domain', ('goe.com', 'vimeo.comyoutube.com'))
+def test_validate_invalid_video_url(fs, get_sync_media_env, video_domain):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
-    get_sync_media_env['Media']['F2'] = 'http://goe.com/video.mov'
+    get_sync_media_env['Media']['F2'] = f'http://{video_domain}/video.mov'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
     synchronizer = MediaSynchronizer(
@@ -232,7 +235,7 @@ def test_validate_invalid_video_url(fs, get_sync_media_env):
     assert deleted == 0
     assert errors == {
         2: ['Videos can be hosted on youtube or vimeo, please also ensure to provide https url. '
-            'Invalid url provided is http://goe.com/video.mov'],
+            f'Invalid url provided is http://{video_domain}/video.mov'],
     }
 
 
@@ -386,11 +389,12 @@ def test_update_image_404(fs, get_sync_media_env, mocked_responses, mocked_media
     assert errors == {2: ['404 Not Found']}
 
 
-def test_create_video(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+@pytest.mark.parametrize('domain', ('youtu.be', 'vimeo.com', 'youtube.com'))
+def test_create_video(fs, get_sync_media_env, mocked_responses, mocked_media_response, domain):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
-    get_sync_media_env['Media']['F2'] = 'https://youtu.be/test'
+    get_sync_media_env['Media']['F2'] = f'https://{domain}/test'
 
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 

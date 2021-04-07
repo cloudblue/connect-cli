@@ -170,8 +170,8 @@ class MediaSynchronizer(ProductSynchronizer):
         url = urlparse(location)
         if url.scheme != 'https' or url.netloc not in (
             'www.vimeo.com',
-            'vimeo.com'
-            'youtube.com'
+            'vimeo.com',
+            'youtube.com',
             'www.youtube.com',
             'www.youtu.be',
             'youtu.be',
