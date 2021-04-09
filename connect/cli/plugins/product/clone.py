@@ -1,11 +1,8 @@
 from datetime import datetime
 
 from click import ClickException, echo as clickecho
-
 from fs.tempfs import TempFS
-
 from openpyxl import load_workbook
-
 
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (

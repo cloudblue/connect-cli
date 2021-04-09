@@ -4,7 +4,6 @@
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import click
-
 from cmr import render
 
 from connect.cli.core.config import pass_config

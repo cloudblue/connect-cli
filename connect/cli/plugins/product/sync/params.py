@@ -8,16 +8,15 @@ from collections import namedtuple
 from json.decoder import JSONDecodeError
 
 from tqdm import trange
-
 from openpyxl.styles import Alignment
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.product.constants import (
-    PARAMS_COLS_HEADERS,
     PARAM_TYPES,
+    PARAMS_COLS_HEADERS,
 )
 from connect.cli.plugins.product.sync.base import ProductSynchronizer
-from connect.cli.plugins.product.utils import ParamSwitchNotSupported, get_json_object_for_param
+from connect.cli.plugins.product.utils import get_json_object_for_param, ParamSwitchNotSupported
 from connect.client import ClientError
 
 

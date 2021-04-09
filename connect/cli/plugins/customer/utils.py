@@ -1,5 +1,4 @@
 import click
-
 from cmr import render
 
 from connect.cli.core.utils import continue_or_quit
