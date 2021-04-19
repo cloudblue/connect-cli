@@ -60,7 +60,7 @@ class ConfigurationValuesSynchronizer(ProductSynchronizer):
                     value = json.loads(data.value)
                     payload['structured_value'] = value
                 except Exception:
-                    payload['value'] = data.value
+                    payload['value'] = str(data.value)
 
             try:
                 self._client.products[self._product_id].configurations.create(payload)
