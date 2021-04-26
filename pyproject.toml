@@ -64,7 +64,7 @@ phonenumbers = "^8.12.19"
 fs = "^2.4.12"
 tqdm = "^4.59.0"
 requests-toolbelt = "^0.9.1"
-connect-reports-core = "^23.0.3"
+connect-reports-core = "^23.0.7"
 requests = "^2.25.1"
 cookiecutter = "^1.7.2"
 
