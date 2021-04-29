@@ -197,7 +197,7 @@ requests = ">=2.23,<3.0"
 
 [[package]]
 name = "connect-reports-core"
-version = "23.0.7"
+version = "23.0.8"
 description = "Connect Reports Core"
 category = "main"
 optional = false
@@ -1138,7 +1138,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f4e60c0267e585ec363f7aa268d1040a00b969f7c63ee93a2ff42491fb4dd184"
+content-hash = "6a3a126dde8b754e094dcbeb11efed4d73aa56f5c9245cdec2ce22988512932b"
 
 [metadata.files]
 altgraph = [
@@ -1251,8 +1251,8 @@ connect-openapi-client = [
     {file = "connect_openapi_client-22.0.5-py3-none-any.whl", hash = "sha256:21f27bd82d6e3a5a650daa636da5b02154dbc17987cdd01f97854e1811a7cdcb"},
 ]
 connect-reports-core = [
-    {file = "connect-reports-core-23.0.7.tar.gz", hash = "sha256:bb2a217c74a35e0624e09630cc0d9a6af05df0ee8c4bbb06ce516423e0e99190"},
-    {file = "connect_reports_core-23.0.7-py3-none-any.whl", hash = "sha256:6158029eb6f2f64a06b01e5eaa8fcd4ce7f66d957aa632a2120e9dc04b30e031"},
+    {file = "connect-reports-core-23.0.8.tar.gz", hash = "sha256:454f786adcbcf8f014cd8165408d74974907087e43b1622c2c032ca4bb6c55e9"},
+    {file = "connect_reports_core-23.0.8-py3-none-any.whl", hash = "sha256:66fa76a0411001319f726f28e52b7b38c6ef80a2ca49174bdd36170160c2bae0"},
 ]
 cookiecutter = [
     {file = "cookiecutter-1.7.2-py2.py3-none-any.whl", hash = "sha256:430eb882d028afb6102c084bab6cf41f6559a77ce9b18dc6802e3bc0cc5f4a30"},
