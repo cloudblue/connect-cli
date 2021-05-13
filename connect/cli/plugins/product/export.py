@@ -344,7 +344,7 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 5, value=item['description'])
     ws.cell(row_idx, 6, value=item['type'])
     ws.cell(row_idx, 7, value=item['precision'])
-    ws.cell(row_idx, 8, value=item['unit']['id'])
+    ws.cell(row_idx, 8, value=item['unit']['title'])
     period = item.get('period', 'monthly')
     if period.startswith('years_'):
         period = f'{period.rsplit("_")[-1]} years'
