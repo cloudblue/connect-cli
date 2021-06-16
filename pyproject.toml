@@ -49,6 +49,7 @@ ccli = 'connect.cli.ccli:main'
 "product" = "connect.cli.plugins.product.commands:get_group"
 "project" = "connect.cli.plugins.project.commands:get_group"
 "report" = "connect.cli.plugins.report.commands:get_group"
+"play" = "connect.cli.plugins.play.commands:get_group"
 
 
 [tool.poetry.dependencies]
