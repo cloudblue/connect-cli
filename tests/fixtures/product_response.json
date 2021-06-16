@@ -85,11 +85,17 @@
       "updates": false,
       "configs": {
         "level": 2
-      }
+      },
+      "validation":false
     },
     "subscription": {
       "hold": false,
-      "schema": "evergreen"
+      "schema": "evergreen",
+      "change":{
+      "editable_ordering_parameters":false,
+      "validation":false,
+      "inquiring_validation":false
+      }
     }
   },
   "visibility": {

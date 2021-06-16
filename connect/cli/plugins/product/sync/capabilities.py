@@ -117,6 +117,74 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             product['capabilities']['subscription']['hold'] = True
                         else:
                             product['capabilities']['subscription']['hold'] = False
+                    if data.capability == 'Dynamic Validation of Tier Requests':
+                        if data.value == 'Enabled':
+                            product['capabilities']['tiers']['validation'] = True
+                        else:
+                            product['capabilities']['tiers']['validation'] = False
+                    if data.capability == 'Editable Ordering Parameters in Change Request':
+                        if data.value == 'Enabled':
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'editable_ordering_parameters'
+                            ] = True
+                        else:
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'editable_ordering_parameters'
+                            ] = False
+                    if data.capability == 'Validation of Draft Change Request':
+                        if data.value == 'Enabled':
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'validation'
+                            ] = True
+                        else:
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'validation'
+                            ] = False
+                    if data.capability == 'Validation of inquiring form for Change Requests':
+                        if data.value == 'Enabled':
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'inquiring_validation'
+                            ] = True
+                        else:
+                            product[
+                                'capabilities'
+                            ][
+                                'subscription'
+                            ][
+                                'change'
+                            ][
+                                'inquiring_validation'
+                            ] = False
                     if update:
                         self._client.products[self._product_id].update(product)
                     updated_items.append(data.capability)
