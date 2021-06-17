@@ -1,0 +1,10 @@
+{
+    "endpoint": "https://api.cnct.info/public/v1",
+    "program_agreement_id": "AGP-123-456-789",
+    "distribution_agreements": [
+        "AGD-199-236-391",
+        "AGD-669-983-907"
+    ],
+    "program_contract_id": "CRP-41033-36725-76650",
+    "vendor_account_id": "VA-677-276"
+}
