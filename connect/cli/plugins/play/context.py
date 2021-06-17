@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
+# Copyright (c) 2021 Ingram Micro. All Rights Reserved.
 import inspect
 import json
 import sys
@@ -7,7 +11,7 @@ class Context(dict):
     context_file_name = None
 
     @classmethod
-    def create_from_file(cls, filename=context_file_name):
+    def create_from_file(cls, filename=None):
         ctx = cls()
         try:
             ctx.load(filename)
@@ -17,7 +21,7 @@ class Context(dict):
         return ctx
 
     @classmethod
-    def create(cls, args=None, filename=context_file_name, **kwargs):
+    def create(cls, args=None, filename=None, **kwargs):
         ctx = cls()
         try:
             ctx.load(filename)
@@ -38,7 +42,9 @@ class Context(dict):
         for k, v in [a.split('=') for a in args]:
             self[k] = v
 
-    def load(self, filename=context_file_name):
+    def load(self, filename=None):
+        if filename is None:
+            filename = self.__class__.context_file_name
         if filename:
             with open(filename) as f:
                 print(f'Loading context from {filename}', file=sys.stderr)
@@ -46,7 +52,9 @@ class Context(dict):
                 for k, v in json.load(f).items():
                     self[k] = v
 
-    def save(self, filename=context_file_name):
+    def save(self, filename=None):
+        if filename is None:
+            filename = self.__class__.context_file_name
         if filename:
             with open(filename, 'w') as f:
                 print(f'Saving context into {filename}', file=sys.stderr)
