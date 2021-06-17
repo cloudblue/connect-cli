@@ -3,6 +3,10 @@ import random
 import sys
 
 from connect.cli.plugins.play.context import Context
+# -*- coding: utf-8 -*-
+
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
+# Copyright (c) 2021 Ingram Micro. All Rights Reserved.
 from connect.cli.plugins.play.script import OptionWrapper, Script
 from connect.cli.plugins.play.save import Save
 

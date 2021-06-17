@@ -52,8 +52,7 @@ def setup_script_command(cls):
         ctx | script_class()
         ctx.save()
 
-    options = cls.options()
-    for o in options:
+    for o in cls.options():
         cmd_play_custom = click.option(*o.args, **o.kwargs)(cmd_play_custom)
 
     grp_play.command(name=cls.command(), short_help=cls.help())(cmd_play_custom)
