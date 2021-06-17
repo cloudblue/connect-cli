@@ -595,6 +595,8 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
     ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
     tiers = capabilities['tiers']
+    subscription = capabilities['subscription']
+    change = subscription['change']
 
     action_validation = DataValidation(
         type='list',
@@ -639,6 +641,10 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
     disabled_enabled.add(ws['C4'])
     ws['A5'].value = 'Consumption reporting for Reservation Items'
     ws['B5'].value = '-'
+    ws['C5'].value = (
+        'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C5'])
 
     progress.update(1)
     progress.close()
@@ -688,6 +694,31 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
     disabled_enabled.add(ws['C9'])
     ws['A10'].value = 'Administrative Hold'
     ws['B10'].value = '-'
+
+    ws['A11'].value = 'Dynamic Validation of Tier Requests'
+    ws['B11'].value = '-'
+    ws['C11'].value = (
+        'Enabled' if capabilities['tiers']['validation'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C11'])
+    ws['A12'].value = 'Editable Ordering Parameters in Change Request'
+    ws['B12'].value = '-'
+    ws['C12'].value = (
+        'Enabled' if subscription['change']['editable_ordering_parameters'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C12'])
+    ws['A13'].value = 'Validation of Draft Change Request'
+    ws['B13'].value = '-'
+    ws['C13'].value = (
+        'Enabled' if 'validation' in change and change['validation'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C13'])
+    ws['A14'].value = 'Validation of inquiring form for Change Requests'
+    ws['B14'].value = '-'
+    ws['C14'].value = (
+        'Enabled' if 'inquiring_validation' in change and change['inquiring_validation'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C14'])
 
     def _get_administrative_hold(capabilities):
         if 'hold' in capabilities['subscription'] and capabilities['subscription']['hold']:
