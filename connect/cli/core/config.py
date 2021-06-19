@@ -27,6 +27,7 @@ class Config(object):
         self._active = None
         self._silent = True
         self._accounts = {}
+        self._verbose = False
 
     def add_account(self, id, name, api_key, endpoint=DEFAULT_ENDPOINT):
         self._accounts[id] = Account(id, name, api_key, endpoint)
@@ -48,6 +49,14 @@ class Config(object):
     @silent.setter
     def silent(self, val):
         self._silent = val
+
+    @property
+    def verbose(self):
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, val):
+        self._verbose = val
 
     def activate(self, id):
         account = self._accounts.get(id)

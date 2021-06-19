@@ -34,13 +34,20 @@ def print_version(ctx, param, value):
     is_flag=True,
     help='Prevent the output of informational messages.',
 )
+@click.option(
+    '-v',
+    '--verbose',
+    is_flag=True,
+    help='Write verbose messages, including HTTP session',
+)
 @pass_config
-def cli(config, config_dir, silent):
+def cli(config, config_dir, silent, verbose):
     """CloudBlue Connect Command Line Interface"""
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
     config.load(config_dir)
     config.silent = silent
+    config.verbose = verbose
 
 
 cli.add_command(grp_account)

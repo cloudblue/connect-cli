@@ -14,7 +14,7 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     TemplatesSynchronizer,
 )
-from connect.client import ClientError, ConnectClient
+from connect.client import ClientError, ConnectClient, RequestLogger
 
 
 class ProductCloner:
@@ -35,6 +35,7 @@ class ProductCloner:
             output_path=self.fs.root_path,
             output_file='',
             silent=self.config.silent,
+            verbose=self.config.verbose,
         )
 
     def inject(self):  # noqa: CCR001
@@ -46,6 +47,7 @@ class ProductCloner:
                 endpoint=self.config.active.endpoint,
                 use_specs=False,
                 max_retries=3,
+                logger=RequestLogger() if self.config.verbose else None,
             )
             synchronizer = GeneralSynchronizer(
                 client,
@@ -150,6 +152,7 @@ class ProductCloner:
                 endpoint=self.config.active.endpoint,
                 use_specs=False,
                 max_retries=3,
+                logger=RequestLogger() if self.config.verbose else None,
             )
             category = self._get_cat_id(client, ws['B8'].value)
             product = client.products.create(
