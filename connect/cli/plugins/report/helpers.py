@@ -17,7 +17,7 @@ from connect.cli.plugins.report.utils import (
     Progress,
 )
 from connect.cli.plugins.report.wizard import get_report_inputs
-from connect.client import ConnectClient
+from connect.client import ConnectClient, RequestLogger
 from connect.reports.constants import CLI_ENV
 from connect.reports.datamodels import Account, Report
 from connect.reports.parser import parse
@@ -110,6 +110,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         default_limit=500,
         max_retries=3,
         default_headers=get_user_agent(),
+        logger=RequestLogger() if config.verbose else None,
     )
 
     inputs = get_report_inputs(config, client, report.get_parameters())

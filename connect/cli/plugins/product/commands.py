@@ -22,7 +22,7 @@ from connect.cli.plugins.product.sync import (
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
 )
-from connect.client import ClientError, ConnectClient, R
+from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
 @click.group(name='product', short_help='Manage product definitions.')
@@ -71,6 +71,7 @@ def cmd_list_products(config, query, page_size, always_continue):
         endpoint=config.active.endpoint,
         use_specs=False,
         max_retries=3,
+        logger=RequestLogger() if config.verbose else None,
     )
 
     if acc_id.startswith('VA'):
@@ -130,6 +131,7 @@ def cmd_dump_products(config, product_id, output_file, output_path):
         product_id,
         output_file,
         config.silent,
+        config.verbose,
         output_path,
     )
     if not config.silent:
@@ -174,6 +176,7 @@ def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
         endpoint=config.active.endpoint,
         use_specs=False,
         max_retries=3,
+        logger=RequestLogger() if config.verbose else None,
     )
 
     synchronizer = GeneralSynchronizer(
@@ -400,6 +403,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
         endpoint=config.active.endpoint,
         use_specs=False,
         max_retries=3,
+        logger=RequestLogger() if config.verbose else None,
     )
 
     if not yes:

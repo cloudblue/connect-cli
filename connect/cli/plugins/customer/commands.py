@@ -6,7 +6,7 @@ import warnings
 
 import click
 
-from connect.client import ConnectClient
+from connect.client import ConnectClient, RequestLogger
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.customer.export import dump_customers
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
@@ -53,6 +53,7 @@ def cmd_export_customers(config, output_path, output_file):
         silent=config.silent,
         output_path=output_path,
         account_id=acc_id,
+        verbose=config.verbose,
     )
     if not config.silent:
         click.secho(
@@ -93,6 +94,7 @@ def cmd_sync_customers(config, input_file, yes):
         endpoint=config.active.endpoint,
         use_specs=False,
         max_retries=3,
+        logger=RequestLogger() if config.verbose else None,
     )
 
     synchronizer = CustomerSynchronizer(

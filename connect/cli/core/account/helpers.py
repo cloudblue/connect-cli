@@ -5,7 +5,7 @@
 
 import click
 
-from connect.client import ClientError, ConnectClient
+from connect.client import ClientError, ConnectClient, RequestLogger
 
 
 def add_account(config, api_key, endpoint):
@@ -15,6 +15,7 @@ def add_account(config, api_key, endpoint):
             endpoint=endpoint,
             validate_using_specs=False,
             use_specs=False,
+            logger=RequestLogger() if config.verbose else None,
         )
         account_data = client.accounts.all().first()
         config.add_account(

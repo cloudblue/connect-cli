@@ -28,7 +28,7 @@ from connect.cli.plugins.product.utils import (
     get_col_limit_by_ws_type,
     get_json_object_for_param,
 )
-from connect.client import ClientError, ConnectClient, R
+from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
 def _setup_cover_sheet(ws, product, location, client, media_path):
@@ -841,7 +841,7 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def dump_product(api_url, api_key, product_id, output_file, silent, output_path=None):  # noqa: CCR001
+def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
     if not output_path:
         output_path = os.path.join(os.getcwd(), product_id)
     else:
@@ -873,6 +873,7 @@ def dump_product(api_url, api_key, product_id, output_file, silent, output_path=
             endpoint=api_url,
             use_specs=False,
             max_retries=3,
+            logger=RequestLogger() if verbose else None,
         )
         product = client.products[product_id].get()
         wb = Workbook()

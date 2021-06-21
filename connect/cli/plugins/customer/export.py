@@ -13,10 +13,10 @@ from connect.cli.core.http import (
     handle_http_error,
 )
 from connect.cli.plugins.customer.constants import COL_HEADERS
-from connect.client import ClientError, ConnectClient
+from connect.client import ClientError, ConnectClient, RequestLogger
 
 
-def dump_customers(api_url, api_key, account_id, output_file, silent, output_path=None):  # noqa: CCR001
+def dump_customers(api_url, api_key, account_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
     if not output_path:
         output_path = os.path.join(os.getcwd(), account_id)
     else:
@@ -44,6 +44,7 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, output_pat
             endpoint=api_url,
             use_specs=False,
             default_limit=1000,
+            logger=RequestLogger() if verbose else None,
         )
         wb = Workbook()
         _prepare_worksheet(wb.create_sheet('Customers'))
