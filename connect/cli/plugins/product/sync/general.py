@@ -100,6 +100,8 @@ class GeneralSynchronizer(ProductSynchronizer):
         product['name'] = ws['B6'].value
         product['category']['name'] = ws['B8'].value
         product['category']['id'] = self._category
+        # Solution for v22 to avoid issue while updating capabilities
+        del product['capabilities']['subscription']['change']['editable_ordering_parameters']
         try:
             self._client.products[self._product_id].update(product)
         except ClientError as e:
