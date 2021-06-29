@@ -9,13 +9,13 @@ from click import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.exceptions import OutputDirExistsException
 
-from connect.cli.plugins.project.helpers import (
+from connect.cli.plugins.project.report_helpers import (
     _add_report_to_descriptor,
     _custom_cookiecutter,
     _entrypoint_validations,
     add_report,
-    bootstrap_project,
-    validate_project,
+    bootstrap_report_project,
+    validate_report_project,
 )
 
 
@@ -28,9 +28,9 @@ def _cookiecutter_result(local_path):
     'exists_cookiecutter_dir',
     (True, False),
 )
-def test_bootstrap_project(fs, mocker, capsys, exists_cookiecutter_dir):
+def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir):
     mocker.patch(
-        'connect.cli.plugins.project.helpers.cookiecutter',
+        'connect.cli.plugins.project.report_helpers.cookiecutter',
         return_value='project_dir',
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
@@ -40,7 +40,7 @@ def test_bootstrap_project(fs, mocker, capsys, exists_cookiecutter_dir):
 
     output_dir = f'{fs.root_path}/projects'
     os.mkdir(output_dir)
-    bootstrap_project(output_dir)
+    bootstrap_report_project(output_dir)
 
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
@@ -48,7 +48,7 @@ def test_bootstrap_project(fs, mocker, capsys, exists_cookiecutter_dir):
 
 def test_bootstrap_direxists_error(fs, mocker):
     mocked_cookiecutter = mocker.patch(
-        'connect.cli.plugins.project.helpers.cookiecutter',
+        'connect.cli.plugins.project.report_helpers.cookiecutter',
         side_effect=OutputDirExistsException('dir "project_dir" exists'),
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
@@ -59,39 +59,39 @@ def test_bootstrap_direxists_error(fs, mocker):
     os.mkdir(output_dir)
 
     with pytest.raises(ClickException):
-        bootstrap_project(output_dir)
+        bootstrap_report_project(output_dir)
     assert mocked_cookiecutter.call_count == 1
 
 
-def test_validate_project(capsys):
+def test_validate_report_project(capsys):
     project_dir = './tests/fixtures/reports/basic_report'
 
-    validate_project(project_dir)
+    validate_report_project(project_dir)
 
     captured = capsys.readouterr()
     assert 'successfully' in captured.out
 
 
-def test_validate_no_descriptor_file(fs):
+def test_validate_report_no_descriptor_file(fs):
     with pytest.raises(ClickException) as error:
-        validate_project(fs.root_path)
+        validate_report_project(fs.root_path)
 
     assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
 
 
-def test_validate_wrong_descriptor_file(fs, mocked_reports):
+def test_validate_report_wrong_descriptor_file(fs, mocked_reports):
     wrong_data = f'{mocked_reports} - extrachar'
 
     with open(f'{fs.root_path}/reports.json', 'w') as fp:
         fp.write(wrong_data)
 
     with pytest.raises(ClickException) as error:
-        validate_project(f'{fs.root_path}')
+        validate_report_project(f'{fs.root_path}')
 
     assert str(error.value) == 'The report project descriptor `reports.json` is not a valid json file.'
 
 
-def test_validate_schema(fs, mocked_reports):
+def test_validate_report_schema(fs, mocked_reports):
     wrong_data = mocked_reports
     # no valid value for 'reports' field
     wrong_data['reports'] = 'string'
@@ -100,19 +100,19 @@ def test_validate_schema(fs, mocked_reports):
         json.dump(wrong_data, fp)
 
     with pytest.raises(ClickException) as error:
-        validate_project(f'{fs.root_path}')
+        validate_report_project(f'{fs.root_path}')
 
     assert 'Invalid `reports.json`: \'string\' is not of type' in str(error.value)
 
 
-def test_validate_missing_files(fs, mocked_reports):
+def test_validate_report_missing_files(fs, mocked_reports):
     with open(f'{fs.root_path}/reports.json', 'w') as fp:
         json.dump(mocked_reports, fp)
 
     # validate function will fail due to missing project files
     # like `readme.md` for instance, let's try it...
     with pytest.raises(ClickException) as error:
-        validate_project(f'{fs.root_path}')
+        validate_report_project(f'{fs.root_path}')
 
     assert 'repository property `readme_file` cannot be resolved to a file' in str(error.value)
 
@@ -146,11 +146,11 @@ def test_add_report_no_package_dir(fs):
 
 def test_add_report_wrong_descriptor_project_file(fs, mocker, mocked_reports):
     desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._file_descriptor_validations',
+        'connect.cli.plugins.project.report_helpers._file_descriptor_validations',
         return_value=mocked_reports,
     )
     schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.validate_with_schema',
+        'connect.cli.plugins.project.report_helpers.validate_with_schema',
         return_value=['error'],
     )
 
@@ -166,15 +166,15 @@ def test_add_report_wrong_descriptor_project_file(fs, mocker, mocked_reports):
 
 def test_add_report_existing_repo_dir(fs, mocker, mocked_reports):
     desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._file_descriptor_validations',
+        'connect.cli.plugins.project.report_helpers._file_descriptor_validations',
         return_value=mocked_reports,
     )
     schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.validate_with_schema',
+        'connect.cli.plugins.project.report_helpers.validate_with_schema',
         return_value=[],
     )
     cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._custom_cookiecutter',
+        'connect.cli.plugins.project.report_helpers._custom_cookiecutter',
         side_effect=_cookiecutter_result(fs.root_path),
         return_value=(f'{fs.root_path}/project_dir', 'report_dir'),
     )
@@ -191,15 +191,15 @@ def test_add_report_existing_repo_dir(fs, mocker, mocked_reports):
 
 def test_add_report(fs, mocker, mocked_reports):
     desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._file_descriptor_validations',
+        'connect.cli.plugins.project.report_helpers._file_descriptor_validations',
         return_value=mocked_reports,
     )
     schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.validate_with_schema',
+        'connect.cli.plugins.project.report_helpers.validate_with_schema',
         return_value=[],
     )
     cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._custom_cookiecutter',
+        'connect.cli.plugins.project.report_helpers._custom_cookiecutter',
         side_effect=_cookiecutter_result(fs.root_path),
         return_value=(f'{fs.root_path}/project_dir', 'report_dir'),
     )
@@ -208,7 +208,7 @@ def test_add_report(fs, mocker, mocked_reports):
     assert os.path.isfile(f'{cookie_mocked.return_value[0]}/reports/report_dir/README.md')
 
     cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers._add_report_to_descriptor',
+        'connect.cli.plugins.project.report_helpers._add_report_to_descriptor',
     )
 
     cookie_dir = f'{fs.root_path}/.cookiecutters'
@@ -263,26 +263,26 @@ def test_custom_cookiecutter(fs, mocker):
     }
 
     config_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.get_user_config',
+        'connect.cli.plugins.project.report_helpers.get_user_config',
     )
     mocker.patch(
-        'connect.cli.plugins.project.helpers.rmtree',
+        'connect.cli.plugins.project.report_helpers.rmtree',
     )
     repo_dir_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.determine_repo_dir',
+        'connect.cli.plugins.project.report_helpers.determine_repo_dir',
     )
     generate_context_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.generate_context',
+        'connect.cli.plugins.project.report_helpers.generate_context',
         return_value={
             'cookiecutter': cookiecutter_json_content,
         },
     )
     prompt_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.prompt_for_config',
+        'connect.cli.plugins.project.report_helpers.prompt_for_config',
         return_value=report_context,
     )
     generate_files_mocked = mocker.patch(
-        'connect.cli.plugins.project.helpers.generate_files',
+        'connect.cli.plugins.project.report_helpers.generate_files',
         return_value=f'{fs.root_path}/project_name',
     )
 

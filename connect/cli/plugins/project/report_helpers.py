@@ -10,7 +10,7 @@ import shutil
 from collections import OrderedDict
 
 from cookiecutter.main import cookiecutter
-from cookiecutter.config import DEFAULT_CONFIG, get_user_config
+from cookiecutter.config import get_user_config
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.prompt import prompt_for_config
@@ -20,8 +20,9 @@ import click
 from click import ClickException
 
 from connect.cli.plugins.project.constants import (
-    PROJECT_BOILERPLATE_URL,
+    PROJECT_REPORT_BOILERPLATE_URL,
 )
+from connect.cli.plugins.project.utils import _purge_cookiecutters_dir
 from connect.reports.validator import (
     validate,
     validate_with_schema,
@@ -29,13 +30,13 @@ from connect.reports.validator import (
 from connect.reports.parser import parse
 
 
-def bootstrap_project(data_dir: str):
+def bootstrap_report_project(data_dir: str):
     click.secho('Bootstraping report project...\n', fg='blue')
 
     _purge_cookiecutters_dir()
 
     try:
-        project_dir = cookiecutter(PROJECT_BOILERPLATE_URL, output_dir=data_dir)
+        project_dir = cookiecutter(PROJECT_REPORT_BOILERPLATE_URL, output_dir=data_dir)
         click.secho(f'\nReport Project location: {project_dir}', fg='blue')
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
@@ -46,7 +47,7 @@ def bootstrap_project(data_dir: str):
         )
 
 
-def validate_project(project_dir):
+def validate_report_project(project_dir):
     click.secho(f'Validating project {project_dir}...\n', fg='blue')
 
     data = _file_descriptor_validations(project_dir)
@@ -86,7 +87,7 @@ def add_report(project_dir, package_name):
 
         # Instead of using cookiecutter use the internals
         report_dir, report_slug = _custom_cookiecutter(
-            PROJECT_BOILERPLATE_URL,
+            PROJECT_REPORT_BOILERPLATE_URL,
             output_dir=add_report_tmpdir,
         )
 
@@ -228,10 +229,3 @@ def _entrypoint_validations(project_dir, entrypoint, report_spec):
             '\n>> def generate(client=None, input_data=None, progress_callback=None, '
             'renderer_type=None, extra_context_callback=None) <<',
         )
-
-
-def _purge_cookiecutters_dir():
-    # Avoid asking rewrite clone boilerplate project
-    cookie_dir = DEFAULT_CONFIG['cookiecutters_dir']
-    if os.path.isdir(cookie_dir):
-        rmtree(cookie_dir)

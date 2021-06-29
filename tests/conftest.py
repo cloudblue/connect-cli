@@ -3,11 +3,8 @@ import os
 from shutil import copy2
 
 import pytest
-
 import responses
-
 from fs.tempfs import TempFS
-
 from openpyxl import load_workbook
 
 from connect.cli.core.base import cli
