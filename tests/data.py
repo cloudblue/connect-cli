@@ -12,6 +12,6 @@ CONFIG_DATA = {
             'name': 'Account 1',
             'api_key': 'ApiKey ZZZZ:SSSS',
             'endpoint': 'https://localhost/public/v1',
-        }
+        },
     ],
 }

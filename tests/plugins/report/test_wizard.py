@@ -1,17 +1,16 @@
 import pytest
-
 from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import DateTimeRangeValidator, DateTimeValidator, RequiredValidator
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.report.wizard import (
-    ObjectValidator,
     checkbox,
     date,
     date_range,
     hub_list,
     marketplace_list,
     object_param,
+    ObjectValidator,
     product_list,
     required_validator,
     single_line,

@@ -5,9 +5,9 @@ from click.testing import CliRunner
 import os
 
 
-def test_bootstrap_command(fs, ccli, mocker, capsys):
+def test_bootstrap_report_command(fs, ccli, mocker, capsys):
     mocked_bootstrap = mocker.patch(
-        'connect.cli.plugins.project.commands.bootstrap_project',
+        'connect.cli.plugins.project.commands.bootstrap_report_project',
         side_effect=print('project_dir'),
     )
     os.mkdir(f'{fs.root_path}/projects')
@@ -29,9 +29,9 @@ def test_bootstrap_command(fs, ccli, mocker, capsys):
     assert result.exit_code == 0
 
 
-def test_validate_command(fs, ccli, mocker, capsys):
+def test_validate_report_command(fs, ccli, mocker, capsys):
     mocked_validate_project = mocker.patch(
-        'connect.cli.plugins.project.commands.validate_project',
+        'connect.cli.plugins.project.commands.validate_report_project',
         side_effect=print('Report Project connect/.data/logan has been successfully validated.'),
     )
     os.mkdir(f'{fs.root_path}/project')
@@ -77,3 +77,27 @@ def test_add_report_command(fs, ccli, mocker, capsys):
     mocked_add_report.assert_called_once_with(f'{fs.root_path}/project', 'reports')
     captured = capsys.readouterr()
     assert 'successfully added' == captured.out.strip()
+
+
+def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
+    mocked_bootstrap = mocker.patch(
+        'connect.cli.plugins.project.commands.bootstrap_extension_project',
+        side_effect=print('project_dir'),
+    )
+    os.mkdir(f'{fs.root_path}/projects')
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'project',
+            'extension',
+            'bootstrap',
+            '--output-dir',
+            f'{fs.root_path}/projects',
+        ],
+    )
+
+    mocked_bootstrap.assert_called_once_with(f'{fs.root_path}/projects')
+    captured = capsys.readouterr()
+    assert 'project_dir' in captured.out
+    assert result.exit_code == 0

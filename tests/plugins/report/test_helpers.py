@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from click import ClickException
 
 from connect.cli.core.config import Config

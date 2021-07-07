@@ -4,10 +4,13 @@ import os
 
 import click
 
-from connect.cli.plugins.project.helpers import (
+from connect.cli.plugins.project.extension_helpers import (
+    bootstrap_extension_project,
+)
+from connect.cli.plugins.project.report_helpers import (
     add_report,
-    bootstrap_project,
-    validate_project,
+    bootstrap_report_project,
+    validate_report_project,
 )
 
 
@@ -16,6 +19,7 @@ def grp_project():
     pass  # pragma: no cover
 
 
+# REPORTS
 @grp_project.group(
     name='report',
     short_help='Manage report projects.',
@@ -36,7 +40,7 @@ def grp_project_report():
     help='Directory where the new report project will be created.',
 )
 def cmd_bootstrap_report_project(output_dir):
-    bootstrap_project(output_dir)
+    bootstrap_report_project(output_dir)
 
 
 @grp_project_report.command(
@@ -50,7 +54,7 @@ def cmd_bootstrap_report_project(output_dir):
     help='Project directory.',
 )
 def cmd_validate_project(project_dir):
-    validate_project(project_dir)
+    validate_report_project(project_dir)
 
 
 @grp_project_report.command(
@@ -70,6 +74,30 @@ def cmd_validate_project(project_dir):
 )
 def cmd_add_report(project_dir, package_name):
     add_report(project_dir, package_name)
+
+
+# EXTENSION AS A SERVICE
+@grp_project.group(
+    name='extension',
+    short_help='Manage extension projects.',
+)
+def grp_project_extension():
+    pass  # pragma: no cover
+
+
+@grp_project_extension.command(
+    name='bootstrap',
+    short_help='Bootstrap new extension project.',
+)
+@click.option(
+    '--output-dir', '-o',
+    default=os.getcwd(),
+    type=click.Path(exists=False, file_okay=False, dir_okay=True),
+    required=False,
+    help='Directory where the new extension project will be created.',
+)
+def cmd_bootstrap_extension_project(output_dir):
+    bootstrap_extension_project(output_dir)
 
 
 def get_group():
