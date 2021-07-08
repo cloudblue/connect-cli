@@ -4,6 +4,7 @@ from shutil import copy2
 
 import pytest
 import responses
+import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
 
@@ -256,3 +257,14 @@ def mocked_reseller():
 @pytest.fixture
 def customers_workbook(fs):
     return load_workbook('./tests/fixtures/customer/customers.xlsx')
+
+
+@pytest.fixture(scope='function')
+def mocked_extension_project_descriptor(fs):
+    return toml.load('./tests/fixtures/extensions/basic_ext/pyproject.toml')
+
+
+@pytest.fixture(scope='function')
+def mocked_extension_descriptor(fs):
+    with open('./tests/fixtures/extensions/basic_ext/connect_ext/extension.json') as response:
+        return json.load(response)

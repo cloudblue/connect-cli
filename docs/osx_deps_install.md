@@ -8,6 +8,6 @@ Please install Homebrew if you haven't already.
 ## Install
 
 ```sh
-$ brew install python3 cairo pango gdk-pixbuf libffi
+$ brew install python3 cairo pango gdk-pixbuf libffi git
 ```
 

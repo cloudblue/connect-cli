@@ -101,3 +101,27 @@ def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert result.exit_code == 0
+
+
+def test_validate_extension_command(fs, ccli, mocker, capsys):
+    mocked_validate_project = mocker.patch(
+        'connect.cli.plugins.project.commands.validate_extension_project',
+        side_effect=print('Extension Project connect/.data/logan has been successfully validated.'),
+    )
+    os.mkdir(f'{fs.root_path}/project')
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'project',
+            'extension',
+            'validate',
+            '--project-dir',
+            f'{fs.root_path}/project',
+        ],
+    )
+
+    assert result.exit_code == 0
+    mocked_validate_project.assert_called_once_with(f'{fs.root_path}/project')
+    captured = capsys.readouterr()
+    assert 'Extension Project connect/.data/logan has been successfully validated.' == captured.out.strip()

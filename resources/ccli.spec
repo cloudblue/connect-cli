@@ -25,6 +25,7 @@ a = Analysis(
         'connect.cli.plugins.product.commands',
         'connect.cli.plugins.report.commands',
         'connect.cli.plugins.play.commands',
+        'connect.cli.plugins.project.commands',
     ],
     hookspath=[],
     runtime_hooks=[],
