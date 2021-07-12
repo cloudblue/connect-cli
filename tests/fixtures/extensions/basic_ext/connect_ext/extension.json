@@ -1,0 +1,21 @@
+{
+  "name": "Basic Extension",
+  "description": "Project description",
+  "version": "1.0",
+  "readme_url": "https://example.com/README.md",
+  "changelog_url": "https://example.com/CHANGELOG.md",
+  "capabilities": {
+    "asset_purchase_request_processing": [
+      "approved"
+    ],
+    "tier_config_setup_request_processing": [
+      "tiers_setup",
+      "pending",
+      "inquiring",
+      "approved",
+      "failed"
+    ],
+    "product_action_execution": [],
+    "product_custom_event_processing": []
+  }
+}

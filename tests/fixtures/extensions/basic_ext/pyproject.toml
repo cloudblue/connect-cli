@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "basic-ext"
+version = "1.0"
+description = "Project description"
+authors = ["Enterprise"]
+license = "Apache Software License 2.0"
+packages = [
+    { include = "connect_ext" }
+]
+readme = "./README.md"
+
+[tool.poetry.plugins."connect.eaas.ext"]
+"extension" = "connect_ext.extension:BasicExtension"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+connect-openapi-client = "^22.0.8"
+connect-extension-runner = "^2.5"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.1.2"
+pytest-cov = "^2.10.1"
+pytest-mock = "^3.3.1"
+pytest-asyncio = "^0.15.1"
+pytest-httpx = "^0.12.0"
+coverage = {extras = ["toml"], version = "^5.3"}
+responses = "^0.12.0"
+flake8 = "~3.8"
+flake8-bugbear = "~20"
+flake8-cognitive-complexity = "^0.1"
+flake8-commas = "~2.0"
+flake8-future-import = "~0.4"
+flake8-import-order = "~0.18"
+flake8-broken-line = "~0.3"
+flake8-comprehensions = "^3.3.1"
+flake8-debugger = "^4.0.0"
+flake8-eradicate = "^1.0.0"
+flake8-string-format = "^0.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--cov=connect_ext --cov-report=term-missing:skip-covered --cov-report=html --cov-report=xml"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+omit = [
+]
+
+exclude_lines = [
+    "pragma: no cover",
+    "def __str__",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

@@ -6,6 +6,7 @@ import click
 
 from connect.cli.plugins.project.extension_helpers import (
     bootstrap_extension_project,
+    validate_extension_project,
 )
 from connect.cli.plugins.project.report_helpers import (
     add_report,
@@ -53,7 +54,7 @@ def cmd_bootstrap_report_project(output_dir):
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Project directory.',
 )
-def cmd_validate_project(project_dir):
+def cmd_validate_report_project(project_dir):
     validate_report_project(project_dir)
 
 
@@ -98,6 +99,20 @@ def grp_project_extension():
 )
 def cmd_bootstrap_extension_project(output_dir):
     bootstrap_extension_project(output_dir)
+
+
+@grp_project_extension.command(
+    name='validate',
+    short_help='Validate given extension project.',
+)
+@click.option(
+    '--project-dir', '-p',
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Project directory.',
+)
+def cmd_validate_extension_project(project_dir):
+    validate_extension_project(project_dir)
 
 
 def get_group():
