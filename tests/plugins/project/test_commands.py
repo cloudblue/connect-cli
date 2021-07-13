@@ -97,7 +97,7 @@ def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
         ],
     )
 
-    mocked_bootstrap.assert_called_once_with(f'{fs.root_path}/projects')
+    mocked_bootstrap.assert_called_once()
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert result.exit_code == 0

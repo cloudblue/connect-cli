@@ -6,6 +6,7 @@ import click
 import pkg_resources
 import toml
 from click.exceptions import ClickException
+from cmr import render
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.main import cookiecutter
 
@@ -17,7 +18,7 @@ from connect.cli.plugins.project.constants import (
 from connect.cli.plugins.project import utils
 
 
-def bootstrap_extension_project(data_dir: str):
+def bootstrap_extension_project(config, data_dir: str):
     click.secho('Bootstraping extension project...\n', fg='blue')
 
     utils._purge_cookiecutters_dir()
@@ -26,13 +27,15 @@ def bootstrap_extension_project(data_dir: str):
     answers = {}
     function_list = [
         '_general_questions',
+        '_credentials_questions',
         '_asset_process_capabilities',
         '_asset_validation_capabilities',
         '_tier_config_capabilities',
         '_product_capabilities',
     ]
+
     for question_function in function_list:
-        partial = getattr(utils, question_function)(index, len(function_list))
+        partial = getattr(utils, question_function)(config, index, len(function_list))
         index += 1
         answers.update(partial)
 
@@ -43,7 +46,8 @@ def bootstrap_extension_project(data_dir: str):
             extra_context=answers,
             output_dir=data_dir,
         )
-        click.secho(f'\nExtension Project location: {project_dir}', fg='blue')
+        click.secho(f'\nExtension Project location: {project_dir}\n', fg='blue')
+        click.echo(render(open(f'{project_dir}/HOWTO.md', 'r').read()))
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
         raise ClickException(
