@@ -11,6 +11,7 @@ from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.exceptions import OutputDirExistsException
 from pkg_resources import EntryPoint
 
+from connect.cli.core.config import Config
 from connect.cli.plugins.project.extension_helpers import (
     bootstrap_extension_project,
     validate_extension_project,
@@ -27,7 +28,15 @@ def _cookiecutter_result(local_path):
     'exists_cookiecutter_dir',
     (True, False),
 )
-def test_bootstrap_extension_project(fs, mocker, capsys, exists_cookiecutter_dir):
+def test_bootstrap_extension_project(
+    fs,
+    mocker,
+    capsys,
+    exists_cookiecutter_dir,
+    config_mocker,
+):
+    config = Config()
+    config.load(config_dir='/tmp')
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.extension_helpers.cookiecutter',
         return_value='project_dir',
@@ -42,6 +51,10 @@ def test_bootstrap_extension_project(fs, mocker, capsys, exists_cookiecutter_dir
             'product': [],
         },
     )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
         os.mkdir(cookie_dir)
@@ -49,15 +62,17 @@ def test_bootstrap_extension_project(fs, mocker, capsys, exists_cookiecutter_dir
 
     output_dir = f'{fs.root_path}/projects'
     os.mkdir(output_dir)
-    bootstrap_extension_project(output_dir)
+    bootstrap_extension_project(config, output_dir)
 
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 5
+    assert mocked_dialogus.call_count == 6
 
 
-def test_bootstrap_direxists_error(fs, mocker):
+def test_bootstrap_direxists_error(fs, mocker, config_mocker):
+    config = Config()
+    config.load(config_dir='/tmp')
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.extension_helpers.cookiecutter',
         side_effect=OutputDirExistsException('dir "project_dir" exists'),
@@ -80,9 +95,9 @@ def test_bootstrap_direxists_error(fs, mocker):
     os.mkdir(output_dir)
 
     with pytest.raises(ClickException):
-        bootstrap_extension_project(output_dir)
+        bootstrap_extension_project(config, output_dir)
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 5
+    assert mocked_dialogus.call_count == 6
 
 
 def test_bootstrap_show_empty_dialog(mocker):

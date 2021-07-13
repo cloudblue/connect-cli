@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 from click.exceptions import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
@@ -14,7 +15,7 @@ def _purge_cookiecutters_dir():
         rmtree(cookie_dir)
 
 
-def _general_questions(idx, total):
+def _general_questions(config, idx, total):
     questions = [
         {
             'name': 'project_name',
@@ -84,7 +85,38 @@ def _general_questions(idx, total):
     return answers
 
 
-def _asset_process_capabilities(idx, total):
+def _credentials_questions(config, idx, total):
+    config.validate()
+    active_api_key = config.active.api_key or 'ApiKey XXXXXXX:xxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    active_server = urlparse(config.active.endpoint).netloc or 'api.connect.cloudblue.com'
+    questions = [
+        {
+            'name': 'api_key',
+            'type': 'input',
+            'message': 'API Key from Connect integration module: ',
+            'default': active_api_key,
+            'validators': (RequiredValidator(message='Please, provide an API Key.'),),
+        },
+        {
+            'name': 'environment_id',
+            'type': 'input',
+            'message': 'Environment ID from DevOps module: ',
+            'default': 'a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5',
+            'validators': (RequiredValidator(message='Please, provide a valid environment id.'),),
+        },
+        {
+            'name': 'server_address',
+            'type': 'input',
+            'message': 'Connect API hostname: ',
+            'default': active_server,
+            'validators': (RequiredValidator(message='Please, provide a server address.'),),
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return answers
+
+
+def _asset_process_capabilities(config, idx, total):
     questions = [
         {
             'name': 'asset_processing',
@@ -104,7 +136,7 @@ def _asset_process_capabilities(idx, total):
     return _gen_cookie_capabilities(answers['asset_processing'])
 
 
-def _asset_validation_capabilities(idx, total):
+def _asset_validation_capabilities(config, idx, total):
     questions = [
         {
             'name': 'asset_validation',
@@ -120,7 +152,7 @@ def _asset_validation_capabilities(idx, total):
     return _gen_cookie_capabilities(answers['asset_validation'])
 
 
-def _tier_config_capabilities(idx, total):
+def _tier_config_capabilities(config, idx, total):
     questions = [
         {
             'name': 'tierconfig',
@@ -138,7 +170,7 @@ def _tier_config_capabilities(idx, total):
     return _gen_cookie_capabilities(answers['tierconfig'])
 
 
-def _product_capabilities(idx, total):
+def _product_capabilities(config, idx, total):
     questions = [
         {
             'name': 'product',
@@ -155,10 +187,11 @@ def _product_capabilities(idx, total):
 
 
 def _show_dialog(questions, idx, total):
+    confirm = 'Create' if idx == total else 'Next'
     answers = dialogus(
         questions,
         title=f'Extension Project Configuration ({idx}/{total})',
-        confirm='Next',
+        confirm=confirm,
     )
     if not answers:
         raise ClickException('Aborted by user input')

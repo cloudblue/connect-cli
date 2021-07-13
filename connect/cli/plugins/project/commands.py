@@ -4,6 +4,7 @@ import os
 
 import click
 
+from connect.cli.core.config import pass_config
 from connect.cli.plugins.project.extension_helpers import (
     bootstrap_extension_project,
     validate_extension_project,
@@ -97,8 +98,9 @@ def grp_project_extension():
     required=False,
     help='Directory where the new extension project will be created.',
 )
-def cmd_bootstrap_extension_project(output_dir):
-    bootstrap_extension_project(output_dir)
+@pass_config
+def cmd_bootstrap_extension_project(config, output_dir):
+    bootstrap_extension_project(config, output_dir)
 
 
 @grp_project_extension.command(
