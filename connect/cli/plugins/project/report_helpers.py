@@ -22,7 +22,7 @@ from click import ClickException
 from connect.cli.plugins.project.constants import (
     PROJECT_REPORT_BOILERPLATE_URL,
 )
-from connect.cli.plugins.project.utils import _purge_cookiecutters_dir
+from connect.cli.plugins.project.utils import purge_cookiecutters_dir
 from connect.reports.validator import (
     validate,
     validate_with_schema,
@@ -33,7 +33,7 @@ from connect.reports.parser import parse
 def bootstrap_report_project(data_dir: str):
     click.secho('Bootstraping report project...\n', fg='blue')
 
-    _purge_cookiecutters_dir()
+    purge_cookiecutters_dir()
 
     try:
         project_dir = cookiecutter(PROJECT_REPORT_BOILERPLATE_URL, output_dir=data_dir)

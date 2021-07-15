@@ -26,6 +26,8 @@ a = Analysis(
         'connect.cli.plugins.report.commands',
         'connect.cli.plugins.play.commands',
         'connect.cli.plugins.project.commands',
+        'cookiecutter.extensions',
+        'jinja2_time',
     ],
     hookspath=[],
     runtime_hooks=[],

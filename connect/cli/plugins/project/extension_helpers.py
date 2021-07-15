@@ -7,9 +7,12 @@ import pkg_resources
 import toml
 from click.exceptions import ClickException
 from cmr import render
+from cookiecutter import generate
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.main import cookiecutter
+from cookiecutter.utils import work_in
 
+from connect.cli.core.utils import is_bundle
 from connect.cli.plugins.project.constants import (
     CAPABILITY_ALLOWED_STATUSES,
     CAPABILITY_METHOD_MAP,
@@ -21,17 +24,17 @@ from connect.cli.plugins.project import utils
 def bootstrap_extension_project(config, data_dir: str):
     click.secho('Bootstraping extension project...\n', fg='blue')
 
-    utils._purge_cookiecutters_dir()
+    utils.purge_cookiecutters_dir()
 
     index = 1
     answers = {}
     function_list = [
-        '_general_questions',
-        '_credentials_questions',
-        '_asset_process_capabilities',
-        '_asset_validation_capabilities',
-        '_tier_config_capabilities',
-        '_product_capabilities',
+        'general_questions',
+        'credentials_questions',
+        'asset_process_capabilities',
+        'asset_validation_capabilities',
+        'tier_config_capabilities',
+        'product_capabilities',
     ]
 
     for question_function in function_list:
@@ -40,12 +43,25 @@ def bootstrap_extension_project(config, data_dir: str):
         answers.update(partial)
 
     try:
-        project_dir = cookiecutter(
-            PROJECT_EXTENSION_BOILERPLATE_URL,
-            no_input=True,
-            extra_context=answers,
-            output_dir=data_dir,
-        )
+        if is_bundle():
+            method_name = '_run_hook_from_repo_dir'
+            setattr(generate, method_name, getattr(utils, method_name))
+            with work_in(data_dir):
+                utils.pre_gen_cookiecutter_hook(answers)
+                project_dir = cookiecutter(
+                    PROJECT_EXTENSION_BOILERPLATE_URL,
+                    no_input=True,
+                    extra_context=answers,
+                    output_dir=data_dir,
+                )
+                utils.post_gen_cookiecutter_hook(answers)
+        else:
+            project_dir = cookiecutter(
+                PROJECT_EXTENSION_BOILERPLATE_URL,
+                no_input=True,
+                extra_context=answers,
+                output_dir=data_dir,
+            )
         click.secho(f'\nExtension Project location: {project_dir}\n', fg='blue')
         click.echo(render(open(f'{project_dir}/HOWTO.md', 'r').read()))
     except OutputDirExistsException as error:

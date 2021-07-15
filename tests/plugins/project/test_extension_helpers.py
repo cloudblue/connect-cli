@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+import json
 from json.decoder import JSONDecodeError
 
 import pytest
@@ -9,6 +10,7 @@ import toml
 from click import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.exceptions import OutputDirExistsException
+from cookiecutter.utils import work_in
 from pkg_resources import EntryPoint
 
 from connect.cli.core.config import Config
@@ -24,15 +26,14 @@ def _cookiecutter_result(local_path):
     open(f'{local_path}/project_dir/connect_ext/README.md', 'w').write('# Extension')
 
 
-@pytest.mark.parametrize(
-    'exists_cookiecutter_dir',
-    (True, False),
-)
+@pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
+@pytest.mark.parametrize('is_bundle', (True, False))
 def test_bootstrap_extension_project(
     fs,
     mocker,
     capsys,
     exists_cookiecutter_dir,
+    is_bundle,
     config_mocker,
 ):
     config = Config()
@@ -45,6 +46,9 @@ def test_bootstrap_extension_project(
         'connect.cli.plugins.project.utils.dialogus',
         return_value={
             'project_name': 'foo',
+            'package_name': 'bar',
+            'license': 'super one',
+            'use_github_actions': 'y',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
@@ -54,6 +58,28 @@ def test_bootstrap_extension_project(
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.open',
         mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    extension_json = {
+        'name': 'my super project',
+        'capabilities': {
+            'asset_purchase_request_processing': ['draft'],
+        },
+    }
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.open',
+        mocker.mock_open(read_data=str(extension_json)),
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.load',
+        return_value=mocked_open.return_value,
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.dump',
+        return_value=mocked_open.return_value,
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
@@ -81,6 +107,7 @@ def test_bootstrap_direxists_error(fs, mocker, config_mocker):
         'connect.cli.plugins.project.utils.dialogus',
         return_value={
             'project_name': 'foo',
+            'package_name': 'bar',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
@@ -467,3 +494,77 @@ def test_validate_product_capability_with_status(
         validate_extension_project(project_dir)
         captured = capsys.readouterr()
         assert 'successfully' in captured.out
+
+
+@pytest.mark.parametrize(
+    'package_name',
+    ('good-one', 'wron@##)one'),
+)
+@pytest.mark.parametrize(
+    'project_name',
+    ('good-one', 'wron@##)one'),
+)
+def test_bootstrap_pre_gen_cookiecutter(project_name, package_name):
+    answers = {'project_name': project_name, 'package_name': package_name}
+    if project_name == 'wron@##)one' or package_name == 'wron@##)one':
+        with pytest.raises(ClickException) as error:
+            utils.pre_gen_cookiecutter_hook(answers)
+        assert 'slug is not a valid Python identifier' in str(error.value)
+
+
+@pytest.mark.parametrize(
+    ('answer', 'capability'),
+    (
+        ('subscription_process_capabilities_1of6', 'asset_purchase_request_processing'),
+        ('subscription_process_capabilities_2of6', 'asset_change_request_processing'),
+        ('subscription_process_capabilities_3of6', 'asset_suspend_request_processing'),
+        ('subscription_process_capabilities_4of6', 'asset_resume_request_processing'),
+        ('subscription_process_capabilities_5of6', 'asset_cancel_request_processing'),
+        ('subscription_process_capabilities_6of6', 'asset_adjustment_request_processing'),
+        ('subscription_validation_capabilities_1of2', 'asset_purchase_request_validation'),
+        ('subscription_validation_capabilities_2of2', 'asset_change_request_validation'),
+        ('tier_config_process_capabilities_1of2', 'tier_config_setup_request_processing'),
+        ('tier_config_process_capabilities_2of2', 'tier_config_change_request_processing'),
+        ('tier_config_validation_capabilities_1of2', 'tier_config_setup_request_validation'),
+        ('tier_config_validation_capabilities_2of2', 'tier_config_change_request_validation'),
+        ('product_capabilities_1of2', 'product_action_execution'),
+        ('product_capabilities_2of2', 'product_custom_event_processing'),
+    ),
+)
+def test_post_gen_cookiecutter_hook(mocker, answer, capability):
+    mocker.patch(
+        'connect.cli.plugins.project.utils.os.remove',
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.utils.shutil.rmtree',
+    )
+    answers = {
+        'project_name': 'project',
+        'package_name': 'package',
+        'license': 'Other, not Open-source',
+        'use_github_actions': 'n',
+        answer: 'y',
+    }
+    extension_json = {
+        'name': 'my super project',
+        'capabilities': {},
+    }
+    with tempfile.TemporaryDirectory() as tmp_data:
+        os.mkdir(f'{tmp_data}/project')
+        os.mkdir(f'{tmp_data}/project/package')
+        with open(f'{tmp_data}/project/package/extension.json', 'w') as fp:
+            json.dump(extension_json, fp)
+        with work_in(f'{tmp_data}'):
+            utils.post_gen_cookiecutter_hook(answers)
+
+        with open(f'{tmp_data}/project/package/extension.json', 'r') as fp:
+            data = json.load(fp)
+
+        assert capability in data['capabilities'].keys()
+        assert isinstance(data['capabilities'][capability], list)
+        if answer == 'product_capabilities_1of2' or answer == 'product_capabilities_2of2':
+            assert data['capabilities'][capability] == []
+        else:
+            assert data[
+                'capabilities'
+            ][capability] == ['draft', 'tiers_setup', 'pending', 'inquiring', 'approved', 'failed']
