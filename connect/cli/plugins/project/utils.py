@@ -1,4 +1,6 @@
+import json
 import os
+import shutil
 from urllib.parse import urlparse
 
 from click.exceptions import ClickException
@@ -7,15 +9,24 @@ from cookiecutter.utils import rmtree
 from interrogatio import dialogus
 from interrogatio.validators.builtins import RequiredValidator
 
+STATUSES = [
+    'draft',
+    'tiers_setup',
+    'pending',
+    'inquiring',
+    'approved',
+    'failed',
+]
 
-def _purge_cookiecutters_dir():
+
+def purge_cookiecutters_dir():
     # Avoid asking rewrite clone boilerplate project
     cookie_dir = DEFAULT_CONFIG['cookiecutters_dir']
     if os.path.isdir(cookie_dir):
         rmtree(cookie_dir)
 
 
-def _general_questions(config, idx, total):
+def general_questions(config, idx, total):
     questions = [
         {
             'name': 'project_name',
@@ -85,7 +96,7 @@ def _general_questions(config, idx, total):
     return answers
 
 
-def _credentials_questions(config, idx, total):
+def credentials_questions(config, idx, total):
     config.validate()
     active_api_key = config.active.api_key or 'ApiKey XXXXXXX:xxxxxxxxxxxxxxxxxxxxxxxxxxx'
     active_server = urlparse(config.active.endpoint).netloc or 'api.connect.cloudblue.com'
@@ -116,7 +127,7 @@ def _credentials_questions(config, idx, total):
     return answers
 
 
-def _asset_process_capabilities(config, idx, total):
+def asset_process_capabilities(config, idx, total):
     questions = [
         {
             'name': 'asset_processing',
@@ -136,7 +147,7 @@ def _asset_process_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['asset_processing'])
 
 
-def _asset_validation_capabilities(config, idx, total):
+def asset_validation_capabilities(config, idx, total):
     questions = [
         {
             'name': 'asset_validation',
@@ -152,7 +163,7 @@ def _asset_validation_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['asset_validation'])
 
 
-def _tier_config_capabilities(config, idx, total):
+def tier_config_capabilities(config, idx, total):
     questions = [
         {
             'name': 'tierconfig',
@@ -170,7 +181,7 @@ def _tier_config_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['tierconfig'])
 
 
-def _product_capabilities(config, idx, total):
+def product_capabilities(config, idx, total):
     questions = [
         {
             'name': 'product',
@@ -205,3 +216,136 @@ def _gen_cookie_capabilities(answers):
             cookicutter_answers[capability] = 'y'
 
     return cookicutter_answers
+
+
+def pre_gen_cookiecutter_hook(answers: dict):
+    pr_slug = _slugify(answers['project_name'])
+    if hasattr(pr_slug, 'isidentifier') and not pr_slug.isidentifier():
+        raise ClickException(f'{pr_slug} project slug is not a valid Python identifier.')
+
+    pk_slug = _slugify(answers['package_name'])
+    if hasattr(pk_slug, 'isidentifier') and not pk_slug.isidentifier():
+        raise ClickException(f'{pk_slug} package slug is not a valid Python identifier.')
+
+
+def post_gen_cookiecutter_hook(answers: dict):
+    if answers['license'] == 'Other, not Open-source':
+        _remove_license()
+    if answers['use_github_actions'].lower() == 'n':
+        _remove_github_actions()
+
+    pr_slug = _slugify(answers['project_name'])
+    pk_slug = _slugify(answers['package_name'])
+    descriptor = json.load(open(f'{pr_slug}/{pk_slug}/extension.json'))
+
+    _json_subscription_process_capabilities(descriptor, answers)
+    _json_subscription_validation_capabilities(descriptor, answers)
+    _json_tierconfig_capabilities(descriptor, answers)
+    _json_product_capabilities(descriptor, answers)
+
+    json.dump(descriptor, open(f'{pr_slug}/{pk_slug}/extension.json', 'w'), indent=2)
+    print('Done! Your extension project is ready to go!')
+
+
+def _slugify(name):
+    return name.lower().strip().replace(' ', '_').replace('-', '_').replace('.', '_').replace(',', '')
+
+
+def _remove_license():
+    os.remove('LICENSE')
+
+
+def _remove_github_actions():
+    shutil.rmtree('.github')
+
+
+def _json_subscription_process_capabilities(descriptor: dict, answers: dict):
+    if (
+        'subscription_process_capabilities_1of6' in answers.keys()
+        and answers['subscription_process_capabilities_1of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_purchase_request_processing'] = STATUSES
+    if (
+        'subscription_process_capabilities_2of6' in answers.keys()
+        and answers['subscription_process_capabilities_2of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_change_request_processing'] = STATUSES
+    if (
+        'subscription_process_capabilities_3of6' in answers.keys()
+        and answers['subscription_process_capabilities_3of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_suspend_request_processing'] = STATUSES
+    if (
+        'subscription_process_capabilities_4of6' in answers.keys()
+        and answers['subscription_process_capabilities_4of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_resume_request_processing'] = STATUSES
+    if (
+        'subscription_process_capabilities_5of6' in answers.keys()
+        and answers['subscription_process_capabilities_5of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_cancel_request_processing'] = STATUSES
+    if (
+        'subscription_process_capabilities_6of6' in answers.keys()
+        and answers['subscription_process_capabilities_6of6'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_adjustment_request_processing'] = STATUSES
+
+
+def _json_subscription_validation_capabilities(descriptor: dict, answers: dict):
+    if (
+        'subscription_validation_capabilities_1of2' in answers.keys()
+        and answers['subscription_validation_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_purchase_request_validation'] = STATUSES
+    if (
+        'subscription_validation_capabilities_2of2' in answers.keys()
+        and answers['subscription_validation_capabilities_2of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['asset_change_request_validation'] = STATUSES
+
+
+def _json_tierconfig_capabilities(descriptor: dict, answers: dict):
+    # Processing
+    if (
+        'tier_config_process_capabilities_1of2' in answers.keys()
+        and answers['tier_config_process_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_setup_request_processing'] = STATUSES
+    if (
+        'tier_config_process_capabilities_2of2' in answers.keys()
+        and answers['tier_config_process_capabilities_2of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_change_request_processing'] = STATUSES
+
+    # Validation
+    if (
+        'tier_config_validation_capabilities_1of2' in answers.keys()
+        and answers['tier_config_validation_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_setup_request_validation'] = STATUSES
+    if (
+        'tier_config_validation_capabilities_2of2' in answers.keys()
+        and answers['tier_config_validation_capabilities_2of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_change_request_validation'] = STATUSES
+
+
+def _json_product_capabilities(descriptor: dict, answers: dict):
+    if (
+        'product_capabilities_1of2' in answers.keys()
+        and answers['product_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['product_action_execution'] = []
+    if (
+        'product_capabilities_2of2' in answers.keys()
+        and answers['product_capabilities_2of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['product_custom_event_processing'] = []
+
+
+def _run_hook_from_repo_dir(
+    repo_dir, hook_name, project_dir, context, delete_project_on_failure,
+):
+    '''Fake method for monkey patching purposes'''
+    pass

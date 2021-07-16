@@ -52,6 +52,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        echo version = '${{ steps.tag.outputs.result }}' > connect/.data/version.txt
         poetry run pyinstaller resources/ccli.spec
     - name: Package linux distro
       env:
@@ -96,6 +97,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        echo version = '${{ steps.tag.outputs.result }}' > connect/.data/version.txt
         poetry run pyinstaller resources/ccli.spec
     - name: Package windows distro
       env:
@@ -125,7 +127,7 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        brew install cairo pango gdk-pixbuf libffi
+        brew install cairo pango gdk-pixbuf libffi git
         python -m pip install --upgrade pip
         pip install poetry
         poetry install
@@ -150,6 +152,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        echo version = '${{ steps.tag.outputs.result }}' > connect/.data/version.txt
         poetry run pyinstaller resources/ccli.spec
     - name: Package osx distro
       env:
