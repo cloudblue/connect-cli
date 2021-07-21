@@ -1,8 +1,10 @@
 import json
 import os
 import shutil
+from pathlib import Path
 from urllib.parse import urlparse
 
+import openpyxl
 from click.exceptions import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.utils import rmtree
@@ -26,7 +28,14 @@ def purge_cookiecutters_dir():
         rmtree(cookie_dir)
 
 
-def general_questions(config, idx, total):
+def _run_hook_from_repo_dir(
+    repo_dir, hook_name, project_dir, context, delete_project_on_failure,
+):
+    '''Fake method for monkey patching purposes'''
+    pass
+
+
+def general_extension_questions(config, idx, total):
     questions = [
         {
             'name': 'project_name',
@@ -218,7 +227,7 @@ def _gen_cookie_capabilities(answers):
     return cookicutter_answers
 
 
-def pre_gen_cookiecutter_hook(answers: dict):
+def pre_gen_cookiecutter_extension_hook(answers: dict):
     pr_slug = _slugify(answers['project_name'])
     if hasattr(pr_slug, 'isidentifier') and not pr_slug.isidentifier():
         raise ClickException(f'{pr_slug} project slug is not a valid Python identifier.')
@@ -228,9 +237,7 @@ def pre_gen_cookiecutter_hook(answers: dict):
         raise ClickException(f'{pk_slug} package slug is not a valid Python identifier.')
 
 
-def post_gen_cookiecutter_hook(answers: dict):
-    if answers['license'] == 'Other, not Open-source':
-        _remove_license()
+def post_gen_cookiecutter_extension_hook(answers: dict):
     if answers['use_github_actions'].lower() == 'n':
         _remove_github_actions()
 
@@ -249,10 +256,6 @@ def post_gen_cookiecutter_hook(answers: dict):
 
 def _slugify(name):
     return name.lower().strip().replace(' ', '_').replace('-', '_').replace('.', '_').replace(',', '')
-
-
-def _remove_license():
-    os.remove('LICENSE')
 
 
 def _remove_github_actions():
@@ -344,8 +347,190 @@ def _json_product_capabilities(descriptor: dict, answers: dict):
         descriptor['capabilities']['product_custom_event_processing'] = []
 
 
-def _run_hook_from_repo_dir(
-    repo_dir, hook_name, project_dir, context, delete_project_on_failure,
-):
-    '''Fake method for monkey patching purposes'''
-    pass
+def pre_gen_cookiecutter_report_hook(answers: dict):
+    project_slug = _slugify(answers['project_name'])
+    if hasattr(project_slug, 'isidentifier') and not project_slug.isidentifier():
+        raise ClickException(f'{project_slug} project slug is not a valid Python identifier.')
+
+    package_slug = _slugify(answers['package_name'])
+    if hasattr(package_slug, 'isidentifier') and not package_slug.isidentifier():
+        raise ClickException(f'{package_slug} project slug is not a valid Python identifier.')
+
+    initial_report_slug = _slugify(answers['initial_report_name'])
+    if hasattr(initial_report_slug, 'isidentifier') and not initial_report_slug.isidentifier():
+        raise ClickException(f'{initial_report_slug} report slug is not a valid Python identifier.')
+
+
+def post_gen_cookiecutter_report_hook(answers: dict):
+    if answers['use_github_actions'] == 'n':
+        _remove_github_actions()
+
+    _create_renderer_templates(answers)
+
+    print('Done! Your report project is ready to go!')
+
+
+def _create_renderer_templates(answers: dict):
+    project_slug = _slugify(answers['project_name'])
+    package_slug = _slugify(answers['package_name'])
+    initial_report_slug = _slugify(answers['initial_report_name'])
+
+    # XLSX
+    xlsx_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xlsx'
+    os.makedirs(xlsx_template_dir)
+    wb = openpyxl.Workbook()
+    wb.save(f'{xlsx_template_dir}/template.xlsx')
+
+    # PDF
+    pdf_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/pdf'
+    os.makedirs(pdf_template_dir)
+    Path(f'{pdf_template_dir}/template.css').touch()
+    Path(f'{pdf_template_dir}/template.html.j2').touch()
+
+    # JINJA2
+    jinja2_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xml'
+    os.makedirs(jinja2_template_dir)
+    open(f'{jinja2_template_dir}/template.xml.j2', 'w').write(
+        'Please rename this file with a proper extension file.\n',
+    )
+
+
+def general_report_questions():
+    questions = [
+        {
+            'name': 'project_name',
+            'type': 'input',
+            'message': 'Reports project name: ',
+            'default': 'My Awesome Project',
+            'validators': (RequiredValidator(message='Please, provide a project name.'),),
+        },
+        {
+            'name': 'description',
+            'type': 'input',
+            'message': 'Reports project description: ',
+            'default': 'Project description',
+            'validators': (RequiredValidator(message='Please, provide a description.'),),
+        },
+        {
+            'name': 'package_name',
+            'type': 'input',
+            'message': 'Reports project package name: ',
+            'default': 'reports',
+            'validators': (RequiredValidator(message='Please, provide a package name.'),),
+        },
+        {
+            'name': 'initial_report_name',
+            'type': 'input',
+            'message': 'Initial report name: ',
+            'default': 'My Awesome Report',
+            'validators': (RequiredValidator(message='Please, provide a report name.'),),
+        },
+        {
+            'name': 'initial_report_description',
+            'type': 'input',
+            'message': 'Initial report description: ',
+            'default': 'This report provides all data I need',
+            'validators': (RequiredValidator(message='Please, provide a description.'),),
+        },
+        {
+            'name': 'initial_report_renderer',
+            'type': 'selectone',
+            'description': 'Initial report renderer: ',
+            'values': [
+                ('xlsx', 'xlsx'),
+                ('csv', 'csv'),
+                ('pdf', 'pdf'),
+                ('json', 'json'),
+                ('jinja2', 'jinja2'),
+            ],
+        },
+        {
+            'name': 'author',
+            'type': 'input',
+            'message': 'Reports project author: ',
+            'default': 'Globex Corporation',
+            'validators': (RequiredValidator(message='Please, provide an author name.'),),
+        },
+        {
+            'name': 'version',
+            'type': 'input',
+            'message': 'Reports project version: ',
+            'default': '0.1.0',
+            'validators': (RequiredValidator(message='Please, provide a version.'),),
+        },
+        {
+            'name': 'license',
+            'type': 'selectone',
+            'description': 'Reports project license: ',
+            'values': [
+                ('Apache Software License 2.0', 'Apache Software License 2.0'),
+                ('MIT', 'MIT'),
+                ('BSD', 'BSD'),
+            ],
+        },
+        {
+            'name': 'use_github_actions',
+            'type': 'selectone',
+            'description': 'Do you want to use Github actions? ',
+            'values': [
+                ('n', 'No'),
+                ('y', 'Yes'),
+            ],
+        },
+    ]
+    answers = dialogus(
+        questions,
+        title='Reports Project Configuration',
+        confirm='Create',
+    )
+    if not answers:
+        raise ClickException('Aborted by user input')
+
+    return answers
+
+
+def add_report_questions():
+    questions = [
+        {
+            'name': 'initial_report_name',
+            'type': 'input',
+            'message': 'Report name: ',
+            'default': 'My Awesome Report',
+            'validators': (RequiredValidator(message='Please, provide a report name.'),),
+        },
+        {
+            'name': 'initial_report_description',
+            'type': 'input',
+            'message': 'Report description: ',
+            'default': 'This report provides all data I need',
+            'validators': (RequiredValidator(message='Please, provide a description.'),),
+        },
+        {
+            'name': 'initial_report_renderer',
+            'type': 'selectone',
+            'description': 'Report renderer: ',
+            'values': [
+                ('xlsx', 'xlsx'),
+                ('csv', 'csv'),
+                ('pdf', 'pdf'),
+                ('json', 'json'),
+                ('jinja2', 'jinja2'),
+            ],
+        },
+        {
+            'name': 'author',
+            'type': 'input',
+            'message': 'Reports project author: ',
+            'default': 'Globex Corporation',
+            'validators': (RequiredValidator(message='Please, provide an author name.'),),
+        },
+    ]
+    answers = dialogus(
+        questions,
+        title='Report Configuration',
+        confirm='Create',
+    )
+    if not answers:
+        raise ClickException('Aborted by user input')
+
+    return answers

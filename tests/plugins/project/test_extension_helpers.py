@@ -508,7 +508,7 @@ def test_bootstrap_pre_gen_cookiecutter(project_name, package_name):
     answers = {'project_name': project_name, 'package_name': package_name}
     if project_name == 'wron@##)one' or package_name == 'wron@##)one':
         with pytest.raises(ClickException) as error:
-            utils.pre_gen_cookiecutter_hook(answers)
+            utils.pre_gen_cookiecutter_extension_hook(answers)
         assert 'slug is not a valid Python identifier' in str(error.value)
 
 
@@ -555,7 +555,7 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
         with open(f'{tmp_data}/project/package/extension.json', 'w') as fp:
             json.dump(extension_json, fp)
         with work_in(f'{tmp_data}'):
-            utils.post_gen_cookiecutter_hook(answers)
+            utils.post_gen_cookiecutter_extension_hook(answers)
 
         with open(f'{tmp_data}/project/package/extension.json', 'r') as fp:
             data = json.load(fp)
