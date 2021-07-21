@@ -29,7 +29,7 @@ def bootstrap_extension_project(config, data_dir: str):
     index = 1
     answers = {}
     function_list = [
-        'general_questions',
+        'general_extension_questions',
         'credentials_questions',
         'asset_process_capabilities',
         'asset_validation_capabilities',
@@ -47,14 +47,14 @@ def bootstrap_extension_project(config, data_dir: str):
             method_name = '_run_hook_from_repo_dir'
             setattr(generate, method_name, getattr(utils, method_name))
             with work_in(data_dir):
-                utils.pre_gen_cookiecutter_hook(answers)
+                utils.pre_gen_cookiecutter_extension_hook(answers)
                 project_dir = cookiecutter(
                     PROJECT_EXTENSION_BOILERPLATE_URL,
                     no_input=True,
                     extra_context=answers,
                     output_dir=data_dir,
                 )
-                utils.post_gen_cookiecutter_hook(answers)
+                utils.post_gen_cookiecutter_extension_hook(answers)
         else:
             project_dir = cookiecutter(
                 PROJECT_EXTENSION_BOILERPLATE_URL,

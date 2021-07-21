@@ -24,14 +24,54 @@ def _cookiecutter_result(local_path):
     open(f'{local_path}/project_dir/reports/report_dir/README.md', 'w').write('# Report')
 
 
-@pytest.mark.parametrize(
-    'exists_cookiecutter_dir',
-    (True, False),
-)
-def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir):
-    mocker.patch(
+@pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
+@pytest.mark.parametrize('is_bundle', (True, False))
+def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir, is_bundle):
+    mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.report_helpers.cookiecutter',
         return_value='project_dir',
+    )
+    mocked_dialogus = mocker.patch(
+        'connect.cli.plugins.project.utils.dialogus',
+        return_value={
+            'project_name': 'foo',
+            'package_name': 'bar',
+            'initial_report_name': 'first',
+            'initial_report_renderer': 'json',
+            'license': 'super one',
+            'use_github_actions': 'y',
+        },
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report_helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report_helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    report_json = {
+        'name': 'my super project',
+        'reports': [
+            {
+                'name': 'first repo',
+                'entrypoint': 'reports/first_repo/entrypoint/generate',
+                'renderers': [{'id': 'json'}],
+            },
+        ],
+        'parameters': [],
+    }
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.open',
+        mocker.mock_open(read_data=str(report_json)),
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.load',
+        return_value=mocked_open.return_value,
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.dump',
+        return_value=mocked_open.return_value,
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
@@ -44,12 +84,25 @@ def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir):
 
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
+    assert mocked_cookiecutter.call_count == 1
+    assert mocked_dialogus.call_count == 1
 
 
 def test_bootstrap_direxists_error(fs, mocker):
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.report_helpers.cookiecutter',
         side_effect=OutputDirExistsException('dir "project_dir" exists'),
+    )
+    mocked_dialogus = mocker.patch(
+        'connect.cli.plugins.project.utils.dialogus',
+        return_value={
+            'project_name': 'foo',
+            'package_name': 'bar',
+            'initial_report_name': 'first',
+            'initial_report_renderer': 'json',
+            'license': 'super one',
+            'use_github_actions': 'y',
+        },
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     os.mkdir(cookie_dir)
@@ -61,6 +114,7 @@ def test_bootstrap_direxists_error(fs, mocker):
     with pytest.raises(ClickException):
         bootstrap_report_project(output_dir)
     assert mocked_cookiecutter.call_count == 1
+    assert mocked_dialogus.call_count == 1
 
 
 def test_validate_report_project(capsys):
@@ -250,18 +304,22 @@ def test_custom_cookiecutter(fs, mocker):
         'project_name': 'project name',
         'project_slug': 'project_name',
         'package_name': 'reports',
+        'package_slug': 'reports',
         'initial_report_name': 'report name',
         'initial_report_slug': 'initial_report_name',
         'initial_report_description': 'desc',
         'author': 'me',
     }
-    report_context = {
-        'report_name': 'report name',
-        'report_slug': 'report_name',
-        'report_description': 'desc',
-        'author': 'me',
-    }
-
+    mocked_dialogus = mocker.patch(
+        'connect.cli.plugins.project.utils.dialogus',
+        return_value={
+            'initial_report_name': 'report name',
+            'initial_report_slug': 'report_name',
+            'initial_report_description': 'desc',
+            'initial_report_renderer': 'json',
+            'author': 'me',
+        },
+    )
     config_mocked = mocker.patch(
         'connect.cli.plugins.project.report_helpers.get_user_config',
     )
@@ -276,10 +334,6 @@ def test_custom_cookiecutter(fs, mocker):
         return_value={
             'cookiecutter': cookiecutter_json_content,
         },
-    )
-    prompt_mocked = mocker.patch(
-        'connect.cli.plugins.project.report_helpers.prompt_for_config',
-        return_value=report_context,
     )
     generate_files_mocked = mocker.patch(
         'connect.cli.plugins.project.report_helpers.generate_files',
@@ -300,12 +354,16 @@ def test_custom_cookiecutter(fs, mocker):
             'default_context': None,
         }
 
-        report_dir, report_slug = _custom_cookiecutter(template, fs.root_path)
+        report_dir, report_slug = _custom_cookiecutter(
+            template,
+            fs.root_path,
+            cookiecutter_json_content['package_slug'],
+        )
 
     assert report_slug == 'report_name'
     assert report_dir == f'{fs.root_path}/project_name'
     assert repo_dir_mocked.call_count == 1
     assert generate_context_mocked.call_count == 1
-    assert prompt_mocked.call_count == 1
     assert generate_files_mocked.call_count == 1
     assert config_mocked.call_count == 1
+    assert mocked_dialogus.call_count == 1

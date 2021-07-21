@@ -7,22 +7,22 @@ import inspect
 import importlib
 import tempfile
 import shutil
-from collections import OrderedDict
 
+from cookiecutter import generate
 from cookiecutter.main import cookiecutter
 from cookiecutter.config import get_user_config
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.generate import generate_context, generate_files
-from cookiecutter.prompt import prompt_for_config
 from cookiecutter.repository import determine_repo_dir
-from cookiecutter.utils import rmtree
+from cookiecutter.utils import rmtree, work_in
 import click
 from click import ClickException
 
+from connect.cli.core.utils import is_bundle
 from connect.cli.plugins.project.constants import (
     PROJECT_REPORT_BOILERPLATE_URL,
 )
-from connect.cli.plugins.project.utils import purge_cookiecutters_dir
+from connect.cli.plugins.project import utils
 from connect.reports.validator import (
     validate,
     validate_with_schema,
@@ -32,12 +32,29 @@ from connect.reports.parser import parse
 
 def bootstrap_report_project(data_dir: str):
     click.secho('Bootstraping report project...\n', fg='blue')
-
-    purge_cookiecutters_dir()
-
+    utils.purge_cookiecutters_dir()
+    answers = utils.general_report_questions()
     try:
-        project_dir = cookiecutter(PROJECT_REPORT_BOILERPLATE_URL, output_dir=data_dir)
-        click.secho(f'\nReport Project location: {project_dir}', fg='blue')
+        if is_bundle():
+            method_name = '_run_hook_from_repo_dir'
+            setattr(generate, method_name, getattr(utils, method_name))
+            with work_in(data_dir):
+                utils.pre_gen_cookiecutter_report_hook(answers)
+                project_dir = cookiecutter(
+                    PROJECT_REPORT_BOILERPLATE_URL,
+                    no_input=True,
+                    extra_context=answers,
+                    output_dir=data_dir,
+                )
+                utils.post_gen_cookiecutter_report_hook(answers)
+        else:
+            project_dir = cookiecutter(
+                PROJECT_REPORT_BOILERPLATE_URL,
+                no_input=True,
+                extra_context=answers,
+                output_dir=data_dir,
+            )
+        click.secho(f'\nReports Project location: {project_dir}', fg='blue')
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
         raise ClickException(
@@ -51,7 +68,6 @@ def validate_report_project(project_dir):
     click.secho(f'Validating project {project_dir}...\n', fg='blue')
 
     data = _file_descriptor_validations(project_dir)
-
     errors = validate_with_schema(data)
     if errors:
         raise ClickException(f'Invalid `reports.json`: {errors}')
@@ -89,13 +105,14 @@ def add_report(project_dir, package_name):
         report_dir, report_slug = _custom_cookiecutter(
             PROJECT_REPORT_BOILERPLATE_URL,
             output_dir=add_report_tmpdir,
+            package_slug=package_name,
         )
-
         if os.path.isdir(f'{project_dir}/{package_name}/{report_slug}'):
             raise ClickException(
                 f'\nThe report directory called `{project_dir}/{package_name}/{report_slug}` already exists, '
                 '\nplease, choose other report name or delete the existing one.',
             )
+
         shutil.move(
             f'{report_dir}/{package_name}/{report_slug}',
             f'{project_dir}/{package_name}/',
@@ -106,7 +123,7 @@ def add_report(project_dir, package_name):
         click.secho('\nReport has been successfully created.', fg='blue')
 
 
-def _custom_cookiecutter(template, output_dir):
+def _custom_cookiecutter(template, output_dir, package_slug):
 
     config_dict = get_user_config(
         config_file=None, default_config=False,
@@ -118,7 +135,7 @@ def _custom_cookiecutter(template, output_dir):
     if os.path.isdir(repo_dir):
         rmtree(repo_dir)
 
-    repo_dir, cleanup = determine_repo_dir(
+    repo_dir, _ = determine_repo_dir(
         template=template,
         abbreviations=config_dict['abbreviations'],
         clone_to_dir=config_dict['cookiecutters_dir'],
@@ -135,47 +152,49 @@ def _custom_cookiecutter(template, output_dir):
         extra_context=None,
     )
 
-    report_context = OrderedDict([])
-    report_context['cookiecutter'] = OrderedDict([])
-    for key in context['cookiecutter'].keys():
-        if 'report' in key:
-            mod_key = key.replace('initial_', '')
-            if 'slug' in key:
-                template_string = context['cookiecutter'][key]
-                mod_template_string = template_string.replace('initial_', '')
-                report_context['cookiecutter'][mod_key] = mod_template_string
-            else:
-                report_context['cookiecutter'][mod_key] = context['cookiecutter'][key]
-        if 'author' in key:
-            report_context['cookiecutter'][key] = context['cookiecutter'][key]
-
-    filled_context = prompt_for_config(report_context, False)
-
-    for key in filled_context.keys():
-        if 'author' not in key:
-            mod_key = f'initial_{key}'
-            context['cookiecutter'][mod_key] = filled_context[key]
-        else:
-            context['cookiecutter'][key] = filled_context[key]
+    answers = utils.add_report_questions()
 
     context['cookiecutter']['_template'] = template
-    project_name = context['cookiecutter']['project_name']
-    project_slug = project_name.strip().lower().replace(' ', '_').replace('-', '_').replace('.', '_')
-    context['cookiecutter']['project_slug'] = project_slug
-    context['cookiecutter']['license'] = 'BSD'
+    context['cookiecutter']['project_slug'] = utils._slugify(context['cookiecutter']['project_name'])
+    context['cookiecutter']['package_name'] = package_slug
+    context['cookiecutter']['package_slug'] = package_slug
+    context['cookiecutter']['initial_report_name'] = answers['initial_report_name']
+    context['cookiecutter']['initial_report_slug'] = utils._slugify(answers['initial_report_name'])
+    context['cookiecutter']['initial_report_description'] = answers['initial_report_description']
+    context['cookiecutter']['initial_report_renderer'] = answers['initial_report_renderer']
+    context['cookiecutter']['author'] = answers['author']
 
-    result = generate_files(
-        repo_dir=repo_dir,
-        context=context,
-        overwrite_if_exists=False,
-        skip_if_file_exists=False,
-        output_dir=output_dir,
-    )
+    result = _generate_files(context, output_dir, repo_dir)
 
     return result, context['cookiecutter']['initial_report_slug']
 
 
-def _add_report_to_descriptor(project_dir, report_dir, package_name):
+def _generate_files(context, output_dir, repo_dir):
+    if is_bundle():
+        method_name = '_run_hook_from_repo_dir'
+        setattr(generate, method_name, getattr(utils, method_name))
+        with work_in(output_dir):
+            utils.pre_gen_cookiecutter_report_hook(context['cookiecutter'])
+            result = generate_files(
+                repo_dir=repo_dir,
+                context=context,
+                overwrite_if_exists=False,
+                skip_if_file_exists=False,
+                output_dir=output_dir,
+            )
+            utils.post_gen_cookiecutter_report_hook(context['cookiecutter'])
+    else:
+        result = generate_files(
+            repo_dir=repo_dir,
+            context=context,
+            overwrite_if_exists=False,
+            skip_if_file_exists=False,
+            output_dir=output_dir,
+        )
+    return result
+
+
+def _add_report_to_descriptor(project_dir, report_dir, package_slug):
     project_descriptor = os.path.join(project_dir, 'reports.json')
     project_desc = json.load(open(project_descriptor, 'r'))
 
@@ -183,7 +202,7 @@ def _add_report_to_descriptor(project_dir, report_dir, package_name):
     temporal_desc = json.load(open(temporal_descriptor, 'r'))
 
     report_dict = temporal_desc['reports'][0]
-    project_desc[package_name].append(report_dict)
+    project_desc['reports'].append(report_dict)
 
     json.dump(
         project_desc,
