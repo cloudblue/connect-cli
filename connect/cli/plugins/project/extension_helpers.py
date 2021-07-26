@@ -54,7 +54,7 @@ def bootstrap_extension_project(config, data_dir: str):
                     extra_context=answers,
                     output_dir=data_dir,
                 )
-                utils.post_gen_cookiecutter_extension_hook(answers)
+                utils.post_gen_cookiecutter_extension_hook(answers, project_dir)
         else:
             project_dir = cookiecutter(
                 PROJECT_EXTENSION_BOILERPLATE_URL,

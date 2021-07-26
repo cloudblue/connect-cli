@@ -550,12 +550,12 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
         'capabilities': {},
     }
     with tempfile.TemporaryDirectory() as tmp_data:
-        os.mkdir(f'{tmp_data}/project')
+        project_dir = os.mkdir(f'{tmp_data}/project')
         os.mkdir(f'{tmp_data}/project/package')
         with open(f'{tmp_data}/project/package/extension.json', 'w') as fp:
             json.dump(extension_json, fp)
         with work_in(f'{tmp_data}'):
-            utils.post_gen_cookiecutter_extension_hook(answers)
+            utils.post_gen_cookiecutter_extension_hook(answers, project_dir)
 
         with open(f'{tmp_data}/project/package/extension.json', 'r') as fp:
             data = json.load(fp)
