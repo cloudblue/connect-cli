@@ -237,9 +237,9 @@ def pre_gen_cookiecutter_extension_hook(answers: dict):
         raise ClickException(f'{pk_slug} package slug is not a valid Python identifier.')
 
 
-def post_gen_cookiecutter_extension_hook(answers: dict):
+def post_gen_cookiecutter_extension_hook(answers: dict, project_dir: str):
     if answers['use_github_actions'].lower() == 'n':
-        _remove_github_actions()
+        _remove_github_actions(project_dir)
 
     pr_slug = _slugify(answers['project_name'])
     pk_slug = _slugify(answers['package_name'])
@@ -258,8 +258,8 @@ def _slugify(name):
     return name.lower().strip().replace(' ', '_').replace('-', '_').replace('.', '_').replace(',', '')
 
 
-def _remove_github_actions():
-    shutil.rmtree('.github')
+def _remove_github_actions(project_dir: str):
+    shutil.rmtree(f'{project_dir}/.github')
 
 
 def _json_subscription_process_capabilities(descriptor: dict, answers: dict):
@@ -361,9 +361,9 @@ def pre_gen_cookiecutter_report_hook(answers: dict):
         raise ClickException(f'{initial_report_slug} report slug is not a valid Python identifier.')
 
 
-def post_gen_cookiecutter_report_hook(answers: dict):
+def post_gen_cookiecutter_report_hook(answers: dict, project_dir: str):
     if answers['use_github_actions'] == 'n':
-        _remove_github_actions()
+        _remove_github_actions(project_dir)
 
     _create_renderer_templates(answers)
 

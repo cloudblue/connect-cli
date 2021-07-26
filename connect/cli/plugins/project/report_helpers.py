@@ -46,7 +46,7 @@ def bootstrap_report_project(data_dir: str):
                     extra_context=answers,
                     output_dir=data_dir,
                 )
-                utils.post_gen_cookiecutter_report_hook(answers)
+                utils.post_gen_cookiecutter_report_hook(answers, project_dir)
         else:
             project_dir = cookiecutter(
                 PROJECT_REPORT_BOILERPLATE_URL,
@@ -182,7 +182,7 @@ def _generate_files(context, output_dir, repo_dir):
                 skip_if_file_exists=False,
                 output_dir=output_dir,
             )
-            utils.post_gen_cookiecutter_report_hook(context['cookiecutter'])
+            utils._create_renderer_templates(context['cookiecutter'])
     else:
         result = generate_files(
             repo_dir=repo_dir,
