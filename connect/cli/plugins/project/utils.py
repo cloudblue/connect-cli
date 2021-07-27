@@ -179,8 +179,9 @@ def tier_config_capabilities(config, idx, total):
             'type': 'selectmany',
             'description': 'Tier configuration capabilities',
             'values': [
-                ('tier_config_process_capabilities_1of2', 'Setup Request Processing'),
-                ('tier_config_process_capabilities_2of2', 'Change Request Processing'),
+                ('tier_config_process_capabilities_1of3', 'Setup Request Processing'),
+                ('tier_config_process_capabilities_2of3', 'Change Request Processing'),
+                ('tier_config_process_capabilities_3of3', 'Adjustment Request Processing'),
                 ('tier_config_validation_capabilities_1of2', 'Setup Request Validation'),
                 ('tier_config_validation_capabilities_1of2', 'Change Request Validation'),
             ],
@@ -311,15 +312,20 @@ def _json_subscription_validation_capabilities(descriptor: dict, answers: dict):
 def _json_tierconfig_capabilities(descriptor: dict, answers: dict):
     # Processing
     if (
-        'tier_config_process_capabilities_1of2' in answers.keys()
-        and answers['tier_config_process_capabilities_1of2'].lower() == 'y'
+        'tier_config_process_capabilities_1of3' in answers.keys()
+        and answers['tier_config_process_capabilities_1of3'].lower() == 'y'
     ):
         descriptor['capabilities']['tier_config_setup_request_processing'] = STATUSES
     if (
-        'tier_config_process_capabilities_2of2' in answers.keys()
-        and answers['tier_config_process_capabilities_2of2'].lower() == 'y'
+        'tier_config_process_capabilities_2of3' in answers.keys()
+        and answers['tier_config_process_capabilities_2of3'].lower() == 'y'
     ):
         descriptor['capabilities']['tier_config_change_request_processing'] = STATUSES
+    if (
+        'tier_config_process_capabilities_3of3' in answers.keys()
+        and answers['tier_config_process_capabilities_3of3'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_adjustment_request_processing'] = STATUSES
 
     # Validation
     if (

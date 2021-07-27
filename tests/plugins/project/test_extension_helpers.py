@@ -146,7 +146,8 @@ def test_bootstrap_generate_capabilities():
     assert cookiecutter_answers['two'] == 'y'
 
 
-def test_validate_sync_project(mocker, capsys):
+@pytest.mark.parametrize('is_bundle', (True, False))
+def test_validate_sync_project(mocker, capsys, is_bundle):
     project_dir = './tests/fixtures/extensions/basic_ext'
 
     class BasicExtension:
@@ -162,25 +163,34 @@ def test_validate_sync_project(mocker, capsys):
         def process_product_custom_event(self):
             pass
 
-    mocker.patch.object(
-        EntryPoint,
-        'load',
-        return_value=BasicExtension,
-    )
     mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        side_effect=(
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-        ),
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=is_bundle,
     )
-    validate_extension_project(project_dir)
+    if is_bundle:
+        with pytest.raises(ClickException) as error:
+            validate_extension_project(project_dir)
+        assert 'This project can not be validated' in str(error.value)
+    else:
+        mocker.patch.object(
+            EntryPoint,
+            'load',
+            return_value=BasicExtension,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+            side_effect=(
+                iter([EntryPoint('extension', 'connect.eaas.ext')]),
+                iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            ),
+        )
+        validate_extension_project(project_dir)
+        captured = capsys.readouterr()
+        assert 'successfully' in captured.out
 
-    captured = capsys.readouterr()
-    assert 'successfully' in captured.out
 
-
-def test_validate_async_project(mocker, capsys):
+@pytest.mark.parametrize('is_bundle', (True, False))
+def test_validate_async_project(mocker, capsys, is_bundle):
     project_dir = './tests/fixtures/extensions/basic_ext'
 
     class BasicExtension:
@@ -196,22 +206,30 @@ def test_validate_async_project(mocker, capsys):
         async def process_product_custom_event(self):
             pass
 
-    mocker.patch.object(
-        EntryPoint,
-        'load',
-        return_value=BasicExtension,
-    )
     mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        side_effect=(
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-        ),
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=is_bundle,
     )
-    validate_extension_project(project_dir)
-
-    captured = capsys.readouterr()
-    assert 'successfully' in captured.out
+    if is_bundle:
+        with pytest.raises(ClickException) as error:
+            validate_extension_project(project_dir)
+        assert 'This project can not be validated' in str(error.value)
+    else:
+        mocker.patch.object(
+            EntryPoint,
+            'load',
+            return_value=BasicExtension,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+            side_effect=(
+                iter([EntryPoint('extension', 'connect.eaas.ext')]),
+                iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            ),
+        )
+        validate_extension_project(project_dir)
+        captured = capsys.readouterr()
+        assert 'successfully' in captured.out
 
 
 def test_validate_too_much_extensions_loaded(mocker):
@@ -241,21 +259,33 @@ def test_validate_too_much_extensions_loaded(mocker):
             EntryPoint('extension', 'connect.eaas.ext'), EntryPoint('extension', 'connect.eaas.ext'),
         ]),
     )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with pytest.raises(ClickException) as error:
         validate_extension_project(project_dir)
 
     assert 'Only one extension can be loaded at a time!!!' in str(error.value)
 
 
-def test_validate_wrong_project_dir():
+def test_validate_wrong_project_dir(mocker):
     project_dir = './tests'
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with pytest.raises(ClickException) as error:
         validate_extension_project(project_dir)
 
     assert 'does not look like an extension project directory' in str(error.value)
 
 
-def test_validate_wrong_pyproject_file():
+def test_validate_wrong_pyproject_file(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with tempfile.TemporaryDirectory() as tmp_project_dir:
         open(f'{tmp_project_dir}/pyproject.toml', 'w').write('foo')
         with pytest.raises(ClickException) as error:
@@ -264,9 +294,13 @@ def test_validate_wrong_pyproject_file():
     assert 'The extension project descriptor file `pyproject.toml` is not valid.' in str(error.value)
 
 
-def test_validate_wrong_plugin_declaration(mocked_extension_project_descriptor):
+def test_validate_wrong_plugin_declaration(mocked_extension_project_descriptor, mocker):
     pyproject_content = mocked_extension_project_descriptor
     pyproject_content['tool']['poetry']['plugins']['connect.eaas.ext'] = 'foo'
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with tempfile.TemporaryDirectory() as tmp_project_dir:
         toml.dump(pyproject_content, open(f'{tmp_project_dir}/pyproject.toml', 'w'))
         with pytest.raises(ClickException) as error:
@@ -275,9 +309,13 @@ def test_validate_wrong_plugin_declaration(mocked_extension_project_descriptor):
     assert 'plugins."connect.eaas.ext"] `pyproject.toml` section is not well configured' in str(error.value)
 
 
-def test_validate_plugin_with_no_extension_key(mocked_extension_project_descriptor):
+def test_validate_plugin_with_no_extension_key(mocked_extension_project_descriptor, mocker):
     pyproject_content = mocked_extension_project_descriptor
     pyproject_content['tool']['poetry']['plugins']['connect.eaas.ext'] = {'newkey': 'pkg.extension:BasicExtension'}
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with tempfile.TemporaryDirectory() as tmp_project_dir:
         toml.dump(pyproject_content, open(f'{tmp_project_dir}/pyproject.toml', 'w'))
         with pytest.raises(ClickException) as error:
@@ -286,8 +324,12 @@ def test_validate_plugin_with_no_extension_key(mocked_extension_project_descript
     assert 'plugins."connect.eaas.ext"] `pyproject.toml` section does not have "extension"' in str(error.value)
 
 
-def test_validate_not_loaded():
+def test_validate_not_loaded(mocker):
     project_dir = './tests/fixtures/extensions/basic_ext'
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     with pytest.raises(ClickException) as error:
         validate_extension_project(project_dir)
 
@@ -302,6 +344,10 @@ def test_validate_object_loaded_from_plugin_not_a_class(
     def _foo():
         pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocked_load = mocker.patch.object(
         EntryPoint,
         'load',
@@ -328,6 +374,10 @@ def test_validate_extension_json_descriptor(
     class BasicExtension:
         pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -358,6 +408,10 @@ def test_validate_methods_not_match_capabilities(mocker):
         def process_asset_purchase_request(self):
             pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -399,6 +453,10 @@ def test_validate_methods_mixed_sync_async(
         async def process_product_custom_event(self):
             pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -428,6 +486,10 @@ def test_validate_capabilities_with_wrong_status(
         def process_asset_purchase_request(self):
             pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -461,6 +523,10 @@ def test_validate_wrong_capability_without_status(
         def process_asset_purchase_request(self):
             pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -513,6 +579,10 @@ def test_validate_product_capability_with_status(
         def process_product_custom_event(self):
             pass
 
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
     mocker.patch.object(
         EntryPoint,
         'load',
@@ -567,8 +637,9 @@ def test_bootstrap_pre_gen_cookiecutter(project_name, package_name):
         ('subscription_process_capabilities_6of6', 'asset_adjustment_request_processing'),
         ('subscription_validation_capabilities_1of2', 'asset_purchase_request_validation'),
         ('subscription_validation_capabilities_2of2', 'asset_change_request_validation'),
-        ('tier_config_process_capabilities_1of2', 'tier_config_setup_request_processing'),
-        ('tier_config_process_capabilities_2of2', 'tier_config_change_request_processing'),
+        ('tier_config_process_capabilities_1of3', 'tier_config_setup_request_processing'),
+        ('tier_config_process_capabilities_2of3', 'tier_config_change_request_processing'),
+        ('tier_config_process_capabilities_3of3', 'tier_config_adjustment_request_processing'),
         ('tier_config_validation_capabilities_1of2', 'tier_config_setup_request_validation'),
         ('tier_config_validation_capabilities_2of2', 'tier_config_change_request_validation'),
         ('product_capabilities_1of2', 'product_action_execution'),
