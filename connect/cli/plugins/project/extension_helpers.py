@@ -113,6 +113,9 @@ def _project_descriptor_validations(project_dir):
 def _entrypoint_validations(project_dir, extension_dict):
     package_name = extension_dict['extension'].rsplit('.', 1)[0]
     descriptor_file = os.path.join(f'{project_dir}/{package_name}', 'extension.json')
+    if sum(1 for _ in pkg_resources.iter_entry_points('connect.eaas.ext', 'extension')) > 1:
+        raise ClickException('\nOnly one extension can be loaded at a time!!!')
+
     ext_class = next(pkg_resources.iter_entry_points('connect.eaas.ext', 'extension'), None)
     if not ext_class:
         raise ClickException('\nThe extension could not be loaded, Did you execute `poetry install`?')
@@ -122,7 +125,7 @@ def _entrypoint_validations(project_dir, extension_dict):
         raise ClickException(f'\nThe extension class {CustomExtension} does not seem a class, please check it')
 
     all_methods = CustomExtension.__dict__
-    methods = [method for method in all_methods.keys() if not method.startswith('__')]
+    methods = [method for method in all_methods.keys() if method in CAPABILITY_METHOD_MAP.values()]
 
     try:
         ext_descriptor = json.load(open(descriptor_file, 'r'))
@@ -137,12 +140,9 @@ def _entrypoint_validations(project_dir, extension_dict):
     if errors:
         raise ClickException(f'Capability errors: {errors}')
 
-    if not _have_methods_proper_capabilities(methods, capabilities):
-        raise ClickException(
-            '\nThere is some mismatch between capabilities on `extension.json` '
-            'and the methods defined on your extension class on `extension.py`, '
-            'please check it.',
-        )
+    errors = _have_methods_proper_capabilities(methods, capabilities)
+    if errors:
+        raise ClickException(f'Capability-Method errors: {errors}')
 
     _have_methods_proper_type(CustomExtension, capabilities)
 
@@ -176,5 +176,11 @@ def _have_capabilities_proper_stats(capabilities):
 
 
 def _have_methods_proper_capabilities(methods, capabilities):
-    capability_list = list(capabilities.keys())
-    return [CAPABILITY_METHOD_MAP[capability] for capability in capability_list] == methods
+    errors = []
+    for capability in capabilities.keys():
+        if CAPABILITY_METHOD_MAP[capability] not in methods:
+            errors.append(
+                f'Capability ´{capability}´ does not have '
+                f'corresponding ´{CAPABILITY_METHOD_MAP[capability]}´ method',
+            )
+    return errors

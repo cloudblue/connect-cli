@@ -169,9 +169,10 @@ def test_validate_sync_project(mocker, capsys):
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     validate_extension_project(project_dir)
 
@@ -202,14 +203,48 @@ def test_validate_async_project(mocker, capsys):
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     validate_extension_project(project_dir)
 
     captured = capsys.readouterr()
     assert 'successfully' in captured.out
+
+
+def test_validate_too_much_extensions_loaded(mocker):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class BasicExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        def execute_product_action(self):
+            pass
+
+        def process_product_custom_event(self):
+            pass
+
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=BasicExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        return_value=iter([
+            EntryPoint('extension', 'connect.eaas.ext'), EntryPoint('extension', 'connect.eaas.ext'),
+        ]),
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Only one extension can be loaded at a time!!!' in str(error.value)
 
 
 def test_validate_wrong_project_dir():
@@ -274,9 +309,10 @@ def test_validate_object_loaded_from_plugin_not_a_class(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     with pytest.raises(ClickException) as error:
         validate_extension_project(project_dir)
@@ -299,9 +335,10 @@ def test_validate_extension_json_descriptor(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.json.load',
@@ -313,9 +350,7 @@ def test_validate_extension_json_descriptor(
     assert 'The extension descriptor file `extension.json` could not be loaded.' in str(error.value)
 
 
-def test_validate_methods_not_match_capabilities(
-    mocker,
-):
+def test_validate_methods_not_match_capabilities(mocker):
     project_dir = './tests/fixtures/extensions/basic_ext'
 
     # On the extension project fixture there are 4 capabilities defined
@@ -330,15 +365,20 @@ def test_validate_methods_not_match_capabilities(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
 
     with pytest.raises(ClickException) as error:
         validate_extension_project(project_dir)
 
-    assert 'There is some mismatch between capabilities' in str(error.value)
+    assert 'Capability-Method errors' in str(error.value)
+    # The class defined above only implements 1 of the 4 capabilities
+    # described on `basic_ext` fixture, then the list should contain 3
+    # elements.
+    assert len(str(error.value).split('[')[1].split(']')[0].split(',')) == 3
 
 
 def test_validate_methods_mixed_sync_async(
@@ -366,9 +406,10 @@ def test_validate_methods_mixed_sync_async(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
 
     with pytest.raises(ClickException) as error:
@@ -394,9 +435,10 @@ def test_validate_capabilities_with_wrong_status(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     mocked_extension_descriptor['capabilities']['asset_purchase_request_processing'] = ['foo']
     mocker.patch(
@@ -426,9 +468,10 @@ def test_validate_wrong_capability_without_status(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     mocked_extension_descriptor['capabilities']['asset_purchase_request_processing'] = []
     mocker.patch(
@@ -477,9 +520,10 @@ def test_validate_product_capability_with_status(
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        return_value=iter([
-            EntryPoint('extension', 'connect.eaas.ext'),
-        ]),
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
     )
     mocked_extension_descriptor['capabilities'][capability] = ['approved']
     mocker.patch(
