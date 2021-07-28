@@ -16,6 +16,7 @@ CAPABILITY_METHOD_MAP = {
     'product_custom_event_processing': 'process_product_custom_event',
     'tier_config_setup_request_processing': 'process_tier_config_setup_request',
     'tier_config_change_request_processing': 'process_tier_config_change_request',
+    'tier_config_adjustment_request_processing': 'process_tier_config_adjustment_request',
     'tier_config_setup_request_validation': 'validate_tier_config_setup_request',
     'tier_config_change_request_validation': 'validate_tier_config_change_request',
 }

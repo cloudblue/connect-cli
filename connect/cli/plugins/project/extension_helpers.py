@@ -76,6 +76,20 @@ def bootstrap_extension_project(config, data_dir: str):
 def validate_extension_project(project_dir: str):
     click.secho(f'Validating project {project_dir}...\n', fg='blue')
 
+    if is_bundle():
+        raise ClickException(
+            '\nThis project can not be validated since you are running outside a development environment.'
+            '\nCurrently in order to validate the project is required that you run the CloudBlue Connect CLI'
+            '\ntool in the same environment where the extension runs.\n'
+            '\nIn the use case that you are developing using the standard dockerized environment, we suggest'
+            '\nto install the ´connect-cli´ tool inside it to validate the project, this can be accomplished'
+            '\nvia starting your extension using the bash option, as example'
+            '\n\n$ docker compose run my_extension_bash\n'
+            '\nOnce you get the bash, you can install the CloudBlue Connect CLI tool inside it using pip:'
+            '\n\n$ pip install connect-cli\n'
+            '\nonce done you can run again.',
+        )
+
     extension_dict = _project_descriptor_validations(project_dir)
     _entrypoint_validations(project_dir, extension_dict)
 
@@ -149,7 +163,7 @@ def _entrypoint_validations(project_dir, extension_dict):
 
 def _have_methods_proper_type(cls, capabilities):
     guess_async = [
-        inspect.iscoroutinefunction(getattr(cls, CAPABILITY_METHOD_MAP[name]))
+        inspect.iscoroutinefunction(getattr(cls, CAPABILITY_METHOD_MAP.get(name)))
         for name in capabilities.keys()
     ]
     if all(guess_async):
@@ -178,9 +192,9 @@ def _have_capabilities_proper_stats(capabilities):
 def _have_methods_proper_capabilities(methods, capabilities):
     errors = []
     for capability in capabilities.keys():
-        if CAPABILITY_METHOD_MAP[capability] not in methods:
+        if CAPABILITY_METHOD_MAP.get(capability) not in methods:
             errors.append(
                 f'Capability ´{capability}´ does not have '
-                f'corresponding ´{CAPABILITY_METHOD_MAP[capability]}´ method',
+                f'corresponding ´{CAPABILITY_METHOD_MAP.get(capability)}´ method',
             )
     return errors
