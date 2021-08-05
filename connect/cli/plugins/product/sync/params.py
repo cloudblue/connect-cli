@@ -129,6 +129,7 @@ class ParamsSynchronizer(ProductSynchronizer):
             horizontal='left',
             vertical='top',
         )
+        ws.cell(row_idx, 3, value='-')
         ws.cell(row_idx, 12, value=get_json_object_for_param(param))
         ws.cell(row_idx, 13, value=param['events']['created']['at']).alignment = Alignment(
             horizontal='left',
