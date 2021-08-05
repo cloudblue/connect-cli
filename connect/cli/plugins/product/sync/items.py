@@ -329,6 +329,7 @@ class ItemSynchronizer(ProductSynchronizer):
     @staticmethod
     def _update_sheet_row(ws, row_idx, item):
         ws.cell(row_idx, 1, value=item['id'])
+        ws.cell(row_idx, 3, value='-')
         ws.cell(row_idx, 11, value=item['status'])
         ws.cell(row_idx, 12, value=item['events']['created']['at'])
         ws.cell(row_idx, 13, value=item['events'].get('updated', {}).get('at'))
