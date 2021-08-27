@@ -35,6 +35,125 @@ def _run_hook_from_repo_dir(
     pass
 
 
+def eaas_introduction(config, idx, total):
+    intro = [
+        {
+            'name': 'introduction',
+            'type': 'input',
+            'message': 'Welcome to the Connect Extension Project Bootstrap utility.\n'
+            'Using this utility multiple data will be collected in order to create a project\n'
+            'skeleton for your Connect Extension. This skeleton will contain all needed things\n'
+            'to start writing your code.\n\n'
+            'Have a nice trip!\n',
+        },
+    ]
+    answers = _show_dialog(intro, idx, total)
+    return answers
+
+
+def eaas_summary(answers, idx, total):
+    summary_list = _prepare_summary(answers)
+    summary = [
+        {
+            'name': 'summary',
+            'type': 'input',
+            'message': 'The provided values for the project are:\n\n'
+            f'{summary_list}',
+        },
+    ]
+    answers = _show_dialog(summary, idx, total)
+    return answers
+
+
+def _summary_general_questions(answers):
+    general_data = {
+        'Project Name': answers['project_name'],
+        'Description': answers['description'],
+        'Package Name': answers['package_name'],
+        'Author': answers['author'],
+        'Version': answers['version'],
+        'License': answers['license'],
+        'Use Github Actions': 'Yes' if answers['use_github_actions'] == 'y' else 'No',
+        'Use Asyncio': 'Yes' if answers['use_asyncio'] == 'y' else 'No',
+        'API Key': answers['api_key'],
+        'Environment ID': answers['environment_id'],
+        'Server Address': answers['server_address'],
+    }
+    return general_data
+
+
+def _summary_asset_questions(answers):
+    asset_data = {
+        'Process Asset Purchase requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_1of6', '',
+        ) == 'y' else 'No',
+        'Process Asset Change requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_2of6', '',
+        ) == 'y' else 'No',
+        'Process Asset Suspend requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_3of6', '',
+        ) == 'y' else 'No',
+        'Process Asset Resume requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_4of6', '',
+        ) == 'y' else 'No',
+        'Process Asset Cancel requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_5of6', '',
+        ) == 'y' else 'No',
+        'Process Asset Adjustment requests': 'Yes' if answers.get(
+            'subscription_process_capabilities_6of6', '',
+        ) == 'y' else 'No',
+        'Validate Asset Purchase requests': 'Yes' if answers.get(
+            'subscription_validation_capabilities_1of2', '',
+        ) == 'y' else 'No',
+        'Validate Asset Change requests': 'Yes' if answers.get(
+            'subscription_validation_capabilities_2of2', '',
+        ) == 'y' else 'No',
+    }
+    return asset_data
+
+
+def _summary_product_questions(answers):
+    product_data = {
+        'Execute Product Actions': 'Yes' if answers.get(
+            'product_capabilities_1of2', '',
+        ) == 'y' else 'No',
+        'Process Product Custom Events': 'Yes' if answers.get(
+            'product_capabilities_2of2', '',
+        ) == 'y' else 'No',
+    }
+    return product_data
+
+
+def _summary_tier_questions(answers):
+    tier_data = {
+        'Process Tier Config Setup requests': 'Yes' if answers.get(
+            'tier_config_process_capabilities_1of3', '',
+        ) == 'y' else 'No',
+        'Process Tier Config Change requests': 'Yes' if answers.get(
+            'tier_config_process_capabilities_2of3', '',
+        ) == 'y' else 'No',
+        'Process Tier Config Adjustment requests': 'Yes' if answers.get(
+            'tier_config_process_capabilities_3of3', '',
+        ) == 'y' else 'No',
+        'Validate Tier Config Setup requests': 'Yes' if answers.get(
+            'tier_config_validation_capabilities_1of2', '',
+        ) == 'y' else 'No',
+        'Validate Tier Config Change requests': 'Yes' if answers.get(
+            'tier_config_validation_capabilities_2of2', '',
+        ) == 'y' else 'No',
+    }
+    return tier_data
+
+
+def _prepare_summary(answers):
+    result = {}
+    result.update(_summary_general_questions(answers))
+    result.update(_summary_asset_questions(answers))
+    result.update(_summary_product_questions(answers))
+    result.update(_summary_tier_questions(answers))
+    return '\n'.join(f'{item[0]}: {item[1]}' for item in result.items())
+
+
 def general_extension_questions(config, idx, total):
     questions = [
         {

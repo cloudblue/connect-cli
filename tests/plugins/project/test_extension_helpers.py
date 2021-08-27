@@ -45,10 +45,12 @@ def test_bootstrap_extension_project(
     mocked_dialogus = mocker.patch(
         'connect.cli.plugins.project.utils.dialogus',
         return_value={
-            'project_name': 'foo',
-            'package_name': 'bar',
-            'license': 'super one',
-            'use_github_actions': 'y',
+            'project_name': 'foo', 'description': 'desc',
+            'package_name': 'bar', 'author': 'connect',
+            'version': '1.0', 'license': 'Apache',
+            'use_github_actions': 'y', 'use_asyncio': 'n',
+            'api_key': 'xxx', 'environment_id': 'ENV-xxx',
+            'server_address': 'api.cnct.info',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
@@ -93,10 +95,10 @@ def test_bootstrap_extension_project(
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 6
+    assert mocked_dialogus.call_count == 8
 
 
-def test_bootstrap_direxists_error(fs, mocker, config_mocker):
+def test_bootstrap_dir_exists_error(fs, mocker, config_mocker):
     config = Config()
     config.load(config_dir='/tmp')
     mocked_cookiecutter = mocker.patch(
@@ -106,8 +108,12 @@ def test_bootstrap_direxists_error(fs, mocker, config_mocker):
     mocked_dialogus = mocker.patch(
         'connect.cli.plugins.project.utils.dialogus',
         return_value={
-            'project_name': 'foo',
-            'package_name': 'bar',
+            'project_name': 'foo', 'description': 'desc',
+            'package_name': 'bar', 'author': 'connect',
+            'version': '1.0', 'license': 'Apache',
+            'use_github_actions': 'y', 'use_asyncio': 'n',
+            'api_key': 'xxx', 'environment_id': 'ENV-xxx',
+            'server_address': 'api.cnct.info',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
@@ -124,7 +130,7 @@ def test_bootstrap_direxists_error(fs, mocker, config_mocker):
     with pytest.raises(ClickException):
         bootstrap_extension_project(config, output_dir)
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 6
+    assert mocked_dialogus.call_count == 8
 
 
 def test_bootstrap_show_empty_dialog(mocker):
