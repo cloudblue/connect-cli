@@ -29,3 +29,5 @@ CAPABILITY_ALLOWED_STATUSES = [
     'pending',
     'tiers_setup',
 ]
+
+PYPI_EXTENSION_RUNNER_URL = 'https://pypi.org/pypi/connect-extension-runner/json'

@@ -7,6 +7,7 @@ from json.decoder import JSONDecodeError
 
 import pytest
 import toml
+import yaml
 from click import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.exceptions import OutputDirExistsException
@@ -15,6 +16,7 @@ from pkg_resources import EntryPoint
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.project.extension_helpers import (
+    _runner_version_validation,
     bootstrap_extension_project,
     validate_extension_project,
 )
@@ -184,6 +186,8 @@ def test_validate_sync_project(mocker, capsys, is_bundle):
                 iter([EntryPoint('extension', 'connect.eaas.ext')]),
             ),
         )
+
+        _mock_pypi_version(mocker)
         validate_extension_project(project_dir)
         captured = capsys.readouterr()
         assert 'successfully' in captured.out
@@ -227,6 +231,7 @@ def test_validate_async_project(mocker, capsys, is_bundle):
                 iter([EntryPoint('extension', 'connect.eaas.ext')]),
             ),
         )
+        _mock_pypi_version(mocker)
         validate_extension_project(project_dir)
         captured = capsys.readouterr()
         assert 'successfully' in captured.out
@@ -600,6 +605,7 @@ def test_validate_product_capability_with_status(
         'connect.cli.plugins.project.extension_helpers.json.load',
         return_value=mocked_extension_descriptor,
     )
+    _mock_pypi_version(mocker)
     if capability == 'product_action_execution' or capability == 'product_custom_event_processing':
         with pytest.raises(ClickException) as error:
             validate_extension_project(project_dir)
@@ -683,3 +689,117 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
             assert data[
                 'capabilities'
             ][capability] == ['draft', 'tiers_setup', 'pending', 'inquiring', 'approved', 'failed']
+
+
+def test_validate_runner_ok(mocker, capsys):
+    _mock_pypi_version(mocker)
+    docker_compose = {
+        'services': {
+            'dev': {'container_name': 'ext_dev', 'image': 'runner:1.0'},
+            'test': {'container_name': 'ext_test', 'image': 'runner:1.0'},
+        },
+    }
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        with open(f'{project_dir}/docker-compose.yml', 'w') as fp:
+            yaml.dump(docker_compose, fp)
+
+        _runner_version_validation(project_dir)
+
+        captured = capsys.readouterr()
+        assert captured.out == ''
+
+
+def test_validate_runner_pypi_not_reached(mocker, capsys):
+    res = mocker.MagicMock()
+    res.status_code = 404
+    res.json.return_value = {'info': {'version': '1.0'}}
+    mocked_get = mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.requests.get',
+        return_value=res,
+    )
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+
+        with pytest.raises(ClickException) as error:
+            _runner_version_validation(project_dir)
+
+    assert mocked_get.call_count == 1
+    assert 'can not retrieve' in str(error.value)
+
+
+def test_validate_runner_pypi_not_json(mocker, capsys):
+    res = mocker.MagicMock()
+    res.status_code = 200
+    res.json.return_value = 'foo'
+    mocked_get = mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.requests.get',
+        return_value=res,
+    )
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+
+        with pytest.raises(ClickException) as error:
+            _runner_version_validation(project_dir)
+
+    assert mocked_get.call_count == 1
+    assert 'content retrieved' in str(error.value)
+
+
+def test_validate_runner_docker_compose_not_found(mocker):
+    _mock_pypi_version(mocker)
+
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+
+        with pytest.raises(ClickException) as error:
+            _runner_version_validation(project_dir)
+
+    assert 'missing' in str(error.value)
+
+
+def test_validate_runner_docker_yaml_error(mocker):
+    _mock_pypi_version(mocker)
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        open(f'{project_dir}/docker-compose.yml', 'w').write(
+            'services:\n\t{{cookiecutter.project_slug}}_dev:',
+        )
+        with pytest.raises(ClickException) as error:
+            _runner_version_validation(project_dir)
+
+    assert 'not properly formatted' in str(error.value)
+
+
+def test_validate_runner_version_mismatch(mocker):
+    _mock_pypi_version(mocker)
+    docker_compose = {
+        'services': {
+            'dev': {'container_name': 'ext_dev', 'image': 'runner:0.1'},
+            'test': {'container_name': 'ext_test', 'image': 'runner:0.1'},
+        },
+    }
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        with open(f'{project_dir}/docker-compose.yml', 'w') as fp:
+            yaml.dump(docker_compose, fp)
+            with pytest.raises(ClickException) as error:
+                _runner_version_validation(project_dir)
+
+    assert 'file is not the latest one' in str(error.value)
+
+
+def _mock_pypi_version(mocker):
+    res = mocker.MagicMock()
+    res.status_code = 200
+    res.json.return_value = {'info': {'version': '1.0'}}
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.requests.get',
+        return_value=res,
+    )

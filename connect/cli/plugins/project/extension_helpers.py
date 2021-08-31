@@ -4,7 +4,9 @@ import os
 
 import click
 import pkg_resources
+import requests
 import toml
+import yaml
 from click.exceptions import ClickException
 from cmr import render
 from cookiecutter import generate
@@ -17,6 +19,7 @@ from connect.cli.plugins.project.constants import (
     CAPABILITY_ALLOWED_STATUSES,
     CAPABILITY_METHOD_MAP,
     PROJECT_EXTENSION_BOILERPLATE_URL,
+    PYPI_EXTENSION_RUNNER_URL,
 )
 from connect.cli.plugins.project import utils
 
@@ -93,7 +96,58 @@ def validate_extension_project(project_dir: str):
     extension_dict = _project_descriptor_validations(project_dir)
     _entrypoint_validations(project_dir, extension_dict)
 
+    _runner_version_validation(project_dir)
+
     click.secho(f'Extension Project {project_dir} has been successfully validated.', fg='green')
+
+
+def _runner_version_validation(project_dir):
+    latest_version = _get_pypi_runner_version()
+    docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
+    if not os.path.isfile(docker_compose_file):
+        raise ClickException(
+            f'Mandatory `docker-compose.yml` file on directory `{project_dir}` is missing.\n'
+            'Please, consider recovering it.',
+        )
+    try:
+        with open(docker_compose_file, 'r') as fp:
+            data = yaml.load(fp, Loader=yaml.FullLoader)
+    except yaml.YAMLError as error:
+        raise ClickException(
+            '`docker_compose.yml` file is not properly formatted. Please review it.\n'
+            f'Error: {error}',
+        )
+    older_image_list = []
+    for service in data['services']:
+        if 'image' in data['services'][service]:
+            runner_image = data['services'][service]['image']
+            runner_version = runner_image.split(':')[-1]
+            if runner_version != latest_version:
+                older_image_list.append(runner_image)
+    if older_image_list:
+        image_string_list = ', '.join(older_image_list)
+        raise ClickException(
+            'The extension runner used currently on `docker-compose.yml` file is not the latest one. '
+            'Please, consider updating it.\n'
+            f'Latest extension-runner version: {latest_version}\n'
+            f'Images not updated: {image_string_list}',
+        )
+
+
+def _get_pypi_runner_version():
+    res = requests.get(PYPI_EXTENSION_RUNNER_URL)
+    if res.status_code != 200:
+        raise ClickException(
+            f'We can not retrieve the current connect-extension-runner version from {PYPI_EXTENSION_RUNNER_URL}.\n'
+            'Please check manually if the version on `docker-compose.yml` file is the same than the lastest on PYPI.',
+        )
+    content = res.json()
+    if not isinstance(content, dict):
+        raise ClickException(
+            f'The content retrieved from {PYPI_EXTENSION_RUNNER_URL} is not valid.\n'
+            'Please check it later or consider doing manually.',
+        )
+    return content['info']['version']
 
 
 def _project_descriptor_validations(project_dir):
