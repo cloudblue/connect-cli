@@ -18,6 +18,7 @@ from connect.cli.core.config import Config
 from connect.cli.plugins.project.extension_helpers import (
     _runner_version_validation,
     bootstrap_extension_project,
+    bump_runner_extension_project,
     validate_extension_project,
 )
 from connect.cli.plugins.project import utils
@@ -799,6 +800,47 @@ def test_validate_runner_version_mismatch(mocker):
                 _runner_version_validation(project_dir)
 
     assert 'file is not the latest one' in str(error.value)
+
+
+def test_bump_runner_version(mocker, capsys):
+    _mock_pypi_version(mocker)
+    docker_compose = {
+        'services': {
+            'dev': {'container_name': 'ext_dev', 'image': 'runner:0.5'},
+            'test': {'container_name': 'ext_test', 'image': 'runner:0.5'},
+        },
+    }
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        with open(f'{project_dir}/docker-compose.yml', 'w') as fp:
+            yaml.dump(docker_compose, fp)
+        bump_runner_extension_project(project_dir)
+        captured = capsys.readouterr()
+        assert 'Runner version has been successfully updated' in captured.out
+
+
+def test_bump_runner_docker_compose_not_found(mocker):
+    _mock_pypi_version(mocker)
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        with pytest.raises(ClickException) as error:
+            bump_runner_extension_project(project_dir)
+        assert 'missing' in str(error.value)
+
+
+def test_bump_runner_docker_yaml_error(mocker):
+    _mock_pypi_version(mocker)
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        open(f'{project_dir}/docker-compose.yml', 'w').write(
+            'services:\n\t{{cookiecutter.project_slug}}_dev:',
+        )
+        with pytest.raises(ClickException) as error:
+            bump_runner_extension_project(project_dir)
+        assert 'not properly formatted' in str(error.value)
 
 
 def _mock_pypi_version(mocker):

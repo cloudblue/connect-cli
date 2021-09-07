@@ -125,3 +125,27 @@ def test_validate_extension_command(fs, ccli, mocker, capsys):
     mocked_validate_project.assert_called_once_with(f'{fs.root_path}/project')
     captured = capsys.readouterr()
     assert 'Extension Project connect/.data/logan has been successfully validated.' == captured.out.strip()
+
+
+def test_bump_extension_command(fs, ccli, mocker, capsys):
+    mocked_bump_runner = mocker.patch(
+        'connect.cli.plugins.project.commands.bump_runner_extension_project',
+        side_effect=print('Runner version has been successfully updated'),
+    )
+    os.mkdir(f'{fs.root_path}/project')
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'project',
+            'extension',
+            'bump',
+            '--project-dir',
+            f'{fs.root_path}/project',
+        ],
+    )
+
+    assert result.exit_code == 0
+    mocked_bump_runner.assert_called_once_with(f'{fs.root_path}/project')
+    captured = capsys.readouterr()
+    assert 'Runner version has been successfully updated' == captured.out.strip()

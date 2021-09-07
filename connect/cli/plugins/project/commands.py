@@ -7,6 +7,7 @@ import click
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.project.extension_helpers import (
     bootstrap_extension_project,
+    bump_runner_extension_project,
     validate_extension_project,
 )
 from connect.cli.plugins.project.report_helpers import (
@@ -115,6 +116,20 @@ def cmd_bootstrap_extension_project(config, output_dir):
 )
 def cmd_validate_extension_project(project_dir):
     validate_extension_project(project_dir)
+
+
+@grp_project_extension.command(
+    name='bump',
+    short_help='Update runner version to the latest one.',
+)
+@click.option(
+    '--project-dir', '-p',
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='Project directory.',
+)
+def cmd_bump_extension_project(project_dir):
+    bump_runner_extension_project(project_dir)
 
 
 def get_group():
