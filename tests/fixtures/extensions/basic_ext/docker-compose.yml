@@ -1,0 +1,7 @@
+services:
+  dev:
+    container_name: ext_dev
+    image: runner:1.0
+  test:
+    container_name: ext_test
+    image: runner:1.0
