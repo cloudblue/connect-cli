@@ -29,6 +29,7 @@ def bootstrap_extension_project(config, data_dir: str):
     index = 1
     answers = {}
     function_list = [
+        'eaas_introduction',
         'general_extension_questions',
         'credentials_questions',
         'asset_process_capabilities',
@@ -36,11 +37,17 @@ def bootstrap_extension_project(config, data_dir: str):
         'tier_config_capabilities',
         'product_capabilities',
     ]
-
+    extension_summary_screen = 1
+    total_dialogs = len(function_list) + extension_summary_screen
     for question_function in function_list:
-        partial = getattr(utils, question_function)(config, index, len(function_list))
+        partial = getattr(
+            utils,
+            question_function,
+        )(config, index, total_dialogs)
         index += 1
         answers.update(partial)
+
+    utils.eaas_summary(answers, index, total_dialogs)
 
     try:
         if is_bundle():
