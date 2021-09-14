@@ -20,6 +20,12 @@ STATUSES = [
     'failed',
 ]
 
+REQUESTS_SCHEDULED_ACTION_STATUSES = [
+    'scheduled',
+    'revoking',
+    'revoked',
+]
+
 
 def purge_cookiecutters_dir():
     # Avoid asking rewrite clone boilerplate project
@@ -387,27 +393,37 @@ def _json_subscription_process_capabilities(descriptor: dict, answers: dict):
         'subscription_process_capabilities_1of6' in answers.keys()
         and answers['subscription_process_capabilities_1of6'].lower() == 'y'
     ):
-        descriptor['capabilities']['asset_purchase_request_processing'] = STATUSES
+        descriptor['capabilities'][
+            'asset_purchase_request_processing'
+        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
     if (
         'subscription_process_capabilities_2of6' in answers.keys()
         and answers['subscription_process_capabilities_2of6'].lower() == 'y'
     ):
-        descriptor['capabilities']['asset_change_request_processing'] = STATUSES
+        descriptor['capabilities'][
+            'asset_change_request_processing'
+        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
     if (
         'subscription_process_capabilities_3of6' in answers.keys()
         and answers['subscription_process_capabilities_3of6'].lower() == 'y'
     ):
-        descriptor['capabilities']['asset_suspend_request_processing'] = STATUSES
+        descriptor['capabilities'][
+            'asset_suspend_request_processing'
+        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
     if (
         'subscription_process_capabilities_4of6' in answers.keys()
         and answers['subscription_process_capabilities_4of6'].lower() == 'y'
     ):
-        descriptor['capabilities']['asset_resume_request_processing'] = STATUSES
+        descriptor['capabilities'][
+            'asset_resume_request_processing'
+        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
     if (
         'subscription_process_capabilities_5of6' in answers.keys()
         and answers['subscription_process_capabilities_5of6'].lower() == 'y'
     ):
-        descriptor['capabilities']['asset_cancel_request_processing'] = STATUSES
+        descriptor['capabilities'][
+            'asset_cancel_request_processing'
+        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
     if (
         'subscription_process_capabilities_6of6' in answers.keys()
         and answers['subscription_process_capabilities_6of6'].lower() == 'y'
