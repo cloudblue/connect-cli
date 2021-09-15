@@ -30,4 +30,10 @@ CAPABILITY_ALLOWED_STATUSES = [
     'tiers_setup',
 ]
 
+REQUESTS_SCHEDULED_ACTION_STATUSES = [
+    'scheduled',
+    'revoking',
+    'revoked',
+]
+
 PYPI_EXTENSION_RUNNER_URL = 'https://pypi.org/pypi/connect-extension-runner/json'

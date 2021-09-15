@@ -21,7 +21,7 @@ from connect.cli.plugins.project.extension_helpers import (
     bump_runner_extension_project,
     validate_extension_project,
 )
-from connect.cli.plugins.project import utils
+from connect.cli.plugins.project import constants, utils
 
 
 def _cookiecutter_result(local_path):
@@ -71,7 +71,12 @@ def test_bootstrap_extension_project(
     extension_json = {
         'name': 'my super project',
         'capabilities': {
-            'asset_purchase_request_processing': ['draft'],
+            'asset_purchase_request_processing': [
+                'draft',
+                'scheduled',
+                'revoking',
+                'revoked',
+            ],
         },
     }
     mocked_open = mocker.patch(
@@ -525,6 +530,56 @@ def test_validate_capabilities_with_wrong_status(
     assert 'Status `foo` on capability `asset_purchase_request_processing` is not allowed.' in str(error.value)
 
 
+def test_validate_capabilities_new_statuses(
+    mocker,
+    mocked_extension_descriptor,
+    capsys,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class BasicExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        def execute_product_action(self):
+            pass
+
+        def process_product_custom_event(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=BasicExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities'][
+        'asset_purchase_request_processing'
+    ] = ['scheduled', 'revoking', 'revoked']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+
+    _mock_pypi_version(mocker)
+    validate_extension_project(project_dir)
+    captured = capsys.readouterr()
+    assert 'successfully' in captured.out
+
+
 def test_validate_wrong_capability_without_status(
     mocker,
     mocked_extension_descriptor,
@@ -692,10 +747,22 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
         assert isinstance(data['capabilities'][capability], list)
         if answer == 'product_capabilities_1of2' or answer == 'product_capabilities_2of2':
             assert data['capabilities'][capability] == []
+        elif answer in (
+            'subscription_process_capabilities_1of6',
+            'subscription_process_capabilities_2of6',
+            'subscription_process_capabilities_3of6',
+            'subscription_process_capabilities_4of6',
+            'subscription_process_capabilities_5of6',
+        ):
+            data['capabilities'][capability].sort()
+            requests_scheduled_statuses = (
+                constants.CAPABILITY_ALLOWED_STATUSES + constants.REQUESTS_SCHEDULED_ACTION_STATUSES
+            )
+            requests_scheduled_statuses.sort()
+            assert data['capabilities'][capability] == requests_scheduled_statuses
         else:
-            assert data[
-                'capabilities'
-            ][capability] == ['draft', 'tiers_setup', 'pending', 'inquiring', 'approved', 'failed']
+            data['capabilities'][capability].sort()
+            assert data['capabilities'][capability] == constants.CAPABILITY_ALLOWED_STATUSES
 
 
 def test_validate_runner_ok(mocker, capsys):

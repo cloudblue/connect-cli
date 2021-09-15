@@ -20,6 +20,7 @@ from connect.cli.plugins.project.constants import (
     CAPABILITY_METHOD_MAP,
     PROJECT_EXTENSION_BOILERPLATE_URL,
     PYPI_EXTENSION_RUNNER_URL,
+    REQUESTS_SCHEDULED_ACTION_STATUSES,
 )
 from connect.cli.plugins.project import utils
 
@@ -229,8 +230,24 @@ def _have_capabilities_proper_stats(capabilities):
         if not stats:
             errors.append(f'Capability `{capability}` must have at least one allowed status.')
         for stat in stats:
-            if stat not in CAPABILITY_ALLOWED_STATUSES:
-                errors.append(f'Status `{stat}` on capability `{capability}` is not allowed.')
+            errors = _check_statuses(capability, stat, errors)
+
+    return errors
+
+
+def _check_statuses(capability, stat, errors):
+    if capability in (
+        'asset_purchase_request_processing',
+        'asset_change_request_processing',
+        'asset_suspend_request_processing',
+        'asset_resume_request_processing',
+        'asset_cancel_request_processing',
+    ):
+        if stat not in CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES:
+            errors.append(f'Status `{stat}` on capability `{capability}` is not allowed.')
+    else:
+        if stat not in CAPABILITY_ALLOWED_STATUSES:
+            errors.append(f'Status `{stat}` on capability `{capability}` is not allowed.')
     return errors
 
 
