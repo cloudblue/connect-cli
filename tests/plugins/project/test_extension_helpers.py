@@ -536,36 +536,7 @@ def test_validate_capabilities_new_statuses(
     capsys,
 ):
     project_dir = './tests/fixtures/extensions/basic_ext'
-
-    class BasicExtension:
-        def process_asset_purchase_request(self):
-            pass
-
-        def process_tier_config_setup_request(self):
-            pass
-
-        def execute_product_action(self):
-            pass
-
-        def process_product_custom_event(self):
-            pass
-
-    mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.is_bundle',
-        return_value=False,
-    )
-    mocker.patch.object(
-        EntryPoint,
-        'load',
-        return_value=BasicExtension,
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        side_effect=(
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-        ),
-    )
+    _setup_extension_validation(mocker)
     mocked_extension_descriptor['capabilities'][
         'asset_purchase_request_processing'
     ] = ['scheduled', 'revoking', 'revoked']
@@ -632,36 +603,7 @@ def test_validate_product_capability_with_status(
     capsys,
 ):
     project_dir = './tests/fixtures/extensions/basic_ext'
-
-    class TestExtension:
-        def process_asset_purchase_request(self):
-            pass
-
-        def process_tier_config_setup_request(self):
-            pass
-
-        def execute_product_action(self):
-            pass
-
-        def process_product_custom_event(self):
-            pass
-
-    mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.is_bundle',
-        return_value=False,
-    )
-    mocker.patch.object(
-        EntryPoint,
-        'load',
-        return_value=TestExtension,
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
-        side_effect=(
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-        ),
-    )
+    _setup_extension_validation(mocker)
     mocked_extension_descriptor['capabilities'][capability] = ['approved']
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.json.load',
@@ -918,3 +860,131 @@ def _mock_pypi_version(mocker):
         'connect.cli.plugins.project.extension_helpers.requests.get',
         return_value=res,
     )
+
+
+def _setup_extension_validation(mocker):
+    class BasicExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        def execute_product_action(self):
+            pass
+
+        def process_product_custom_event(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=BasicExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+
+def test_validate_variables_key(
+    mocker,
+    capsys,
+    mocked_extension_descriptor,
+):
+    _setup_extension_validation(mocker)
+    _mock_pypi_version(mocker)
+    mocked_extension_descriptor['variables'] = [
+        {'name': 'foo_var', 'initial_value': 'foo_value'},
+        {'name': 'bar_var', 'initial_value': 'bar_value'},
+    ]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    project_dir = './tests/fixtures/extensions/basic_ext'
+    validate_extension_project(project_dir)
+    captured = capsys.readouterr()
+    assert 'successfully' in captured.out
+
+
+def test_validate_variables_section_not_a_list(
+    mocker,
+    mocked_extension_descriptor,
+):
+    _setup_extension_validation(mocker)
+    _mock_pypi_version(mocker)
+    mocked_extension_descriptor['variables'] = 'foo'
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    project_dir = './tests/fixtures/extensions/basic_ext'
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'The variables section should be a list of dictionaries.' in str(error.value)
+
+
+def test_validate_variables_variable_not_a_dict(
+    mocker,
+    mocked_extension_descriptor,
+):
+    _setup_extension_validation(mocker)
+    _mock_pypi_version(mocker)
+    mocked_extension_descriptor['variables'] = ['foo', 'bar']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    project_dir = './tests/fixtures/extensions/basic_ext'
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'is not a dictionary.' in str(error.value)
+
+
+def test_validate_variables_variable_without_name_key(
+    mocker,
+    mocked_extension_descriptor,
+):
+    _setup_extension_validation(mocker)
+    _mock_pypi_version(mocker)
+    mocked_extension_descriptor['variables'] = [{'initial_value': 'foo_value'}]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    project_dir = './tests/fixtures/extensions/basic_ext'
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'does not have `name` key.' in str(error.value)
+
+
+def test_validate_variables_variable_duplicated(
+    mocker,
+    mocked_extension_descriptor,
+):
+    _setup_extension_validation(mocker)
+    _mock_pypi_version(mocker)
+    mocked_extension_descriptor['variables'] = [
+        {'name': 'foo_var', 'initial_value': 'foo_value', 'secure': True},
+        {'name': 'FOO_var', 'initial_value': 'new_vallue', 'secure': False},
+    ]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    project_dir = './tests/fixtures/extensions/basic_ext'
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'is duplicated on the variables definition' in str(error.value)

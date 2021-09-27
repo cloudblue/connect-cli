@@ -196,18 +196,46 @@ def _entrypoint_validations(project_dir, extension_dict):
 
     capabilities = ext_descriptor['capabilities']
 
-    errors = _have_capabilities_proper_stats(capabilities)
+    errors = _validate_stats_capabilities(capabilities)
     if errors:
         raise ClickException(f'Capability errors: {errors}')
 
-    errors = _have_methods_proper_capabilities(methods, capabilities)
+    errors = _validate_methods_capabilities(methods, capabilities)
     if errors:
         raise ClickException(f'Capability-Method errors: {errors}')
 
-    _have_methods_proper_type(CustomExtension, capabilities)
+    variables = ext_descriptor.get('variables', [])
+    errors = _validate_variables_definition(variables)
+    if errors:
+        raise ClickException(f'Variable errors: {errors}')
+
+    _validate_methods_definition(CustomExtension, capabilities)
 
 
-def _have_methods_proper_type(cls, capabilities):
+def _validate_variables_definition(variables):
+    if not variables:
+        return
+    if not isinstance(variables, list):
+        return 'The variables section should be a list of dictionaries.'
+
+    errors = []
+    checked = set()
+    for var in variables:
+        if not isinstance(var, dict):
+            errors.append(f'Variable {var} is not a dictionary.')
+        elif 'name' not in var.keys():
+            errors.append(f'Variable {var} does not have `name` key.')
+        else:
+            var_name = var['name'].lower()
+            if var_name not in checked:
+                checked.add(var_name)
+            else:
+                errors.append(f'Variable {var_name} is duplicated on the variables definition in extension.json file.')
+
+    return errors
+
+
+def _validate_methods_definition(cls, capabilities):
     guess_async = [
         inspect.iscoroutinefunction(getattr(cls, CAPABILITY_METHOD_MAP.get(name)))
         for name in capabilities.keys()
@@ -220,7 +248,7 @@ def _have_methods_proper_type(cls, capabilities):
     raise ClickException('An Extension class can only have sync or async methods not a mix of both.')
 
 
-def _have_capabilities_proper_stats(capabilities):
+def _validate_stats_capabilities(capabilities):
     errors = []
     for capability, stats in capabilities.items():
         if capability == 'product_action_execution' or capability == 'product_custom_event_processing':
@@ -251,7 +279,7 @@ def _check_statuses(capability, stat, errors):
     return errors
 
 
-def _have_methods_proper_capabilities(methods, capabilities):
+def _validate_methods_capabilities(methods, capabilities):
     errors = []
     for capability in capabilities.keys():
         if CAPABILITY_METHOD_MAP.get(capability) not in methods:
