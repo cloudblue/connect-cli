@@ -91,12 +91,12 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
     repo = load_repo(reports_dir)
     report = get_report_by_id(repo, report_id)
 
-    if config.active.id.startswith('VA') and 'vendor' not in report.audience:
+    if config.active.is_vendor() and 'vendor' not in report.audience:
         raise ClickException(
             "This report is not expected to be executed on vendor accounts",
         )
 
-    if config.active.id.startswith('PA') and 'provider' not in report.audience:
+    if config.active.is_provider() and 'provider' not in report.audience:
         raise ClickException(
             "This report is not expected to be executed on provider accounts",
         )

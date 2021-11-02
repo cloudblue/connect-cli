@@ -22,6 +22,8 @@ from connect.cli.plugins.project.extension_helpers import (
     validate_extension_project,
 )
 from connect.cli.plugins.project import constants, utils
+from connect.cli.plugins.project.utils import CHUNK_FILE_STATUSES, USAGE_FILE_STATUSES, LISTING_REQUEST_STATUSES, \
+    TIER_ACCOUNT_UPDATE_STATUSES
 
 
 def _cookiecutter_result(local_path):
@@ -31,16 +33,15 @@ def _cookiecutter_result(local_path):
 
 @pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
 @pytest.mark.parametrize('is_bundle', (True, False))
-def test_bootstrap_extension_project(
+def test_bootstrap_extension_project_vendor(
     fs,
     mocker,
     capsys,
     exists_cookiecutter_dir,
     is_bundle,
-    config_mocker,
+    config_vendor,
 ):
-    config = Config()
-    config.load(config_dir='/tmp')
+    config_vendor.load(config_dir='/tmp')
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.extension_helpers.cookiecutter',
         return_value='project_dir',
@@ -52,12 +53,17 @@ def test_bootstrap_extension_project(
             'package_name': 'bar', 'author': 'connect',
             'version': '1.0', 'license': 'Apache',
             'use_github_actions': 'y', 'use_asyncio': 'n',
+            'include_schedules_example': 'y', 'include_variables_example': 'y',
             'api_key': 'xxx', 'environment_id': 'ENV-xxx',
             'server_address': 'api.cnct.info',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
             'product': [],
+            'tieraccount': [],
+            'listing_request': [],
+            'usage_files': [],
+            'tierconfig_validation': [],
         },
     )
     mocker.patch(
@@ -85,7 +91,7 @@ def test_bootstrap_extension_project(
     )
     mocked_open = mocker.patch(
         'connect.cli.plugins.project.utils.json.load',
-        return_value=mocked_open.return_value,
+        return_value=extension_json,
     )
     mocked_open = mocker.patch(
         'connect.cli.plugins.project.utils.json.dump',
@@ -98,17 +104,174 @@ def test_bootstrap_extension_project(
 
     output_dir = f'{fs.root_path}/projects'
     os.mkdir(output_dir)
-    bootstrap_extension_project(config, output_dir)
+    bootstrap_extension_project(config_vendor, output_dir)
 
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 8
+    assert mocked_dialogus.call_count == 14
 
 
-def test_bootstrap_dir_exists_error(fs, mocker, config_mocker):
-    config = Config()
-    config.load(config_dir='/tmp')
+@pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
+@pytest.mark.parametrize('is_bundle', (True, False))
+def test_bootstrap_extension_project_provider(
+    fs,
+    mocker,
+    capsys,
+    exists_cookiecutter_dir,
+    is_bundle,
+    config_provider,
+):
+    config_provider.load(config_dir='/tmp')
+    mocked_cookiecutter = mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.cookiecutter',
+        return_value='project_dir',
+    )
+    mocked_dialogus = mocker.patch(
+        'connect.cli.plugins.project.utils.dialogus',
+        return_value={
+            'project_name': 'foo', 'description': 'desc',
+            'package_name': 'bar', 'author': 'connect',
+            'version': '1.0', 'license': 'Apache',
+            'use_github_actions': 'y', 'use_asyncio': 'n',
+            'include_schedules_example': 'y', 'include_variables_example': 'y',
+            'api_key': 'xxx', 'environment_id': 'ENV-xxx',
+            'server_address': 'api.cnct.info',
+            'asset_processing': [],
+            'tierconfig': [],
+            'tieraccount': [],
+            'listing_request': [],
+            'usage_chunk_files': [],
+        },
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    extension_json = {
+        'name': 'my super project',
+        'capabilities': {
+            'asset_purchase_request_processing': [
+                'draft',
+                'scheduled',
+                'revoking',
+                'revoked',
+            ],
+        },
+    }
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.open',
+        mocker.mock_open(read_data=str(extension_json)),
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.load',
+        return_value=extension_json,
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.dump',
+        return_value=mocked_open.return_value,
+    )
+    cookie_dir = f'{fs.root_path}/.cookiecutters'
+    if exists_cookiecutter_dir:
+        os.mkdir(cookie_dir)
+    DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
+
+    output_dir = f'{fs.root_path}/projects'
+    os.mkdir(output_dir)
+    bootstrap_extension_project(config_provider, output_dir)
+
+    captured = capsys.readouterr()
+    assert 'project_dir' in captured.out
+    assert mocked_cookiecutter.call_count == 1
+    assert mocked_dialogus.call_count == 11
+
+
+@pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
+@pytest.mark.parametrize('is_bundle', (True, False))
+def test_bootstrap_extension_project_unknown(
+    fs,
+    mocker,
+    capsys,
+    exists_cookiecutter_dir,
+    is_bundle,
+    config_unknown,
+):
+    config_unknown.load(config_dir='/tmp')
+    mocked_cookiecutter = mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.cookiecutter',
+        return_value='project_dir',
+    )
+    mocked_dialogus = mocker.patch(
+        'connect.cli.plugins.project.utils.dialogus',
+        return_value={
+            'project_name': 'foo', 'description': 'desc',
+            'package_name': 'bar', 'author': 'connect',
+            'version': '1.0', 'license': 'Apache',
+            'use_github_actions': 'y', 'use_asyncio': 'n',
+            'include_schedules_example': 'y', 'include_variables_example': 'y',
+            'api_key': 'xxx', 'environment_id': 'ENV-xxx',
+            'server_address': 'api.cnct.info',
+            'asset_processing': [],
+            'tierconfig': [],
+            'tieraccount': [],
+            'listing_request': [],
+        },
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    extension_json = {
+        'name': 'my super project',
+        'schedulables': [],
+        'variables': [],
+        'capabilities': {
+            'asset_purchase_request_processing': [
+                'draft',
+                'scheduled',
+                'revoking',
+                'revoked',
+            ],
+        },
+    }
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.open',
+        mocker.mock_open(read_data=str(extension_json)),
+
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.load',
+        return_value=extension_json,
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.utils.json.dump',
+        return_value=mocked_open.return_value,
+    )
+    cookie_dir = f'{fs.root_path}/.cookiecutters'
+    if exists_cookiecutter_dir:
+        os.mkdir(cookie_dir)
+    DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
+
+    output_dir = f'{fs.root_path}/projects'
+    os.mkdir(output_dir)
+    bootstrap_extension_project(config_unknown, output_dir)
+
+    captured = capsys.readouterr()
+    assert 'project_dir' in captured.out
+    assert mocked_cookiecutter.call_count == 1
+    assert mocked_dialogus.call_count == 10
+
+
+def test_bootstrap_dir_exists_error_vendor(fs, mocker, config_vendor):
+    config_vendor.load(config_dir='/tmp')
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.extension_helpers.cookiecutter',
         side_effect=OutputDirExistsException('dir "project_dir" exists'),
@@ -120,12 +283,17 @@ def test_bootstrap_dir_exists_error(fs, mocker, config_mocker):
             'package_name': 'bar', 'author': 'connect',
             'version': '1.0', 'license': 'Apache',
             'use_github_actions': 'y', 'use_asyncio': 'n',
+            'include_schedules_example': 'y', 'include_variables_example': 'y',
             'api_key': 'xxx', 'environment_id': 'ENV-xxx',
             'server_address': 'api.cnct.info',
             'asset_processing': [],
             'asset_validation': [],
             'tierconfig': [],
             'product': [],
+            'tieraccount': [],
+            'listing_request': [],
+            'usage_files': [],
+            'tierconfig_validation': [],
         },
     )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
@@ -136,9 +304,9 @@ def test_bootstrap_dir_exists_error(fs, mocker, config_mocker):
     os.mkdir(output_dir)
 
     with pytest.raises(ClickException):
-        bootstrap_extension_project(config, output_dir)
+        bootstrap_extension_project(config_vendor, output_dir)
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 8
+    assert mocked_dialogus.call_count == 14
 
 
 def test_bootstrap_show_empty_dialog(mocker):
@@ -175,6 +343,9 @@ def test_validate_sync_project(mocker, capsys, is_bundle):
             pass
 
         def process_product_custom_event(self):
+            pass
+
+        def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -220,6 +391,9 @@ def test_validate_async_project(mocker, capsys, is_bundle):
             pass
 
         async def process_product_custom_event(self):
+            pass
+
+        async def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -425,6 +599,9 @@ def test_validate_methods_not_match_capabilities(mocker):
         def process_asset_purchase_request(self):
             pass
 
+        def execute_scheduled_processing(self):
+            pass
+
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.is_bundle',
         return_value=False,
@@ -470,6 +647,9 @@ def test_validate_methods_mixed_sync_async(
         async def process_product_custom_event(self):
             pass
 
+        async def execute_scheduled_processing(self):
+            pass
+
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.is_bundle',
         return_value=False,
@@ -493,6 +673,268 @@ def test_validate_methods_mixed_sync_async(
     assert 'An Extension class can only have sync or async methods not a mix of both.' in str(error.value)
 
 
+def test_validate_schedulable_method_is_not_in_class(
+    mocker,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        async def execute_product_action(self):
+            pass
+
+        async def process_product_custom_event(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'The schedulable method execute_scheduled_processing is not defined in the extension class' in str(error.value)
+
+
+def test_validate_schedulable_def_has_no_all_keys(
+    mocker, mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        async def execute_product_action(self):
+            pass
+
+        async def process_product_custom_event(self):
+            pass
+
+        async def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+    mocked_extension_descriptor['schedulables'] = [{
+        'name': 'Schedulable method mock',
+        'description': 'It can be used to test DevOps scheduler.',
+    }]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'There are schedulable definitions with missing keys:' in str(error.value)
+
+
+def test_validate_schedulable_def_has_empty_keys(
+    mocker, mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        async def execute_product_action(self):
+            pass
+
+        async def process_product_custom_event(self):
+            pass
+
+        async def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+    mocked_extension_descriptor['schedulables'] = [{
+        'name': 'Schedulable method mock',
+        'description': 'It can be used to test DevOps scheduler.',
+        'method': ''
+    }]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'contains empty values. All values must be filled in.' in str(error.value)
+
+
+def test_validate_schedulable_def_has_duplicated_methods(
+    mocker, mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        async def execute_product_action(self):
+            pass
+
+        async def process_product_custom_event(self):
+            pass
+
+        async def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+    mocked_extension_descriptor['schedulables'] = [{
+        'name': 'Schedulable method mock',
+        'description': 'It can be used to test DevOps scheduler.',
+        'method': 'my_cool_method',
+    }, {
+        'name': 'Schedulable method mock',
+        'description': 'It can be used to test DevOps scheduler.',
+        'method': 'my_cool_method',
+    }]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'There are duplicated values in "method" property in multiple' in str(error.value)
+
+
+def test_validate_variables_def_has_duplicated_names(
+    mocker, mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def process_tier_config_setup_request(self):
+            pass
+
+        async def execute_product_action(self):
+            pass
+
+        async def process_product_custom_event(self):
+            pass
+
+        async def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+
+    mocked_extension_descriptor['variables'] = [{
+        "name": "VAR_1",
+        "initial_value": "VAL_1"
+    }, {
+        "name": "VAR_1",
+        "initial_value": "VAL_2"
+    }]
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'duplicated values in "name" property in multiple entries in "vari' in str(error.value)
+
+
 def test_validate_capabilities_with_wrong_status(
     mocker,
     mocked_extension_descriptor,
@@ -501,6 +943,9 @@ def test_validate_capabilities_with_wrong_status(
 
     class TestExtension:
         def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -530,6 +975,206 @@ def test_validate_capabilities_with_wrong_status(
     assert 'Status `foo` on capability `asset_purchase_request_processing` is not allowed.' in str(error.value)
 
 
+def test_validate_listing_request_capabilities_with_wrong_status(
+    mocker,
+    mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities']['listing_new_request_processing'] = ['foo']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Status `foo` on capability `listing_new_request_processing` is not allowed.' in str(error.value)
+
+
+def test_validate_tier_account_capabilities_with_wrong_status(
+    mocker,
+    mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities']['tier_account_update_request_processing'] = ['foo']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Status `foo` on capability `tier_account_update_request_processing` is not allowed.' in str(error.value)
+
+
+def test_validate_tier_config_change_capabilities_with_wrong_status(
+    mocker,
+    mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities']['tier_config_change_request_processing'] = ['foo']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Status `foo` on capability `tier_config_change_request_processing` is not allowed.' in str(error.value)
+
+
+def test_validate_usage_file_capabilities_with_wrong_status(
+    mocker,
+    mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities']['usage_file_request_processing'] = ['foo']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Status `foo` on capability `usage_file_request_processing` is not allowed.' in str(error.value)
+
+
+def test_validate_usage_chunk_file_capabilities_with_wrong_status(
+    mocker,
+    mocked_extension_descriptor,
+):
+    project_dir = './tests/fixtures/extensions/basic_ext'
+
+    class TestExtension:
+        def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
+            pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.is_bundle',
+        return_value=False,
+    )
+    mocker.patch.object(
+        EntryPoint,
+        'load',
+        return_value=TestExtension,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.pkg_resources.iter_entry_points',
+        side_effect=(
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+            iter([EntryPoint('extension', 'connect.eaas.ext')]),
+        ),
+    )
+    mocked_extension_descriptor['capabilities']['part_usage_file_request_processing'] = ['foo']
+    mocker.patch(
+        'connect.cli.plugins.project.extension_helpers.json.load',
+        return_value=mocked_extension_descriptor,
+    )
+    with pytest.raises(ClickException) as error:
+        validate_extension_project(project_dir)
+
+    assert 'Status `foo` on capability `part_usage_file_request_processing` is not allowed.' in str(error.value)
+
+
 def test_validate_capabilities_new_statuses(
     mocker,
     mocked_extension_descriptor,
@@ -548,6 +1193,9 @@ def test_validate_capabilities_new_statuses(
             pass
 
         def process_product_custom_event(self):
+            pass
+
+        def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -588,6 +1236,9 @@ def test_validate_wrong_capability_without_status(
 
     class TestExtension:
         def process_asset_purchase_request(self):
+            pass
+
+        def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -644,6 +1295,9 @@ def test_validate_product_capability_with_status(
             pass
 
         def process_product_custom_event(self):
+            pass
+
+        def execute_scheduled_processing(self):
             pass
 
     mocker.patch(
@@ -712,9 +1366,13 @@ def test_bootstrap_pre_gen_cookiecutter(project_name, package_name):
         ('tier_config_validation_capabilities_2of2', 'tier_config_change_request_validation'),
         ('product_capabilities_1of2', 'product_action_execution'),
         ('product_capabilities_2of2', 'product_custom_event_processing'),
+        ('usage_file_process', 'usage_file_request_processing'),
+        ('listing_request_process_new', 'listing_new_request_processing'),
+        ('listing_request_process_remove', 'listing_remove_request_processing'),
+        ('tier_account_update_request', 'tier_account_update_request_processing'),
     ),
 )
-def test_post_gen_cookiecutter_hook(mocker, answer, capability):
+def test_post_gen_cookiecutter_hook_vendor(mocker, answer, capability, config_vendor):
     mocker.patch(
         'connect.cli.plugins.project.utils.os.remove',
     )
@@ -738,7 +1396,7 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
         with open(f'{tmp_data}/project/package/extension.json', 'w') as fp:
             json.dump(extension_json, fp)
         with work_in(f'{tmp_data}'):
-            utils.post_gen_cookiecutter_extension_hook(answers, project_dir)
+            utils.post_gen_cookiecutter_extension_hook(answers, project_dir, config_vendor)
 
         with open(f'{tmp_data}/project/package/extension.json', 'r') as fp:
             data = json.load(fp)
@@ -760,6 +1418,84 @@ def test_post_gen_cookiecutter_hook(mocker, answer, capability):
             )
             requests_scheduled_statuses.sort()
             assert data['capabilities'][capability] == requests_scheduled_statuses
+        elif answer == 'usage_file_process':
+            assert capability in data['capabilities'].keys()
+            assert data['capabilities'][capability] == USAGE_FILE_STATUSES
+        elif answer.startswith('listing_request_process_'):
+            assert capability in data['capabilities'].keys()
+            assert data['capabilities'][capability] == LISTING_REQUEST_STATUSES
+        elif answer == 'tier_account_update_request':
+            assert capability in data['capabilities'].keys()
+            assert data['capabilities'][capability] == TIER_ACCOUNT_UPDATE_STATUSES
+        else:
+            data['capabilities'][capability].sort()
+            assert data['capabilities'][capability] == constants.CAPABILITY_ALLOWED_STATUSES
+
+
+@pytest.mark.parametrize(
+    ('answer', 'capability'),
+    (
+        ('subscription_process_capabilities_1of6', 'asset_purchase_request_processing'),
+        ('subscription_process_capabilities_2of6', 'asset_change_request_processing'),
+        ('subscription_process_capabilities_3of6', 'asset_suspend_request_processing'),
+        ('subscription_process_capabilities_4of6', 'asset_resume_request_processing'),
+        ('subscription_process_capabilities_5of6', 'asset_cancel_request_processing'),
+        ('subscription_process_capabilities_6of6', 'asset_adjustment_request_processing'),
+        ('tier_config_process_capabilities_1of3', 'tier_config_setup_request_processing'),
+        ('tier_config_process_capabilities_2of3', 'tier_config_change_request_processing'),
+        ('tier_config_process_capabilities_3of3', 'tier_config_adjustment_request_processing'),
+        ('usage_chunk_file_process', 'part_usage_file_request_processing'),
+    ),
+)
+def test_post_gen_cookiecutter_hook_provider(mocker, answer, capability, config_provider):
+    mocker.patch(
+        'connect.cli.plugins.project.utils.os.remove',
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.utils.shutil.rmtree',
+    )
+    answers = {
+        'project_name': 'project',
+        'package_name': 'package',
+        'license': 'Other, not Open-source',
+        'use_github_actions': 'n',
+        answer: 'y',
+    }
+    extension_json = {
+        'name': 'my super project',
+        'capabilities': {},
+    }
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = os.mkdir(f'{tmp_data}/project')
+        os.mkdir(f'{tmp_data}/project/package')
+        with open(f'{tmp_data}/project/package/extension.json', 'w') as fp:
+            json.dump(extension_json, fp)
+        with work_in(f'{tmp_data}'):
+            utils.post_gen_cookiecutter_extension_hook(answers, project_dir, config_provider)
+
+        with open(f'{tmp_data}/project/package/extension.json', 'r') as fp:
+            data = json.load(fp)
+
+        assert capability in data['capabilities'].keys()
+        assert isinstance(data['capabilities'][capability], list)
+        if answer == 'product_capabilities_1of2' or answer == 'product_capabilities_2of2':
+            assert data['capabilities'][capability] == []
+        elif answer in (
+            'subscription_process_capabilities_1of6',
+            'subscription_process_capabilities_2of6',
+            'subscription_process_capabilities_3of6',
+            'subscription_process_capabilities_4of6',
+            'subscription_process_capabilities_5of6',
+        ):
+            data['capabilities'][capability].sort()
+            requests_scheduled_statuses = (
+                constants.CAPABILITY_ALLOWED_STATUSES + constants.REQUESTS_SCHEDULED_ACTION_STATUSES
+            )
+            requests_scheduled_statuses.sort()
+            assert data['capabilities'][capability] == requests_scheduled_statuses
+        elif answer == 'usage_chunk_file_process':
+            assert capability in data['capabilities'].keys()
+            assert data['capabilities'][capability] == CHUNK_FILE_STATUSES
         else:
             data['capabilities'][capability].sort()
             assert data['capabilities'][capability] == constants.CAPABILITY_ALLOWED_STATUSES

@@ -20,6 +20,12 @@ class Account:
     api_key: str
     endpoint: str
 
+    def is_vendor(self):
+        return self.id.startswith('VA-')
+
+    def is_provider(self):
+        return self.id.startswith('PA-')
+
 
 class Config(object):
     def __init__(self):
