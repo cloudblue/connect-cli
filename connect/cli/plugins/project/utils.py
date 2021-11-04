@@ -26,6 +26,41 @@ REQUESTS_SCHEDULED_ACTION_STATUSES = [
     'revoked',
 ]
 
+TIER_ACCOUNT_UPDATE_STATUSES = [
+    'pending',
+    'accepted',
+    'ignored',
+]
+
+LISTING_REQUEST_STATUSES = [
+    'draft',
+    'reviewing',
+    'deploying',
+    'canceled',
+    'completed',
+]
+
+USAGE_FILE_STATUSES = [
+    'draft',
+    'uploading',
+    'uploaded',
+    'invalid',
+    'processing',
+    'processed',
+    'ready',
+    'rejected',
+    'pending',
+    'accepted',
+    'closed',
+]
+
+CHUNK_FILE_STATUSES = [
+    'draft',
+    'ready',
+    'closed',
+    'failed',
+]
+
 
 def purge_cookiecutters_dir():
     # Avoid asking rewrite clone boilerplate project
@@ -57,8 +92,8 @@ def eaas_introduction(config, idx, total):
     return answers
 
 
-def eaas_summary(answers, idx, total):
-    summary_list = _prepare_summary(answers)
+def eaas_summary(answers, idx, total, config):
+    summary_list = _prepare_summary(answers, config)
     summary = [
         {
             'name': 'summary',
@@ -108,6 +143,12 @@ def _summary_asset_questions(answers):
         'Process Asset Adjustment requests': 'Yes' if answers.get(
             'subscription_process_capabilities_6of6', '',
         ) == 'y' else 'No',
+    }
+    return asset_data
+
+
+def _summary_asset_validation_questions(answers):
+    asset_data = {
         'Validate Asset Purchase requests': 'Yes' if answers.get(
             'subscription_validation_capabilities_1of2', '',
         ) == 'y' else 'No',
@@ -130,6 +171,27 @@ def _summary_product_questions(answers):
     return product_data
 
 
+def _summary_tier_config_validation(answers):
+    tier_data = {
+        'Validate Tier Config Setup requests': 'Yes' if answers.get(
+            'tier_config_validation_capabilities_1of2', '',
+        ) == 'y' else 'No',
+        'Validate Tier Config Change requests': 'Yes' if answers.get(
+            'tier_config_validation_capabilities_2of2', '',
+        ) == 'y' else 'No',
+    }
+    return tier_data
+
+
+def _summary_tier_account_questions(answers):
+    tier_data = {
+        'Process Tier Accounts Update requests': 'Yes' if answers.get(
+            'tier_account_update_request', '',
+        ) == 'y' else 'No',
+    }
+    return tier_data
+
+
 def _summary_tier_questions(answers):
     tier_data = {
         'Process Tier Config Setup requests': 'Yes' if answers.get(
@@ -141,22 +203,71 @@ def _summary_tier_questions(answers):
         'Process Tier Config Adjustment requests': 'Yes' if answers.get(
             'tier_config_process_capabilities_3of3', '',
         ) == 'y' else 'No',
-        'Validate Tier Config Setup requests': 'Yes' if answers.get(
-            'tier_config_validation_capabilities_1of2', '',
-        ) == 'y' else 'No',
-        'Validate Tier Config Change requests': 'Yes' if answers.get(
-            'tier_config_validation_capabilities_2of2', '',
-        ) == 'y' else 'No',
     }
     return tier_data
 
 
-def _prepare_summary(answers):
+def _summary_usage_files(answers):
+    usage_data = {
+        'Process Usage Files': 'Yes' if answers.get(
+            'usage_file_process', '',
+        ) == 'y' else 'No',
+    }
+
+    return usage_data
+
+
+def _summary_usage_chunk_files(answers):
+    usage_data = {
+        'Process Usage Chunk Files': 'Yes' if answers.get(
+            'usage_chunk_file_process', '',
+        ) == 'y' else 'No',
+    }
+
+    return usage_data
+
+
+def _summary_listing_requests(answers):
+    listing_req_data = {
+        'Process New Listing Requests': 'Yes' if answers.get(
+            'listing_request_process_new', '',
+        ) == 'y' else 'No',
+        'Process Listing Removal Requests': 'Yes' if answers.get(
+            'listing_request_process_remove', '',
+        ) == 'y' else 'No',
+    }
+
+    return listing_req_data
+
+
+def _summary_examples(answers):
+    examples_data = {
+        'Include Schedulables example into extension project': 'Yes' if answers.get(
+            'include_schedules_example', '',
+        ) == 'y' else 'No',
+        'Include Environment variables example into extension project': 'Yes' if answers.get(
+            'include_variables_example', '',
+        ) == 'y' else 'No',
+    }
+
+    return examples_data
+
+
+def _prepare_summary(answers, config):
     result = {}
     result.update(_summary_general_questions(answers))
     result.update(_summary_asset_questions(answers))
-    result.update(_summary_product_questions(answers))
+    if config.active.is_vendor():
+        result.update(_summary_asset_validation_questions(answers))
+        result.update(_summary_product_questions(answers))
+        result.update(_summary_usage_files(answers))
+        result.update(_summary_tier_config_validation(answers))
+    if config.active.is_provider():
+        result.update(_summary_usage_chunk_files(answers))
     result.update(_summary_tier_questions(answers))
+    result.update(_summary_tier_account_questions(answers))
+    result.update(_summary_listing_requests(answers))
+    result.update(_summary_examples(answers))
     return '\n'.join(f'{item[0]}: {item[1]}' for item in result.items())
 
 
@@ -297,7 +408,23 @@ def asset_validation_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['asset_validation'])
 
 
-def tier_config_capabilities(config, idx, total):
+def tier_config_validation_capabilities(config, idx, total):
+    questions = [
+        {
+            'name': 'tierconfig_validation',
+            'type': 'selectmany',
+            'description': 'Tier configuration validation capabilities',
+            'values': [
+                ('tier_config_validation_capabilities_1of2', 'Setup Request Validation'),
+                ('tier_config_validation_capabilities_2of2', 'Change Request Validation'),
+            ],
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return _gen_cookie_capabilities(answers['tierconfig_validation'])
+
+
+def tier_config_processing_capabilities(config, idx, total):
     questions = [
         {
             'name': 'tierconfig',
@@ -332,6 +459,97 @@ def product_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['product'])
 
 
+def tier_account_capabilities(config, idx, total):
+    questions = [
+        {
+            'name': 'tieraccount',
+            'type': 'selectmany',
+            'description': 'Tier Account capabilities',
+            'values': [
+                ('tier_account_update_request', 'Tier Account Update'),
+            ],
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return _gen_cookie_capabilities(answers['tieraccount'])
+
+
+def usage_files_capabilities(config, idx, total):
+    questions = [
+        {
+            'name': 'usage_files',
+            'type': 'selectmany',
+            'description': 'Usage Files',
+            'values': [
+                ('usage_file_process', 'Process Usage Files'),
+            ],
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return _gen_cookie_capabilities(answers['usage_files'])
+
+
+def usage_chunk_files_capabilities(config, idx, total):
+    questions = [
+        {
+            'name': 'usage_chunk_files',
+            'type': 'selectmany',
+            'description': 'Usage Chunk Files',
+            'values': [
+                ('usage_chunk_file_process', 'Process Usage Chunk Files'),
+            ],
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return _gen_cookie_capabilities(answers['usage_chunk_files'])
+
+
+def listing_request_capabilities(config, idx, total):
+    questions = [
+        {
+            'name': 'listing_request',
+            'type': 'selectmany',
+            'description': 'Listing Requests',
+            'values': [
+                ('listing_request_process_new', 'Process New Listing Requests'),
+                ('listing_request_process_remove', 'Process Listing Requests Removals'),
+            ],
+        },
+    ]
+    answers = _show_dialog(questions, idx, total)
+    return _gen_cookie_capabilities(answers['listing_request'])
+
+
+def include_schedulables_example(config, idx, total):
+    questions = [
+        {
+            'name': 'include_schedules_example',
+            'type': 'selectone',
+            'description': 'Do you want to include an example of schedulable method? ',
+            'values': [
+                ('n', 'No'),
+                ('y', 'Yes'),
+            ],
+        },
+    ]
+    return _show_dialog(questions, idx, total)
+
+
+def include_variables_example(config, idx, total):
+    questions = [
+        {
+            'name': 'include_variables_example',
+            'type': 'selectone',
+            'description': 'Do you want to include an example of environment variables? ',
+            'values': [
+                ('n', 'No'),
+                ('y', 'Yes'),
+            ],
+        },
+    ]
+    return _show_dialog(questions, idx, total)
+
+
 def _show_dialog(questions, idx, total):
     confirm = 'Create' if idx == total else 'Next'
     answers = dialogus(
@@ -363,7 +581,7 @@ def pre_gen_cookiecutter_extension_hook(answers: dict):
         raise ClickException(f'{pk_slug} package slug is not a valid Python identifier.')
 
 
-def post_gen_cookiecutter_extension_hook(answers: dict, project_dir: str):
+def post_gen_cookiecutter_extension_hook(answers: dict, project_dir: str, config):
     if answers['use_github_actions'].lower() == 'n':
         _remove_github_actions(project_dir)
 
@@ -371,10 +589,23 @@ def post_gen_cookiecutter_extension_hook(answers: dict, project_dir: str):
     pk_slug = _slugify(answers['package_name'])
     descriptor = json.load(open(f'{pr_slug}/{pk_slug}/extension.json'))
 
+    # general
     _json_subscription_process_capabilities(descriptor, answers)
-    _json_subscription_validation_capabilities(descriptor, answers)
-    _json_tierconfig_capabilities(descriptor, answers)
-    _json_product_capabilities(descriptor, answers)
+    _json_tierconfig_processing_capabilities(descriptor, answers)
+    _json_tieraccount_capabilities(descriptor, answers)
+    _json_listing_request_capabilities(descriptor, answers)
+
+    if config.active.is_vendor():
+        _json_product_capabilities(descriptor, answers)
+        _json_subscription_validation_capabilities(descriptor, answers)
+        _json_usage_files_capabilities(descriptor, answers)
+        _json_tier_config_validation_capabilities(descriptor, answers)
+
+    if config.active.is_provider():
+        _json_usage_chunk_files_capabilities(descriptor, answers)
+
+    _join_schedulable_example(descriptor, answers)
+    _join_variables_example(descriptor, answers)
 
     json.dump(descriptor, open(f'{pr_slug}/{pk_slug}/extension.json', 'w'), indent=2)
     print('Done! Your extension project is ready to go!')
@@ -386,6 +617,79 @@ def _slugify(name):
 
 def _remove_github_actions(project_dir: str):
     shutil.rmtree(f'{project_dir}/.github')
+
+
+def _json_tieraccount_capabilities(descriptor: dict, answers: dict):
+    if (
+        'tier_account_update_request' in answers.keys()
+        and answers['tier_account_update_request'].lower() == 'y'
+    ):
+        descriptor['capabilities'][
+            'tier_account_update_request_processing'] = TIER_ACCOUNT_UPDATE_STATUSES
+
+
+def _json_usage_files_capabilities(descriptor: dict, answers: dict):
+    if (
+        'usage_file_process' in answers.keys()
+        and answers['usage_file_process'].lower() == 'y'
+    ):
+        descriptor['capabilities'][
+            'usage_file_request_processing'] = USAGE_FILE_STATUSES
+
+
+def _json_usage_chunk_files_capabilities(descriptor: dict, answers: dict):
+    if (
+        'usage_chunk_file_process' in answers.keys()
+        and answers['usage_chunk_file_process'].lower() == 'y'
+    ):
+        descriptor['capabilities'][
+            'part_usage_file_request_processing'] = CHUNK_FILE_STATUSES
+
+
+def _join_schedulable_example(descriptor: dict, answers: dict):
+    if (
+        'include_schedules_example' in answers.keys()
+        and answers['include_schedules_example'].lower() == 'y'
+    ):
+        descriptor['schedulables'] = [{
+            'name': 'Schedulable method mock',
+            'description': 'It can be used to test DevOps scheduler.',
+            'method': 'execute_scheduled_processing',
+        }]
+
+
+def _join_variables_example(descriptor: dict, answers: dict):
+    if (
+        'include_variables_example' in answers.keys()
+        and answers['include_variables_example'].lower() == 'y'
+    ):
+        descriptor['variables'] = [
+            {
+                'name': 'VAR_NAME_1',
+                'initial_value': 'VAR_VALUE_1',
+                'secure': False,
+            },
+            {
+                'name': 'VAR_NAME_N',
+                'initial_value': 'VAR_VALUE_N',
+                'secure': True,
+            },
+        ]
+
+
+def _json_listing_request_capabilities(descriptor: dict, answers: dict):
+    if (
+        'listing_request_process_new' in answers.keys()
+        and answers['listing_request_process_new'].lower() == 'y'
+    ):
+        descriptor['capabilities'][
+            'listing_new_request_processing'] = LISTING_REQUEST_STATUSES
+    if (
+        'listing_request_process_remove' in answers.keys()
+        and answers['listing_request_process_remove'].lower() == 'y'
+    ):
+        descriptor['capabilities'][
+            'listing_remove_request_processing'] = LISTING_REQUEST_STATUSES
 
 
 def _json_subscription_process_capabilities(descriptor: dict, answers: dict):
@@ -444,7 +748,21 @@ def _json_subscription_validation_capabilities(descriptor: dict, answers: dict):
         descriptor['capabilities']['asset_change_request_validation'] = STATUSES
 
 
-def _json_tierconfig_capabilities(descriptor: dict, answers: dict):
+def _json_tier_config_validation_capabilities(descriptor: dict, answers: dict):
+    # Validation
+    if (
+            'tier_config_validation_capabilities_1of2' in answers.keys()
+            and answers['tier_config_validation_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_setup_request_validation'] = STATUSES
+    if (
+            'tier_config_validation_capabilities_2of2' in answers.keys()
+            and answers['tier_config_validation_capabilities_2of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['tier_config_change_request_validation'] = STATUSES
+
+
+def _json_tierconfig_processing_capabilities(descriptor: dict, answers: dict):
     # Processing
     if (
         'tier_config_process_capabilities_1of3' in answers.keys()
@@ -461,18 +779,6 @@ def _json_tierconfig_capabilities(descriptor: dict, answers: dict):
         and answers['tier_config_process_capabilities_3of3'].lower() == 'y'
     ):
         descriptor['capabilities']['tier_config_adjustment_request_processing'] = STATUSES
-
-    # Validation
-    if (
-        'tier_config_validation_capabilities_1of2' in answers.keys()
-        and answers['tier_config_validation_capabilities_1of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_setup_request_validation'] = STATUSES
-    if (
-        'tier_config_validation_capabilities_2of2' in answers.keys()
-        and answers['tier_config_validation_capabilities_2of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_change_request_validation'] = STATUSES
 
 
 def _json_product_capabilities(descriptor: dict, answers: dict):

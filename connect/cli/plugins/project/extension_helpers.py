@@ -23,6 +23,42 @@ from connect.cli.plugins.project.constants import (
     REQUESTS_SCHEDULED_ACTION_STATUSES,
 )
 from connect.cli.plugins.project import utils
+from connect.cli.plugins.project.utils import (
+    CHUNK_FILE_STATUSES,
+    LISTING_REQUEST_STATUSES,
+    TIER_ACCOUNT_UPDATE_STATUSES,
+    USAGE_FILE_STATUSES,
+)
+
+
+def get_total_dialogs(
+    config,
+    function_list,
+    vendor_specific,
+    provider_specific,
+    examples,
+    extension_summary_screen,
+):
+    if config.active.is_vendor():
+        return (
+            len(function_list)
+            + len(vendor_specific)
+            + len(examples)
+            + extension_summary_screen
+        )
+    elif config.active.is_provider():
+        return (
+            len(function_list)
+            + len(provider_specific)
+            + len(examples)
+            + extension_summary_screen
+        )
+    else:
+        return (
+            len(function_list)
+            + len(examples)
+            + extension_summary_screen
+        )
 
 
 def bootstrap_extension_project(config, data_dir: str):
@@ -37,12 +73,35 @@ def bootstrap_extension_project(config, data_dir: str):
         'general_extension_questions',
         'credentials_questions',
         'asset_process_capabilities',
-        'asset_validation_capabilities',
-        'tier_config_capabilities',
-        'product_capabilities',
+        'tier_config_processing_capabilities',
+        'tier_account_capabilities',
+        'listing_request_capabilities',
     ]
+    vendor_specific = [
+        'product_capabilities',
+        'asset_validation_capabilities',
+        'usage_files_capabilities',
+        'tier_config_validation_capabilities',
+    ]
+    provider_specific = [
+        'usage_chunk_files_capabilities',
+    ]
+
+    examples = [
+        'include_schedulables_example',
+        'include_variables_example',
+    ]
+
     extension_summary_screen = 1
-    total_dialogs = len(function_list) + extension_summary_screen
+
+    total_dialogs = get_total_dialogs(
+        config,
+        function_list,
+        vendor_specific,
+        provider_specific,
+        examples,
+        extension_summary_screen,
+    )
     for question_function in function_list:
         partial = getattr(
             utils,
@@ -51,7 +110,33 @@ def bootstrap_extension_project(config, data_dir: str):
         index += 1
         answers.update(partial)
 
-    utils.eaas_summary(answers, index, total_dialogs)
+    if config.active.is_vendor():
+        for question_function in vendor_specific:
+            partial = getattr(
+                utils,
+                question_function,
+            )(config, index, total_dialogs)
+            index += 1
+            answers.update(partial)
+
+    if config.active.is_provider():
+        for question_function in provider_specific:
+            partial = getattr(
+                utils,
+                question_function,
+            )(config, index, total_dialogs)
+            index += 1
+            answers.update(partial)
+
+    for example_function in examples:
+        partial = getattr(
+            utils,
+            example_function,
+        )(config, index, total_dialogs)
+        index += 1
+        answers.update(partial)
+
+    utils.eaas_summary(answers, index, total_dialogs, config)
 
     try:
         if is_bundle():
@@ -65,7 +150,7 @@ def bootstrap_extension_project(config, data_dir: str):
                     extra_context=answers,
                     output_dir=data_dir,
                 )
-                utils.post_gen_cookiecutter_extension_hook(answers, project_dir)
+                utils.post_gen_cookiecutter_extension_hook(answers, project_dir, config)
         else:
             project_dir = cookiecutter(
                 PROJECT_EXTENSION_BOILERPLATE_URL,
@@ -170,6 +255,53 @@ def _project_descriptor_validations(project_dir):
     return extension_dict
 
 
+def _check_variables(variables):
+    names = list(map(lambda x: x['name'], variables))
+    unique_names = list(set(map(lambda x: x['name'], variables)))
+    if names != unique_names:
+        raise ClickException(
+            'There are duplicated values in "name" property in multiple entries in '
+            '"variables" list in your extension.json. Please correct it, all variables '
+            'names must be unique.',
+        )
+
+
+def _check_schedulables(schedulables, extension_class):
+    invalid_no_keys = list(filter(
+        lambda x: set({'method', 'name', 'description'}) != set(x.keys()),
+        schedulables,
+    ))
+    if invalid_no_keys:
+        raise ClickException(
+            f'There are schedulable definitions with missing keys: {invalid_no_keys}. '
+            'All definitions must have "method", "name" and "description" properties set '
+            'and not empty.',
+        )
+
+    for schedulable in schedulables:
+        empty_values = list(filter(lambda x: not x, list(schedulable.values())))
+        if empty_values:
+            raise ClickException(
+                f'Schedulable definition {schedulable} contains empty values. All '
+                'values must be filled in.',
+            )
+
+    methods = list(map(lambda x: x['method'], schedulables))
+    unique_methods = list(set(map(lambda x: x['method'], schedulables)))
+    if methods != unique_methods:
+        raise ClickException(
+            'There are duplicated values in "method" property in multiple entries in '
+            '"schedulables" list in your extension.json. Please correct it, all schedulable '
+            'methods must be unique.',
+        )
+
+    for method_name in unique_methods:
+        if not hasattr(extension_class, method_name):
+            raise ClickException(
+                f'The schedulable method {method_name} is not defined in the extension class',
+            )
+
+
 def _entrypoint_validations(project_dir, extension_dict):
     package_name = extension_dict['extension'].rsplit('.', 1)[0]
     descriptor_file = os.path.join(f'{project_dir}/{package_name}', 'extension.json')
@@ -193,6 +325,12 @@ def _entrypoint_validations(project_dir, extension_dict):
         raise ClickException(
             '\nThe extension descriptor file `extension.json` could not be loaded.',
         )
+
+    if 'schedulables' in ext_descriptor.keys() and len(ext_descriptor['schedulables']):
+        _check_schedulables(ext_descriptor['schedulables'], CustomExtension)
+
+    if 'variables' in ext_descriptor.keys() and len(ext_descriptor['variables']):
+        _check_variables(ext_descriptor['variables'])
 
     capabilities = ext_descriptor['capabilities']
 
@@ -236,18 +374,31 @@ def _have_capabilities_proper_stats(capabilities):
 
 
 def _check_statuses(capability, stat, errors):
-    if capability in (
-        'asset_purchase_request_processing',
-        'asset_change_request_processing',
-        'asset_suspend_request_processing',
-        'asset_resume_request_processing',
-        'asset_cancel_request_processing',
-    ):
-        if stat not in CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES:
+    capabilities_statuses_map = {
+        'asset_purchase_request_processing': (
+            CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
+        'asset_change_request_processing': (
+            CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
+        'asset_suspend_request_processing': (
+            CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
+        'asset_resume_request_processing': (
+            CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
+        'asset_cancel_request_processing': (
+            CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
+        'listing_new_request_processing': LISTING_REQUEST_STATUSES,
+        'listing_remove_request_processing': LISTING_REQUEST_STATUSES,
+        'tier_account_update_request_processing': TIER_ACCOUNT_UPDATE_STATUSES,
+        'part_usage_file_request_processing': CHUNK_FILE_STATUSES,
+        'usage_file_request_processing': USAGE_FILE_STATUSES,
+    }
+
+    if capability in capabilities_statuses_map.keys():
+        if stat not in capabilities_statuses_map[capability]:
             errors.append(f'Status `{stat}` on capability `{capability}` is not allowed.')
     else:
         if stat not in CAPABILITY_ALLOWED_STATUSES:
             errors.append(f'Status `{stat}` on capability `{capability}` is not allowed.')
+
     return errors
 
 

@@ -19,6 +19,11 @@ CAPABILITY_METHOD_MAP = {
     'tier_config_adjustment_request_processing': 'process_tier_config_adjustment_request',
     'tier_config_setup_request_validation': 'validate_tier_config_setup_request',
     'tier_config_change_request_validation': 'validate_tier_config_change_request',
+    'usage_file_request_processing': 'process_usage_file',
+    'part_usage_file_request_processing': 'process_usage_chunk_file',
+    'tier_account_update_request_processing': 'process_tier_account_update_request',
+    'listing_new_request_processing': 'process_new_listing_request',
+    'listing_remove_request_processing': 'process_remove_listing_request',
 }
 
 CAPABILITY_ALLOWED_STATUSES = [

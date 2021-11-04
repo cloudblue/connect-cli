@@ -4,6 +4,11 @@
   "version": "1.0",
   "readme_url": "https://example.com/README.md",
   "changelog_url": "https://example.com/CHANGELOG.md",
+  "schedulables": [{
+      "name": "Schedulable method mock",
+      "description": "It can be used to test DevOps scheduler.",
+      "method": "execute_scheduled_processing"
+  }],
   "capabilities": {
     "asset_purchase_request_processing": [
       "approved"

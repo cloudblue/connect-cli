@@ -8,6 +8,7 @@ import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
 
+from connect.cli.core.config import Config
 from connect.cli.core.base import cli
 from connect.cli.core.plugins import load_plugins
 
@@ -23,6 +24,27 @@ def fs():
 def ccli():
     load_plugins(cli)
     return cli
+
+
+@pytest.fixture(scope='function')
+def config_vendor():
+    config = Config()
+    config.add_account('VA-001-002', 'name', 'api_key', 'endpoint')
+    return config
+
+
+@pytest.fixture(scope='function')
+def config_provider():
+    config = Config()
+    config.add_account('PA-001-002', 'name', 'api_key', 'endpoint')
+    return config
+
+
+@pytest.fixture(scope='function')
+def config_unknown():
+    config = Config()
+    config.add_account('XA-001-002', 'name', 'api_key', 'endpoint')
+    return config
 
 
 @pytest.fixture(scope='function')

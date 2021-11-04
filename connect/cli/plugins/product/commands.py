@@ -74,7 +74,7 @@ def cmd_list_products(config, query, page_size, always_continue):
         logger=RequestLogger() if config.verbose else None,
     )
 
-    if acc_id.startswith('VA'):
+    if config.active.is_vendor():
         default_query = R().visibility.owner.eq(True) & R().version.null(True)
     else:
         default_query = R().visibility.listing.eq(True) | R().visibility.syndication.eq(True)

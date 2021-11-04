@@ -132,7 +132,7 @@ def hub_list(config, client, param):
 
 
 def product_list(config, client, param):
-    if config.id.startswith('VA'):
+    if config.is_vendor():
         default_query = R().visibility.owner.eq(True) & R().version.null(True)
     else:
         default_query = R().visibility.listing.eq(True) | R().visibility.syndication.eq(True)
