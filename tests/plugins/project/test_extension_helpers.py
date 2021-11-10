@@ -66,6 +66,9 @@ def test_bootstrap_extension_project_vendor(
             'tierconfig_validation': [],
         },
     )
+    mocked_button_dialog = mocker.patch(
+        'connect.cli.plugins.project.utils.button_dialog',
+    )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.open',
         mocker.mock_open(read_data='#Project'),
@@ -109,7 +112,8 @@ def test_bootstrap_extension_project_vendor(
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 14
+    assert mocked_dialogus.call_count == 13
+    assert mocked_button_dialog.call_count == 2
 
 
 @pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
@@ -142,7 +146,11 @@ def test_bootstrap_extension_project_provider(
             'tieraccount': [],
             'listing_request': [],
             'usage_chunk_files': [],
+            'product': [],
         },
+    )
+    mocked_button_dialog = mocker.patch(
+        'connect.cli.plugins.project.utils.button_dialog',
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.open',
@@ -187,7 +195,8 @@ def test_bootstrap_extension_project_provider(
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 11
+    assert mocked_dialogus.call_count == 9
+    assert mocked_button_dialog.call_count == 2
 
 
 @pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
@@ -219,7 +228,11 @@ def test_bootstrap_extension_project_unknown(
             'tierconfig': [],
             'tieraccount': [],
             'listing_request': [],
+            'product': [],
         },
+    )
+    mocked_button_dialog = mocker.patch(
+        'connect.cli.plugins.project.utils.button_dialog',
     )
     mocker.patch(
         'connect.cli.plugins.project.extension_helpers.open',
@@ -267,7 +280,8 @@ def test_bootstrap_extension_project_unknown(
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 10
+    assert mocked_dialogus.call_count == 8
+    assert mocked_button_dialog.call_count == 2
 
 
 def test_bootstrap_dir_exists_error_vendor(fs, mocker, config_vendor):
@@ -296,6 +310,9 @@ def test_bootstrap_dir_exists_error_vendor(fs, mocker, config_vendor):
             'tierconfig_validation': [],
         },
     )
+    mocked_button_dialog = mocker.patch(
+        'connect.cli.plugins.project.utils.button_dialog',
+    )
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     os.mkdir(cookie_dir)
     DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
@@ -306,7 +323,8 @@ def test_bootstrap_dir_exists_error_vendor(fs, mocker, config_vendor):
     with pytest.raises(ClickException):
         bootstrap_extension_project(config_vendor, output_dir)
     assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 14
+    assert mocked_dialogus.call_count == 13
+    assert mocked_button_dialog.call_count == 2
 
 
 def test_bootstrap_show_empty_dialog(mocker):

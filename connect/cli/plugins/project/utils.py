@@ -9,7 +9,9 @@ from click.exceptions import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
 from cookiecutter.utils import rmtree
 from interrogatio import dialogus
+from interrogatio.themes import for_dialog
 from interrogatio.validators.builtins import RequiredValidator
+from prompt_toolkit.shortcuts import button_dialog
 
 STATUSES = [
     'draft',
@@ -77,32 +79,20 @@ def _run_hook_from_repo_dir(
 
 
 def eaas_introduction(config, idx, total):
-    intro = [
-        {
-            'name': 'introduction',
-            'type': 'input',
-            'message': 'Welcome to the Connect Extension Project Bootstrap utility.\n'
-            'Using this utility multiple data will be collected in order to create a project\n'
-            'skeleton for your Connect Extension. This skeleton will contain all needed things\n'
-            'to start writing your code.\n\n'
-            'Have a nice trip!\n',
-        },
-    ]
-    answers = _show_dialog(intro, idx, total)
-    return answers
+    message = (
+        'Welcome to the Connect Extension Project Bootstrap utility.\n'
+        'Using this utility multiple data will be collected in order to create a project\n'
+        'skeleton for your Connect Extension. This skeleton will contain all needed things\n'
+        'to start writing your code.\n\n'
+        'Have a nice trip!\n'
+    )
+    return _show_cancel_next_dialog(msg=message, idx=idx, total=total)
 
 
 def eaas_summary(answers, idx, total, config):
     summary_list = _prepare_summary(answers, config)
-    summary = [
-        {
-            'name': 'summary',
-            'type': 'input',
-            'message': 'The provided values for the project are:\n\n'
-            f'{summary_list}',
-        },
-    ]
-    answers = _show_dialog(summary, idx, total)
+    message = f'The provided values for the project are:\n\n{summary_list}'
+    _show_cancel_next_dialog(msg=message, idx=idx, total=total)
     return answers
 
 
@@ -159,11 +149,17 @@ def _summary_asset_validation_questions(answers):
     return asset_data
 
 
-def _summary_product_questions(answers):
+def _summary_product_actions_questions(answers):
     product_data = {
         'Execute Product Actions': 'Yes' if answers.get(
             'product_capabilities_1of2', '',
         ) == 'y' else 'No',
+    }
+    return product_data
+
+
+def _summary_product_custom_events_questions(answers):
+    product_data = {
         'Process Product Custom Events': 'Yes' if answers.get(
             'product_capabilities_2of2', '',
         ) == 'y' else 'No',
@@ -257,9 +253,10 @@ def _prepare_summary(answers, config):
     result = {}
     result.update(_summary_general_questions(answers))
     result.update(_summary_asset_questions(answers))
+    result.update(_summary_product_custom_events_questions(answers))
     if config.active.is_vendor():
         result.update(_summary_asset_validation_questions(answers))
-        result.update(_summary_product_questions(answers))
+        result.update(_summary_product_actions_questions(answers))
         result.update(_summary_usage_files(answers))
         result.update(_summary_tier_config_validation(answers))
     if config.active.is_provider():
@@ -443,65 +440,83 @@ def tier_config_processing_capabilities(config, idx, total):
     return _gen_cookie_capabilities(answers['tierconfig'])
 
 
-def product_capabilities(config, idx, total):
+def product_custom_events_capability(config, idx, total):
     questions = [
         {
-            'name': 'product',
-            'type': 'selectmany',
-            'description': 'Product capabilities',
+            'name': 'product_capabilities_2of2',
+            'type': 'selectone',
+            'description': (
+                'Will your extension support custom events? Custom events are useful in the use '
+                'case that an external system needs to interact with your extension running on the '
+                'cloud.'
+            ),
             'values': [
-                ('product_capabilities_1of2', 'Product Action Execution'),
-                ('product_capabilities_2of2', 'Product Custom Event'),
+                ('n', 'No'),
+                ('y', 'Yes'),
             ],
         },
     ]
-    answers = _show_dialog(questions, idx, total)
-    return _gen_cookie_capabilities(answers['product'])
+    return _show_dialog(questions, idx, total)
+
+
+def product_actions_capability(config, idx, total):
+    questions = [
+        {
+            'name': 'product_capabilities_1of2',
+            'type': 'selectone',
+            'description': 'Will your extension support product actions?',
+            'values': [
+                ('n', 'No'),
+                ('y', 'Yes'),
+            ],
+        },
+    ]
+    return _show_dialog(questions, idx, total)
 
 
 def tier_account_capabilities(config, idx, total):
     questions = [
         {
-            'name': 'tieraccount',
-            'type': 'selectmany',
-            'description': 'Tier Account capabilities',
+            'name': 'tier_account_update_request',
+            'type': 'selectone',
+            'description': 'Do you want to process Tier Account Requests?',
             'values': [
-                ('tier_account_update_request', 'Tier Account Update'),
+                ('n', 'No'),
+                ('y', 'Yes'),
             ],
         },
     ]
-    answers = _show_dialog(questions, idx, total)
-    return _gen_cookie_capabilities(answers['tieraccount'])
+    return _show_dialog(questions, idx, total)
 
 
 def usage_files_capabilities(config, idx, total):
     questions = [
         {
-            'name': 'usage_files',
-            'type': 'selectmany',
-            'description': 'Usage Files',
+            'name': 'usage_file_process',
+            'type': 'selectone',
+            'description': 'Do you want to process Usage Files?',
             'values': [
-                ('usage_file_process', 'Process Usage Files'),
+                ('n', 'No'),
+                ('y', 'Yes'),
             ],
         },
     ]
-    answers = _show_dialog(questions, idx, total)
-    return _gen_cookie_capabilities(answers['usage_files'])
+    return _show_dialog(questions, idx, total)
 
 
 def usage_chunk_files_capabilities(config, idx, total):
     questions = [
         {
-            'name': 'usage_chunk_files',
-            'type': 'selectmany',
-            'description': 'Usage Chunk Files',
+            'name': 'usage_chunk_file_process',
+            'type': 'selectone',
+            'description': 'Do you want to process Usage Chunk Files?',
             'values': [
-                ('usage_chunk_file_process', 'Process Usage Chunk Files'),
+                ('n', 'No'),
+                ('y', 'Yes'),
             ],
         },
     ]
-    answers = _show_dialog(questions, idx, total)
-    return _gen_cookie_capabilities(answers['usage_chunk_files'])
+    return _show_dialog(questions, idx, total)
 
 
 def listing_request_capabilities(config, idx, total):
@@ -562,6 +577,19 @@ def _show_dialog(questions, idx, total):
     return answers
 
 
+def _show_cancel_next_dialog(msg, idx, total):
+    confirm = 'Create' if idx == total else 'Next'
+    clicked_next = button_dialog(
+        title=f'Extension Project Configuration ({idx}/{total})',
+        text=msg,
+        buttons=[('Cancel', False), (confirm, True)],
+        style=for_dialog(),
+    ).run()
+    if not clicked_next:
+        raise ClickException('Aborted by user input')
+    return []
+
+
 def _gen_cookie_capabilities(answers):
     cookicutter_answers = {}
     if answers:
@@ -594,9 +622,10 @@ def post_gen_cookiecutter_extension_hook(answers: dict, project_dir: str, config
     _json_tierconfig_processing_capabilities(descriptor, answers)
     _json_tieraccount_capabilities(descriptor, answers)
     _json_listing_request_capabilities(descriptor, answers)
+    _json_product_custom_events(descriptor, answers)
 
     if config.active.is_vendor():
-        _json_product_capabilities(descriptor, answers)
+        _json_product_actions(descriptor, answers)
         _json_subscription_validation_capabilities(descriptor, answers)
         _json_usage_files_capabilities(descriptor, answers)
         _json_tier_config_validation_capabilities(descriptor, answers)
@@ -781,17 +810,20 @@ def _json_tierconfig_processing_capabilities(descriptor: dict, answers: dict):
         descriptor['capabilities']['tier_config_adjustment_request_processing'] = STATUSES
 
 
-def _json_product_capabilities(descriptor: dict, answers: dict):
-    if (
-        'product_capabilities_1of2' in answers.keys()
-        and answers['product_capabilities_1of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['product_action_execution'] = []
+def _json_product_custom_events(descriptor: dict, answers: dict):
     if (
         'product_capabilities_2of2' in answers.keys()
         and answers['product_capabilities_2of2'].lower() == 'y'
     ):
         descriptor['capabilities']['product_custom_event_processing'] = []
+
+
+def _json_product_actions(descriptor: dict, answers: dict):
+    if (
+        'product_capabilities_1of2' in answers.keys()
+        and answers['product_capabilities_1of2'].lower() == 'y'
+    ):
+        descriptor['capabilities']['product_action_execution'] = []
 
 
 def pre_gen_cookiecutter_report_hook(answers: dict):

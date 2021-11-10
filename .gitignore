@@ -13,7 +13,7 @@ dist/
 .devcontainer
 
 coverage/
-.coverage
+.coverage*
 /htmlcov/
 docs/_build
 temp/

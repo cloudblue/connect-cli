@@ -74,11 +74,12 @@ def bootstrap_extension_project(config, data_dir: str):
         'credentials_questions',
         'asset_process_capabilities',
         'tier_config_processing_capabilities',
-        'tier_account_capabilities',
         'listing_request_capabilities',
+        'product_custom_events_capability',
     ]
     vendor_specific = [
-        'product_capabilities',
+        'tier_account_capabilities',
+        'product_actions_capability',
         'asset_validation_capabilities',
         'usage_files_capabilities',
         'tier_config_validation_capabilities',
