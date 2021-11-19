@@ -12,6 +12,7 @@ from connect.cli.plugins.report.helpers import (
 )
 from connect.cli.plugins.report.utils import Progress
 from connect.client import ConnectClient
+from connect.reports.datamodels import ReportDefinition
 
 
 def test_load_repo_ok():
@@ -137,7 +138,7 @@ def test_execute_report_v1(mocker):
 
     assert mocked_input.mock_calls[0].args[0] == config
     assert isinstance(mocked_input.mock_calls[0].args[1], ConnectClient)
-    assert mocked_input.mock_calls[0].args[2] == []
+    assert isinstance(mocked_input.mock_calls[0].args[2], ReportDefinition)
 
     assert renderer_mock.render.mock_calls[0].args[0] == report_data
     assert renderer_mock.render.mock_calls[0].args[1] == 'out_file'
@@ -183,7 +184,7 @@ def test_execute_report_v2(mocker):
 
     assert mocked_input.mock_calls[0].args[0] == config
     assert isinstance(mocked_input.mock_calls[0].args[1], ConnectClient)
-    assert mocked_input.mock_calls[0].args[2] == []
+    assert isinstance(mocked_input.mock_calls[0].args[2], ReportDefinition)
 
     assert renderer_mock.render.mock_calls[0].args[0] == report_data
     assert renderer_mock.render.mock_calls[0].args[1] == 'out_file'

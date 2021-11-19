@@ -23,3 +23,5 @@ coverage.xml
 connect/.data
 .DS_Store
 */.DS_Store
+
+context.json

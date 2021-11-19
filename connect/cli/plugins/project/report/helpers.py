@@ -7,46 +7,71 @@ import inspect
 import importlib
 import tempfile
 import shutil
+from pathlib import Path
 
-from cookiecutter import generate
+import click
+import openpyxl
+from click import ClickException
 from cookiecutter.main import cookiecutter
 from cookiecutter.config import get_user_config
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.repository import determine_repo_dir
 from cookiecutter.utils import rmtree, work_in
-import click
-from click import ClickException
+from interrogatio.core.dialog import dialogus
 
 from connect.cli.core.utils import is_bundle
-from connect.cli.plugins.project.constants import (
+from connect.cli.plugins.project.cookiehelpers import (
+    monkey_patch,
+    purge_cookiecutters_dir,
+    remove_github_actions,
+    slugify,
+)
+from connect.cli.plugins.project.report.constants import (
     PROJECT_REPORT_BOILERPLATE_URL,
 )
-from connect.cli.plugins.project import utils
+from connect.cli.plugins.project.report.wizard import (
+    ADD_REPORT_QUESTIONS,
+    BOOTSTRAP_QUESTIONS,
+    BOOTSTRAP_SUMMARY,
+    REPORT_ADD_WIZARD_INTRO,
+    REPORT_BOOTSTRAP_WIZARD_INTRO,
+    REPORT_SUMMARY,
+)
+from connect.reports.parser import parse
 from connect.reports.validator import (
     validate,
     validate_with_schema,
 )
-from connect.reports.parser import parse
 
 
 def bootstrap_report_project(data_dir: str):
     click.secho('Bootstraping report project...\n', fg='blue')
-    utils.purge_cookiecutters_dir()
-    answers = utils.general_report_questions()
+    purge_cookiecutters_dir()
+    answers = dialogus(
+        BOOTSTRAP_QUESTIONS,
+        'Reports project bootstrap',
+        intro=REPORT_BOOTSTRAP_WIZARD_INTRO,
+        summary=BOOTSTRAP_SUMMARY,
+        finish_text='Create',
+        previous_text='Back',
+    )
+
+    if not answers:
+        raise ClickException('Aborted by user input')
+
     try:
         if is_bundle():
-            method_name = '_run_hook_from_repo_dir'
-            setattr(generate, method_name, getattr(utils, method_name))
+            # Monkey patch cookiecutter since post hooks fails in a exe bundle.
+            monkey_patch()
             with work_in(data_dir):
-                utils.pre_gen_cookiecutter_report_hook(answers)
                 project_dir = cookiecutter(
                     PROJECT_REPORT_BOILERPLATE_URL,
                     no_input=True,
                     extra_context=answers,
                     output_dir=data_dir,
                 )
-                utils.post_gen_cookiecutter_report_hook(answers, project_dir)
+                _post_gen_hook(answers, project_dir)
         else:
             project_dir = cookiecutter(
                 PROJECT_REPORT_BOILERPLATE_URL,
@@ -104,8 +129,9 @@ def add_report(project_dir, package_name):
         # Instead of using cookiecutter use the internals
         report_dir, report_slug = _custom_cookiecutter(
             PROJECT_REPORT_BOILERPLATE_URL,
-            output_dir=add_report_tmpdir,
-            package_slug=package_name,
+            add_report_tmpdir,
+            project_dir,
+            package_name,
         )
         if os.path.isdir(f'{project_dir}/{package_name}/{report_slug}'):
             raise ClickException(
@@ -123,7 +149,7 @@ def add_report(project_dir, package_name):
         click.secho('\nReport has been successfully created.', fg='blue')
 
 
-def _custom_cookiecutter(template, output_dir, package_slug):
+def _custom_cookiecutter(template, output_dir, project_slug, package_slug):
 
     config_dict = get_user_config(
         config_file=None, default_config=False,
@@ -152,17 +178,25 @@ def _custom_cookiecutter(template, output_dir, package_slug):
         extra_context=None,
     )
 
-    answers = utils.add_report_questions()
+    answers = dialogus(
+        ADD_REPORT_QUESTIONS,
+        'Add report to existing project',
+        intro=REPORT_ADD_WIZARD_INTRO,
+        summary=REPORT_SUMMARY,
+        finish_text='Add',
+        previous_text='Back',
+    )
+
+    if not answers:
+        raise ClickException('Aborted by user input')
 
     context['cookiecutter']['_template'] = template
-    context['cookiecutter']['project_slug'] = utils._slugify(context['cookiecutter']['project_name'])
-    context['cookiecutter']['package_name'] = package_slug
+    context['cookiecutter']['project_slug'] = project_slug
     context['cookiecutter']['package_slug'] = package_slug
     context['cookiecutter']['initial_report_name'] = answers['initial_report_name']
-    context['cookiecutter']['initial_report_slug'] = utils._slugify(answers['initial_report_name'])
+    context['cookiecutter']['initial_report_slug'] = answers['initial_report_slug']
     context['cookiecutter']['initial_report_description'] = answers['initial_report_description']
     context['cookiecutter']['initial_report_renderer'] = answers['initial_report_renderer']
-    context['cookiecutter']['author'] = answers['author']
 
     result = _generate_files(context, output_dir, repo_dir)
 
@@ -171,10 +205,8 @@ def _custom_cookiecutter(template, output_dir, package_slug):
 
 def _generate_files(context, output_dir, repo_dir):
     if is_bundle():
-        method_name = '_run_hook_from_repo_dir'
-        setattr(generate, method_name, getattr(utils, method_name))
+        monkey_patch()
         with work_in(output_dir):
-            utils.pre_gen_cookiecutter_report_hook(context['cookiecutter'])
             result = generate_files(
                 repo_dir=repo_dir,
                 context=context,
@@ -182,7 +214,7 @@ def _generate_files(context, output_dir, repo_dir):
                 skip_if_file_exists=False,
                 output_dir=output_dir,
             )
-            utils._create_renderer_templates(context['cookiecutter'])
+            _create_renderer_templates(context['cookiecutter'])
     else:
         result = generate_files(
             repo_dir=repo_dir,
@@ -248,3 +280,35 @@ def _entrypoint_validations(project_dir, entrypoint, report_spec):
             '\n>> def generate(client=None, input_data=None, progress_callback=None, '
             'renderer_type=None, extra_context_callback=None) <<',
         )
+
+
+def _post_gen_hook(answers, project_dir):
+    if answers['use_github_actions'] == 'n':
+        remove_github_actions(project_dir)
+
+    _create_renderer_templates(answers)
+
+
+def _create_renderer_templates(answers):
+    project_slug = slugify(answers['project_slug'])
+    package_slug = slugify(answers['package_name'])
+    initial_report_slug = slugify(answers['initial_report_slug'])
+
+    # XLSX
+    xlsx_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xlsx'
+    os.makedirs(xlsx_template_dir)
+    wb = openpyxl.Workbook()
+    wb.save(f'{xlsx_template_dir}/template.xlsx')
+
+    # PDF
+    pdf_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/pdf'
+    os.makedirs(pdf_template_dir)
+    Path(f'{pdf_template_dir}/template.css').touch()
+    Path(f'{pdf_template_dir}/template.html.j2').touch()
+
+    # JINJA2
+    jinja2_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xml'
+    os.makedirs(jinja2_template_dir)
+    open(f'{jinja2_template_dir}/template.xml.j2', 'w').write(
+        'Please rename this file with a proper extension file.\n',
+    )

@@ -1,4 +1,5 @@
 import pytest
+from click import ClickException 
 from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import DateTimeRangeValidator, DateTimeValidator, RequiredValidator
 
@@ -7,6 +8,9 @@ from connect.cli.plugins.report.wizard import (
     checkbox,
     date,
     date_range,
+    generate_summary,
+    get_report_inputs,
+    handle_param_input,
     hub_list,
     marketplace_list,
     object_param,
@@ -90,7 +94,7 @@ def test_date_range():
     }
 
     result = date_range(param)
-    assert len(result) == 4
+    assert len(result) == 5
     assert isinstance(result['validators'][0], DateTimeRangeValidator)
     assert isinstance(result['validators'][1], RequiredValidator)
 
@@ -105,7 +109,7 @@ def test_date():
     }
 
     result = date(param)
-    assert len(result) == 4
+    assert len(result) == 5
     assert isinstance(result['validators'][1], RequiredValidator)
     assert isinstance(result['validators'][0], DateTimeValidator)
 
@@ -318,3 +322,164 @@ def test_product_2(mocked_responses, mocked_product_response):
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1
     assert result['values'][0] == ('PRD-276-377-545', 'My Product (PRD-276-377-545)')
+
+
+def test_get_report_inputs_cancel_report(mocker):
+    mocked_report = mocker.MagicMock()
+    mocked_report.get_parameters.return_value = [{'id': 'a_param'}]
+    mocker.patch('connect.cli.plugins.report.wizard.generate_intro')
+    mocker.patch('connect.cli.plugins.report.wizard.handle_param_input')
+    mocker.patch('connect.cli.plugins.report.wizard.dialogus', return_value=None)
+    with pytest.raises(ClickException) as cv:
+        get_report_inputs(None, None, mocked_report, None)
+    assert str(cv.value) == 'Aborted by user input'
+
+
+@pytest.mark.parametrize(
+    ('answer', 'expected'),
+    (
+        (['a'], {'all': False, 'choices': ['a']}),
+        (['a', 'b'], {'all': True, 'choices': []}),
+    ),
+)
+def test_get_report_inputs_select_many(mocker, answer, expected):
+    question = {
+        'name': 'a_param',
+        'label': 'Test select many',
+        'type': 'selectmany',
+        'description': 'Test',
+        'values': [
+            ('a', 'A'),
+            ('b', 'B'),
+        ],
+    }
+    mocked_report = mocker.MagicMock()
+    mocked_report.get_parameters.return_value = [{'id': 'a_param', 'type': 'product'}]
+    mocker.patch('connect.cli.plugins.report.wizard.generate_intro')
+    mocker.patch('connect.cli.plugins.report.wizard.handle_param_input', return_value=question)
+    mocker.patch('connect.cli.plugins.report.wizard.dialogus', return_value={'a_param': answer})
+    inputs = get_report_inputs(None, None, mocked_report, None)
+    assert inputs['a_param'] == expected
+
+
+def test_get_report_inputs_other(mocker):
+    question = {
+        'name': 'a_param',
+        'label': 'Test others',
+        'type': 'input',
+        'description': 'Test',
+    }
+    mocked_report = mocker.MagicMock()
+    mocked_report.get_parameters.return_value = [{'id': 'a_param', 'type': 'single_line'}]
+    mocker.patch('connect.cli.plugins.report.wizard.generate_intro')
+    mocker.patch('connect.cli.plugins.report.wizard.handle_param_input', return_value=question)
+    mocker.patch('connect.cli.plugins.report.wizard.dialogus', return_value={'a_param': 'a value'})
+    inputs = get_report_inputs(None, None, mocked_report, None)
+    assert inputs['a_param'] == 'a value'
+
+
+def test_generate_summary():
+    info = {
+        'a_param': {
+            'question': {
+                'name': 'a_param',
+                'label': 'Test summary',
+                'type': 'input',
+                'description': 'Test',
+            },
+            'value': 'a value',
+            'formatted_value': 'a value',
+        },
+        'a_param2': {
+            'question': {
+                'name': 'a_param2',
+                'label': 'Test summary 2',
+                'type': 'selectmany',
+                'description': 'Test',
+                'values': [
+                    ('a', 'A'),
+                    ('b', 'B'),
+                ],
+            },
+            'value': ['a', 'b'],
+            'formatted_value': 'A, B',
+        },
+    }
+
+    summary = generate_summary(info)
+    assert summary == '\n'.join([
+        '<b>Test summary: </b>a value',
+        '<b>Test summary 2: </b>All',
+    ])
+
+
+def test_generate_summary_some():
+    info = {
+        'a_param': {
+            'question': {
+                'name': 'a_param',
+                'label': 'Test summary',
+                'type': 'input',
+                'description': 'Test',
+            },
+            'value': 'a value',
+            'formatted_value': 'a value',
+        },
+        'a_param2': {
+            'question': {
+                'name': 'a_param2',
+                'label': 'Test summary 2',
+                'type': 'selectmany',
+                'description': 'Test',
+                'values': [
+                    ('a', 'A'),
+                    ('b', 'B'),
+                ],
+            },
+            'value': ['a'],
+            'formatted_value': 'A',
+        },
+    }
+
+    summary = generate_summary(info)
+    assert summary == '\n'.join([
+        '<b>Test summary: </b>a value',
+        '<b>Test summary 2: </b>A',
+    ])
+
+
+def test_handle_param_inputs_dynamic(mocker, mocked_responses, mocked_product_response):
+    mocked_active_account = mocker.MagicMock()
+    mocked_active_account.is_vendor.return_value = True
+    mocked_config = mocker.MagicMock(active=mocked_active_account)
+    param = {
+        'id': 'product',
+        'type': 'product',
+        'name': 'Product list',
+        'description': 'Select the products you want to include in report',
+    }
+
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+    mocked_responses.add(
+        url='https://localhost/public/v1/products',
+        method='GET',
+        json=[mocked_product_response],
+    )
+
+    result = handle_param_input(mocked_config, client, param)
+
+    assert result['type'] == 'selectmany'
+    assert len(result['values']) == 1
+    assert result['values'][0] == ('PRD-276-377-545', 'My Product (PRD-276-377-545)')
+
+
+def test_handle_param_inputs_unknown():
+
+    with pytest.raises(ClickException) as cv:
+        handle_param_input(None, None, {'type': 'unknown'})
+
+    assert str(cv.value) == 'Unknown parameter type unknown'

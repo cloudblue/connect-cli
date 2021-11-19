@@ -1,8 +1,8 @@
 #  Copyright © 2021 CloudBlue. All rights reserved.
-
+import os
 from click.testing import CliRunner
 
-import os
+from connect.cli.core.config import Config
 
 
 def test_bootstrap_report_command(fs, ccli, mocker, capsys):
@@ -80,6 +80,7 @@ def test_add_report_command(fs, ccli, mocker, capsys):
 
 
 def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_bootstrap = mocker.patch(
         'connect.cli.plugins.project.commands.bootstrap_extension_project',
         side_effect=print('project_dir'),
