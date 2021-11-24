@@ -18,7 +18,7 @@ from connect.client import R
 
 class ObjectValidator(Validator):
 
-    def validate(self, value):
+    def validate(self, value, context=None):
         if not value:
             return
         try:
@@ -42,6 +42,7 @@ def single_line(param):
 
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'input',
         'description': f'{param["description"]}',
         'validators': required_validator(param),
@@ -54,6 +55,7 @@ def object_param(param):
 
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'input',
         'multiline': True,
         'default': '{}',  # noqa
@@ -74,6 +76,7 @@ def date_range(param):
     )
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'daterange',
         'description': description,
         'validators': required_validator(param, [DateTimeRangeValidator()]),
@@ -88,6 +91,7 @@ def date(param):
 
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'date',
         'description': f'{param["description"]}:',
         'validators': required_validator(param, date_validator),
@@ -98,12 +102,14 @@ def marketplace_list(config, client, param):
     marketplaces = client.marketplaces.all()
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]} ({param["id"]})',
         'values': [
             (m['id'], f'{m["name"]} ({m["id"]})')
             for m in marketplaces
         ],
+        'formatting_template': '${label}',
         'validators': required_validator(param),
     }
 
@@ -121,12 +127,14 @@ def hub_list(config, client, param):
 
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]}',
         'values': [
             (h['id'], f'{h["name"]} ({h["id"]})')
             for h in hubs
         ],
+        'formatting_template': '${label}',
         'validators': required_validator(param),
     }
 
@@ -139,12 +147,14 @@ def product_list(config, client, param):
     products = client.products.filter(default_query).order_by('name')
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]}',
         'values': [
             (p['id'], f'{p["name"]} ({p["id"]})')
             for p in products
         ],
+        'formatting_template': '${label}',
         'validators': required_validator(param),
     }
 
@@ -162,10 +172,12 @@ def checkbox(param):
 
     return {
         'name': param['id'],
+        'label': param['name'],
         'type': input_type,
         'description': f'{param["description"]}',
         'values': values,
         'validators': required_validator(param),
+        'formatting_template': '${label}',
     }
 
 
@@ -189,71 +201,101 @@ date_params = {
 
 
 def handle_param_input(config, client, param):
-    questions = []
     if date_params.get(param['type']):
         handler = date_params[param['type']]
-        questions.append(
-            handler(param),
-        )
-    elif dynamic_params.get(param['type']):
+        return handler(param)
+
+    if dynamic_params.get(param['type']):
         handler = dynamic_params[param['type']]
-        questions.append(
-            handler(config.active, client, param),
-        )
-    elif static_params.get(param['type']):
+        return handler(config.active, client, param)
+    if static_params.get(param['type']):
         handler = static_params[param['type']]
-        questions.append(
-            handler(param),
-        )
-    else:
-        raise ClickException(f'Unknown parameter type {param["type"]}')
+        return handler(param)
 
-    return questions
+    raise ClickException(f'Unknown parameter type {param["type"]}')
 
 
-def get_report_inputs(config, client, parameters):
-    parameters_values = {}
-    i = 0
-    for param in parameters:
-        questions = handle_param_input(config, client, param)
+def generate_intro(config, report, output_format):
+    output_formats = {
+        format.id: format.description
+        for format in report.renderers
+    }
+    intro = """Welcome to the Connect CLI Report execution utility.
 
-        answers = dialogus(
-            questions,
-            param['name'],
-            confirm='Run' if i == len(parameters) else 'Next',
-        )
+<b><blue>Account</blue></b>
+    <b>Id:</b> {account_id}
+    <b>Name:</b> {account_name}
+    <b>Type:</b> {account_type}
 
-        if not answers:
-            raise ClickException('Aborted by user input')
+<b><blue>Report</blue></b>
+    <b>Name:</b> {report_name}
+    <b>Output format:</b> {output_format}
+""".format(
+        account_id=config.active.id,
+        account_name=config.active.name,
+        account_type='Vendor' if config.active.is_vendor() else 'Distributor',
+        report_name=report.name,
+        output_format=output_formats[output_format],
+    )
+    return intro
 
-        if param['type'] == 'date_range':
-            if answers[param['id']]['from']:
-                after_str = answers[param['id']]['from']
-                before_str = answers[param['id']]['to']
-                after = convert_to_utc_input(after_str)
-                before = convert_to_utc_input(before_str)
-                parameters_values[param['id']] = {
-                    'after': after,
-                    'before': before,
-                }
-            continue
-        elif (
-            questions[0]['type'] == 'selectmany'
-            and len(questions[0]['values']) == len(answers[param['id']])
-        ):
-            parameters_values[param['id']] = {
-                'all': True,
-                'choices': [],
-            }
-        elif (
-            questions[0]['type'] == 'selectmany'
-            and len(questions[0]['values']) != len(answers[param['id']])
-        ):
-            parameters_values[param['id']] = {
-                'all': False,
-                'choices': answers[param['id']],
-            }
+
+def generate_summary(data):
+    summary = []
+    for info in data.values():
+        label = info['question'].get('label')
+        value = ''
+        if info['question']['type'] in ('selectone', 'selectmany'):
+            if len(info['value']) == len(info['question']['values']):
+                value = 'All'
+            else:
+                value = info['formatted_value']
         else:
-            parameters_values[param['id']] = answers[param['id']]
-        i += 1
+            value = info['formatted_value']
+        summary.append(f'<b>{label}: </b>{value}')
+    return '\n'.join(summary)
+
+
+def get_report_inputs(config, client, report, output_format):
+    parameters = report.get_parameters()
+    if not parameters:
+        return {}
+    parameters_values = {}
+    questions = {}
+    for param in parameters:
+        questions[param['id']] = handle_param_input(config, client, param)
+
+    answers = dialogus(
+        list(questions.values()),
+        f'Generate report {report.name}',
+        intro=generate_intro(config, report, output_format),
+        summary=generate_summary,
+        finish_text='Run',
+        previous_text='Back',
+    )
+
+    if not answers:
+        raise ClickException('Aborted by user input')
+
+    for param in parameters:
+        value = answers[param['id']]
+        if param['type'] == 'date_range':
+            parameters_values[param['id']] = {
+                'after': convert_to_utc_input(value['from']),
+                'before': convert_to_utc_input(value['to']),
+            }
+        elif questions[param['id']]['type'] == 'selectmany':
+            if len(questions[param['id']]['values']) == len(value):
+                parameters_values[param['id']] = {
+                    'all': True,
+                    'choices': [],
+                }
+            else:
+                parameters_values[param['id']] = {
+                    'all': False,
+                    'choices': value,
+                }
+        else:
+            parameters_values[param['id']] = value
+
     return parameters_values

@@ -1,6 +1,6 @@
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import timezone
 from importlib import import_module
 from threading import Lock
 
@@ -11,9 +11,8 @@ from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.client import ClientError
 
 
-def convert_to_utc_input(date_string):
-    date = datetime.strptime(date_string, '%Y-%m-%d')
-    return date.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')
+def convert_to_utc_input(date):
+    return date.astimezone(timezone.utc).isoformat()
 
 
 def get_report_by_id(repo, local_id):

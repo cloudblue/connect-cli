@@ -1,6 +1,5 @@
 #  Copyright © 2021 CloudBlue. All rights reserved.
 
-PROJECT_REPORT_BOILERPLATE_URL = 'https://github.com/cloudblue/connect-report-python-boilerplate.git'
 PROJECT_EXTENSION_BOILERPLATE_URL = 'https://github.com/cloudblue/connect-extension-python-boilerplate.git'
 
 CAPABILITY_METHOD_MAP = {
@@ -40,5 +39,56 @@ REQUESTS_SCHEDULED_ACTION_STATUSES = [
     'revoking',
     'revoked',
 ]
+
+STATUSES = [
+    'draft',
+    'tiers_setup',
+    'pending',
+    'inquiring',
+    'approved',
+    'failed',
+]
+
+REQUESTS_SCHEDULED_ACTION_STATUSES = [
+    'scheduled',
+    'revoking',
+    'revoked',
+]
+
+TIER_ACCOUNT_UPDATE_STATUSES = [
+    'pending',
+    'accepted',
+    'ignored',
+]
+
+LISTING_REQUEST_STATUSES = [
+    'draft',
+    'reviewing',
+    'deploying',
+    'canceled',
+    'completed',
+]
+
+USAGE_FILE_STATUSES = [
+    'draft',
+    'uploading',
+    'uploaded',
+    'invalid',
+    'processing',
+    'processed',
+    'ready',
+    'rejected',
+    'pending',
+    'accepted',
+    'closed',
+]
+
+CHUNK_FILE_STATUSES = [
+    'draft',
+    'ready',
+    'closed',
+    'failed',
+]
+
 
 PYPI_EXTENSION_RUNNER_URL = 'https://pypi.org/pypi/connect-extension-runner/json'

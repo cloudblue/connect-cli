@@ -5,12 +5,12 @@ import os
 import click
 
 from connect.cli.core.config import pass_config
-from connect.cli.plugins.project.extension_helpers import (
+from connect.cli.plugins.project.extension.helpers import (
     bootstrap_extension_project,
     bump_runner_extension_project,
     validate_extension_project,
 )
-from connect.cli.plugins.project.report_helpers import (
+from connect.cli.plugins.project.report.helpers import (
     add_report,
     bootstrap_report_project,
     validate_report_project,
@@ -101,6 +101,7 @@ def grp_project_extension():
 )
 @pass_config
 def cmd_bootstrap_extension_project(config, output_dir):
+    config.validate()
     bootstrap_extension_project(config, output_dir)
 
 

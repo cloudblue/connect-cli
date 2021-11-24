@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from click.testing import CliRunner
 
@@ -62,7 +63,6 @@ def test_no_reports(fs, ccli):
 
     assert result.exit_code == 1
     assert 'Invalid `reports.json`: [] is too short' in result.output
-
 
 
 def test_report_client_exception(fs, ccli):
@@ -170,17 +170,13 @@ def test_input_parameters(mocker, fs, ccli):
 
     mocker.patch(
         'connect.cli.plugins.report.wizard.dialogus',
-        side_effect=[
-            {
-                'status': 'Active',
+        return_value={
+            'status': 'Active',
+            'date': {
+                'from': datetime.utcnow(),
+                'to': datetime.utcnow(),
             },
-            {
-                'date': {
-                    'from': '2021-01-01',
-                    'to': '2021-02-01',
-                },
-            },
-        ],
+        },
     )
     result = runner.invoke(
         ccli,

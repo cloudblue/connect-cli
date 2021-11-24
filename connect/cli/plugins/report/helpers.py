@@ -113,13 +113,15 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         logger=RequestLogger() if config.verbose else None,
     )
 
-    inputs = get_report_inputs(config, client, report.get_parameters())
+    output_format = output_format or report.default_renderer
+
+    inputs = get_report_inputs(config, client, report, output_format)
 
     click.echo(f'Preparing to run report {report_id}. Please wait...\n')
 
     progress = Progress(report.name)
 
-    renderer_def = get_renderer_by_id(report, output_format or report.default_renderer)
+    renderer_def = get_renderer_by_id(report, output_format)
 
     renderer = get_renderer(
         renderer_def.type,
