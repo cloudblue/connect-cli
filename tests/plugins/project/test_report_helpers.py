@@ -3,11 +3,12 @@
 import os
 import json
 import tempfile
+import subprocess
 
 import pytest
 from click import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
-from cookiecutter.exceptions import OutputDirExistsException
+from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 
 from connect.cli.plugins.project.report.helpers import (
     _add_report_to_descriptor,
@@ -75,6 +76,17 @@ def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir, i
         'connect.cli.plugins.project.report.helpers.json.dump',
         return_value=mocked_open.return_value,
     )
+
+    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
+    mock_called_process = mocker.patch(
+        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
+    )
+    mock_called_process.stdout = b"""commit1	refs/tags/21.1
+                  commit2	refs/tags/21.10
+                  commit3	refs/tags/21.11
+                  commit4	refs/tags/21.9"""
+    mock_subprocess_run.return_value = mock_called_process
+
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
         os.mkdir(cookie_dir)
@@ -86,6 +98,7 @@ def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir, i
 
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
+    assert mocked_cookiecutter.call_args_list[0][1]['checkout'] == '21.11'
     assert mocked_cookiecutter.call_count == 1
     assert mocked_dialogus.call_count == 1
 
@@ -117,6 +130,69 @@ def test_bootstrap_direxists_error(fs, mocker):
         bootstrap_report_project(output_dir)
     assert mocked_cookiecutter.call_count == 1
     assert mocked_dialogus.call_count == 1
+
+
+@pytest.mark.parametrize('is_bundle', (True, False))
+@pytest.mark.parametrize('raise_exception', (subprocess.CalledProcessError(1, []), RepositoryCloneFailed()))
+def test_bootstrap_report_project_git_error(fs, mocker, is_bundle, raise_exception):
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.cookiecutter',
+        return_value='project_dir',
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.dialogus',
+        return_value={
+            'project_name': 'foo',
+            'project_slug': 'foobar',
+            'package_name': 'bar',
+            'initial_report_name': 'first',
+            'initial_report_slug': 'initial_report_slug',
+            'initial_report_renderer': 'json',
+            'license': 'super one',
+            'use_github_actions': 'y',
+        },
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    report_json = {
+        'name': 'my super project',
+        'reports': [
+            {
+                'name': 'first repo',
+                'entrypoint': 'reports/first_repo/entrypoint/generate',
+                'renderers': [{'id': 'json'}],
+            },
+        ],
+        'parameters': [],
+    }
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.report.helpers.open',
+        mocker.mock_open(read_data=str(report_json)),
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.report.helpers.json.load',
+        return_value=mocked_open.return_value,
+    )
+    mocked_open = mocker.patch(
+        'connect.cli.plugins.project.report.helpers.json.dump',
+        return_value=mocked_open.return_value,
+    )
+
+    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
+    mock_called_process = mocker.patch(
+        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
+    )
+    mock_called_process.check_returncode.side_effect = raise_exception
+    mock_subprocess_run.return_value = mock_called_process
+
+    with pytest.raises(ClickException):
+        bootstrap_report_project('')
 
 
 def test_validate_report_project(capsys):
