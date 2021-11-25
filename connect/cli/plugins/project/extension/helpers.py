@@ -9,7 +9,7 @@ import toml
 import yaml
 from click.exceptions import ClickException
 from cmr import render
-from cookiecutter.exceptions import OutputDirExistsException
+from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.main import cookiecutter
 from cookiecutter.utils import work_in
 from interrogatio.core.dialog import dialogus
@@ -20,6 +20,7 @@ from connect.cli.plugins.project.extension.constants import (
     CAPABILITY_METHOD_MAP,
     CHUNK_FILE_STATUSES,
     LISTING_REQUEST_STATUSES,
+    PROJECT_EXTENSION_BOILERPLATE_TAG,
     PROJECT_EXTENSION_BOILERPLATE_URL,
     PYPI_EXTENSION_RUNNER_URL,
     REQUESTS_SCHEDULED_ACTION_STATUSES,
@@ -27,6 +28,7 @@ from connect.cli.plugins.project.extension.constants import (
     TIER_ACCOUNT_UPDATE_STATUSES,
     USAGE_FILE_STATUSES,
 )
+from connect.cli.plugins.project.git import get_highest_version, GitException
 from connect.cli.plugins.project.cookiehelpers import (
     monkey_patch,
     purge_cookiecutters_dir,
@@ -72,12 +74,15 @@ def bootstrap_extension_project(config, data_dir: str):
     cookiecutter_ctx.update(answers)
 
     try:
+        checkout_tag, _ = PROJECT_EXTENSION_BOILERPLATE_TAG or get_highest_version(PROJECT_EXTENSION_BOILERPLATE_URL)
+
         if is_bundle():
             # Monkey patch cookiecutter since post hooks fails in a exe bundle.
             monkey_patch()
             with work_in(data_dir):
                 project_dir = cookiecutter(
                     PROJECT_EXTENSION_BOILERPLATE_URL,
+                    checkout=checkout_tag,
                     no_input=True,
                     extra_context=cookiecutter_ctx,
                     output_dir=data_dir,
@@ -86,12 +91,17 @@ def bootstrap_extension_project(config, data_dir: str):
         else:
             project_dir = cookiecutter(
                 PROJECT_EXTENSION_BOILERPLATE_URL,
+                checkout=checkout_tag,
                 no_input=True,
                 extra_context=cookiecutter_ctx,
                 output_dir=data_dir,
             )
         click.secho(f'\nExtension Project location: {project_dir}\n', fg='blue')
         click.echo(render(open(f'{project_dir}/HOWTO.md', 'r').read()))
+    except GitException as error:
+        raise ClickException(f'\nAn error occured on tags retrieval: {error}')
+    except RepositoryCloneFailed as error:
+        raise ClickException(f'\nAn error occured while cloning the project: {error}')
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
         raise ClickException(

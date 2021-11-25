@@ -4,13 +4,14 @@ import os
 import tempfile
 import json
 from json.decoder import JSONDecodeError
+import subprocess
 
 import pytest
 import toml
 import yaml
 from click import ClickException
 from cookiecutter.config import DEFAULT_CONFIG
-from cookiecutter.exceptions import OutputDirExistsException
+from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.utils import work_in
 from pkg_resources import EntryPoint
 
@@ -78,7 +79,7 @@ def test_bootstrap_extension_project_vendor(
             ],
         },
     }
-    mocked_open = mocker.patch(
+    mocker.patch(
         'connect.cli.plugins.project.extension.helpers.open',
         mocker.mock_open(read_data=str(extension_json)),
     )
@@ -90,6 +91,16 @@ def test_bootstrap_extension_project_vendor(
         'connect.cli.plugins.project.extension.helpers.json.dump',
         return_value=mocked_open.return_value,
     )
+
+    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
+    mock_called_process = mocker.patch(
+        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
+    )
+    mock_called_process.stdout = b"""commit1	refs/tags/21.1
+                  commit2	refs/tags/21.10
+                  commit3	refs/tags/21.11
+                  commit4	refs/tags/21.9"""
+    mock_subprocess_run.return_value = mock_called_process
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
         os.mkdir(cookie_dir)
@@ -103,6 +114,58 @@ def test_bootstrap_extension_project_vendor(
     assert 'project_dir' in captured.out
     assert mocked_cookiecutter.call_count == 1
     assert mocked_dialogus.call_count == 1
+    assert mocked_cookiecutter.call_args_list[0][1]['checkout'] == '21.11'
+
+
+@pytest.mark.parametrize('is_bundle', (True, False))
+@pytest.mark.parametrize('raise_exception', (subprocess.CalledProcessError(1, []), RepositoryCloneFailed()))
+def test_bootstrap_extension_project_vendor_with_error(
+    mocker,
+    is_bundle,
+    config_vendor,
+    raise_exception,
+):
+    config_vendor.load(config_dir='/tmp')
+    mocker.patch(
+        'connect.cli.plugins.project.extension.helpers.cookiecutter',
+        return_value='project_dir',
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.helpers.dialogus',
+        return_value={
+            'project_name': 'foo', 'description': 'desc',
+            'package_name': 'bar', 'author': 'connect',
+            'version': '1.0', 'license': 'Apache',
+            'use_github_actions': 'y', 'use_asyncio': 'n',
+            'include_schedules_example': 'y', 'include_variables_example': 'y',
+            'api_key': 'xxx', 'environment_id': 'ENV-xxx',
+            'server_address': 'api.cnct.info',
+            'asset_processing': [],
+            'asset_validation': [],
+            'tierconfig': [],
+            'product': [],
+            'tieraccount': [],
+            'listing_request': [],
+            'usage_files': [],
+            'tierconfig_validation': [],
+        },
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.helpers.open',
+        mocker.mock_open(read_data='#Project'),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.helpers.is_bundle',
+        return_value=is_bundle,
+    )
+    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
+    mock_called_process = mocker.patch(
+        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
+    )
+    mock_called_process.check_returncode.side_effect = raise_exception
+    mock_subprocess_run.return_value = mock_called_process
+    with pytest.raises(ClickException):
+        bootstrap_extension_project(config_vendor, '')
 
 
 @pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))

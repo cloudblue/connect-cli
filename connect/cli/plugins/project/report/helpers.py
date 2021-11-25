@@ -14,7 +14,7 @@ import openpyxl
 from click import ClickException
 from cookiecutter.main import cookiecutter
 from cookiecutter.config import get_user_config
-from cookiecutter.exceptions import OutputDirExistsException
+from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.repository import determine_repo_dir
 from cookiecutter.utils import rmtree, work_in
@@ -27,7 +27,9 @@ from connect.cli.plugins.project.cookiehelpers import (
     remove_github_actions,
     slugify,
 )
+from connect.cli.plugins.project.git import get_highest_version, GitException
 from connect.cli.plugins.project.report.constants import (
+    PROJECT_REPORT_BOILERPLATE_TAG,
     PROJECT_REPORT_BOILERPLATE_URL,
 )
 from connect.cli.plugins.project.report.wizard import (
@@ -61,12 +63,15 @@ def bootstrap_report_project(data_dir: str):
         raise ClickException('Aborted by user input')
 
     try:
+        checkout_tag, _ = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)
+
         if is_bundle():
             # Monkey patch cookiecutter since post hooks fails in a exe bundle.
             monkey_patch()
             with work_in(data_dir):
                 project_dir = cookiecutter(
                     PROJECT_REPORT_BOILERPLATE_URL,
+                    checkout=checkout_tag,
                     no_input=True,
                     extra_context=answers,
                     output_dir=data_dir,
@@ -75,11 +80,16 @@ def bootstrap_report_project(data_dir: str):
         else:
             project_dir = cookiecutter(
                 PROJECT_REPORT_BOILERPLATE_URL,
+                checkout=checkout_tag,
                 no_input=True,
                 extra_context=answers,
                 output_dir=data_dir,
             )
         click.secho(f'\nReports Project location: {project_dir}', fg='blue')
+    except GitException as error:
+        raise ClickException(f'\nAn error occured on tags retrieval: {error}')
+    except RepositoryCloneFailed as error:
+        raise ClickException(f'\nAn error occured while cloning the project: {error}')
     except OutputDirExistsException as error:
         project_path = str(error).split('"')[1]
         raise ClickException(

@@ -1,6 +1,9 @@
 #  Copyright © 2021 CloudBlue. All rights reserved.
+import os
+
 
 PROJECT_EXTENSION_BOILERPLATE_URL = 'https://github.com/cloudblue/connect-extension-python-boilerplate.git'
+PROJECT_EXTENSION_BOILERPLATE_TAG = os.environ.get('PROJECT_EXTENSION_BOILERPLATE_TAG')
 
 CAPABILITY_METHOD_MAP = {
     'asset_purchase_request_processing': 'process_asset_purchase_request',
