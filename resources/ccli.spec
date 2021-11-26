@@ -14,7 +14,7 @@ datas += collect_data_files('cairosvg')
 datas += collect_data_files('connect.reports')
 datas += collect_data_files('interrogatio')
 datas += collect_data_files('pyphen')
-datas += copy_metadata('connect-cli')
+datas += copy_metadata('connect-cli', recursive=True)
 
 a = Analysis(
     ['../connect/cli/ccli.py'],

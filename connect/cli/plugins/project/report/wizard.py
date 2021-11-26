@@ -46,6 +46,14 @@ BOOTSTRAP_QUESTIONS = [  # pragma: no cover
         ),
     },
     {
+        'name': 'author',
+        'label': 'Project: author',
+        'type': 'input',
+        'description': 'Please enter the author for this project:',
+        'default': 'Globex Corporation',
+        'validators': (RequiredValidator(message='Please, provide an author name.'),),
+    },
+    {
         'name': 'description',
         'label': 'Project: description',
         'type': 'input',

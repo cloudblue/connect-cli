@@ -101,6 +101,7 @@ def test_bootstrap_extension_project_vendor(
                   commit3	refs/tags/21.11
                   commit4	refs/tags/21.9"""
     mock_subprocess_run.return_value = mock_called_process
+    mocker.patch('connect.cli.plugins.project.git.get_version', return_value='21.2')
     cookie_dir = f'{fs.root_path}/.cookiecutters'
     if exists_cookiecutter_dir:
         os.mkdir(cookie_dir)

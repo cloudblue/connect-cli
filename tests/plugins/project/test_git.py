@@ -1,11 +1,10 @@
-from typing import OrderedDict
-from connect.cli.plugins.project import git
-
+import subprocess
 from collections import OrderedDict
 
 import pytest
 
-import subprocess
+from connect.cli.plugins.project import git
+
 
 @pytest.mark.parametrize(
     ('str', 'result'),
@@ -65,7 +64,7 @@ def test_list_tags(mocker):
     mock_subprocess_run.return_value = mock_subprocess_called_process_error
 
     tags = git._list_tags('dummy.repo')
-    assert tags  == {'21.1': 'commit1', '21.10': 'commit2', '21.11': 'commit3', '21.9': 'commit4'}
+    assert tags == {'21.1': 'commit1', '21.10': 'commit2', '21.11': 'commit3', '21.9': 'commit4'}
 
 
 def test_list_tags_error(mocker):
@@ -79,36 +78,39 @@ def test_list_tags_error(mocker):
     with pytest.raises(git.GitException):
         git._list_tags('dummy.repo')
 
+
 @pytest.mark.parametrize(
     ('tags', 'expected'),
     (
         (
             {'v21.1': 'cmt1', 'v21.10': 'cmt2', 'v21.11': 'cmt3', 'v21.9': 'cmt4'},
-            OrderedDict({'v21.1': 'cmt1', 'v21.9': 'cmt4','v21.10': 'cmt2', 'v21.11': 'cmt3'})
+            OrderedDict({'v21.1': 'cmt1', 'v21.9': 'cmt4', 'v21.10': 'cmt2', 'v21.11': 'cmt3'}),
         ),
         (
             {'21.1': 'cmt1', '21.10': 'cmt2', '21.11': 'cmt3', '21.9': 'cmt4'},
-            OrderedDict({'21.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2', '21.11': 'cmt3', })
+            OrderedDict({'21.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2', '21.11': 'cmt3'}),
         ),
         (
             {'21.1': 'cmt1', '21.10': 'cmt2', '21.9': 'cmt4', '23.0.1a2': 'cmt3'},
-            OrderedDict({ '21.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2', '23.0.1a2': 'cmt3'})
+            OrderedDict({'21.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2'}),
+        ),
+        (
+            {'21.1': 'cmt1', '21.10': 'cmt2', '21.9': 'cmt4', '21.0.1a2': 'cmt3'},
+            OrderedDict({'21.0.1a2': 'cmt3', '21.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2'}),
         ),
         (
             {'01.1': 'cmt1', '21.10': 'cmt2', '21.11': 'cmt3', '21.9': 'cmt4'},
-            OrderedDict({'01.1': 'cmt1', '21.9': 'cmt4', '21.10': 'cmt2', '21.11': 'cmt3'})
+            OrderedDict({'21.9': 'cmt4', '21.10': 'cmt2', '21.11': 'cmt3'}),
         ),
         (
             {'v21.10not-a-tag': 'cmt5', '01.1': 'cmt1', '21.11': 'cmt3', '21.10': 'cmt2', 'v21.11': 'cmt4'},
             OrderedDict(
                 {
-                    'v21.10not-a-tag': 'cmt5',
-                    '01.1': 'cmt1',
                     '21.10': 'cmt2',
                     '21.11': 'cmt3',
                     'v21.11': 'cmt4',
-                }
-            )
+                },
+            ),
         ),
         (
             {
@@ -124,69 +126,78 @@ def test_list_tags_error(mocker):
             },
             OrderedDict(
                 {
-                    '22a2': 'cmt4',
-                    'not-a-version-tag': 'cmt1',
-                    'not-a-version-tag2': 'cmt2',
-                    'not-a-version-tag3': 'cmt3',
                     '21.1': 'cmt5',
                     '21.9': 'cmt6',
                     '21.10a1': 'cmt7alpha',
                     '21.10': 'cmt7',
-                    '23.0.1a2': 'cmt8',
-                }
-            )
+                },
+            ),
         ),
-        ({},OrderedDict()),
+        ({}, OrderedDict()),
     ),
 )
-def test_sort_tags(tags, expected):
-    sorted_tags = git._sort_tags(tags)
+def test_sort_and_filter_tags(tags, expected):
+    sorted_tags = git._sort_and_filter_tags(tags, '21')
     assert sorted_tags == expected
 
 
 @pytest.mark.parametrize(
-    ('tags', 'expected'),
+    ('tags', 'cli_version', 'expected'),
     (
         (
             b"""commit1	 refs/tags/v21.1
                 commit2	 refs/tags/v21.10
                 commit3	 refs/tags/v21.11
                 commit4	 refs/tags/v21.9""",
-            ('v21.11', 'commit3')
+            '21.4',
+            ('v21.11', 'commit3'),
         ),
         (
             b"""commit1	 refs/tags/21.1
                 commit2	 refs/tags/21.10
                 commit3	 refs/tags/21.11
                 commit4	 refs/tags/21.9""",
-            ('21.11', 'commit3')
+            '21.7',
+            ('21.11', 'commit3'),
         ),
         (
             b"""commit4	 refs/tags/22.0
                 commit1	 refs/tags/21.3
                 commit2	 refs/tags/21.2
                 commit3	 refs/tags/21.1""",
-            ('22.0', 'commit4')
+            '22.1',
+            ('22.0', 'commit4'),
+        ),
+        (
+            b"""commit4	 refs/tags/22.0
+                commit1	 refs/tags/21.3
+                commit2	 refs/tags/21.2
+                commit3	 refs/tags/21.1""",
+            '21.1',
+            ('21.3', 'commit1'),
         ),
         (
             b"""commit4	 refs/tags/22.0
                 commit1	 refs/tags/21.3
                 commit2	 refs/tags/21.2""",
-            ('22.0', 'commit4')
+            '22.4',
+            ('22.0', 'commit4'),
         ),
         (
             b"""commit4	 refs/tags/01.0
                 commit1	 refs/tags/0.0""",
-            ('01.0', 'commit4')
+            '22.1',
+            (None, None),
         ),
-        (b"", (None, None)),
+        (b"", '21.1', (None, None)),
     ),
 )
-def test_get_highest_version(mocker, tags, expected):
+def test_get_highest_version(mocker, tags, cli_version, expected):
     mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
     mock_subprocess_called_process_error = mocker.patch(
         'connect.cli.plugins.project.git.subprocess.CalledProcessError',
     )
     mock_subprocess_called_process_error.stdout = tags
     mock_subprocess_run.return_value = mock_subprocess_called_process_error
+    mocker.patch('connect.cli.plugins.project.git.get_version', return_value=cli_version)
     assert expected == git.get_highest_version('dummy.repo')

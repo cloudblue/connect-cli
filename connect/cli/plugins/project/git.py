@@ -3,6 +3,8 @@ import subprocess
 from distutils.version import StrictVersion
 from collections import OrderedDict
 
+from connect.cli import get_version
+
 
 class GitException(Exception):
     pass
@@ -46,9 +48,15 @@ class ConnectVersionTag(StrictVersion):
         return super()._cmp(other)
 
 
-def _sort_tags(tags):
+def _sort_and_filter_tags(tags, desired_major):
     sorted_tags = OrderedDict()
     for tag in sorted(tags.keys(), key=ConnectVersionTag):
+        match = ConnectVersionTag.version_re.match(tag)
+        if not match:
+            continue
+        major = match.group(1)
+        if major != desired_major:
+            continue
         sorted_tags[tag] = tags[tag]
 
     return sorted_tags
@@ -77,5 +85,6 @@ def _list_tags(repo_url):
 
 def get_highest_version(repo_url):
     tags = _list_tags(repo_url)
-    tags = _sort_tags(tags)
+    desired_major, _ = get_version().split('.', 1)
+    tags = _sort_and_filter_tags(tags, desired_major)
     return tags.popitem() if tags else (None, None)
