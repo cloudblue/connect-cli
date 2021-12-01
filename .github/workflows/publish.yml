@@ -66,22 +66,13 @@ jobs:
         tags: cloudblueconnect/connect-cli:${{ steps.tag.outputs.result }},cloudblueconnect/connect-cli:latest
     - name: Docker image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
-    - name: push Docker image README to Dockerhub
-      uses: christian-korneck/update-container-description-action@v1
-      env:
-        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
-      with:
-        destination_container_repo: cloudblueconnect/connect-cli
-        provider: dockerhub
-        short_description: 'Connect CLI Docker Image'
-        readme_file: 'resources/README.md'
     - name: Update Homebrew repo
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: Update Homebrew TAP
         repo: cloudblue/homebrew-connect
         token: ${{ secrets.GITHUB_HOMEBREW_REPO_TOKEN }}
+        info: '{"sleep": "300"}'
     - name: Build linux distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
