@@ -7,11 +7,12 @@ import sys
 
 import click
 
+from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.play.context import Context
 
 
-@click.group(name='play', short_help='Play connect scripts.')
+@group(name='play', short_help='Play connect scripts.')
 def grp_play():
     pass
 
@@ -38,7 +39,6 @@ def setup_script_command(cls):
     @pass_config
     @pass_arg(cls)
     def cmd_play_custom(script_class, config, **kwargs):
-        config.validate()
 
         Context.context_file_name = PlayOptions.context_file
         ctx = Context.create(**kwargs)

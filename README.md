@@ -1,13 +1,12 @@
 # CloudBlue Connect Command Line Interface
 
-![pyversions](https://img.shields.io/pypi/pyversions/connect-cli.svg) [![PyPi Status](https://img.shields.io/pypi/v/connect-cli.svg)](https://pypi.org/project/connect-cli/) [![Build Status](https://travis-ci.org/cloudblue/connect-cli.svg?branch=master)](https://travis-ci.org/cloudblue/connect-cli) [![codecov](https://codecov.io/gh/cloudblue/connect-cli/branch/master/graph/badge.svg)](https://codecov.io/gh/cloudblue/connect-cli) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=connect-cli&metric=alert_status)](https://sonarcloud.io/dashboard?id=connect-cli)
-
+![pyversions](https://img.shields.io/pypi/pyversions/connect-cli.svg) [![PyPi Status](https://img.shields.io/pypi/v/connect-cli.svg)](https://pypi.org/project/connect-cli/) ![PyPI - Downloads](https://img.shields.io/pypi/dm/connect-cli) ![Docker Pulls](https://img.shields.io/docker/pulls/cloudblueconnect/connect-cli) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/cloudblue/connect-cli/Build%20Connect%20Command%20Line%20Client) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=connect-cli&metric=coverage)](https://sonarcloud.io/summary/new_code?id=connect-cli) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=connect-cli&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=connect-cli)
 
 ## Introduction
 
 The CloudBlue Connect Command Line Interface (CLI) is an extensible unified tool to perform various automation scenarios. With just one tool, you can control multiple Connect modules from the command line and automate them through scripts.
 
-Since it is extensible, user can write your own plugins to extend its functionalities.
+Since it is extensible, users can write their own plugins to extend its functionalities.
 
 
 ## Install
@@ -26,11 +25,34 @@ Please refers to the platform-specific instructions on how to install these depe
 
 ### Using PIP
 
-To use `connect-cli` you need a system with python 3.6 or later installed.
+To use `connect-cli` you need a system with python 3.8 or later installed.
 
 ```sh
     $ pip install --upgrade connect-cli
-```    
+```
+
+### Using Docker
+
+To use the Docker image of `connect-cli`:
+
+```sh
+    $ docker run -it -v $HOME/.ccli:/home/connect/.ccli cloudblueconnect/connect-cli ccli
+```
+
+Please refer to the [`connect-cli` docker image documentation](https://hub.docker.com/r/cloudblueconnect/connect-cli) for more information.
+
+
+### Using Homebrew (Mac OS X only)
+
+To install `connect-cli` with homebrew run:
+
+```sh
+    $ brew update
+    $ brew tap cloudblue/connect
+    $ brew install cloudblue/connect/connect-cli
+```
+
+
 
 ### Binary distributions
 

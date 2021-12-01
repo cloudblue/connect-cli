@@ -113,7 +113,11 @@ class Config(object):
 
     def validate(self):
         if not (self._accounts and self._active):
-            raise ClickException('connect-cli is not properly configured.')
+            raise ClickException(
+                'connect-cli is not properly configured.\n'
+                'You must configure at least a Connect account. To do so please execute:\n\n'
+                'ccli account add API_KEY\n\n',
+            )
 
 
 pass_config = make_pass_decorator(Config, ensure=True)
