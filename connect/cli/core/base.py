@@ -8,6 +8,30 @@ from connect.cli.core.config import pass_config
 from connect.cli.core.utils import check_for_updates
 
 
+class CCliCommand(click.Command):
+    def invoke(self, ctx):
+        ctx.obj.validate()
+        return super().invoke(ctx)
+
+
+class CCliGroup(click.Group):
+    def command(self, *args, **kwargs):
+        from click.decorators import command
+        kwargs['cls'] = CCliCommand
+
+        def decorator(f):
+            cmd = command(*args, **kwargs)(f)
+            self.add_command(cmd)
+            return cmd
+
+        return decorator
+
+
+def group(name=None, **attrs):
+    attrs.setdefault("cls", CCliGroup)
+    return click.command(name, **attrs)
+
+
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -41,7 +65,8 @@ def print_version(ctx, param, value):
     help='Write verbose messages, including HTTP session',
 )
 @pass_config
-def cli(config, config_dir, silent, verbose):
+@click.pass_context
+def cli(ctx, config, config_dir, silent, verbose):
     """CloudBlue Connect Command Line Interface"""
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)

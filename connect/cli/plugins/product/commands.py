@@ -4,8 +4,10 @@
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import click
+from click.exceptions import ClickException
 from cmr import render
 
+from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.core.utils import continue_or_quit
 from connect.cli.plugins.exceptions import SheetNotFoundError
@@ -25,7 +27,7 @@ from connect.cli.plugins.product.sync import (
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
-@click.group(name='product', short_help='Manage product definitions.')
+@group(name='product', short_help='Manage product definitions.')
 def grp_product():
     pass  # pragma: no cover
 
@@ -115,7 +117,6 @@ def cmd_list_products(config, query, page_size, always_continue):
 )
 @pass_config
 def cmd_dump_products(config, product_id, output_file, output_path):
-    config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
     if not config.silent:
@@ -157,7 +158,6 @@ def cmd_dump_products(config, product_id, output_file, output_path):
 )
 @pass_config
 def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
-    config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
 
@@ -365,27 +365,27 @@ def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
 )
 @pass_config
 def cmd_clone_products(config, source_product_id, source_account, destination_account, name, yes):
+    if not config.active.is_vendor():
+        raise ClickException(
+            'The clone command is only available for vendor accounts.',
+        )
     if name and len(name) > 32:
         click.echo(
             click.style(
-                f'New product name can not exceed 32 chracters, provided as name{name}',
+                f'New product name can not exceed 32 chracters, provided as name {name}',
                 fg='red',
             ),
         )
         exit(-1)
     if destination_account:
         config.activate(destination_account)
-        config.validate()
     else:
         destination_account = config.active.id
 
     if source_account:
         config.activate(source_account)
-        config.validate()
     else:
         source_account = config.active.id
-
-    config.validate()
 
     acc_id = config.active.id
     acc_name = config.active.name

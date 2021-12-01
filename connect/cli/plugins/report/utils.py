@@ -1,5 +1,6 @@
 import json
 import sys
+import traceback
 from datetime import timezone
 from importlib import import_module
 from threading import Lock
@@ -57,7 +58,7 @@ def handle_report_exception():
                 'filename': tb.tb_frame.f_code.co_filename,
                 'name': tb.tb_frame.f_code.co_name,
                 'lineno': tb.tb_lineno,
-                'info': str(tb),
+                'info': '\n'.join(traceback.format_tb(tb)),
             },
         )
         tb = tb.tb_next

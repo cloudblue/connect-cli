@@ -3,6 +3,7 @@ from datetime import datetime
 
 import click
 
+from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.report.helpers import (
     execute_report,
@@ -16,7 +17,7 @@ DEFAULT_REPORT_DIR = os.path.normpath(
 )
 
 
-@click.group(name='report', short_help='Reports execution and development.')
+@group(name='report', short_help='Reports execution and development.')
 def grp_report():
     pass  # pragma: no cover
 

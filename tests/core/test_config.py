@@ -159,7 +159,11 @@ def test_config_validate():
     with pytest.raises(click.ClickException) as ex:
         config.validate()
 
-    assert ex.value.message == 'connect-cli is not properly configured.'
+    assert ex.value.message == (
+        'connect-cli is not properly configured.\n'
+        'You must configure at least a Connect account. To do so please execute:\n\n'
+        'ccli account add API_KEY\n\n'
+    )
 
     config.add_account(
         'VA-000',

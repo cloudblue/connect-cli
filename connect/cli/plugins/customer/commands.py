@@ -7,13 +7,14 @@ import warnings
 import click
 
 from connect.client import ConnectClient, RequestLogger
+from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.customer.export import dump_customers
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
 from connect.cli.plugins.customer.utils import print_sync_result
 
 
-@click.group(name='customer', short_help='Export/synchronize customers.')
+@group(name='customer', short_help='Export/synchronize customers.')
 def grp_customer():
     pass  # pragma: no cover
 
@@ -38,7 +39,6 @@ def grp_customer():
 )
 @pass_config
 def cmd_export_customers(config, output_path, output_file):
-    config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
     if not config.silent:
@@ -77,7 +77,6 @@ def cmd_export_customers(config, output_path, output_file):
 )
 @pass_config
 def cmd_sync_customers(config, input_file, yes):
-    config.validate()
     acc_id = config.active.id
     acc_name = config.active.name
 
