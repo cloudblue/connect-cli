@@ -72,7 +72,7 @@ jobs:
         workflow: Update Homebrew TAP
         repo: cloudblue/homebrew-connect
         token: ${{ secrets.GITHUB_HOMEBREW_REPO_TOKEN }}
-        info: '{"sleep": "300"}'
+        inputs: '{"sleep": "300"}'
     - name: Build linux distro
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
