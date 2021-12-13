@@ -13,8 +13,8 @@ Since it is extensible, users can write their own plugins to extend its function
 
 ### Prerequisites
 
-`connect-cli` depends on [Cairo](https://www.cairographics.org/), [Pango](https://pango.gnome.org/) and 
-[GDK-PixBuf](https://developer.gnome.org/gdk-pixbuf/stable/).
+`connect-cli` depends on [Git](https://git-scm.com/), [Cairo](https://www.cairographics.org/),
+[Pango](https://pango.gnome.org/) and [GDK-PixBuf](https://developer.gnome.org/gdk-pixbuf/stable/).
 
 Please refers to the platform-specific instructions on how to install these dependecies:
 
@@ -42,7 +42,7 @@ To use the Docker image of `connect-cli`:
 Please refer to the [`connect-cli` docker image documentation](https://hub.docker.com/r/cloudblueconnect/connect-cli) for more information.
 
 
-### Using Homebrew (Mac OS X only)
+### Using Homebrew on Mac OS X
 
 To install `connect-cli` with homebrew run:
 
@@ -52,36 +52,11 @@ To install `connect-cli` with homebrew run:
     $ brew install cloudblue/connect/connect-cli
 ```
 
+### Using the installer on Windows
 
+An installer package is available for Windows 10 or newer.
+You can download its zip file from the [Github Releases](https://github.com/cloudblue/connect-cli/releases) page.
 
-### Binary distributions
-
-A single executable binary distribution is available for windows, linux and mac os x.
-You can it from the [Github Releases](https://github.com/cloudblue/connect-cli/releases) page.
-
-To install under linux:
-
-```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/xx.yy/connect-cli_xx.yy_linux_amd64.tar.gz
-    $ tar xvfz connect-cli_xx.yy_linux_amd64.tar.gz
-    $ sudo cp dist/ccli /usr/local/bin/ccli
-```
-
-To install under Mac OS X:
-
-```
-    $ curl -O -J https://github.com/cloudblue/connect-cli/releases/download/xx.yy/connect-cli_xx.yy_osx_amd64.tar.gz
-    $ tar xvfz connect-cli_xx.yy_osx_amd64.tar.gz
-    $ sudo cp dist/ccli /usr/local/bin/ccli
-```
-
-> If your user is not a sudoer, you can copy the `ccli` executable from the dist directory to a directory of your choice
-> that is listed in the `PATH` variable.
-
-
-To install under Windows
-
-Download the windows single executable zipfile from [Github Releases](https://github.com/cloudblue/connect-cli/releases/download/xx.yy/connect-cli_xx.yy_windows_amd64.zip), extract it and place it in a folder that is included in your `PATH` system variable.
 
 
 ## Usage

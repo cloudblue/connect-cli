@@ -7,26 +7,17 @@ import inspect
 import importlib
 import tempfile
 import shutil
-from pathlib import Path
 
 import click
-import openpyxl
 from click import ClickException
 from cookiecutter.main import cookiecutter
 from cookiecutter.config import get_user_config
 from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.repository import determine_repo_dir
-from cookiecutter.utils import rmtree, work_in
 from interrogatio.core.dialog import dialogus
 
-from connect.cli.core.utils import is_bundle
-from connect.cli.plugins.project.cookiehelpers import (
-    monkey_patch,
-    purge_cookiecutters_dir,
-    remove_github_actions,
-    slugify,
-)
+from connect.cli.plugins.project.cookiehelpers import force_delete, purge_cookiecutters_dir
 from connect.cli.plugins.project.git import get_highest_version, GitException
 from connect.cli.plugins.project.report.constants import (
     PROJECT_REPORT_BOILERPLATE_TAG,
@@ -65,26 +56,13 @@ def bootstrap_report_project(data_dir: str):
     try:
         checkout_tag, _ = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)
 
-        if is_bundle():
-            # Monkey patch cookiecutter since post hooks fails in a exe bundle.
-            monkey_patch()
-            with work_in(data_dir):
-                project_dir = cookiecutter(
-                    PROJECT_REPORT_BOILERPLATE_URL,
-                    checkout=checkout_tag,
-                    no_input=True,
-                    extra_context=answers,
-                    output_dir=data_dir,
-                )
-                _post_gen_hook(answers, project_dir)
-        else:
-            project_dir = cookiecutter(
-                PROJECT_REPORT_BOILERPLATE_URL,
-                checkout=checkout_tag,
-                no_input=True,
-                extra_context=answers,
-                output_dir=data_dir,
-            )
+        project_dir = cookiecutter(
+            PROJECT_REPORT_BOILERPLATE_URL,
+            checkout=checkout_tag,
+            no_input=True,
+            extra_context=answers,
+            output_dir=data_dir,
+        )
         click.secho(f'\nReports Project location: {project_dir}', fg='blue')
     except GitException as error:
         raise ClickException(f'\nAn error occured on tags retrieval: {error}')
@@ -169,7 +147,7 @@ def _custom_cookiecutter(template, output_dir, project_slug, package_slug):
 
     repo_dir = os.path.join(config_dict['cookiecutters_dir'], template_name)
     if os.path.isdir(repo_dir):
-        rmtree(repo_dir)
+        shutil.rmtree(repo_dir, onerror=force_delete)
 
     repo_dir, _ = determine_repo_dir(
         template=template,
@@ -214,25 +192,13 @@ def _custom_cookiecutter(template, output_dir, project_slug, package_slug):
 
 
 def _generate_files(context, output_dir, repo_dir):
-    if is_bundle():
-        monkey_patch()
-        with work_in(output_dir):
-            result = generate_files(
-                repo_dir=repo_dir,
-                context=context,
-                overwrite_if_exists=False,
-                skip_if_file_exists=False,
-                output_dir=output_dir,
-            )
-            _create_renderer_templates(context['cookiecutter'])
-    else:
-        result = generate_files(
-            repo_dir=repo_dir,
-            context=context,
-            overwrite_if_exists=False,
-            skip_if_file_exists=False,
-            output_dir=output_dir,
-        )
+    result = generate_files(
+        repo_dir=repo_dir,
+        context=context,
+        overwrite_if_exists=False,
+        skip_if_file_exists=False,
+        output_dir=output_dir,
+    )
     return result
 
 
@@ -290,35 +256,3 @@ def _entrypoint_validations(project_dir, entrypoint, report_spec):
             '\n>> def generate(client=None, input_data=None, progress_callback=None, '
             'renderer_type=None, extra_context_callback=None) <<',
         )
-
-
-def _post_gen_hook(answers, project_dir):
-    if answers['use_github_actions'] == 'n':
-        remove_github_actions(project_dir)
-
-    _create_renderer_templates(answers)
-
-
-def _create_renderer_templates(answers):
-    project_slug = slugify(answers['project_slug'])
-    package_slug = slugify(answers['package_name'])
-    initial_report_slug = slugify(answers['initial_report_slug'])
-
-    # XLSX
-    xlsx_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xlsx'
-    os.makedirs(xlsx_template_dir)
-    wb = openpyxl.Workbook()
-    wb.save(f'{xlsx_template_dir}/template.xlsx')
-
-    # PDF
-    pdf_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/pdf'
-    os.makedirs(pdf_template_dir)
-    Path(f'{pdf_template_dir}/template.css').touch()
-    Path(f'{pdf_template_dir}/template.html.j2').touch()
-
-    # JINJA2
-    jinja2_template_dir = f'{project_slug}/{package_slug}/{initial_report_slug}/templates/xml'
-    os.makedirs(jinja2_template_dir)
-    open(f'{jinja2_template_dir}/template.xml.j2', 'w').write(
-        'Please rename this file with a proper extension file.\n',
-    )
