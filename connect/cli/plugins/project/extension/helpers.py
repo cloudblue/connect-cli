@@ -11,10 +11,8 @@ from click.exceptions import ClickException
 from cmr import render
 from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.main import cookiecutter
-from cookiecutter.utils import work_in
 from interrogatio.core.dialog import dialogus
 
-from connect.cli.core.utils import is_bundle
 from connect.cli.plugins.project.extension.constants import (
     CAPABILITY_ALLOWED_STATUSES,
     CAPABILITY_METHOD_MAP,
@@ -24,17 +22,11 @@ from connect.cli.plugins.project.extension.constants import (
     PROJECT_EXTENSION_BOILERPLATE_URL,
     PYPI_EXTENSION_RUNNER_URL,
     REQUESTS_SCHEDULED_ACTION_STATUSES,
-    STATUSES,
     TIER_ACCOUNT_UPDATE_STATUSES,
     USAGE_FILE_STATUSES,
 )
 from connect.cli.plugins.project.git import get_highest_version, GitException
-from connect.cli.plugins.project.cookiehelpers import (
-    monkey_patch,
-    purge_cookiecutters_dir,
-    remove_github_actions,
-    slugify,
-)
+from connect.cli.plugins.project.cookiehelpers import purge_cookiecutters_dir
 from connect.cli.plugins.project.extension.wizard import (
     EXTENSION_BOOTSTRAP_WIZARD_INTRO,
     get_questions,
@@ -76,26 +68,13 @@ def bootstrap_extension_project(config, data_dir: str):
     try:
         checkout_tag, _ = PROJECT_EXTENSION_BOILERPLATE_TAG or get_highest_version(PROJECT_EXTENSION_BOILERPLATE_URL)
 
-        if is_bundle():
-            # Monkey patch cookiecutter since post hooks fails in a exe bundle.
-            monkey_patch()
-            with work_in(data_dir):
-                project_dir = cookiecutter(
-                    PROJECT_EXTENSION_BOILERPLATE_URL,
-                    checkout=checkout_tag,
-                    no_input=True,
-                    extra_context=cookiecutter_ctx,
-                    output_dir=data_dir,
-                )
-                _post_gen_hook(config, answers, project_dir)
-        else:
-            project_dir = cookiecutter(
-                PROJECT_EXTENSION_BOILERPLATE_URL,
-                checkout=checkout_tag,
-                no_input=True,
-                extra_context=cookiecutter_ctx,
-                output_dir=data_dir,
-            )
+        project_dir = cookiecutter(
+            PROJECT_EXTENSION_BOILERPLATE_URL,
+            checkout=checkout_tag,
+            no_input=True,
+            extra_context=cookiecutter_ctx,
+            output_dir=data_dir,
+        )
         click.secho(f'\nExtension Project location: {project_dir}\n', fg='blue')
         click.echo(render(open(f'{project_dir}/HOWTO.md', 'r').read()))
     except GitException as error:
@@ -113,21 +92,6 @@ def bootstrap_extension_project(config, data_dir: str):
 
 def validate_extension_project(project_dir: str):
     click.secho(f'Validating project {project_dir}...\n', fg='blue')
-
-    if is_bundle():
-        raise ClickException(
-            '\nThis project can not be validated since you are running outside a development environment.'
-            '\nCurrently in order to validate the project is required that you run the CloudBlue Connect CLI'
-            '\ntool in the same environment where the extension runs.\n'
-            '\nIn the use case that you are developing using the standard dockerized environment, we suggest'
-            '\nto install the ´connect-cli´ tool inside it to validate the project, this can be accomplished'
-            '\nvia starting your extension using the bash option, as example'
-            '\n\n$ docker compose run my_extension_bash\n'
-            '\nOnce you get the bash, you can install the CloudBlue Connect CLI tool inside it using pip:'
-            '\n\n$ pip install connect-cli\n'
-            '\nonce done you can run again.',
-        )
-
     extension_dict = _project_descriptor_validations(project_dir)
     _entrypoint_validations(project_dir, extension_dict)
 
@@ -382,37 +346,6 @@ def bump_runner_extension_project(project_dir: str):
     click.secho(f'Runner version has been successfully updated to {latest_version}', fg='green')
 
 
-def _post_gen_hook(config, answers, project_dir):
-    if answers['use_github_actions'].lower() == 'n':
-        remove_github_actions(project_dir)
-
-    project_slug = slugify(answers['project_name'])
-    package_slug = slugify(answers['package_name'])
-
-    descriptor = json.load(open(f'{project_slug}/{package_slug}/extension.json'))
-
-    # general
-    _json_subscription_process_capabilities(descriptor, answers)
-    _json_tierconfig_processing_capabilities(descriptor, answers)
-    _json_tieraccount_capabilities(descriptor, answers)
-    _json_listing_request_capabilities(descriptor, answers)
-    _json_product_custom_events(descriptor, answers)
-
-    if config.active.is_vendor():
-        _json_product_actions(descriptor, answers)
-        _json_subscription_validation_capabilities(descriptor, answers)
-        _json_usage_files_capabilities(descriptor, answers)
-        _json_tier_config_validation_capabilities(descriptor, answers)
-
-    if config.active.is_provider():
-        _json_usage_chunk_files_capabilities(descriptor, answers)
-
-    _join_schedulable_example(descriptor, answers)
-    _join_variables_example(descriptor, answers)
-
-    json.dump(descriptor, open(f'{project_slug}/{package_slug}/extension.json', 'w'), indent=2)
-
-
 def _get_pypi_runner_version():
     res = requests.get(PYPI_EXTENSION_RUNNER_URL)
     if res.status_code != 200:
@@ -427,181 +360,3 @@ def _get_pypi_runner_version():
             'Please check it later or consider doing manually.',
         )
     return content['info']['version']
-
-
-def _json_tieraccount_capabilities(descriptor: dict, answers: dict):
-    if (
-        'tier_account_update_request' in answers.keys()
-        and answers['tier_account_update_request'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'tier_account_update_request_processing'] = TIER_ACCOUNT_UPDATE_STATUSES
-
-
-def _json_usage_files_capabilities(descriptor: dict, answers: dict):
-    if (
-        'usage_file_process' in answers.keys()
-        and answers['usage_file_process'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'usage_file_request_processing'] = USAGE_FILE_STATUSES
-
-
-def _json_usage_chunk_files_capabilities(descriptor: dict, answers: dict):
-    if (
-        'usage_chunk_file_process' in answers.keys()
-        and answers['usage_chunk_file_process'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'part_usage_file_request_processing'] = CHUNK_FILE_STATUSES
-
-
-def _join_schedulable_example(descriptor: dict, answers: dict):
-    if (
-        'include_schedules_example' in answers.keys()
-        and answers['include_schedules_example'].lower() == 'y'
-    ):
-        descriptor['schedulables'] = [{
-            'name': 'Schedulable method mock',
-            'description': 'It can be used to test DevOps scheduler.',
-            'method': 'execute_scheduled_processing',
-        }]
-
-
-def _join_variables_example(descriptor: dict, answers: dict):
-    if (
-        'include_variables_example' in answers.keys()
-        and answers['include_variables_example'].lower() == 'y'
-    ):
-        descriptor['variables'] = [
-            {
-                'name': 'VAR_NAME_1',
-                'initial_value': 'VAR_VALUE_1',
-                'secure': False,
-            },
-            {
-                'name': 'VAR_NAME_N',
-                'initial_value': 'VAR_VALUE_N',
-                'secure': True,
-            },
-        ]
-
-
-def _json_listing_request_capabilities(descriptor: dict, answers: dict):
-    if (
-        'listing_request_process_new' in answers.keys()
-        and answers['listing_request_process_new'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'listing_new_request_processing'] = LISTING_REQUEST_STATUSES
-    if (
-        'listing_request_process_remove' in answers.keys()
-        and answers['listing_request_process_remove'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'listing_remove_request_processing'] = LISTING_REQUEST_STATUSES
-
-
-def _json_subscription_process_capabilities(descriptor: dict, answers: dict):
-    if (
-        'subscription_process_capabilities_1of6' in answers.keys()
-        and answers['subscription_process_capabilities_1of6'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'asset_purchase_request_processing'
-        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
-    if (
-        'subscription_process_capabilities_2of6' in answers.keys()
-        and answers['subscription_process_capabilities_2of6'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'asset_change_request_processing'
-        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
-    if (
-        'subscription_process_capabilities_3of6' in answers.keys()
-        and answers['subscription_process_capabilities_3of6'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'asset_suspend_request_processing'
-        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
-    if (
-        'subscription_process_capabilities_4of6' in answers.keys()
-        and answers['subscription_process_capabilities_4of6'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'asset_resume_request_processing'
-        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
-    if (
-        'subscription_process_capabilities_5of6' in answers.keys()
-        and answers['subscription_process_capabilities_5of6'].lower() == 'y'
-    ):
-        descriptor['capabilities'][
-            'asset_cancel_request_processing'
-        ] = STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES
-    if (
-        'subscription_process_capabilities_6of6' in answers.keys()
-        and answers['subscription_process_capabilities_6of6'].lower() == 'y'
-    ):
-        descriptor['capabilities']['asset_adjustment_request_processing'] = STATUSES
-
-
-def _json_subscription_validation_capabilities(descriptor: dict, answers: dict):
-    if (
-        'subscription_validation_capabilities_1of2' in answers.keys()
-        and answers['subscription_validation_capabilities_1of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['asset_purchase_request_validation'] = STATUSES
-    if (
-        'subscription_validation_capabilities_2of2' in answers.keys()
-        and answers['subscription_validation_capabilities_2of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['asset_change_request_validation'] = STATUSES
-
-
-def _json_tier_config_validation_capabilities(descriptor: dict, answers: dict):
-    # Validation
-    if (
-            'tier_config_validation_capabilities_1of2' in answers.keys()
-            and answers['tier_config_validation_capabilities_1of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_setup_request_validation'] = STATUSES
-    if (
-            'tier_config_validation_capabilities_2of2' in answers.keys()
-            and answers['tier_config_validation_capabilities_2of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_change_request_validation'] = STATUSES
-
-
-def _json_tierconfig_processing_capabilities(descriptor: dict, answers: dict):
-    # Processing
-    if (
-        'tier_config_process_capabilities_1of3' in answers.keys()
-        and answers['tier_config_process_capabilities_1of3'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_setup_request_processing'] = STATUSES
-    if (
-        'tier_config_process_capabilities_2of3' in answers.keys()
-        and answers['tier_config_process_capabilities_2of3'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_change_request_processing'] = STATUSES
-    if (
-        'tier_config_process_capabilities_3of3' in answers.keys()
-        and answers['tier_config_process_capabilities_3of3'].lower() == 'y'
-    ):
-        descriptor['capabilities']['tier_config_adjustment_request_processing'] = STATUSES
-
-
-def _json_product_custom_events(descriptor: dict, answers: dict):
-    if (
-        'product_capabilities_2of2' in answers.keys()
-        and answers['product_capabilities_2of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['product_custom_event_processing'] = []
-
-
-def _json_product_actions(descriptor: dict, answers: dict):
-    if (
-        'product_capabilities_1of2' in answers.keys()
-        and answers['product_capabilities_1of2'].lower() == 'y'
-    ):
-        descriptor['capabilities']['product_action_execution'] = []

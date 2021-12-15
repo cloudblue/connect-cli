@@ -26,8 +26,7 @@ def _cookiecutter_result(local_path):
 
 
 @pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
-@pytest.mark.parametrize('is_bundle', (True, False))
-def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir, is_bundle):
+def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir):
     mocked_cookiecutter = mocker.patch(
         'connect.cli.plugins.project.report.helpers.cookiecutter',
         return_value='project_dir',
@@ -49,10 +48,7 @@ def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir, i
         'connect.cli.plugins.project.report.helpers.open',
         mocker.mock_open(read_data='#Project'),
     )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.is_bundle',
-        return_value=is_bundle,
-    )
+
     report_json = {
         'name': 'my super project',
         'reports': [
@@ -132,9 +128,8 @@ def test_bootstrap_direxists_error(fs, mocker):
     assert mocked_dialogus.call_count == 1
 
 
-@pytest.mark.parametrize('is_bundle', (True, False))
 @pytest.mark.parametrize('raise_exception', (subprocess.CalledProcessError(1, []), RepositoryCloneFailed()))
-def test_bootstrap_report_project_git_error(fs, mocker, is_bundle, raise_exception):
+def test_bootstrap_report_project_git_error(fs, mocker, raise_exception):
     mocker.patch(
         'connect.cli.plugins.project.report.helpers.cookiecutter',
         return_value='project_dir',
@@ -156,10 +151,7 @@ def test_bootstrap_report_project_git_error(fs, mocker, is_bundle, raise_excepti
         'connect.cli.plugins.project.report.helpers.open',
         mocker.mock_open(read_data='#Project'),
     )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.is_bundle',
-        return_value=is_bundle,
-    )
+
     report_json = {
         'name': 'my super project',
         'reports': [
@@ -402,7 +394,7 @@ def test_custom_cookiecutter(fs, mocker):
         'connect.cli.plugins.project.report.helpers.get_user_config',
     )
     mocker.patch(
-        'connect.cli.plugins.project.report.helpers.rmtree',
+        'connect.cli.plugins.project.report.helpers.shutil.rmtree',
     )
     repo_dir_mocked = mocker.patch(
         'connect.cli.plugins.project.report.helpers.determine_repo_dir',

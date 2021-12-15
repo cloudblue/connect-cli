@@ -2,8 +2,6 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
-import sys
-
 import click
 import requests
 
@@ -38,7 +36,3 @@ def check_for_updates(*args):
                 )
     except requests.RequestException:
         pass
-
-
-def is_bundle():
-    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
