@@ -19,7 +19,7 @@ Since it is extensible, users can write their own plugins to extend its function
 Please refers to the platform-specific instructions on how to install these dependecies:
 
 * [Linux](docs/linux_deps_install.md)
-* [Mac OSX](docs/osx_deps_install.md)
+* [Mac OS](docs/osx_deps_install.md)
 * [Windows](docs/win_deps_install.md)
 
 
@@ -42,7 +42,7 @@ To use the Docker image of `connect-cli`:
 Please refer to the [`connect-cli` docker image documentation](https://hub.docker.com/r/cloudblueconnect/connect-cli) for more information.
 
 
-### Using Homebrew on Mac OS X
+### Using Homebrew on Mac OS
 
 To install `connect-cli` with homebrew run:
 
