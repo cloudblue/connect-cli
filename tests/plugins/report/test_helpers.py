@@ -12,7 +12,7 @@ from connect.cli.plugins.report.helpers import (
 )
 from connect.cli.plugins.report.utils import Progress
 from connect.client import ConnectClient
-from connect.reports.datamodels import ReportDefinition
+from connect.reports.datamodels import RendererDefinition, ReportDefinition
 
 
 def test_load_repo_ok():
@@ -102,6 +102,33 @@ def test_execute_report_invalid_account(mocker, account_id, audience, expected_e
         execute_report(config, 'root_dir', 'local_id', 'out_file', 'out_format')
 
     assert str(cv.value) == expected_error
+
+
+def test_execute_report_invalid_renderer(mocker):
+    config = Config()
+    config.add_account(
+        'VA-000-001',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+    )
+    config.activate('VA-000-001')
+
+    mocker.patch('connect.cli.plugins.report.helpers.load_repo')
+
+    mocker.patch(
+        'connect.cli.plugins.report.helpers.get_report_by_id',
+        return_value=mocker.MagicMock(
+            renderers=[
+                RendererDefinition('path', 'pdf', 'pdf', 'test'),
+            ],
+            audience=['vendor'],
+        ),
+    )
+
+    with pytest.raises(ClickException) as cv:
+        execute_report(config, 'root_dir', 'local_id', 'out_file', 'out_format')
+
+    assert str(cv.value) == 'The format out_format is not available for report local_id'
 
 
 def test_execute_report_v1(mocker):

@@ -101,6 +101,13 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
             "This report is not expected to be executed on provider accounts",
         )
 
+    available_renderers = [r.id for r in report.renderers]
+
+    if output_format and output_format not in available_renderers:
+        raise ClickException(
+            f'The format {output_format} is not available for report {report_id}',
+        )
+
     entrypoint = get_report_entrypoint(report)
 
     client = ConnectClient(
