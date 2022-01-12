@@ -29,7 +29,7 @@ def get_summary(config):
     <b>Server Address:</b> ${server_address}
 <b><blue>Subscriptions processing</blue></b>
     <b>Asset requests types:</b> ${asset_processing}
-    <b>Tier configuration requests types:</b> ${asset_processing}
+    <b>Tier configuration requests types:</b> ${tierconfig}
 <b><blue>Listing processing</blue></b>
     <b>Listing requests types:</b> ${listing_request}
 """
