@@ -118,5 +118,23 @@
         }
       }
     }
+  },
+  {
+    "id": "TL-686-991-072",
+    "title": "Template 4 - no created at",
+    "name": "Template 4",
+    "body": "# Template 4\n\nThis is **template 3** with the following parameters:\n\n1. t0_o_email = {{ t0_o_email }}\n2. t0_f_password = {{ t0_f_password }}\n3. t0_f_text = {{ t0_f_text }}\n\nHave a nice day!",
+    "scope": "asset",
+    "type": "fulfillment",
+    "position": 60000,
+    "events": {
+      "updated": {
+        "at": "2020-10-13T05:17:33+00:00",
+        "by": {
+          "id": "UR-539-008-555",
+          "name": "Robert Balboa Oct 12"
+        }
+      }
+    }
   }
 ]
