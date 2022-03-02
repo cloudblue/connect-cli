@@ -401,5 +401,27 @@
         "at": "2020-10-13T01:29:01+00:00"
       }
     }
+  },
+  {
+    "id": "PRM-276-377-545-0014",
+    "name": "t0_o_url_no_created_at",
+    "title": "t0_o_url T_no_created_at",
+    "description": "t0_o_url D_no_created_at",
+    "type": "url",
+    "scope": "asset",
+    "phase": "ordering",
+    "hint": "I am the hint text",
+    "placeholder": "I am the placeholder text",
+    "constraints": {
+      "required": false,
+      "hidden": false,
+      "unique": false
+    },
+    "position": 140000,
+    "events": {
+      "updated": {
+        "at": "2020-10-13T01:29:01+00:00"
+      }
+    }
   }
 ]

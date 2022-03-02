@@ -32,5 +32,28 @@
       }
     },
     "title": "Action 2"
+  },
+  {
+    "action": "action_3",
+    "name": "Action 3 - No created at",
+    "type": "button",
+    "scope": "asset",
+    "description": "Action 3 Description",
+    "id": "ACT-276-377-545-002",
+    "events": {
+      "updated": {
+        "at": "2020-10-13T04:37:29+00:00"
+      }
+    },
+    "title": "Action 3"
+  },
+  {
+    "action": "action_4",
+    "name": "Action 4 - No events",
+    "type": "button",
+    "scope": "asset",
+    "description": "Action 4 Description",
+    "id": "ACT-276-377-545-002",
+    "title": "Action 4"
   }
 ]

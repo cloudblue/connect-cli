@@ -736,5 +736,68 @@
         "at": "2020-10-13T01:09:36+00:00"
       }
     }
+  },
+  {
+    "id": "PRD-276-377-545-0019",
+    "name": "Reservation Item without events",
+    "status": "published",
+    "unit": {
+      "id": "unit",
+      "name": "Units",
+      "title": "Units",
+      "unit": "unit"
+    },
+    "mpn": "MPN-R-019",
+    "position": 180000,
+    "type": "reservation",
+    "local_id": "PRD_276_377_545_0019",
+    "display_name": "Reservation Item 019",
+    "period": "onetime",
+    "precision": "integer",
+    "commitment": {
+      "multiplier": "billing_period",
+      "count": 1
+    },
+    "dynamic": false,
+    "ui": {
+      "visibility": true
+    },
+    "ui_visibility": true,
+    "description": "Description 019",
+    "depth": 0
+  },
+  {
+    "id": "PRD-276-377-545-0020",
+    "name": "Reservation Item without created at",
+    "status": "published",
+    "unit": {
+      "id": "unit",
+      "name": "Units",
+      "title": "Units",
+      "unit": "unit"
+    },
+    "mpn": "MPN-R-020",
+    "position": 180000,
+    "type": "reservation",
+    "local_id": "PRD_276_377_545_0020",
+    "display_name": "Reservation Item 020",
+    "period": "onetime",
+    "precision": "integer",
+    "commitment": {
+      "multiplier": "billing_period",
+      "count": 1
+    },
+    "dynamic": false,
+    "ui": {
+      "visibility": true
+    },
+    "ui_visibility": true,
+    "description": "Description 020",
+    "depth": 0,
+    "events": {
+      "updated": {
+        "at": "2020-10-13T01:09:36+00:00"
+      }
+    }
   }
 ]
