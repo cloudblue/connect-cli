@@ -114,7 +114,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
-        default_limit=100,
+        default_limit=500,
         max_retries=5,
         default_headers=get_user_agent(),
         logger=RequestLogger() if config.verbose else None,
