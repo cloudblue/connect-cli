@@ -155,12 +155,16 @@ class ProductCloner:
                 logger=RequestLogger() if self.config.verbose else None,
             )
             category = self._get_cat_id(client, ws['B8'].value)
+            primary_locale_id = self._get_primary_locale_id(ws['B14'].value)
             product = client.products.create(
                 {
                     "name": name,
                     "category": {
                         "id": category,
                     },
+                    "translations": [
+                        {"locale": {"id": primary_locale_id}, "primary": True},
+                    ],
                 },
             )
             if name:
@@ -222,3 +226,11 @@ class ProductCloner:
         for category in categories:
             if category['name'] == category_name:
                 return category['id']
+
+    @staticmethod
+    def _get_primary_locale_id(locale_repr):
+        """
+        `locale_repr` should be in the form of "<id> (<verbose name>)",
+        e.g. "EN-GB (British English)"
+        """
+        return locale_repr.split(' ')[0]

@@ -1,5 +1,6 @@
 import json
 import re
+import string
 import os
 
 import pytest
@@ -169,6 +170,8 @@ def test_export_product(
     mocked_configuration_params_response,
     mocked_actions_response,
     mocked_configurations_response,
+    mocked_locales_response,
+    mocked_primary_translation_response,
     sample_product_workbook,
 ):
     mocked_responses.add(
@@ -282,6 +285,19 @@ def test_export_product(
             'Content-Range': 'items 0-17/18',
         },
     )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/locales',
+        json=mocked_locales_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url=(
+            'https://localhost/public/v1/localization/translations?'
+            'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=100&offset=0'
+        ),
+        json=mocked_primary_translation_response,
+    )
     output_file = dump_product(
         api_url='https://localhost/public/v1',
         api_key='ApiKey SU111:1111',
@@ -294,28 +310,27 @@ def test_export_product(
     product_wb = load_workbook(output_file)
     for name in sample_product_workbook.sheetnames:
         assert name in product_wb.sheetnames
+
+    ignore_sheet_cells = {
+        'General Information': ['B7'],
+    }
     for sheet in sample_product_workbook.sheetnames:
         sample_sheet = sample_product_workbook[sheet]
         product_sheet = product_wb[sheet]
-        row_idx = 1
         letter_limit = _get_col_limit_by_type(sheet)
 
-        def letter(c):
-            return chr(ord('A') + c)
-
-        letter_idx = 0
-        while row_idx <= sample_sheet.max_row:
-            while letter(letter_idx) != letter_limit:
-                expected = sample_sheet[f'{letter(letter_idx)}{row_idx}'].value
-                assert product_sheet[f'{letter(letter_idx)}{row_idx}'].value == expected
-                letter_idx = letter_idx + 1
-            letter_idx = 0
-            row_idx = row_idx + 1
+        for col in string.ascii_uppercase:
+            if col == letter_limit:
+                break
+            for row in range(1, sample_sheet.max_row + 1):
+                cell = f'{col}{row}'
+                if cell not in ignore_sheet_cells.get(sheet, []):
+                    assert product_sheet[cell].value == sample_sheet[cell].value
 
 
 def _get_col_limit_by_type(ws_type):
     if ws_type == 'General Information':
-        return 'B'
+        return 'C'
     elif ws_type == 'Capabilities':
         return 'C'
     elif ws_type == 'Embedding Static Resources':

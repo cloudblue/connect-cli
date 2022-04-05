@@ -11,6 +11,7 @@ from urllib import parse
 import requests
 from click import ClickException
 from openpyxl import Workbook
+from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.utils import quote_sheetname
@@ -92,6 +93,19 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     ws['B13'].alignment = Alignment(
         wrap_text=True,
     )
+    ws['A14'].value = 'Primary Translation Locale'
+    ws['A14'].comment = Comment(
+        "This attribute will not be updated on product sync",
+        "ccli product dump",
+    )
+    primary_translation = (
+        client.ns('localization').translations
+        .filter(context__instance_id=product['id'], primary=True).first()
+    )
+    ws['B14'].value = (
+        f'{ primary_translation["locale"]["id"] } '
+        f'({ primary_translation["locale"]["name"] })'
+    )
 
     categories = client.categories.all()
     unassignable_cat = ['Cloud Services', 'All Categories']
@@ -110,6 +124,19 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     )
     ws.add_data_validation(categories_validation)
     categories_validation.add('B8')
+
+    locales = client.ns('localization').locales.all()
+    locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
+    ws['AB1'].value = 'Locales'
+    for idx, loc in enumerate(locales_list, 2):
+        ws[f'AB{idx}'].value = loc
+    locales_validation = DataValidation(
+        type='list',
+        formula1=f'{quote_sheetname("General Information")}!$AB$2:$AB${idx}',
+        allow_blank=False,
+    )
+    ws.add_data_validation(locales_validation)
+    locales_validation.add('B14')
 
 
 def _dump_image(image_location, image_name, media_path):
