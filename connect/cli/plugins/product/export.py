@@ -113,13 +113,11 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
         cat['name'] for cat in categories if cat['name'] not in unassignable_cat
     ]
     ws['AA1'].value = 'Categories'
-    cat_row_idx = 2
-    for cat in categories_list:
-        ws[f'AA{cat_row_idx}'].value = cat
-        cat_row_idx += 1
+    for idx, cat in enumerate(categories_list, 2):
+        ws[f'AA{idx}'].value = cat
     categories_validation = DataValidation(
         type='list',
-        formula1=f'{quote_sheetname("General Information")}!$AA$2:$AA${len(categories_list)}',
+        formula1=f'{quote_sheetname("General Information")}!$AA$2:$AA${idx}',
         allow_blank=False,
     )
     ws.add_data_validation(categories_validation)
