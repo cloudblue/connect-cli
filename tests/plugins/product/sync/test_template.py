@@ -247,7 +247,7 @@ def test_update_template_not_exists(
     assert updated == 0
     assert deleted == 0
     assert errors == {
-        2: ['Cannot update template TL-551-876-782 since does not exist in the product.Create it '
+        2: ['Cannot update template TL-551-876-782 since does not exist in the product. Create it '
             'instead'],
     }
 
@@ -272,7 +272,7 @@ def test_delete_template_not_exists(
     )
 
     mocked_responses.add(
-        method='GET',
+        method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
         status=404,
     )
@@ -308,7 +308,7 @@ def test_delete_template_500(
     )
 
     mocked_responses.add(
-        method='GET',
+        method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
         status=500,
     )
@@ -324,7 +324,7 @@ def test_delete_template_500(
     assert errors == {2: ['500 Internal Server Error']}
 
 
-def test_delete_template(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
+def test_delete_template(fs, get_sync_templates_env, mocked_responses):
     get_sync_templates_env['Templates']['C2'] = 'delete'
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -336,12 +336,6 @@ def test_delete_template(fs, get_sync_templates_env, mocked_templates_response, 
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
-    )
-
-    mocked_responses.add(
-        method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
-        json=mocked_templates_response[0],
     )
 
     mocked_responses.add(
