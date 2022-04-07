@@ -69,7 +69,6 @@ class TemplatesSynchronizer(ProductSynchronizer):
     def _action_update(self, data, row_indexes):
         row_indexes.set_description(f"Updating template {data.id}")
 
-        # check not changing scope or type before update
         try:
             current = self._client.products[self._product_id].templates[data.id].get()
         except ClientError as e:
@@ -80,13 +79,14 @@ class TemplatesSynchronizer(ProductSynchronizer):
                 ) from e
             raise e
 
-        if current.get('type') != data.type or current['scope'] != data.scope:
+        payload = self._row_to_payload(data)
+        # check not changing scope or type before update
+        if current.get('type') != payload.get('type') or current['scope'] != payload['scope']:
             raise Exception(
                 f'Switching scope or type is not supported. '
-                f'Original scope {current["scope"]}, requested scope {data.scope}. '
-                f'Original type {current.get("type")}, requested type {data.type}',
+                f'Original scope {current["scope"]}, requested scope {payload["scope"]}. '
+                f'Original type {current.get("type")}, requested type {payload.get("type")}',
             )
-        payload = self._row_to_payload(data)
         return self._client.products[self._product_id].templates[data.id].update(payload)
 
     def _action_delete(self, data, row_indexes):
