@@ -123,6 +123,18 @@ def mocked_configurations_response(fs):
 
 
 @pytest.fixture(scope='function')
+def mocked_locales_response():
+    with open('./tests/fixtures/locales_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def mocked_primary_translation_response():
+    with open('./tests/fixtures/primary_translation_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
 def sample_product_workbook(fs):
     return load_workbook('./tests/fixtures/comparation_product.xlsx')
 

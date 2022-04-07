@@ -1,6 +1,8 @@
 import os
 
+from freezegun import freeze_time
 import pytest
+from responses import matchers
 
 from click import ClickException
 
@@ -71,9 +73,8 @@ def test_clean_wb(
         assert cloned_wb['Capabilities'][f'B{row}'].value == 'update'
 
 
+@freeze_time('2022-04-05 20:15:00')
 def test_create_product(
-    config_mocker,
-    fs,
     mocked_responses,
     mocked_categories_response,
     mocked_product_response,
@@ -97,6 +98,17 @@ def test_create_product(
     mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/products',
+        match=[
+            matchers.json_params_matcher({
+                'name': 'Clone of PRD-123 2022-04-05-20:15:00',
+                'category': {
+                    'id': 'CAT-59128',
+                },
+                'translations': [
+                    {'locale': {'id': 'FA'}, 'primary': True},
+                ],
+            }),
+        ],
         json=mocked_product_response,
     )
 
