@@ -50,6 +50,8 @@ class TemplatesSynchronizer(ProductSynchronizer):
             if data.action == 'create':
                 row_indexes.set_description(f"Creating template {data[1]}")
                 try:
+                    if data.scope != 'asset':
+                        del template_data['type']
                     template = self._create_template(template_data)
                     created_items.append(template)
                     self._update_sheet_row(ws, row_idx, template)
