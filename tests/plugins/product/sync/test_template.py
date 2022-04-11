@@ -1,3 +1,5 @@
+from responses import matchers
+
 from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer
 from connect.client import ConnectClient
 
@@ -213,6 +215,56 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
     assert errors == {2: ['500 Internal Server Error']}
 
 
+def test_create_template_for_tier_scope_ignore_type(
+    fs, get_sync_templates_env, mocked_templates_response, mocked_responses
+):
+    get_sync_templates_env['Templates']['C2'] = 'create'
+    get_sync_templates_env['Templates']['A2'] = None
+    get_sync_templates_env['Templates']['D2'] = 'tier1'
+    get_sync_templates_env['Templates']['E2'] = 'fulfillment'
+
+    get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
+
+    synchronizer = TemplatesSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+    )
+
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/products/PRD-276-377-545/templates',
+        match=[
+            matchers.json_params_matcher({
+                'name': 'Template 1',
+                'scope': 'tier1',
+                'body': (
+                    '# Template 1\n\n'
+                    'This is **template 1** with the following parameters:\n\n'
+                    '1. t0_o_email = {{ t0_o_email }}\n'
+                    '2. t0_f_password = {{ t0_f_password }}\n'
+                    '3. t0_f_text = {{ t0_f_text }}\n\n'
+                    'Have a nice day!'
+                ),
+            }),
+        ],
+        json=mocked_templates_response[0],
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    assert skipped == 0
+    assert created == 1
+    assert updated == 0
+    assert deleted == 0
+    assert errors == {}
+
+
 def test_update_template_not_exists(
     fs,
     get_sync_templates_env,
@@ -247,7 +299,7 @@ def test_update_template_not_exists(
     assert updated == 0
     assert deleted == 0
     assert errors == {
-        2: ['Cannot update template TL-551-876-782 since does not exist in the product.Create it '
+        2: ['Cannot update template TL-551-876-782 since does not exist in the product. Create it '
             'instead'],
     }
 
@@ -272,7 +324,7 @@ def test_delete_template_not_exists(
     )
 
     mocked_responses.add(
-        method='GET',
+        method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
         status=404,
     )
@@ -308,7 +360,7 @@ def test_delete_template_500(
     )
 
     mocked_responses.add(
-        method='GET',
+        method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
         status=500,
     )
@@ -324,7 +376,7 @@ def test_delete_template_500(
     assert errors == {2: ['500 Internal Server Error']}
 
 
-def test_delete_template(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
+def test_delete_template(fs, get_sync_templates_env, mocked_responses):
     get_sync_templates_env['Templates']['C2'] = 'delete'
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -336,12 +388,6 @@ def test_delete_template(fs, get_sync_templates_env, mocked_templates_response, 
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
-    )
-
-    mocked_responses.add(
-        method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
-        json=mocked_templates_response[0],
     )
 
     mocked_responses.add(
@@ -481,3 +527,61 @@ def test_update_template_exception(
     assert updated == 0
     assert deleted == 0
     assert errors == {2: ['500 Internal Server Error']}
+
+
+def test_update_template_for_tier_scope_ignore_type(
+    fs,
+    get_sync_templates_env,
+    mocked_templates_response,
+    mocked_responses,
+):
+    get_sync_templates_env['Templates']['C2'] = 'update'
+    get_sync_templates_env['Templates']['D2'] = 'tier1'
+    get_sync_templates_env['Templates']['E2'] = 'fulfillment'
+
+    get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
+
+    synchronizer = TemplatesSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
+        json=mocked_templates_response[1],
+    )
+
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/products/PRD-276-377-545/templates/TL-551-876-782',
+        match=[
+            matchers.json_params_matcher({
+                'name': 'Template 1',
+                'scope': 'tier1',
+                'body': (
+                    '# Template 1\n\n'
+                    'This is **template 1** with the following parameters:\n\n'
+                    '1. t0_o_email = {{ t0_o_email }}\n'
+                    '2. t0_f_password = {{ t0_f_password }}\n'
+                    '3. t0_f_text = {{ t0_f_text }}\n\n'
+                    'Have a nice day!'
+                ),
+            }),
+        ],
+        json=mocked_templates_response[1],
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+
+    skipped, created, updated, deleted, errors = synchronizer.sync()
+
+    assert skipped == 0
+    assert created == 0
+    assert updated == 1
+    assert deleted == 0
+    assert errors == {}

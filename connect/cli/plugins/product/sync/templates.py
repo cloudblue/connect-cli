@@ -3,7 +3,7 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 from tqdm import trange
 
@@ -18,13 +18,19 @@ _RowData = namedtuple('RowData', fields)
 
 
 class TemplatesSynchronizer(ProductSynchronizer):
-    def sync(self):  # noqa: CCR001
+
+    def __init__(self, client, silent):
+        super().__init__(client, silent)
+        self._action_handlers = {
+            'create': self._action_create,
+            'update': self._action_update,
+            'delete': self._action_delete,
+        }
+
+    def sync(self):
         ws = self._wb["Templates"]
         errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
-        deleted_items = []
+        success_action_count = defaultdict(int)
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -32,76 +38,79 @@ class TemplatesSynchronizer(ProductSynchronizer):
         for row_idx in row_indexes:
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 9)])
             row_indexes.set_description(f'Processing Template {data.id or data.title}')
-            if data.action == '-':
-                skipped_count += 1
-                continue
-            row_errors = self._validate_row(data)
-            if row_errors:
-                errors[row_idx] = row_errors
-                continue
-            template_data = {
-                'name': data.title,
-                'scope': data.scope,
-                'body': data.content,
-                'type': data.type,
-            }
-            if data.scope == 'asset':
-                template_data['title'] = data.title
-            if data.action == 'create':
-                row_indexes.set_description(f"Creating template {data[1]}")
-                try:
-                    template = self._create_template(template_data)
-                    created_items.append(template)
-                    self._update_sheet_row(ws, row_idx, template)
-                    continue
-                except Exception as e:
-                    errors[row_idx] = [str(e)]
-                    continue
             try:
-                current = self._client.products[self._product_id].templates[data.id].get()
-            except ClientError as e:
-                if data.action == 'delete':
-                    if e.status_code == 404:
-                        deleted_items.append(data)
-                        continue
-                    errors[row_idx] = [str(e)]
-                    continue
-                errors[row_idx] = [
-                    f'Cannot {data.action} template {data.id} since does not exist in the product.'
-                    'Create it instead',
-                ]
-                continue
-            if current['type'] != data.type or current['scope'] != data.scope:
-                errors[row_idx] = [
-                    f'Switching scope or type is not supported. '
-                    f'Original scope {current["scope"]}, requested scope {data.scope}. '
-                    f'Original type {current["type"]}, requested type {data.type}',
-                ]
-                continue
-            try:
-                if data.action == 'update':
-                    template = self._update_template(data.id, template_data)
-                    updated_items.append(template)
-                    self._update_sheet_row(ws, row_idx, template)
-                if data.action == 'delete':
-                    self._client.products[self._product_id].templates[data.id].delete()
-                    deleted_items.append(data)
-
+                if data.action != '-':
+                    self._process_row(data, ws, row_indexes, row_idx)
+                success_action_count[data.action] += 1
             except Exception as e:
-                errors[row_idx] = [str(e)]
+                errors[row_idx] = str(e).split('\n')
+
         return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            len(deleted_items),
+            success_action_count['-'],
+            success_action_count['create'],
+            success_action_count['update'],
+            success_action_count['delete'],
             errors,
         )
 
-    def _create_template(self, template_data):
-        return self._client.products[self._product_id].templates.create(template_data)
+    def _process_row(self, data, ws, row_indexes, row_idx):
+        row_errors = self._validate_row(data)
+        if row_errors:
+            raise Exception('\n'.join(row_errors))
+        template = self._action_handlers[data.action](data, row_indexes)
+        if template:
+            self._update_sheet_row(ws, row_idx, template)
 
-    def _update_template(self, tl_id, template_data):
-        return self._client.products[self._product_id].templates[tl_id].update(template_data)
+    def _action_create(self, data, row_indexes):
+        row_indexes.set_description(f"Creating template {data.title}")
+        payload = self._row_to_payload(data)
+        return self._client.products[self._product_id].templates.create(payload)
+
+    def _action_update(self, data, row_indexes):
+        row_indexes.set_description(f"Updating template {data.id}")
+
+        try:
+            current = self._client.products[self._product_id].templates[data.id].get()
+        except ClientError as e:
+            if e.status_code == 404:
+                raise Exception(
+                    f'Cannot update template {data.id} since does not exist in the product. '
+                    'Create it instead',
+                ) from e
+            raise e
+
+        payload = self._row_to_payload(data)
+        # check not changing scope or type before update
+        if current.get('type') != payload.get('type') or current['scope'] != payload['scope']:
+            raise Exception(
+                f'Switching scope or type is not supported. '
+                f'Original scope {current["scope"]}, requested scope {payload["scope"]}. '
+                f'Original type {current.get("type")}, requested type {payload.get("type")}',
+            )
+        return self._client.products[self._product_id].templates[data.id].update(payload)
+
+    def _action_delete(self, data, row_indexes):
+        row_indexes.set_description(f"Deleting template {data.id}")
+        try:
+            self._client.products[self._product_id].templates[data.id].delete()
+        except ClientError as e:
+            # if the template doesn't exist, perform as success deletion
+            if e.status_code != 404:
+                raise
+
+    @staticmethod
+    def _row_to_payload(data):
+        template_payload = {
+            'name': data.title,
+            'scope': data.scope,
+            'body': data.content,
+        }
+        if data.scope == 'asset':
+            template_payload.update({
+                'title': data.title,
+                'type': data.type,
+            })
+        return template_payload
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, template):
