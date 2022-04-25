@@ -302,3 +302,20 @@ def mocked_extension_project_descriptor(fs):
 def mocked_extension_descriptor(fs):
     with open('./tests/fixtures/extensions/basic_ext/connect_ext/extension.json') as response:
         return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def sample_translation_workbook(fs):
+    return load_workbook('./tests/fixtures/translation.xlsx')
+
+
+@pytest.fixture(scope='function')
+def mocked_translation_response():
+    with open('./tests/fixtures/translation_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def mocked_translation_attributes_response():
+    with open('./tests/fixtures/translation_attributes_response.json') as response:
+        return json.load(response)
