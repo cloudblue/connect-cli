@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
+import os
+
 import click
 import requests
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles.colors import Color, WHITE
 
 from connect.cli import get_version
 from connect.cli.core.constants import PYPI_JSON_API_URL
@@ -36,3 +40,42 @@ def check_for_updates(*args):
                 )
     except requests.RequestException:
         pass
+
+
+def validate_output_options(output_path, output_file, default_dir_name, default_file_name=None):
+    """
+    Common validation for commands using output path and file options.
+    """
+    if not default_file_name:
+        default_file_name = default_dir_name
+
+    output_path = output_path or os.getcwd()
+    if not os.path.exists(output_path):
+        raise click.ClickException("Output Path does not exist")
+
+    output_path = os.path.join(output_path, default_dir_name)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    elif not os.path.isdir(output_path):
+        raise click.ClickException(
+            f"Exists a file with name '{os.path.basename(output_path)}' but a directory is "
+            "expected, please rename it",
+        )
+
+    output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
+
+    return output_file
+
+
+def set_ws_main_header(ws, title):
+    """
+    Set the header for a main worksheet
+    """
+    ws.column_dimensions['A'].width = 50
+    ws.column_dimensions['B'].width = 180
+    ws.merge_cells('A1:B1')
+    cell = ws['A1']
+    cell.fill = PatternFill('solid', start_color=Color('1565C0'))
+    cell.font = Font(sz=24, color=WHITE)
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    cell.value = title

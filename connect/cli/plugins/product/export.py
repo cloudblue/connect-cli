@@ -23,6 +23,7 @@ from connect.cli.core.http import (
     format_http_status,
     handle_http_error,
 )
+from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.product.utils import (
     get_col_headers_by_ws_type,
@@ -873,29 +874,8 @@ def _dump_items(ws, client, product_id, silent):
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
-    if not output_path:
-        output_path = os.path.join(os.getcwd(), product_id)
-    else:
-        if not os.path.exists(output_path):
-            raise ClickException(
-                "Output Path does not exist",
-            )
-        output_path = os.path.join(output_path, product_id)
-
-    media_path = os.path.join(output_path, 'media')
-
-    if not output_file:
-        output_file = os.path.join(output_path, f'{product_id}.xlsx')
-    else:
-        output_file = os.path.join(output_path, output_file)
-
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-    elif not os.path.isdir(output_path):
-        raise ClickException(
-            "Exists a file with product name but a directory is expected, please rename it",
-        )
-
+    output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
+    media_path = os.path.join(os.path.dirname(output_file), 'media')
     if not os.path.exists(media_path):
         os.mkdir(media_path)
     try:
