@@ -5,7 +5,8 @@
 
 from click import ClickException
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles.colors import Color, WHITE
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from connect.client import ClientError, ConnectClient, RequestLogger
@@ -14,7 +15,7 @@ from connect.cli.core.http import (
     handle_http_error,
 )
 from connect.cli.plugins.translation.export_attributes import dump_translation_attributes
-from connect.cli.core.utils import set_ws_main_header, validate_output_options
+from connect.cli.core.utils import validate_output_options
 
 
 def dump_translation(
@@ -45,7 +46,7 @@ def dump_translation(
 
 
 def _dump_general(ws, translation):
-    set_ws_main_header(ws, 'Translation information')
+    _set_ws_main_header(ws, 'Translation information')
     ws.title = 'General'
     for row_idx in range(3, 10):
         for col_idx in [1, 2]:
@@ -76,3 +77,14 @@ def _dump_general(ws, translation):
     ws['A10'].value = 'Autotranslation'
     ws['B10'].value = 'Enabled' if translation['auto']['enabled'] else 'Disabled'
     disabled_enabled.add(ws['B10'])
+
+
+def _set_ws_main_header(ws, title):
+    ws.column_dimensions['A'].width = 50
+    ws.column_dimensions['B'].width = 180
+    ws.merge_cells('A1:B1')
+    cell = ws['A1']
+    cell.fill = PatternFill('solid', start_color=Color('1565C0'))
+    cell.font = Font(sz=24, color=WHITE)
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    cell.value = title

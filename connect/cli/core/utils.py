@@ -6,8 +6,6 @@ import os
 
 import click
 import requests
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.styles.colors import Color, WHITE
 
 from connect.cli import get_version
 from connect.cli.core.constants import PYPI_JSON_API_URL
@@ -65,17 +63,3 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
     output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
 
     return output_file
-
-
-def set_ws_main_header(ws, title):
-    """
-    Set the header for a main worksheet
-    """
-    ws.column_dimensions['A'].width = 50
-    ws.column_dimensions['B'].width = 180
-    ws.merge_cells('A1:B1')
-    cell = ws['A1']
-    cell.fill = PatternFill('solid', start_color=Color('1565C0'))
-    cell.font = Font(sz=24, color=WHITE)
-    cell.alignment = Alignment(horizontal='center', vertical='center')
-    cell.value = title

@@ -2,10 +2,6 @@ import os.path
 
 import pytest
 from click import ClickException
-from openpyxl import Workbook
-from openpyxl.cell.cell import MergedCell
-from openpyxl.styles import Font
-from openpyxl.styles.colors import WHITE
 
 from connect.cli.core import utils
 from connect.cli.core.constants import PYPI_JSON_API_URL
@@ -146,13 +142,3 @@ def test_validate_output_options_no_output_file(fs):
     )
 
     assert output_file.endswith('custom/path/XX-000-000/data.xlsx')
-
-
-def test_set_ws_main_header():
-    wb = Workbook()
-
-    utils.set_ws_main_header(wb.active, 'Test information')
-
-    assert wb.active['A1'].font == Font(sz=24, color=WHITE)
-    assert wb.active['A1'].value == 'Test information'
-    assert isinstance(wb.active['B1'], MergedCell)
