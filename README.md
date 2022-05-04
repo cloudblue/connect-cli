@@ -62,6 +62,7 @@ You can download its zip file from the [Github Releases](https://github.com/clou
 ## Usage
 
 * [General](docs/core_usage.md)
+* [Locales](docs/locales_usage.md)
 * [Products](docs/products_usage.md)
 * [Customers](docs/customers_usage.md)
 * [Reports](docs/reports_usage.md)
