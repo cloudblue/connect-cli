@@ -1,0 +1,45 @@
+{
+    "id": "TRN-8100-3865-4869",
+    "context": {
+        "id": "LCX-2604-7704-5548",
+        "instance_id": "PRD-746-555-769",
+        "name": "translation test product",
+        "icon": "/media/VA-063-000/PRD-746-555-769/media/PRD-746-555-769-logo_ty6JA3T.png",
+        "type": "product"
+    },
+    "owner": {
+        "id": "VA-063-000",
+        "name": "Vendor account 00"
+    },
+    "locale": {
+        "id": "ES",
+        "name": "Spanish"
+    },
+    "description": "Translation for spanish",
+    "stats": {
+        "total": 30,
+        "translated": 20
+    },
+    "auto": {
+        "enabled": false,
+        "status": "off"
+    },
+    "status": "active",
+    "events": {
+        "updated": {
+            "at": "2022-04-28T10:51:29+00:00",
+            "by": {
+                "id": "UR-063-000-003",
+                "name": "Carlos"
+            }
+        },
+        "created": {
+            "at": "2022-04-14T15:32:37+00:00",
+            "by": {
+                "id": "UR-063-000-003",
+                "name": "Carlos"
+            }
+        }
+    },
+    "primary": false
+}

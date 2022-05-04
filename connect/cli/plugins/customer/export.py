@@ -1,6 +1,3 @@
-import os
-
-from click import ClickException
 from iso3166 import countries
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
@@ -12,31 +9,15 @@ from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.core.http import (
     handle_http_error,
 )
+from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.customer.constants import COL_HEADERS
 from connect.client import ClientError, ConnectClient, RequestLogger
 
 
 def dump_customers(api_url, api_key, account_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
-    if not output_path:
-        output_path = os.path.join(os.getcwd(), account_id)
-    else:
-        if not os.path.exists(output_path):
-            raise ClickException(
-                "Output Path does not exist",
-            )
-        output_path = os.path.join(output_path, account_id)
-
-    if not output_file:
-        output_file = os.path.join(output_path, 'customers.xlsx')
-    else:
-        output_file = os.path.join(output_path, output_file)
-
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-    elif not os.path.isdir(output_path):
-        raise ClickException(
-            "Exists a file with account id as name but a directory is expected, please rename it",
-        )
+    output_file = validate_output_options(
+        output_path, output_file, default_dir_name=account_id, default_file_name='customers',
+    )
     try:
         client = ConnectClient(
             max_retries=3,

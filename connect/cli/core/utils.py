@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
+import os
+
 import click
 import requests
 
@@ -36,3 +38,28 @@ def check_for_updates(*args):
                 )
     except requests.RequestException:
         pass
+
+
+def validate_output_options(output_path, output_file, default_dir_name, default_file_name=None):
+    """
+    Common validation for commands using output path and file options.
+    """
+    if not default_file_name:
+        default_file_name = default_dir_name
+
+    output_path = output_path or os.getcwd()
+    if not os.path.exists(output_path):
+        raise click.ClickException("Output Path does not exist")
+
+    output_path = os.path.join(output_path, default_dir_name)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    elif not os.path.isdir(output_path):
+        raise click.ClickException(
+            f"Exists a file with name '{os.path.basename(output_path)}' but a directory is "
+            "expected, please rename it",
+        )
+
+    output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
+
+    return output_file

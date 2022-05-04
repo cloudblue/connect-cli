@@ -1,0 +1,555 @@
+[
+	{
+		"key": "product.PRD-746-555-769.actions.ACT-746-555-769-001.description",
+		"value": "Inicie sesión en el servicio haciendo clic en este botón",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.actions.ACT-746-555-769-001.name",
+		"value": "Inicia sesión",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.description",
+		"value": "Nos complace proporcionarle el servicio en la nube, una solución definitiva para su empresa. Deje de usar la solución local heredada en el equipo. Muévase a la nube con nuestra ayuda.",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.documents.0.title",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.documents.0.url",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.0.title",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.0.url",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.1.title",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.1.url",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.2.title",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.2.url",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.3.title",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.download_links.3.url",
+		"value": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:50:21+00:00"
+			},
+			"created": {
+				"at": "2022-04-28T10:50:21+00:00"
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.getting_started",
+		"value": "Ahora está listo para usar el servicio en la nube y migrar los archivos desde su equipo local y dispositivos móviles a la nube. Descargue aplicaciones para Windows Desktop, Windows Phone, Mac OS o Android siguiendo uno de los siguientes enlaces, o acceda directamente a la interfaz web del servicio.",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.customer_ui_settings.provisioning_message",
+		"value": "Por favor, espere mientras se cumple su solicitud.",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.description",
+		"value": "Descripción corta del producto.",
+		"comment": "revisada a mano",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:55:04+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.detailed_overview",
+		"value": "Un texto **descripción** del producto. Este texto será visto por los proveedores que tienen acceso a este producto y se puede utilizar para rellenar otros sistemas, como [CloudBlue Catalog](https://catalog.cloudblue.com).\n\nLa **primera oración** (alrededor de 3-4 líneas) de esta descripción **cuenta más**. Por lo tanto, comience con una oración que llame la atención y que presente claramente a los usuarios para qué está destinado el producto.\n\nTenga en cuenta las siguientes recomendaciones con respecto a la descripción del producto:\n\n* Manténgalo conciso, informativo y fácil de entender\n* Apégate al tono de tu marca\n* Evite términos específicos, manténgalo simple\n* Asegúrese de describir el público objetivo de este producto\n* Esbozar características clave y diferenciadores clave\nTenga en cuenta que el espacio máximo permitido es de ** hasta 4,000 caracteres ** - asegúrese de explicar su producto dentro de ese límite.\n\n# Usar texto con formato\nCloudBlue Connect le permite enriquecer esta descripción con el formato [texto de marcado](https://en.wikipedia.org/wiki/Markdown). **Markdown** permite incluir múltiples elementos, como* Listas de elementos sin ordenar, como esta\n* Listas ordenadas, como la siguiente\n    1. Primer punto\n    2. Segundo punto\n* Estilos de fuente, como *italic*, **bold** y 'monospace'\n* Encabezados: tenga en cuenta que recomendamos encarecidamente usar solo ## para este documento\n\n# Para más información\nConsulte nuestra **[documentación](https://connect.cloudblue.com/documentation)** para obtener más información sobre las capacidades del editor de productos.\n## ELIMINE ESTE TEXTO ANTES DE PUBLICAR SU PRODUCTO.",
+		"comment": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:52:14+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.items.PRD-746-555-769-0001.description",
+		"value": "MPN-A",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.items.PRD-746-555-769-0001.name",
+		"value": "Prd 746 555 769 0001",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.items.PRD-746-555-769-0002.description",
+		"value": "MPN-B",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.items.PRD-746-555-769-0002.name",
+		"value": "Prd 746 555 769 0002",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.name",
+		"value": "producto de prueba para traducciones",
+		"comment": "",
+		"auto_translated": false,
+		"events": {
+			"updated": {
+				"at": "2022-04-28T10:52:53+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0001.description",
+		"value": "Descripción del parámetro A",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0001.hint",
+		"value": "Se trata de una sola línea de texto",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0001.placeholder",
+		"value": "Escriba el valor del parámetro",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0001.title",
+		"value": "Título del parámetro A",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0002.description",
+		"value": "Descripción del parámetro B",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0002.hint",
+		"value": "Esta es otra sola línea de texto",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0002.placeholder",
+		"value": "otro valor",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	},
+	{
+		"key": "product.PRD-746-555-769.parameters.PRM-746-555-769-0002.title",
+		"value": "Título del parámetro B",
+		"auto_translated": true,
+		"events": {
+			"updated": {
+				"at": "2022-04-12T12:40:21+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			},
+			"created": {
+				"at": "2022-04-14T15:32:37+00:00",
+				"by": {
+					"id": "UR-063-000-003",
+					"name": "Carlos"
+				}
+			}
+		}
+	}
+]
