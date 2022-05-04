@@ -3,7 +3,7 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Alignment, PatternFill
 from openpyxl.styles.colors import Color
 from openpyxl.worksheet.datavalidation import DataValidation
 from tqdm import tqdm
@@ -48,5 +48,5 @@ def _prepare_attributes_worksheet(ws):
 def _fill_attribute_row(ws, row_idx, attribute):
     ws.cell(row_idx, 1, value=attribute['key'])
     ws.cell(row_idx, 2, value='-')
-    ws.cell(row_idx, 3, value=attribute.get('value', '-'))
+    ws.cell(row_idx, 3, value=attribute.get('value', '-')).alignment = Alignment(wrap_text=True)
     ws.cell(row_idx, 4, value=attribute.get('comment', '-'))
