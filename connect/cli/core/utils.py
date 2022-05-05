@@ -5,6 +5,7 @@
 import os
 
 import click
+from cmr import render
 import requests
 
 from connect.cli import get_version
@@ -63,3 +64,45 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
     output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
 
     return output_file
+
+
+def field_to_check_mark(predicate, false_value=''):
+    """Change the value of a field to a check mark base on a predicate.
+
+        :param predicate: bool value / expression.
+        :param false_value: customizable value if predicate evaluates to false.
+        """
+    return (
+        '\u2713' if predicate else false_value
+    )
+
+
+def row_format_resource(*fields):
+    """Transform a variable number of fields to a `table-row` format.
+        ```
+            >>> row_format_resource(a,b,c,d)
+            '| a | b | c | d |'
+        ```
+        :param fields: fields to be converted to row.
+        """
+    return ('| {} ' * len(fields)).format(*fields) + '|\n'  # noqa: P103
+
+
+def table_formater_resource(resource_str_list, count_of_resources, paging, page_size):
+    """Helps to render resources in chunks of `page_size`.
+
+        :param resource_str_list: list of row-formated resources, must contain table header as first element.
+        :param count_of_resources: the count of resources available in api response.
+        :param paging: keep track of iteration on resources in order to meet certain conditions.
+        :param page_size: size of resources chunks displayed at once, helpful if the command allow to paginate.
+    """
+    header = resource_str_list[:1]
+    if paging % page_size == 0:
+        start = 1 if paging == page_size else paging - page_size
+        if paging > page_size:
+            start += 1
+        click.echo(render(''.join(header + resource_str_list[start:])))
+    else:
+        start = count_of_resources - ((paging - 1) % page_size)
+        if resource_str_list[start:] and len(resource_str_list[1:]) == count_of_resources:
+            click.echo(render(''.join(header + resource_str_list[start:])))

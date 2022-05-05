@@ -5,7 +5,6 @@
 
 import click
 from click import ClickException
-from cmr import render
 
 from connect.cli.core.account.constants import AVAILABLE_ACCOUNTS
 from connect.cli.core.account.helpers import (
@@ -15,6 +14,11 @@ from connect.cli.core.account.helpers import (
 )
 from connect.cli.core.config import pass_config
 from connect.cli.core.constants import DEFAULT_ENDPOINT
+from connect.cli.core.utils import (
+    field_to_check_mark,
+    row_format_resource,
+    table_formater_resource,
+)
 
 
 @click.group(name='account', short_help='Manage configured accounts.')
@@ -52,14 +56,22 @@ def cmd_list_account(config):
     accounts = [AVAILABLE_ACCOUNTS]
 
     for acc in config.accounts.values():
-        active = ' '
-        if acc.id == config.active.id:
-            active = '\u2713'
-        accounts.append(
-            f'| {acc.id} | {acc.name} | {active} |\n',
+        active = field_to_check_mark(
+            acc.id == config.active.id,
         )
+        row = row_format_resource(
+            acc.id,
+            acc.name,
+            active,
+        )
+        accounts.append(row)
 
-    click.echo(render(''.join(accounts)))
+    table_formater_resource(
+        accounts,
+        len(config.accounts.values()),
+        paging=1,
+        page_size=1,
+    )
 
 
 @grp_account.command(

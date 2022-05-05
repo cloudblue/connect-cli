@@ -13,3 +13,11 @@ ATTRIBUTES_COLS = {
     'C': ColumnSettings('Value', 100),
     'D': ColumnSettings('Comment', 30),
 }
+
+TRANSLATION_TABLE_HEADER = """
+
+
+
+| ID | Context_ID | Context_Type | Context_Name |Locale  | Auto | Status | Primary | Owner |
+|:--------|:-----------|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|
+"""

@@ -8,14 +8,13 @@ import click
 
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
-from connect.cli.core.utils import continue_or_quit
-from connect.cli.plugins.locale.constants import LOCALES_TABLE_HEADER
-from connect.cli.plugins.locale.utils import (
-    icon_for_autotranslate,
+from connect.cli.core.utils import (
+    continue_or_quit,
+    field_to_check_mark,
     row_format_resource,
-    stats_of_translations,
     table_formater_resource,
 )
+from connect.cli.plugins.locale.constants import LOCALES_TABLE_HEADER
 from connect.client import ConnectClient, RequestLogger
 
 
@@ -73,8 +72,8 @@ def cmd_list_locales(config, query, page_size, always_continue):
     count_of_locales = query_locales.count()
 
     for paging, resource in enumerate(query_locales, 1):
-        auto = icon_for_autotranslate(resource)
-        translations_count = stats_of_translations(resource)
+        auto = field_to_check_mark(resource["auto_translation"], false_value='\u2716')
+        translations_count = resource["stats"]["translations"] or '-'
         row = row_format_resource(resource["id"], resource["name"], auto, translations_count)
         locales_list.append(row)
         table_formater_resource(
