@@ -1,3 +1,4 @@
+import re
 import os.path
 
 import pytest
@@ -142,3 +143,60 @@ def test_validate_output_options_no_output_file(fs):
     )
 
     assert output_file.endswith('custom/path/XX-000-000/data.xlsx')
+
+
+def test_field_to_check_mark():
+    assert '✓' == utils.field_to_check_mark(True)
+    assert '' == utils.field_to_check_mark(False)
+
+
+def test_field_to_check_mark_with_false_value():
+    assert '-' == utils.field_to_check_mark(False, false_value='-')
+
+
+def test_row_format_resource():
+    fields = (
+        'ZH-HANS',
+        'Simplified Chinese',
+        '✓',
+        '-',
+    )
+    separators = len(fields) + 1
+    assert '| ZH-HANS | Simplified Chinese | ✓ | - |\n' == utils.row_format_resource(*fields)
+    assert separators == len(re.findall(r'\|', utils.row_format_resource(*fields)))
+
+
+def test_formater_not_echo_with_page_size_greater_than_paging(capsys, mocked_resource_list_table):
+
+    utils.table_formater_resource(
+        resource_str_list=mocked_resource_list_table,
+        count_of_resources=97,
+        paging=1,
+        page_size=10,
+    )
+    captured = capsys.readouterr()
+    assert '' == captured.out
+
+
+def test_formater_with_page_size_less_than_paging_and_modulo_equal_zero(capsys, mocked_resource_list_table):
+    utils.table_formater_resource(
+        resource_str_list=mocked_resource_list_table,
+        count_of_resources=97,
+        paging=2,
+        page_size=1,
+    )
+    captured = capsys.readouterr()
+    assert '┌───────┐\n│   ID  │\n├───────┤\n│ZH-HANS│\n└───────┘\n' == captured.out
+
+
+def test_table_formater_page_size_equeal_paging(capsys, mocked_resource_list_table):
+
+    utils.table_formater_resource(
+        resource_str_list=mocked_resource_list_table[:2],
+        count_of_resources=97,
+        paging=1,
+        page_size=1,
+    )
+
+    captured = capsys.readouterr()
+    assert '┌───────┐\n│   ID  │\n├───────┤\n│ZH-HANS│\n└───────┘\n' == captured.out
