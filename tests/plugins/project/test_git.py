@@ -150,7 +150,7 @@ def test_sort_and_filter_tags(tags, expected):
                 commit3	 refs/tags/v21.11
                 commit4	 refs/tags/v21.9""",
             '21.4',
-            ('v21.11', 'commit3'),
+            'v21.11',
         ),
         (
             b"""commit1	 refs/tags/21.1
@@ -158,7 +158,7 @@ def test_sort_and_filter_tags(tags, expected):
                 commit3	 refs/tags/21.11
                 commit4	 refs/tags/21.9""",
             '21.7',
-            ('21.11', 'commit3'),
+            '21.11',
         ),
         (
             b"""commit4	 refs/tags/22.0
@@ -166,7 +166,7 @@ def test_sort_and_filter_tags(tags, expected):
                 commit2	 refs/tags/21.2
                 commit3	 refs/tags/21.1""",
             '22.1',
-            ('22.0', 'commit4'),
+            '22.0',
         ),
         (
             b"""commit4	 refs/tags/22.0
@@ -174,22 +174,22 @@ def test_sort_and_filter_tags(tags, expected):
                 commit2	 refs/tags/21.2
                 commit3	 refs/tags/21.1""",
             '21.1',
-            ('21.3', 'commit1'),
+            '21.3',
         ),
         (
             b"""commit4	 refs/tags/22.0
                 commit1	 refs/tags/21.3
                 commit2	 refs/tags/21.2""",
             '22.4',
-            ('22.0', 'commit4'),
+            '22.0',
         ),
         (
             b"""commit4	 refs/tags/01.0
                 commit1	 refs/tags/0.0""",
             '22.1',
-            (None, None),
+            None
         ),
-        (b"", '21.1', (None, None)),
+        (b"", '21.1', None),
     ),
 )
 def test_get_highest_version(mocker, tags, cli_version, expected):

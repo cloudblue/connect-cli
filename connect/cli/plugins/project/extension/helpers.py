@@ -17,7 +17,6 @@ from connect.cli.plugins.project.extension.constants import (
     CAPABILITY_ALLOWED_STATUSES,
     CAPABILITY_METHOD_MAP,
     CHUNK_FILE_STATUSES,
-    LISTING_REQUEST_STATUSES,
     PROJECT_EXTENSION_BOILERPLATE_TAG,
     PROJECT_EXTENSION_BOILERPLATE_URL,
     PYPI_EXTENSION_RUNNER_URL,
@@ -56,7 +55,6 @@ def bootstrap_extension_project(config, data_dir: str):
     for input_field in (
         'asset_processing', 'asset_validation',
         'tierconfig_validation', 'tierconfig',
-        'listing_request',
     ):
         if input_field in answers:
             cookiecutter_ctx.update(
@@ -66,7 +64,7 @@ def bootstrap_extension_project(config, data_dir: str):
     cookiecutter_ctx.update(answers)
 
     try:
-        checkout_tag, _ = PROJECT_EXTENSION_BOILERPLATE_TAG or get_highest_version(PROJECT_EXTENSION_BOILERPLATE_URL)
+        checkout_tag = PROJECT_EXTENSION_BOILERPLATE_TAG or get_highest_version(PROJECT_EXTENSION_BOILERPLATE_URL)
 
         project_dir = cookiecutter(
             PROJECT_EXTENSION_BOILERPLATE_URL,
@@ -291,8 +289,6 @@ def _check_statuses(capability, stat, errors):
             CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
         'asset_cancel_request_processing': (
             CAPABILITY_ALLOWED_STATUSES + REQUESTS_SCHEDULED_ACTION_STATUSES),
-        'listing_new_request_processing': LISTING_REQUEST_STATUSES,
-        'listing_remove_request_processing': LISTING_REQUEST_STATUSES,
         'tier_account_update_request_processing': TIER_ACCOUNT_UPDATE_STATUSES,
         'part_usage_file_request_processing': CHUNK_FILE_STATUSES,
         'usage_file_request_processing': USAGE_FILE_STATUSES,

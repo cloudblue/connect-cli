@@ -54,7 +54,7 @@ def bootstrap_report_project(data_dir: str):
         raise ClickException('Aborted by user input')
 
     try:
-        checkout_tag, _ = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)
+        checkout_tag = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)
 
         project_dir = cookiecutter(
             PROJECT_REPORT_BOILERPLATE_URL,
