@@ -13,6 +13,7 @@ Options:
   -h, --help  Show this message and exit.
 
 Commands:
+  activate  Active a translation.
   export  Export a translation and its attributes to an excel file.
   list    List translations.
 ```
@@ -49,6 +50,30 @@ This command will output a list of all translations (id, context id, context typ
 │TRN-0000-0000-0000│PRD-999-999-999│  product   │Product P00 for John Doe│English│off │inactive│   ✓   │  ✓  │
 └──────────────────┴───────────────┴────────────┴────────────────────────┴───────┴────┴────────┴───────┴─────┘
 ```
+## Activate a translation
+
+To see the options for the activate translation command run:
+
+```sh
+$ ccli translation activate -h
+
+Usage: ccli translation activate [OPTIONS] TRANSLATION_ID
+
+Options:
+  -f, --force  Force activate.
+  -h, --help   Show this message and exit.
+
+```
+
+Then, to activate a translation, run:
+
+```sh
+$ ccli translation activate TRN-000-000-000
+```
+
+<b>Please note that only one translation file may be active for a given locale at a time</b>. So you will receive a warning explaining this and will be ask if want to continue performing the action, otherwise the activate command will abort.
+You can also use the flag `-f, --force` to force the translation activate and avoid warnings and questions.
+
 
 ## Export a translation to Excel
 
