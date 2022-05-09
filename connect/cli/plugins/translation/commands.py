@@ -14,6 +14,7 @@ from connect.cli.core.utils import (
     table_formater_resource,
 )
 from connect.cli.plugins.translation.constants import TRANSLATION_TABLE_HEADER
+from connect.cli.plugins.translation.activate import activate_translation
 from connect.cli.plugins.translation.export import dump_translation
 from connect.client import ConnectClient, RequestLogger
 
@@ -132,6 +133,54 @@ def cmd_export_translation(config, translation_id, output_file, output_path):
     if not config.silent:
         click.secho(
             f'\nThe translation {translation_id} has been successfully exported to {outfile}.',
+            fg='green',
+        )
+
+
+@grp_translation.command(
+    name='activate',
+    short_help='Active a translation.',
+)
+@click.argument('translation_id', metavar='TRANSLATION_ID', nargs=1, required=True)
+@click.option(
+    '--force',
+    '-f',
+    'force',
+    is_flag=True,
+    help='Force activate.',
+)
+@pass_config
+def cmd_activate_translation(config, translation_id, force):
+    acc_id = config.active.id
+    acc_name = config.active.name
+    if not config.silent:
+        click.secho(
+            f'Current active account: {acc_id} - {acc_name}\n',
+            fg='blue',
+        )
+        click.secho(
+            'Warning: You are about to activate this translation.\n'
+            'Please note that only one translation file may be active for a given locale at a time.\n'
+            'Some attributes are not translated and that may cause problems '
+            'when using this locale.\n',
+            fg='yellow',
+        )
+    if not force:
+        click.confirm(
+            f'Are you sure you want to Activate the translation {translation_id} ?',
+            abort=True,
+        )
+        click.echo()
+    translation = activate_translation(
+        config.active.endpoint,
+        config.active.api_key,
+        translation_id,
+        config.verbose,
+    )
+    if not config.silent:
+        click.secho(
+            f'The translation {translation["id"]} on {translation["context"]["name"]} '
+            'has been successfully activated.',
             fg='green',
         )
 
