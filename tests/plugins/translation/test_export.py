@@ -8,6 +8,7 @@ from connect.cli.plugins.translation.export import dump_translation
 
 
 _LAST_COLUMN_BY_SHEET = {
+    'Instructions': 'B',
     'General': 'B',
     'Attributes': 'D',
 }
@@ -16,22 +17,16 @@ _LAST_COLUMN_BY_SHEET = {
 def test_dump_translation(
     fs,
     mocked_responses,
-    mocked_translation_response,
-    mocked_translation_attributes_response,
+    mocked_translation_attributes_xlsx_response,
     sample_translation_workbook,
 ):
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
-        json=mocked_translation_response,
-    )
-    mocked_responses.add(
-        method='GET',
         url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/attributes',
-        json=mocked_translation_attributes_response,
+        body=mocked_translation_attributes_xlsx_response,
         headers={
-            'Content-Range': 'items 0-29/30',
-        }
+            'Contet-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
     )
 
     output_file = dump_translation(
@@ -39,7 +34,6 @@ def test_dump_translation(
         api_key='ApiKey XXX',
         translation_id='TRN-8100-3865-4869',
         output_file='translation.xlsx',
-        silent=True,
         output_path=fs.root_path,
     )
 
@@ -62,7 +56,7 @@ def test_dump_translation(
 def test_dump_translation_not_exists(fs, mocked_responses):
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-0000-0000-0000',
+        url='https://localhost/public/v1/localization/translations/TRN-0000-0000-0000/attributes',
         status=404,
     )
     with pytest.raises(ClickException) as e:
@@ -71,7 +65,6 @@ def test_dump_translation_not_exists(fs, mocked_responses):
             api_key='ApiKey XXX',
             translation_id='TRN-0000-0000-0000',
             output_file='translation.xlsx',
-            silent=True,
             output_path=fs.root_path,
         )
 

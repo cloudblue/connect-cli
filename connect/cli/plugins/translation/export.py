@@ -3,88 +3,97 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
-from click import ClickException
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.styles.colors import Color, WHITE
-from openpyxl.worksheet.datavalidation import DataValidation
+from copy import copy
+from io import BytesIO
 
-from connect.client import ClientError, ConnectClient, RequestLogger
-from connect.cli.core.http import (
-    format_http_status,
-    handle_http_error,
-)
-from connect.cli.plugins.translation.export_attributes import dump_translation_attributes
+from click import ClickException
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.worksheet.filters import AutoFilter
+from openpyxl.utils import get_column_letter
+
+from connect.client import ClientError, ConnectClient
+from connect.client.utils import get_headers
+from connect.cli.core.http import format_http_status, handle_http_error
 from connect.cli.core.utils import validate_output_options
+from connect.cli.plugins.translation.utils import insert_column_ws, logged_request
+
+
+EXCEL_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 
 def dump_translation(
-    api_url, api_key, translation_id, output_file,
-    silent, verbose=False, output_path=None,
+    api_url, api_key, translation_id, output_file, verbose=False, output_path=None,
 ):
     output_file = validate_output_options(output_path, output_file, default_dir_name=translation_id)
+    wb = _get_translation_workbook(api_url, api_key, translation_id, verbose)
+    _alter_general_sheet(wb['General'])
+    _alter_attributes_sheet(wb['Attributes'])
+    wb.save(output_file)
+    return output_file
+
+
+def _get_translation_workbook(api_url, api_key, translation_id, verbose=False):
     try:
-        client = ConnectClient(
-            api_key=api_key,
-            endpoint=api_url,
-            use_specs=False,
-            max_retries=3,
-            logger=RequestLogger() if verbose else None,
-        )
-        translation = client.ns('localization').translations[translation_id].get()
-        wb = Workbook()
-        _dump_general(wb.active, translation)
-        dump_translation_attributes(wb.create_sheet('Attributes'), client, translation_id, silent)
-        wb.save(output_file)
+        client = ConnectClient(api_key=api_key, endpoint=api_url, use_specs=False)
+        attributes_path = client.ns('localization').translations[translation_id].attributes.path
+        url = f'{api_url}/{attributes_path}'
+        response = logged_request('GET', url, verbose, headers={
+            'Content-type': EXCEL_CONTENT_TYPE, **get_headers(api_key),
+        })
+        if response.status_code != 200:
+            raise ClientError(status_code=response.status_code)
+        return load_workbook(filename=BytesIO(response.content))
     except ClientError as error:
         if error.status_code == 404:
             status = format_http_status(error.status_code)
             raise ClickException(f'{status}: Translation {translation_id} not found.')
         handle_http_error(error)
 
-    return output_file
+
+def _alter_general_sheet(ws):
+    for row_idx in range(1, ws.max_row + 1):
+        if ws.cell(row_idx, 1).value.lower() == 'auto-translation':
+            disabled_enabled = DataValidation(
+                type='list',
+                formula1='"Disabled,Enabled"',
+                allow_blank=False,
+            )
+            ws.add_data_validation(disabled_enabled)
+            disabled_enabled.add(ws.cell(row_idx, 2))
+            break
 
 
-def _dump_general(ws, translation):
-    _set_ws_main_header(ws, 'Translation information')
-    ws.title = 'General'
-    for row_idx in range(3, 10):
-        for col_idx in [1, 2]:
-            ws.cell(row_idx, col_idx).font = Font(sz=12)
-    disabled_enabled = DataValidation(
-        type='list',
-        formula1='"Disabled,Enabled"',
-        allow_blank=False,
-    )
-    ws.add_data_validation(disabled_enabled)
+def _alter_attributes_sheet(ws):
+    # Search for the 'value' column
+    for col_idx in range(1, ws.max_column + 1):
+        if ws.cell(1, col_idx).value.lower() == 'value':
+            new_column = col_idx
+            break
+    else:
+        return
 
-    ws['A3'].value = 'Translation'
-    ws['B3'].value = translation['id']
-    ws['A4'].value = 'Translation Owner'
-    ws['B4'].value = translation['owner']['id']
-    ws['A5'].value = 'Locale'
-    ws['B5'].value = translation['locale']['id']
-    ws['A6'].value = 'Localization Context'
-    ws['B6'].value = translation['context']['id']
-    ws['A7'].value = 'Instance ID'
-    ws['B7'].value = translation['context']['instance_id']
-    ws['A8'].value = 'Instance Name'
-    ws['B8'].value = translation['context']['name']
-    ws['A9'].value = 'Description'
-    ws['A9'].alignment = Alignment(horizontal='left', vertical='top')
-    ws['B9'].value = translation['description']
-    ws['B9'].alignment = Alignment(wrap_text=True)
-    ws['A10'].value = 'Autotranslation'
-    ws['B10'].value = 'Enabled' if translation['auto']['enabled'] else 'Disabled'
-    disabled_enabled.add(ws['B10'])
+    # Add new 'action' column before 'value' column
+    fill = copy(ws.cell(1, 1).fill)
+    font = copy(ws.cell(1, 1).font)
+    insert_column_ws(ws, new_column, 20)
+    header_cell = ws.cell(1, new_column)
+    header_cell.value = 'action'
+    header_cell.fill = fill
+    header_cell.font = font
 
+    # Setup 'action' column cells
+    if ws.max_row > 1:
+        action_validation = DataValidation(type='list', formula1='"-,update"', allow_blank=False)
+        ws.add_data_validation(action_validation)
+        for row_idx in range(2, ws.max_row + 1):
+            cell = ws.cell(row_idx, new_column)
+            cell.alignment = Alignment(vertical='top')
+            cell.value = '-'
+            action_validation.add(cell)
 
-def _set_ws_main_header(ws, title):
-    ws.column_dimensions['A'].width = 50
-    ws.column_dimensions['B'].width = 180
-    ws.merge_cells('A1:B1')
-    cell = ws['A1']
-    cell.fill = PatternFill('solid', start_color=Color('1565C0'))
-    cell.font = Font(sz=24, color=WHITE)
-    cell.alignment = Alignment(horizontal='center', vertical='center')
-    cell.value = title
+    # (re)set auto filter
+    ws.auto_filter = AutoFilter(ref=f'A:{get_column_letter(ws.max_column)}')
+    for col_idx in range(1, ws.max_column + 1):
+        ws.auto_filter.add_filter_column(col_idx, [], blank=False)

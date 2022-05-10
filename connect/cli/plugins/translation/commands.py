@@ -126,7 +126,6 @@ def cmd_export_translation(config, translation_id, output_file, output_path):
         config.active.api_key,
         translation_id,
         output_file,
-        config.silent,
         config.verbose,
         output_path,
     )
