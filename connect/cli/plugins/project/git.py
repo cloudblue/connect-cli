@@ -87,4 +87,4 @@ def get_highest_version(repo_url):
     tags = _list_tags(repo_url)
     desired_major, _ = get_version().split('.', 1)
     tags = _sort_and_filter_tags(tags, desired_major)
-    return tags.popitem() if tags else (None, None)
+    return tags.popitem()[0] if tags else None

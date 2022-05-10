@@ -30,8 +30,6 @@ def get_summary(config):
 <b><blue>Subscriptions processing</blue></b>
     <b>Asset requests types:</b> ${asset_processing}
     <b>Tier configuration requests types:</b> ${tierconfig}
-<b><blue>Listing processing</blue></b>
-    <b>Listing requests types:</b> ${listing_request}
 """
 
     vendor_specific = """<b><blue>Products</blue></b>
@@ -216,17 +214,6 @@ def get_questions(config):
                 ('tier_config_process_capabilities_1of3', 'Setup'),
                 ('tier_config_process_capabilities_2of3', 'Change'),
                 ('tier_config_process_capabilities_3of3', 'Adjustment'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'listing_request',
-            'label': 'Listings',
-            'type': 'selectmany',
-            'description': 'What types of listing requests do you want your Extension to process ?',
-            'values': [
-                ('listing_request_process_new', 'New/Update'),
-                ('listing_request_process_remove', 'Remove'),
             ],
             'formatting_template': '${label}',
         },
