@@ -6,6 +6,7 @@ from connect.cli.core.config import Config
 
 
 def test_bootstrap_report_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_bootstrap = mocker.patch(
         'connect.cli.plugins.project.commands.bootstrap_report_project',
         side_effect=print('project_dir'),
@@ -30,6 +31,7 @@ def test_bootstrap_report_command(fs, ccli, mocker, capsys):
 
 
 def test_validate_report_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_validate_project = mocker.patch(
         'connect.cli.plugins.project.commands.validate_report_project',
         side_effect=print('Report Project connect/.data/logan has been successfully validated.'),
@@ -54,6 +56,7 @@ def test_validate_report_command(fs, ccli, mocker, capsys):
 
 
 def test_add_report_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_add_report = mocker.patch(
         'connect.cli.plugins.project.commands.add_report',
         side_effect=print('successfully added'),
@@ -105,6 +108,7 @@ def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
 
 
 def test_validate_extension_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_validate_project = mocker.patch(
         'connect.cli.plugins.project.commands.validate_extension_project',
         side_effect=print('Extension Project connect/.data/logan has been successfully validated.'),
@@ -129,6 +133,7 @@ def test_validate_extension_command(fs, ccli, mocker, capsys):
 
 
 def test_bump_extension_command(fs, ccli, mocker, capsys):
+    mocker.patch.object(Config, 'validate')
     mocked_bump_runner = mocker.patch(
         'connect.cli.plugins.project.commands.bump_runner_extension_project',
         side_effect=print('Runner version has been successfully updated'),

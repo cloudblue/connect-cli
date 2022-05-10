@@ -26,6 +26,17 @@ class CCliGroup(click.Group):
 
         return decorator
 
+    def group(self, *args, **kwargs):
+        from click.decorators import group
+        kwargs['cls'] = CCliGroup
+
+        def decorator(f):
+            cmd = group(*args, **kwargs)(f)
+            self.add_command(cmd)
+            return cmd
+
+        return decorator
+
 
 def group(name=None, **attrs):
     attrs.setdefault("cls", CCliGroup)
