@@ -1,8 +1,4 @@
-import pytest
 from click.testing import CliRunner
-
-
-pytestmark = pytest.mark.skip(reason='translation plugin has been temporary disabled')
 
 
 def test_export(config_mocker, mocker, ccli):

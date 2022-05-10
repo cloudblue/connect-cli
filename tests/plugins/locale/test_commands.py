@@ -1,8 +1,4 @@
-import pytest
 from click.testing import CliRunner
-
-
-pytestmark = pytest.mark.skip(reason='locale plugin has been temporary disabled')
 
 
 def test_list_locales(config_mocker, mocked_responses, mocked_locales_response, ccli):
