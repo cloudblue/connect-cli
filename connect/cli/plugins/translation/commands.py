@@ -16,6 +16,7 @@ from connect.cli.core.utils import (
 from connect.cli.plugins.translation.constants import TRANSLATION_TABLE_HEADER
 from connect.cli.plugins.translation.activate import activate_translation
 from connect.cli.plugins.translation.export import dump_translation
+from connect.cli.plugins.translation.primarize import primarize_translation
 from connect.client import ConnectClient, RequestLogger
 
 
@@ -181,6 +182,58 @@ def cmd_activate_translation(config, translation_id, force):
         click.secho(
             f'The translation {translation["id"]} on {translation["context"]["name"]} '
             'has been successfully activated.',
+            fg='green',
+        )
+
+
+@grp_translation.command(
+    name='primarize',
+    short_help='Primarize a translation.',
+)
+@click.argument('translation_id', metavar='TRANSLATION_ID', nargs=1, required=True)
+@click.option(
+    '--force',
+    '-f',
+    'force',
+    is_flag=True,
+    help='Force primarize.',
+)
+@pass_config
+def cmd_primarize_translation(config, translation_id, force):
+    acc_id = config.active.id
+    acc_name = config.active.name
+    if not config.silent:
+        click.secho(
+            f'Current active account: {acc_id} - {acc_name}\n',
+            fg='blue',
+        )
+        click.secho(
+            'Warning: You are about to make this translation primary.\n'
+            'This action can\'t be undone.\n'
+            'You will loose all of its attributes values, they will be '
+            'replaced with the original context attributes values.\n',
+            fg='yellow',
+        )
+        click.secho(
+            'Tip: You can clone this translation to keep a copy of the current values.\n',
+            fg='blue',
+        )
+    if not force:
+        click.confirm(
+            f'Are you sure you want to Primarize the translation {translation_id} ?',
+            abort=True,
+        )
+        click.echo()
+    translation = primarize_translation(
+        config.active.endpoint,
+        config.active.api_key,
+        translation_id,
+        config.verbose,
+    )
+    if not config.silent:
+        click.secho(
+            f'The translation {translation["id"]} on {translation["context"]["name"]} '
+            'has been successfully primarize.',
             fg='green',
         )
 
