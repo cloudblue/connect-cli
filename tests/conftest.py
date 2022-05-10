@@ -316,12 +316,6 @@ def mocked_translation_response():
 
 
 @pytest.fixture(scope='function')
-def mocked_translation_attributes_response():
-    with open('./tests/fixtures/translation_attributes_response.json') as response:
-        return json.load(response)
-
-
-@pytest.fixture(scope='function')
 def mocked_resource_list_table():
     return [
         '|ID|\n|:----:|\n',
@@ -334,4 +328,3 @@ def mocked_resource_list_table():
 def mocked_translation_attributes_xlsx_response():
     with open('./tests/fixtures/translation_attributes_response.xlsx') as response:
         yield response.buffer
-
