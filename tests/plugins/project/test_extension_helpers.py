@@ -49,7 +49,6 @@ def test_bootstrap_extension_project_vendor(
             'tierconfig': [],
             'product': [],
             'tieraccount': [],
-            'listing_request': [],
             'usage_files': [],
             'tierconfig_validation': [],
         },
@@ -134,7 +133,6 @@ def test_bootstrap_extension_project_vendor_with_error(
             'tierconfig': [],
             'product': [],
             'tieraccount': [],
-            'listing_request': [],
             'usage_files': [],
             'tierconfig_validation': [],
         },
@@ -179,7 +177,6 @@ def test_bootstrap_extension_project_provider(
             'asset_processing': [],
             'tierconfig': [],
             'tieraccount': [],
-            'listing_request': [],
             'usage_chunk_files': [],
             'product': [],
         },
@@ -247,7 +244,6 @@ def test_bootstrap_dir_exists_error_vendor(fs, mocker, config_vendor):
             'tierconfig': [],
             'product': [],
             'tieraccount': [],
-            'listing_request': [],
             'usage_files': [],
             'tierconfig_validation': [],
         },
@@ -829,42 +825,6 @@ def test_validate_capabilities_with_wrong_status(
         validate_extension_project(project_dir)
 
     assert 'Status `foo` on capability `asset_purchase_request_processing` is not allowed.' in str(error.value)
-
-
-def test_validate_listing_request_capabilities_with_wrong_status(
-    mocker,
-    mocked_extension_descriptor,
-):
-    project_dir = './tests/fixtures/extensions/basic_ext'
-
-    class TestExtension:
-        def process_asset_purchase_request(self):
-            pass
-
-        def execute_scheduled_processing(self):
-            pass
-
-    mocker.patch.object(
-        EntryPoint,
-        'load',
-        return_value=TestExtension,
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.pkg_resources.iter_entry_points',
-        side_effect=(
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-            iter([EntryPoint('extension', 'connect.eaas.ext')]),
-        ),
-    )
-    mocked_extension_descriptor['capabilities']['listing_new_request_processing'] = ['foo']
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.json.load',
-        return_value=mocked_extension_descriptor,
-    )
-    with pytest.raises(ClickException) as error:
-        validate_extension_project(project_dir)
-
-    assert 'Status `foo` on capability `listing_new_request_processing` is not allowed.' in str(error.value)
 
 
 def test_validate_tier_account_capabilities_with_wrong_status(

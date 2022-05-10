@@ -24,8 +24,6 @@ CAPABILITY_METHOD_MAP = {
     'usage_file_request_processing': 'process_usage_file',
     'part_usage_file_request_processing': 'process_usage_chunk_file',
     'tier_account_update_request_processing': 'process_tier_account_update_request',
-    'listing_new_request_processing': 'process_new_listing_request',
-    'listing_remove_request_processing': 'process_remove_listing_request',
 }
 
 CAPABILITY_ALLOWED_STATUSES = [
@@ -62,14 +60,6 @@ TIER_ACCOUNT_UPDATE_STATUSES = [
     'pending',
     'accepted',
     'ignored',
-]
-
-LISTING_REQUEST_STATUSES = [
-    'draft',
-    'reviewing',
-    'deploying',
-    'canceled',
-    'completed',
 ]
 
 USAGE_FILE_STATUSES = [
