@@ -1,7 +1,6 @@
 import platform
 
 import pytest
-
 from click import ClickException
 
 from connect.cli import get_version

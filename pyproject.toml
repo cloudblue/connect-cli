@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "connect-cli"
-version = "0.0.0"
+version = "24.0"
 description = "CloudBlue Connect Command Line Interface"
 authors = ["CloudBlue LLC"]
 license = "Apache-2.0"
@@ -58,9 +58,9 @@ python = "^3.8"
 lxml = "^4.6.2"
 click = "^7.1.2"
 openpyxl = "^3.0.7"
-connect-openapi-client = "^24.0"
+connect-openapi-client = ">=25.0"
 interrogatio = "^2.1.2"
-connect-markdown-renderer = "^1.0.1"
+connect-markdown-renderer = ">=2.0.1,<3"
 iso3166 = "^1.0.1"
 phonenumbers = "^8.12.19"
 fs = "^2.4.12"
@@ -70,6 +70,10 @@ connect-reports-core = "24.*"
 requests = "^2.25.1"
 cookiecutter = "^1.7.2"
 toml = "^0.10.2"
+Jinja2 = "^3.1.2"
+jinja2-time = "^0.2.0"
+connect-eaas-core = "^2"
+rich = "^12.4.1"
 
 [tool.poetry.dev-dependencies]
 
@@ -92,6 +96,7 @@ flake8-eradicate = "^1.0.0"
 flake8-string-format = "^0.3.0"
 ipython = "^7.21.0"
 wheel = "^0.37.0"
+Faker = "^13.11.0"
 
 
 [build-system]

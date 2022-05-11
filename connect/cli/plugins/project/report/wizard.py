@@ -1,6 +1,6 @@
 from interrogatio.validators import RequiredValidator
 
-from connect.cli.plugins.project.cookiehelpers import slugify
+from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
 REPORT_BOOTSTRAP_WIZARD_INTRO = (

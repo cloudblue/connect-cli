@@ -186,7 +186,7 @@ def test_formater_with_page_size_less_than_paging_and_modulo_equal_zero(capsys, 
         page_size=1,
     )
     captured = capsys.readouterr()
-    assert '┌───────┐\n│   ID  │\n├───────┤\n│ZH-HANS│\n└───────┘\n' == captured.out
+    assert '╭─────────╮\n│   ID    │\n├─────────┤\n│ ZH-HANS │\n╰─────────╯\n\n' == captured.out
 
 
 def test_table_formater_page_size_equeal_paging(capsys, mocked_resource_list_table):
@@ -199,4 +199,4 @@ def test_table_formater_page_size_equeal_paging(capsys, mocked_resource_list_tab
     )
 
     captured = capsys.readouterr()
-    assert '┌───────┐\n│   ID  │\n├───────┤\n│ZH-HANS│\n└───────┘\n' == captured.out
+    assert '╭─────────╮\n│   ID    │\n├─────────┤\n│ ZH-HANS │\n╰─────────╯\n\n' == captured.out

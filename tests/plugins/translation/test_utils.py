@@ -1,8 +1,4 @@
-import sys
-from pickle import FALSE
 from openpyxl import Workbook
-
-from connect.client import ClientError, RequestLogger
 
 from connect.cli.plugins.translation.utils import insert_column_ws, logged_request
 

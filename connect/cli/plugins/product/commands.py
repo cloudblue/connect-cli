@@ -5,7 +5,6 @@
 
 import click
 from click.exceptions import ClickException
-from cmr import render
 
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
@@ -25,6 +24,7 @@ from connect.cli.plugins.product.sync import (
     TemplatesSynchronizer,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
+from connect.utils.terminal.markdown import render
 
 
 @group(name='product', short_help='Manage product definitions.')
@@ -627,7 +627,6 @@ def config_values_sync(client, config, input_file):
         config.silent,
     )
     synchronizer.open(input_file, 'Configuration')
-
     skipped, created, updated, deleted, errors = synchronizer.sync()
 
     return {
