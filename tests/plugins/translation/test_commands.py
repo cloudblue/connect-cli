@@ -1,8 +1,8 @@
+import pytest
 from click.testing import CliRunner
 
-from openpyxl import load_workbook
 
-from connect.cli.core.config import Config
+pytestmark = pytest.mark.skip(reason='translation plugin has been temporary disabled')
 
 
 def test_export(config_mocker, mocker, ccli):
