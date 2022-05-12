@@ -76,7 +76,7 @@ def test_list_translations(config_mocker, mocked_responses, mocked_translation_r
     assert result.exit_code == 0
     assert 'Current active account: VA-000 - Account 0' in result.output
     assert (
-        '│TRN-8100-3865-4869│PRD-746-555-769│  product   │translation test product│Spanish│off │active│       │     │' 
+        '│TRN-8100-3865-4869│PRD-746-555-769│  product   │translation test product│Spanish│off │active│       │     │'
         in result.output
     )
 
@@ -178,4 +178,105 @@ def test_force_activate_translation(config_mocker, mocker, mocked_translation_re
     assert (
         'The translation TRN-8100-3865-4869 on translation test '
         'product has been successfully activated.' in result.output
+    )
+
+
+def test_primarize_translation_command(config_mocker, mocker, mocked_translation_response, ccli):
+    mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.primarize_translation',
+        side_effect=lambda *args: mocked_translation_response,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'translation',
+            'primarize',
+            'TRN-8100-3865-4869',
+        ],
+        input='y\n',
+    )
+
+    mock.assert_called_once()
+    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
+    assert mock.mock_calls[0][1][3] is False
+    assert result.exit_code == 0
+    assert 'Warning: You are about to make this translation primary.' in result.output
+    assert (
+        'The translation TRN-8100-3865-4869 on translation test '
+        'product has been successfully primarize.' in result.output
+    )
+
+
+def test_primarize_translation_silent(config_mocker, mocker, mocked_translation_response, ccli):
+    mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.primarize_translation',
+        side_effect=lambda *args: mocked_translation_response,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-s',
+            'translation',
+            'primarize',
+            'TRN-8100-3865-4869',
+        ],
+        input='y\n',
+    )
+
+    mock.assert_called_once()
+    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
+    assert mock.mock_calls[0][1][3] is False
+    assert result.exit_code == 0
+    assert 'Warning: You are about to make this translation primary.' not in result.output
+
+
+def test_abort_primarize_translation(config_mocker, mocker, mocked_translation_response, ccli):
+    mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.primarize_translation',
+        side_effect=lambda *args: mocked_translation_response,
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'translation',
+            'primarize',
+            'TRN-8100-3865-4869',
+        ],
+        input='n\n',
+    )
+
+    mock.assert_not_called()
+    assert result.exit_code == 1
+    assert 'Aborted!' in result.output
+
+
+def test_force_primarize_translation(config_mocker, mocker, mocked_translation_response, ccli):
+    mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.primarize_translation',
+        side_effect=lambda *args: mocked_translation_response,
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'translation',
+            'primarize',
+            '-f',
+            'TRN-8100-3865-4869',
+        ],
+    )
+
+    mock.assert_called_once()
+    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
+    assert mock.mock_calls[0][1][3] is False
+    assert result.exit_code == 0
+    assert 'Are you sure you want to Primarize the translation TRN-8100-3865-4869 ?' not in result.output
+    assert (
+        'The translation TRN-8100-3865-4869 on translation test '
+        'product has been successfully primarize.' in result.output
     )

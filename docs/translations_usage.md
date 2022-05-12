@@ -13,9 +13,10 @@ Options:
   -h, --help  Show this message and exit.
 
 Commands:
-  activate  Active a translation.
-  export  Export a translation and its attributes to an excel file.
-  list    List translations.
+  activate   Active a translation.
+  export     Export a translation and its attributes to an excel file.
+  list       List translations.
+  primarize  Primarize a translation.
 ```
 
 ## List translation options
@@ -84,3 +85,28 @@ To export a translation and its attributes to Excel run:
 ```
 
 This command will generate a excel file named TRN-000-000-000.xlsx in the current working directory.
+
+
+## Primarize a translation
+
+To see the options for the primarize translation command run:
+
+```sh
+$ ccli translation primarize -h
+
+Usage: ccli translation primarize [OPTIONS] TRANSLATION_ID
+
+Options:
+  -f, --force  Force primarize.
+  -h, --help   Show this message and exit.
+
+```
+
+Then, to primarize a translation, run:
+
+```sh
+$ ccli translation primarize TRN-000-000-000
+```
+
+<b>When primarize a translation you will loose all of its attributes values, they will be replaced with the original context attributes values. This action can't be undone.</b> So as the same as `activate command`, you will receive a warning.
+You can also use the flag `-f, --force` to force the translation primarize.
