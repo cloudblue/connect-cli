@@ -624,8 +624,8 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
     _setup_ws_header(ws, 'capabilities')
     progress = trange(0, 1, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
     progress.set_description("Processing product capabilities")
-    ppu = product['capabilities']['ppu']
     capabilities = product['capabilities']
+    ppu = product['capabilities'].get('ppu', False)
     tiers = capabilities['tiers']
     subscription = capabilities['subscription']
     change = subscription['change']
