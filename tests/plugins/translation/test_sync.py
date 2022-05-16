@@ -259,7 +259,7 @@ def test_update_wait_autotranslate_attributes(
         "Unknown auto-translation status: unknown_status",
     ),
 ])
-def test_update_wait_autotranslate_timeout(
+def test_update_wait_autotranslate_fails(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook,
     wait_response_auto, expected_error_msg,
 ):
@@ -333,6 +333,34 @@ def test_update(
     }
 
 
+def test_create_asks_confirmation(
+    fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        status=404,
+    )
+
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/localization/translations',
+        json=mocked_translation_response,
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    synchronizer.sync(yes=False)
+
+    captured = capsys.readouterr()
+    assert "A new translation will be created." in captured.out
+    assert "Do you want to continue?" in captured.out
+
+
 def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker):
     mocker.patch('click.termui.visible_prompt_func', return_value='n')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
@@ -383,7 +411,7 @@ def test_create_always_yes(
 
 
 def test_create_and_skip_all_attributes(
-    fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
     mocker.patch('click.termui.visible_prompt_func', return_value='y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
@@ -409,13 +437,10 @@ def test_create_and_skip_all_attributes(
         'processed': 1, 'created': 1, 'updated': 0,
         'deleted': 0, 'skipped': 0, 'errors': 0,
     }
-    captured = capsys.readouterr()
-    assert "A new translation will be created." in captured.out
-    assert "Do you want to continue?" in captured.out
 
 
 def test_create_fail_skip_attributes(
-    fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs, mocked_responses, sample_translation_workbook, mocker,
 ):
     mocker.patch('click.termui.visible_prompt_func', return_value='y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
@@ -446,23 +471,17 @@ def test_create_fail_skip_attributes(
     }
 
 
-@pytest.mark.parametrize('cell,cell_value', [
-    ('B4', 'DE'),
-    ('B5', 'LCX-9999-9999-9999'),
-])
-def test_change_locale_or_context_causes_creation(
-    fs, capsys, cell, cell_value, mocked_responses, mocked_translation_response,
-    sample_translation_workbook, mocker,
+def test_change_locale_causes_creation(
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
     mocker.patch('click.termui.visible_prompt_func', return_value='y')
-    sample_translation_workbook['General'][cell].value = cell_value
+    sample_translation_workbook['General']['B4'].value = 'DE'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
-
     mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/localization/translations',
@@ -478,14 +497,10 @@ def test_change_locale_or_context_causes_creation(
         'processed': 1, 'created': 1, 'updated': 0,
         'deleted': 0, 'skipped': 0, 'errors': 0,
     }
-    captured = capsys.readouterr()
-    assert "A new translation will be created." in captured.out
-    assert "Do you want to continue?" in captured.out
 
 
 def test_different_account_causes_creation(
-    fs, capsys, mocked_responses, mocked_translation_response,
-    sample_translation_workbook, mocker,
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
     mocker.patch('click.termui.visible_prompt_func', return_value='y')
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -510,6 +525,177 @@ def test_different_account_causes_creation(
         'processed': 1, 'created': 1, 'updated': 0,
         'deleted': 0, 'skipped': 0, 'errors': 0,
     }
-    captured = capsys.readouterr()
-    assert "A new translation will be created." in captured.out
-    assert "Do you want to continue?" in captured.out
+
+
+@pytest.mark.parametrize('ctx_instance_id', ['PRD-999-999-999', ''])
+def test_change_context_causes_creation(
+    fs, ctx_instance_id, mocked_responses, mocked_translation_response,
+    sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
+    sample_translation_workbook['General']['B6'].value = ctx_instance_id
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        json=mocked_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/contexts/LCX-9999-9999-9999',
+        json={
+            'id': 'LCX-9999-9999-9999',
+            'instance_id': 'PRD-999-999-999', 'name': 'another product',
+        },
+    )
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/localization/translations',
+        json=mocked_translation_response,
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    synchronizer.sync(yes=False)
+
+    assert synchronizer.stats['Translation'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
+
+
+def test_change_context_instance_causes_creation(
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B5'].value = ''
+    sample_translation_workbook['General']['B6'].value = 'PRD-999-999-999'
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        json=mocked_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-999-999-999)&limit=100&offset=0',
+        headers={
+            'Content-Range': 'items 0-0/1',
+        },
+        json=[{
+            'id': 'LCX-9999-9999-9999',
+            'instance_id': 'PRD-999-999-999', 'name': 'another product',
+        }],
+    )
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/localization/translations',
+        json=mocked_translation_response,
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    synchronizer.sync(yes=False)
+
+    assert synchronizer.stats['Translation'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
+
+
+def test_change_context_ambiguity_fail(
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
+    sample_translation_workbook['General']['B6'].value = 'PRD-DIFFERENT-PRODUCT'
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        json=mocked_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/contexts/LCX-9999-9999-9999',
+        json={
+            'id': 'LCX-9999-9999-9999',
+            'instance_id': 'PRD-999-999-999', 'name': 'another product',
+        },
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    with pytest.raises(click.ClickException) as e:
+        synchronizer.sync(yes=False)
+
+    assert str(e.value) == (
+        "The Instance ID (PRD-DIFFERENT-PRODUCT) doesn't correspond "
+        "to the Context ID (LCX-9999-9999-9999)"
+    )
+
+
+@pytest.mark.parametrize('status,error_msg', [
+    (404, "The Context ID (LCX-TRIGGER-ERROR) doesn't exist"),
+    (500, "500 - Internal Server Error: unexpected error."),
+])
+def test_change_context_fail(
+    fs, status, error_msg, mocked_responses, mocked_translation_response,
+    sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B5'].value = 'LCX-TRIGGER-ERROR'
+    sample_translation_workbook['General']['B6'].value = ''
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        json=mocked_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/contexts/LCX-TRIGGER-ERROR',
+        status=status,
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    with pytest.raises(click.ClickException) as e:
+        synchronizer.sync(yes=False)
+
+    assert str(e.value) == error_msg
+
+
+def test_change_context_instance_not_exists_fail(
+    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+):
+    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    sample_translation_workbook['General']['B5'].value = ''
+    sample_translation_workbook['General']['B6'].value = 'PRD-INEXISTENT'
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        json=mocked_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-INEXISTENT)&limit=100&offset=0',
+        headers={
+            'Content-Range': 'items 0-0/0',
+        },
+        json=[],
+    )
+    client = get_client()
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer.open(f'{fs.root_path}/test.xlsx')
+
+    with pytest.raises(click.ClickException) as e:
+        synchronizer.sync(yes=False)
+
+    assert str(e.value) == "The Instance ID (PRD-INEXISTENT) doesn't exist"
