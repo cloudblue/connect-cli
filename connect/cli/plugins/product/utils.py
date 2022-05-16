@@ -10,6 +10,7 @@ from connect.cli.plugins.product.constants import (
     PARAMS_COLS_HEADERS,
     STATIC_LINK_HEADERS,
     TEMPLATES_HEADERS,
+    TRANSLATION_HEADERS,
 )
 
 
@@ -30,6 +31,8 @@ def get_col_limit_by_ws_type(ws_type):
         return 'I'
     elif ws_type == 'actions':
         return 'I'
+    elif ws_type == 'translations':
+        return 'M'
     return 'Z'
 
 
@@ -54,6 +57,8 @@ def get_ws_type_by_worksheet_name(ws_name):
         return 'configurations'
     elif ws_name == 'Actions':
         return 'actions'
+    elif ws_name == 'Translations':
+        return 'translations'
     return None
 
 
@@ -74,6 +79,8 @@ def get_col_headers_by_ws_type(ws_type):
         return CONFIGURATION_HEADERS
     elif ws_type == 'actions':
         return ACTIONS_HEADERS
+    elif ws_type == 'translations':
+        return TRANSLATION_HEADERS
 
 
 def cleanup_product_for_update(product):
