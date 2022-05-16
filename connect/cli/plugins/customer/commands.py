@@ -11,7 +11,6 @@ from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.plugins.customer.export import dump_customers
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
-from connect.cli.plugins.customer.utils import print_sync_result
 
 
 @group(name='customer', short_help='Export/synchronize customers.')
@@ -103,10 +102,10 @@ def cmd_sync_customers(config, input_file, yes):
     )
     warnings.filterwarnings("ignore", category=UserWarning)
     synchronizer.open(input_file, 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
+    synchronizer.sync()
     synchronizer.save(input_file)
     if not config.silent:
-        print_sync_result(skipped, created, updated, errors)
+        synchronizer.stats.print()
 
 
 def get_group():

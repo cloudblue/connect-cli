@@ -3,7 +3,7 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from tqdm import trange
 
@@ -18,9 +18,9 @@ _RowData = namedtuple('RowData', fields)
 
 
 class TemplatesSynchronizer(ProductSynchronizer):
-
-    def __init__(self, client, silent):
+    def __init__(self, client, silent, stats):
         super().__init__(client, silent)
+        self._mstats = stats['Templates']
         self._action_handlers = {
             'create': self._action_create,
             'update': self._action_update,
@@ -29,8 +29,6 @@ class TemplatesSynchronizer(ProductSynchronizer):
 
     def sync(self):
         ws = self._wb["Templates"]
-        errors = {}
-        success_action_count = defaultdict(int)
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -39,19 +37,12 @@ class TemplatesSynchronizer(ProductSynchronizer):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 9)])
             row_indexes.set_description(f'Processing Template {data.id or data.title}')
             try:
-                if data.action != '-':
+                if data.action == '-':
+                    self._mstats.skipped()
+                else:
                     self._process_row(data, ws, row_indexes, row_idx)
-                success_action_count[data.action] += 1
             except Exception as e:
-                errors[row_idx] = str(e).split('\n')
-
-        return (
-            success_action_count['-'],
-            success_action_count['create'],
-            success_action_count['update'],
-            success_action_count['delete'],
-            errors,
-        )
+                self._mstats.error(str(e).split('\n'), row_idx)
 
     def _process_row(self, data, ws, row_indexes, row_idx):
         row_errors = self._validate_row(data)
@@ -64,7 +55,9 @@ class TemplatesSynchronizer(ProductSynchronizer):
     def _action_create(self, data, row_indexes):
         row_indexes.set_description(f"Creating template {data.title}")
         payload = self._row_to_payload(data)
-        return self._client.products[self._product_id].templates.create(payload)
+        template = self._client.products[self._product_id].templates.create(payload)
+        self._mstats.created()
+        return template
 
     def _action_update(self, data, row_indexes):
         row_indexes.set_description(f"Updating template {data.id}")
@@ -87,7 +80,9 @@ class TemplatesSynchronizer(ProductSynchronizer):
                 f'Original scope {current["scope"]}, requested scope {payload["scope"]}. '
                 f'Original type {current.get("type")}, requested type {payload.get("type")}',
             )
-        return self._client.products[self._product_id].templates[data.id].update(payload)
+        template = self._client.products[self._product_id].templates[data.id].update(payload)
+        self._mstats.updated()
+        return template
 
     def _action_delete(self, data, row_indexes):
         row_indexes.set_description(f"Deleting template {data.id}")
@@ -97,6 +92,7 @@ class TemplatesSynchronizer(ProductSynchronizer):
             # if the template doesn't exist, perform as success deletion
             if e.status_code != 404:
                 raise
+        self._mstats.deleted()
 
     @staticmethod
     def _row_to_payload(data):

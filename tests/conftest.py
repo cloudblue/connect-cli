@@ -328,3 +328,113 @@ def mocked_resource_list_table():
 def mocked_translation_attributes_xlsx_response():
     with open('./tests/fixtures/translation_attributes_response.xlsx') as response:
         yield response.buffer
+
+
+@pytest.fixture
+def extension_class_declaration():
+    def _declaration(extension_name, with_variables=True):
+        if with_variables:
+            return (
+                EXTENSION_VARIABLES_DECLARATION
+                + EXTENSION_CLASS_DECLARATION.format(extension_name=extension_name)
+            )
+        return EXTENSION_CLASS_DECLARATION.format(extension_name=extension_name)
+    return _declaration
+
+
+@pytest.fixture
+def extension_imports():
+    def _imports(
+        with_schedulable=True,
+        with_variables=True,
+        with_background=True,
+        with_interactive=False,
+    ):
+        variables = ''
+        schedulable = ''
+        scheduled_response = ''
+        background_response = ''
+        interactive_response = ''
+
+        if with_variables:
+            variables = '\n    variables,'
+
+        if with_schedulable:
+            schedulable = '\n    schedulable,'
+            scheduled_response = '\n    ScheduledExecutionResponse,'
+
+        if with_background:
+            background_response = '\n    BackgroundResponse,'
+
+        if with_interactive:
+            interactive_response = '\n    InteractiveResponse,'
+
+        return EXTENSION_IMPORTS.format(
+            variables=variables,
+            schedulable=schedulable,
+            scheduled_response=scheduled_response,
+            background_response=background_response,
+            interactive_response=interactive_response,
+        )
+    return _imports
+
+
+def _event_handler(event_template, async_impl=False):
+    async_def = ''
+    if async_impl:
+        async_def = 'async '
+    return event_template.format(async_def=async_def)
+
+
+def _test_handler(event_template, extension_name, async_impl=False):
+    async_def = ''
+    pytest_asyncio = ''
+    await_keyword = ''
+    client_factory_prefix = 'sync_'
+    if async_impl:
+        async_def = 'async '
+        pytest_asyncio = '@pytest.mark.asyncio\n'
+        await_keyword = 'await '
+        client_factory_prefix = 'async_'
+    return event_template.format(
+        extension_name=extension_name,
+        async_def=async_def,
+        pytest_asyncio=pytest_asyncio,
+        await_keyword=await_keyword,
+        client_factory_prefix=client_factory_prefix,
+    )
+
+
+@pytest.fixture
+def extension_bg_event():
+    return functools.partial(_event_handler, EXTENSION_BG_EVENT)
+
+
+@pytest.fixture
+def extension_schedulable_event():
+    return functools.partial(_event_handler, EXTENSION_SCHEDULABLE_EVENT)
+
+
+@pytest.fixture
+def extension_interactive_event():
+    return functools.partial(_event_handler, EXTENSION_INTERACTIVE_EVENT)
+
+
+@pytest.fixture
+def test_bg_event():
+    return functools.partial(_test_handler, TEST_BG_EVENT)
+
+
+@pytest.fixture
+def test_interactive_event():
+    return functools.partial(_test_handler, TEST_INTERACTIVE_EVENT)
+
+
+@pytest.fixture
+def test_schedulable_event():
+    return functools.partial(_test_handler, TEST_SCHEDULABLE_EVENT)
+
+
+@pytest.fixture(scope='function')
+def console_80_columns(mocker):
+    mocker.patch.dict(os.environ, {"COLUMNS": "80"})
