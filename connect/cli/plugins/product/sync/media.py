@@ -21,8 +21,9 @@ _RowData = namedtuple('RowData', fields)
 
 
 class MediaSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent):
+    def __init__(self, client, silent, stats):
         self._media_path = None
+        self._mstats = stats['Media']
         super(MediaSynchronizer, self).__init__(client, silent)
 
     def open(self, input_file, worksheet):
@@ -31,11 +32,6 @@ class MediaSynchronizer(ProductSynchronizer):
 
     def sync(self):  # noqa: CCR001
         ws = self._wb['Media']
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
-        deleted_items = []
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -45,23 +41,23 @@ class MediaSynchronizer(ProductSynchronizer):
             row_indexes.set_description(f'Processing Media {data.id or data.position or "New"}')
 
             if data.action == '-':
-                skipped_count += 1
+                self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
 
             if row_errors:
-                errors[row_idx] = row_errors
+                self._mstats.error(row_errors, row_idx)
                 continue
             if data.action == 'delete':
                 try:
                     self._client.products[self._product_id].media[data.id].delete()
-                    deleted_items.append(data)
+                    self._mstats.deleted()
                     continue
                 except ClientError as e:
                     if e.status_code == 404:
-                        deleted_items.append(data)
+                        self._mstats.deleted()
                     else:
-                        errors[row_idx] = [str(e)]
+                        self._mstats.error(str(e), row_idx)
                     continue
             if data.type == 'image':
                 payload = MultipartEncoder(
@@ -107,24 +103,16 @@ class MediaSynchronizer(ProductSynchronizer):
                         headers={'Content-Type': payload.content_type},
                     )
                     self._update_sheet_row(ws, row_idx, media)
-                    updated_items.append(media)
+                    self._mstats.updated()
                 else:
                     media = self._client.products[self._product_id].media.create(
                         data=payload,
                         headers={'Content-Type': payload.content_type},
                     )
                     self._update_sheet_row(ws, row_idx, media)
-                    created_items.append(media)
+                    self._mstats.created()
             except Exception as e:
-                errors[row_idx] = [str(e)]
-
-        return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            len(deleted_items),
-            errors,
-        )
+                self._mstats.error(str(e), row_idx)
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, media):

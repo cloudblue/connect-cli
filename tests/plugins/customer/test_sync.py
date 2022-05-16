@@ -20,11 +20,11 @@ def test_sync_all_skip(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert skipped == 2
-    assert created == 0
-    assert updated == 0
-    assert len(errors) == 0
+    synchronizer.sync()
+    assert synchronizer.stats.get_counts_as_dict() == {
+        'processed': 2, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 2, 'errors': 0,
+    }
 
 
 def test_bad_action(fs, customers_workbook):
@@ -38,8 +38,8 @@ def test_bad_action(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Action wrong is not supported']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Action wrong is not supported']}
 
 
 def test_bad_account(fs, customers_workbook):
@@ -54,8 +54,8 @@ def test_bad_account(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Customer type must be customer or reseller, not robot']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Customer type must be customer or reseller, not robot']}
 
 
 def test_empty_address(fs, customers_workbook):
@@ -70,8 +70,8 @@ def test_empty_address(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Address line 1, city, state and zip are mandatory']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Address line 1, city, state and zip are mandatory']}
 
 
 def test_create_existing(fs, customers_workbook):
@@ -85,8 +85,10 @@ def test_create_existing(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Create action must not have account id, is set to TA-7374-0753-1907']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {
+        2: ['Create action must not have account id, is set to TA-7374-0753-1907'],
+    }
 
 
 def test_create_customer_no_parent(fs, customers_workbook):
@@ -102,8 +104,8 @@ def test_create_customer_no_parent(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Customers requires a parent account']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Customers requires a parent account']}
 
 
 def test_update_customer_no_id(fs, customers_workbook):
@@ -118,8 +120,8 @@ def test_update_customer_no_id(fs, customers_workbook):
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Update operation requires account ID to be set']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Update operation requires account ID to be set']}
 
 
 def test_update_customer_no_account_connect(fs, customers_workbook, mocked_responses):
@@ -138,8 +140,8 @@ def test_update_customer_no_account_connect(fs, customers_workbook, mocked_respo
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {2: ['Account with id TA-7374-0753-1907 does not exist']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {2: ['Account with id TA-7374-0753-1907 does not exist']}
 
 
 def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked_reseller):
@@ -159,8 +161,8 @@ def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert created == 1
+    synchronizer.sync()
+    assert synchronizer.stats._created == 1
 
 
 def test_create_account_connect_uuid(
@@ -186,8 +188,8 @@ def test_create_account_connect_uuid(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert created == 1
+    synchronizer.sync()
+    assert synchronizer.stats._created == 1
 
 
 def test_create_account_connect_parent_id(
@@ -218,8 +220,8 @@ def test_create_account_connect_parent_id(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert created == 1
+    synchronizer.sync()
+    assert synchronizer.stats._created == 1
 
 
 def test_create_account_connect_parent_id_not_found(
@@ -245,8 +247,8 @@ def test_create_account_connect_parent_id_not_found(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {3: [f'Parent with id {mocked_reseller["id"]} does not exist']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {3: [f'Parent with id {mocked_reseller["id"]} does not exist']}
 
 
 def test_create_account_connect_parent_external_id(
@@ -289,8 +291,8 @@ def test_create_account_connect_parent_external_id(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert created == 1
+    synchronizer.sync()
+    assert synchronizer.stats._created == 1
 
 
 def test_create_account_connect_parent_external_id_not_found(
@@ -320,8 +322,8 @@ def test_create_account_connect_parent_external_id_not_found(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {3: ['Parent with external_id TA-7374-0753-1907 not found']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {3: ['Parent with external_id TA-7374-0753-1907 not found']}
 
 
 def test_create_account_connect_parent_external_id_more_than_one(
@@ -351,8 +353,8 @@ def test_create_account_connect_parent_external_id_more_than_one(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {3: ['More than one Parent with external_id TA-7374-0753-1907']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {3: ['More than one Parent with external_id TA-7374-0753-1907']}
 
 
 def test_create_account_connect_parent_external_uid(
@@ -395,8 +397,8 @@ def test_create_account_connect_parent_external_uid(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert created == 1
+    synchronizer.sync()
+    assert synchronizer.stats._created == 1
 
 
 def test_create_account_connect_parent_external_uid_not_found(
@@ -426,8 +428,8 @@ def test_create_account_connect_parent_external_uid_not_found(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {3: ['Parent with external_uid TA-7374-0753-1907 not found']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {3: ['Parent with external_uid TA-7374-0753-1907 not found']}
 
 
 def test_create_account_connect_parent_external_uid_more_than_one(
@@ -457,5 +459,5 @@ def test_create_account_connect_parent_external_uid_more_than_one(
         silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
-    skipped, created, updated, errors = synchronizer.sync()
-    assert errors == {3: ['More than one Parent with external_uid TA-7374-0753-1907']}
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {3: ['More than one Parent with external_uid TA-7374-0753-1907']}

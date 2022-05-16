@@ -31,17 +31,13 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ItemSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent):
+    def __init__(self, client, silent, stats):
         self._units = list(client.ns('settings').units.all())
+        self._mstats = stats['Items']
         super().__init__(client, silent)
 
     def sync(self):  # noqa: CCR001
         ws = self._wb["Items"]
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
-        deleted_items = []
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -50,11 +46,11 @@ class ItemSynchronizer(ProductSynchronizer):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 14)])
             row_indexes.set_description(f'Processing item {data.id or data.mpn}')
             if data.action == '-':
-                skipped_count += 1
+                self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
             if row_errors:
-                errors[row_idx] = row_errors
+                self._mstats.error(row_errors, row_idx)
                 continue
 
             if data.action == 'create':
@@ -66,10 +62,11 @@ class ItemSynchronizer(ProductSynchronizer):
                     .first()
                 )
                 if item:
-                    errors[row_idx] = [
+                    self._mstats.error(
                         f'Cannot create item: item with MPN `{data.mpn}`'
                         f' already exists with ID `{item["id"]}`.',
-                    ]
+                        row_idx,
+                    )
                     continue
                 row_indexes.set_description(f"Creating item {data[1]}")
                 try:
@@ -78,10 +75,10 @@ class ItemSynchronizer(ProductSynchronizer):
                         self._product_id,
                         self._get_item_payload(data),
                     )
-                    created_items.append(item)
+                    self._mstats.created()
                     self._update_sheet_row(ws, row_idx, item)
                 except Exception as e:
-                    errors[row_idx] = [str(e)]
+                    self._mstats.error(str(e), row_idx)
 
             if data.action == 'update':
                 item = self._get_item(data)
@@ -89,10 +86,11 @@ class ItemSynchronizer(ProductSynchronizer):
                 if not item:
                     field = 'ID' if data.id else 'MPN'
                     value = data.id if data.id else data.mpn
-                    errors[row_idx] = [
+                    self._mstats.error(
                         f'Cannot update item: item with {field} `{value}` '
                         f'the item does not exist.',
-                    ]
+                        row_idx,
+                    )
                     continue
 
                 row_indexes.set_description(f"Updating item {item['id']}")
@@ -114,10 +112,10 @@ class ItemSynchronizer(ProductSynchronizer):
                         item['id'],
                         payload,
                     )
-                    updated_items.append(item)
+                    self._mstats.updated()
                     self._update_sheet_row(ws, row_idx, item)
                 except Exception as e:
-                    errors[row_idx] = [str(e)]
+                    self._mstats.error(str(e), row_idx)
 
             if data.action == 'delete':
                 item = self._get_item(data)
@@ -125,10 +123,11 @@ class ItemSynchronizer(ProductSynchronizer):
                 if not item:
                     field = 'ID' if data.id else 'MPN'
                     value = data.id if data.id else data.mpn
-                    errors[row_idx] = [
+                    self._mstats.error(
                         f'Cannot update item: item with {field} `{value}` '
                         f'the item does not exist.',
-                    ]
+                        row_idx,
+                    )
                     continue
                 try:
                     delete_item(
@@ -136,16 +135,9 @@ class ItemSynchronizer(ProductSynchronizer):
                         self._product_id,
                         item['id'],
                     )
-                    deleted_items.append(item)
+                    self._mstats.deleted()
                 except Exception as e:
-                    errors[row_idx] = [str(e)]
-        return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            len(deleted_items),
-            errors,
-        )
+                    self._mstats.error(str(e), row_idx)
 
     @staticmethod
     def _validate_commitment(row):

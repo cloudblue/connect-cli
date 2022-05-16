@@ -15,12 +15,12 @@ _RowData = namedtuple('RowData', fields)
 
 
 class StaticResourcesSynchronizer(ProductSynchronizer):
+    def __init__(self, client, silent, stats):
+        super().__init__(client, silent)
+        self._mstats = stats['Static Resources']
+
     def sync(self):  # noqa: CCR001
         ws = self._wb['Embedding Static Resources']
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        deleted_items = []
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -31,14 +31,14 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 5)])
             row_indexes.set_description(f'Processing item {data.title or data.type}')
             if data.action not in ('-', 'create', 'delete'):
-                skipped_count += 1
+                self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
             if row_errors:
-                errors[row_idx] = row_errors
+                self._mstats.error(row_errors, row_idx)
                 continue
             if data.action == 'delete':
-                deleted_items.append(data.title)
+                self._mstats.deleted()
                 continue
             if data.type == 'Download':
                 download.append(
@@ -56,9 +56,9 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
                     },
                 )
             if data.action == '-':
-                skipped_count += 1
+                self._mstats.skipped()
             else:
-                created_items.append(data.title)
+                self._mstats.created()
 
         product = cleanup_product_for_update(self._client.products[self._product_id].get())
         try:
@@ -66,14 +66,7 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
             product['customer_ui_settings']['documents'] = documentation
             self._client.products[self._product_id].update(product)
         except Exception as e:
-            errors[1] = [str(e)]
-
-        return (
-            skipped_count,
-            len(created_items),
-            len(deleted_items),
-            errors,
-        )
+            self._mstats.error(str(e), 1)
 
     @staticmethod
     def _validate_row(data):

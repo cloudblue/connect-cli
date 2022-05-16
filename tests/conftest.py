@@ -445,3 +445,8 @@ def test_interactive_event():
 @pytest.fixture
 def test_schedulable_event():
     return functools.partial(_test_handler, TEST_SCHEDULABLE_EVENT)
+
+
+@pytest.fixture(scope='function')
+def console_80_columns(mocker):
+    mocker.patch.dict(os.environ, {"COLUMNS": "80"})
