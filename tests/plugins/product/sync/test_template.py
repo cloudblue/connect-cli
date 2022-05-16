@@ -1,6 +1,6 @@
 from responses import matchers
 
-from connect.cli.core.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer
 from connect.client import ConnectClient
 

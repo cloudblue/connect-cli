@@ -1,6 +1,6 @@
 import pytest
 
-from connect.cli.core.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.items import ItemSynchronizer
 from connect.client import ConnectClient
 

@@ -9,8 +9,8 @@ from click.exceptions import ClickException
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.core.utils import continue_or_quit
-from connect.cli.core.sync_stats import SynchronizerStats
-from connect.cli.plugins.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.product.clone import ProductCloner
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (
@@ -435,20 +435,7 @@ def capabilities_sync(client, config, input_file, stats):
 def config_values_sync(client, config, input_file, stats):
     synchronizer = ConfigurationValuesSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Configuration')
-<<<<<<< HEAD
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    return {
-        "module": "Configuration",
-        "created": created,
-        "updated": updated,
-        "deleted": deleted,
-        "skipped": skipped,
-        "errors": errors,
-    }
-=======
     synchronizer.sync()
->>>>>>> 6cff1f5 (Add SynchronizerStats class)
 
 
 def item_sync(client, config, input_file, stats):

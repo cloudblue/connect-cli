@@ -51,7 +51,9 @@ def test_export_silent(config_mocker, mocker, ccli):
     assert result.output == ''
 
 
-def test_list_translations(config_mocker, mocked_responses, mocked_translation_response, ccli):
+def test_list_translations(
+    config_mocker, console_80_columns, mocked_responses, mocked_translation_response, ccli,
+):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/localization/translations',

@@ -13,9 +13,9 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
-from connect.cli.core.sync_stats import SynchronizerStatsSingleModule
+from connect.cli.plugins.shared.sync_stats import SynchronizerStatsSingleModule
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.customer.constants import COL_HEADERS
-from connect.cli.plugins.exceptions import SheetNotFoundError
 
 fields = (v.replace(' ', '_').lower() for v in COL_HEADERS.values())
 
