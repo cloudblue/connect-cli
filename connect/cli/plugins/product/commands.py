@@ -9,8 +9,8 @@ from click.exceptions import ClickException
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.core.utils import continue_or_quit
-from connect.cli.core.sync_stats import SynchronizerStats
-from connect.cli.plugins.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.product.clone import ProductCloner
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (
@@ -25,7 +25,6 @@ from connect.cli.plugins.product.sync import (
     TemplatesSynchronizer,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
-from connect.utils.terminal.markdown import render
 
 
 @group(name='product', short_help='Manage product definitions.')

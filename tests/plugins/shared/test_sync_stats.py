@@ -1,4 +1,4 @@
-from connect.cli.core.sync_stats import SynchronizerStats, SynchronizerStatsSingleModule
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats, SynchronizerStatsSingleModule
 
 
 def test_synchronizer_stats_module_get_counts():

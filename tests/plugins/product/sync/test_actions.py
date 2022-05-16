@@ -1,4 +1,4 @@
-from connect.cli.core.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.actions import ActionsSynchronizer
 from connect.client import ConnectClient
 
