@@ -93,6 +93,21 @@ ACTIONS_HEADERS = {
     'I': 'Modified',
 }
 
+TRANSLATION_HEADERS = {
+    'A': 'Translation ID',
+    'B': 'Action',
+    'C': 'Context ID',
+    'D': 'Context',
+    'E': 'Owner ID',
+    'F': 'Owner',
+    'G': 'Locale',
+    'H': 'Description',
+    'I': 'Autotranslation',
+    'J': 'Completion',
+    'K': 'Status',
+    'L': 'Created',
+    'M': 'Updated',
+}
 
 PARAM_TYPES = [
     'email',
