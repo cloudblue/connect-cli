@@ -11,14 +11,14 @@ import shutil
 import click
 from click import ClickException
 from cookiecutter.main import cookiecutter
-from cookiecutter.config import get_user_config
+from cookiecutter.config import DEFAULT_CONFIG, get_user_config
 from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
 from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.repository import determine_repo_dir
 from interrogatio.core.dialog import dialogus
 
-from connect.cli.plugins.project.cookiehelpers import force_delete, purge_cookiecutters_dir
 from connect.cli.plugins.project.git import get_highest_version, GitException
+from connect.cli.plugins.project.utils import purge_dir
 from connect.cli.plugins.project.report.constants import (
     PROJECT_REPORT_BOILERPLATE_TAG,
     PROJECT_REPORT_BOILERPLATE_URL,
@@ -38,7 +38,11 @@ from connect.reports.validator import (
 )
 
 
-def bootstrap_report_project(data_dir: str):
+def purge_cookiecutters_dir():
+    purge_dir(DEFAULT_CONFIG['cookiecutters_dir'])
+
+
+def bootstrap_report_project(data_dir):
     click.secho('Bootstraping report project...\n', fg='blue')
     purge_cookiecutters_dir()
     answers = dialogus(
@@ -54,7 +58,7 @@ def bootstrap_report_project(data_dir: str):
         raise ClickException('Aborted by user input')
 
     try:
-        checkout_tag = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)
+        checkout_tag = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)[0]
 
         project_dir = cookiecutter(
             PROJECT_REPORT_BOILERPLATE_URL,
@@ -147,7 +151,7 @@ def _custom_cookiecutter(template, output_dir, project_slug, package_slug):
 
     repo_dir = os.path.join(config_dict['cookiecutters_dir'], template_name)
     if os.path.isdir(repo_dir):
-        shutil.rmtree(repo_dir, onerror=force_delete)
+        purge_dir(repo_dir)
 
     repo_dir, _ = determine_repo_dir(
         template=template,

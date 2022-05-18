@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 from interrogatio.validators import RequiredValidator
 
-from connect.cli.plugins.project.cookiehelpers import slugify
+from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
 
@@ -16,7 +16,7 @@ EXTENSION_BOOTSTRAP_WIZARD_INTRO = (
 )
 
 
-def get_summary(config):
+def get_summary(config, definitions):
     common = """<b><blue>Project</blue></b>
     <b>Project Name:</b> ${project_name} - <b>Package Name:</b> ${package_name}
     <b>Description:</b> ${description}
@@ -27,40 +27,25 @@ def get_summary(config):
     <b>API Key:</b> ${api_key}
     <b>Environment ID:</b> ${environment_id}
     <b>Server Address:</b> ${server_address}
-<b><blue>Subscriptions processing</blue></b>
-    <b>Asset requests types:</b> ${asset_processing}
-    <b>Tier configuration requests types:</b> ${tierconfig}
 """
 
-    vendor_specific = """<b><blue>Products</blue></b>
-    <b>Custom events:</b> ${product_capabilities_2of2} - <b>Actions:</b> ${product_capabilities_1of2}
-<b><blue>Tier accounts</blue></b>
-    <b>Update requests:</b> ${product_capabilities_2of2}
-<b><blue>Validation</blue></b>
-    <b>Asset requests type:</b> ${asset_validation}
-    <b>Tier configuration requests type:</b> ${tierconfig_validation}
-<b><blue>Usage</blue></b>
-    <b>Usage files:</b> ${usage_file_process}
-"""
-
-    provider_specific = """<b><blue>Products</blue></b>
-    <b>Custom events:</b> ${product_capabilities_2of2}
-<b><blue>Usage</blue></b>
-    <b>Usage chunk files:</b> ${usage_chunk_file_process}
-"""
+    event_answers = '\n'.join(
+        (
+            f'<b><blue>{group}</blue></b>\n'
+            f'    <b>{group} types:</b> '
+            '${' + f'{category}_' + slugify(group.lower()) + '}'
+        )
+        for category, category_events in definitions.items()
+        for group in category_events.keys()
+    ) + '\n'
 
     examples = """<b><blue>Examples</blue></b>
     <b>Schedulables:</b> ${include_schedules_example} - <b>Variables:</b> ${include_variables_example}
 """
-
-    return (
-        common
-        + (vendor_specific if config.active.is_vendor() else provider_specific)
-        + examples
-    )
+    return common + event_answers + examples
 
 
-def get_questions(config):
+def get_questions(config, definitions):
     project = [
         {
             'name': 'project_name',
@@ -189,122 +174,26 @@ def get_questions(config):
         },
     ]
 
-    common = [
-        {
-            'name': 'asset_processing',
-            'label': 'Subscriptions: assets',
-            'type': 'selectmany',
-            'description': 'What types of asset requests do you want your Extension to process ?',
-            'values': [
-                ('subscription_process_capabilities_1of6', 'Purchase'),
-                ('subscription_process_capabilities_2of6', 'Change'),
-                ('subscription_process_capabilities_3of6', 'Suspend'),
-                ('subscription_process_capabilities_4of6', 'Resume'),
-                ('subscription_process_capabilities_5of6', 'Cancel'),
-                ('subscription_process_capabilities_6of6', 'Adjustment'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'tierconfig',
-            'label': 'Subscriptions: tier config',
-            'type': 'selectmany',
-            'description': 'What types of tier configuration requests do you want your Extension to process ?',
-            'values': [
-                ('tier_config_process_capabilities_1of3', 'Setup'),
-                ('tier_config_process_capabilities_2of3', 'Change'),
-                ('tier_config_process_capabilities_3of3', 'Adjustment'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'product_capabilities_2of2',
-            'label': 'Products: custom events',
-            'type': 'selectone',
-            'description': (
-                'Will your extension support custom events ? Custom events are useful in the use\n'
-                'case that an external system needs to interact with your extension running on the\n'
-                'cloud.'
-            ),
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'formatting_template': '${label}',
-        },
-    ]
+    event_questions = []
 
-    vendor_specific = [
-        {
-            'name': 'product_capabilities_1of2',
-            'label': 'Products: actions',
-            'type': 'selectone',
-            'description': 'Will your extension support product actions ?',
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'tier_account_update_request',
-            'label': 'Tiers: accounts',
-            'type': 'selectone',
-            'description': 'Do you want to process Tier Account Requests ?',
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'asset_validation',
-            'label': 'Validation: assets',
-            'type': 'selectmany',
-            'description': 'What types of asset requests do you want your Extension to validate ?',
-            'values': [
-                ('subscription_validation_capabilities_1of2', 'Purchase'),
-                ('subscription_validation_capabilities_2of2', 'Change'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'tierconfig_validation',
-            'label': 'Validation: tier config',
-            'type': 'selectmany',
-            'description': 'What types of tier configuration requests do you want your Extension to validate ?',
-            'values': [
-                ('tier_config_validation_capabilities_1of2', 'Setup'),
-                ('tier_config_validation_capabilities_2of2', 'Change'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
-            'name': 'usage_file_process',
-            'label': 'Usage: files',
-            'type': 'selectone',
-            'description': 'Do you want to process Usage Files ?',
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'formatting_template': '${label}',
-        },
-    ]
-
-    provider_specific = [
-        {
-            'name': 'usage_chunk_file_process',
-            'label': 'Usage: chunks',
-            'type': 'selectone',
-            'description': 'Do you want to process Usage Chunk Files ?',
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'formatting_template': '${label}',
-        },
-    ]
+    for category, cagegory_events in definitions.items():
+        for group, events in cagegory_events.items():
+            event_questions.append(
+                {
+                    'name': f'{category}_{slugify(group.lower())}',
+                    'label': f'{category.title()}: {group.lower()}',
+                    'type': 'selectmany',
+                    'description': (
+                        f'What types of {group.title()} {category} '
+                        'events do you want your Extension to process ?'
+                    ),
+                    'values': [
+                        (event['type'], event['name'])
+                        for event in events
+                    ],
+                    'formatting_template': '${label}',
+                },
+            )
 
     examples = [
         {
@@ -331,8 +220,4 @@ def get_questions(config):
         },
     ]
 
-    return (
-        project + environment + common
-        + (vendor_specific if config.active.is_vendor() else provider_specific)
-        + examples
-    )
+    return project + environment + event_questions + examples

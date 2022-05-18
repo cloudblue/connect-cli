@@ -100,23 +100,30 @@ def grp_project_extension():
     required=False,
     help='Directory where the new extension project will be created.',
 )
+@click.option(
+    '--force-overwrite', '-f',
+    is_flag=True,
+    help='Overwrite the destination project directory if exists.',
+)
 @pass_config
-def cmd_bootstrap_extension_project(config, output_dir):
-    bootstrap_extension_project(config, output_dir)
+def cmd_bootstrap_extension_project(config, output_dir, force_overwrite):
+    bootstrap_extension_project(config, output_dir, force_overwrite)
 
 
 @grp_project_extension.command(
     name='validate',
     short_help='Validate given extension project.',
 )
-@click.option(
-    '--project-dir', '-p',
+@click.argument(
+    'project_dir',
+    metavar='PROJECT_DIR',
+    nargs=1,
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help='Project directory.',
 )
-def cmd_validate_extension_project(project_dir):
-    validate_extension_project(project_dir)
+@pass_config
+def cmd_validate_extension_project(config, project_dir):
+    validate_extension_project(config, project_dir)
 
 
 @grp_project_extension.command(

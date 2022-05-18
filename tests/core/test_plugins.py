@@ -1,5 +1,4 @@
 import click
-
 from pkg_resources import EntryPoint
 
 from connect.cli.core.plugins import load_plugins

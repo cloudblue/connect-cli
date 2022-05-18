@@ -1,9 +1,5 @@
 from click.testing import CliRunner
 
-from openpyxl import load_workbook
-
-from connect.cli.core.config import Config
-
 
 def test_export(config_mocker, mocker, ccli):
     mock = mocker.patch(
@@ -76,7 +72,7 @@ def test_list_translations(config_mocker, mocked_responses, mocked_translation_r
     assert result.exit_code == 0
     assert 'Current active account: VA-000 - Account 0' in result.output
     assert (
-        '│TRN-8100-3865-4869│PRD-746-555-769│  product   │translation test product│Spanish│off │active│       │     │'
+        '│ TRN-8… │ PRD-7… │ produ… │ trans… │ Spanish │ off  │ active │        │       │'
         in result.output
     )
 

@@ -1,5 +1,6 @@
 #  Copyright © 2021 CloudBlue. All rights reserved.
 import os
+
 from click.testing import CliRunner
 
 from connect.cli.core.config import Config
@@ -107,11 +108,10 @@ def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
     assert result.exit_code == 0
 
 
-def test_validate_extension_command(fs, ccli, mocker, capsys):
+def test_validate_extension_command(fs, ccli, mocker):
     mocker.patch.object(Config, 'validate')
     mocked_validate_project = mocker.patch(
         'connect.cli.plugins.project.commands.validate_extension_project',
-        side_effect=print('Extension Project connect/.data/logan has been successfully validated.'),
     )
     os.mkdir(f'{fs.root_path}/project')
     runner = CliRunner()
@@ -121,15 +121,11 @@ def test_validate_extension_command(fs, ccli, mocker, capsys):
             'project',
             'extension',
             'validate',
-            '--project-dir',
             f'{fs.root_path}/project',
         ],
     )
-
     assert result.exit_code == 0
-    mocked_validate_project.assert_called_once_with(f'{fs.root_path}/project')
-    captured = capsys.readouterr()
-    assert 'Extension Project connect/.data/logan has been successfully validated.' == captured.out.strip()
+    mocked_validate_project.assert_called_once()
 
 
 def test_bump_extension_command(fs, ccli, mocker, capsys):
