@@ -11,6 +11,7 @@ from connect.cli.plugins.product.constants import (
     STATIC_LINK_HEADERS,
     TEMPLATES_HEADERS,
     TRANSLATION_HEADERS,
+    TRN_ATTR_HEADER,
 )
 
 
@@ -33,6 +34,8 @@ def get_col_limit_by_ws_type(ws_type):
         return 'I'
     elif ws_type == 'translations':
         return 'M'
+    elif ws_type == '_attributes':
+        return 'E'
     return 'Z'
 
 
@@ -81,6 +84,8 @@ def get_col_headers_by_ws_type(ws_type):
         return ACTIONS_HEADERS
     elif ws_type == 'translations':
         return TRANSLATION_HEADERS
+    elif ws_type == '_attributes':
+        return TRN_ATTR_HEADER
 
 
 def cleanup_product_for_update(product):
