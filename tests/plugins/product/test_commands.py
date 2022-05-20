@@ -169,6 +169,7 @@ def test_export_product(
     mocked_configurations_response,
     mocked_locales_response,
     mocked_primary_translation_response,
+    mocked_translation_attributes_xlsx_response,
     sample_product_workbook,
 ):
     mocked_responses.add(
@@ -305,6 +306,14 @@ def test_export_product(
         json=mocked_primary_translation_response,
         headers={
             'Content-Range': 'items 0-0/1',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/translations/TRN-1079-0833-9890/attributes',
+        body=mocked_translation_attributes_xlsx_response,
+        headers={
+            'Contet-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
     )
     output_file = dump_product(

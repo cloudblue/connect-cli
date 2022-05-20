@@ -30,6 +30,10 @@ from connect.cli.plugins.product.utils import (
     get_col_limit_by_ws_type,
     get_json_object_for_param,
 )
+from connect.cli.plugins.translation.export import (
+    _alter_attributes_sheet,
+    _get_translation_workbook,
+)
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
@@ -173,6 +177,11 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
                 ws.column_dimensions[cel.column_letter].width = 100
             if cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
+        elif ws_type == '_attributes':
+            attr_column_width = 100
+            ws.column_dimensions['A'].width = attr_column_width
+            ws.column_dimensions['B'].width = attr_column_width
+            ws.column_dimensions['D'].width = attr_column_width
 
 
 def _calculate_commitment(item):
@@ -899,7 +908,8 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def _dump_translations(ws, client, product_id, silent):
+def _dump_translations(wb, client, product_id, silent):
+    ws = wb.create_sheet('Translations')
     _setup_ws_header(ws, 'translations')
     ws.column_dimensions['F'].width = 30
     ws.column_dimensions['J'].width = 15
@@ -935,9 +945,22 @@ def _dump_translations(ws, client, product_id, silent):
         _fill_translation_row(ws, row_idx, translation)
         action_validation.add(ws[f'B{row_idx}'])
         disabled_enabled.add(ws[f'I{row_idx}'])
+        _dump_translation_attr(wb, client, translation)
 
     progress.close()
     print()
+
+
+def _dump_translation_attr(wb, client, translation):
+    external_wb = _get_translation_workbook(client.endpoint, client.api_key, translation['id'])
+    attr_ws = wb.create_sheet(f'{translation["id"]} ({translation["locale"]["id"]})')
+    for row in external_wb['Attributes']:
+        for cell in row:
+            attr_ws[cell.coordinate].value = cell.value
+            if cell.coordinate.startswith(('B', 'C')):
+                attr_ws[cell.coordinate].alignment = Alignment(wrap_text=True)
+    _alter_attributes_sheet(attr_ws)
+    _setup_ws_header(attr_ws, '_attributes')
 
 
 def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
@@ -1000,7 +1023,7 @@ def dump_product(api_url, api_key, product_id, output_file, silent, verbose=Fals
         )
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
-        _dump_translations(wb.create_sheet('Translations'), client, product_id, silent)
+        _dump_translations(wb, client, product_id, silent)
         wb.save(output_file)
 
     except ClientError as error:
