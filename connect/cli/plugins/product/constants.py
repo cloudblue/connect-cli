@@ -109,14 +109,6 @@ TRANSLATION_HEADERS = {
     'M': 'Updated',
 }
 
-TRN_ATTR_HEADER = {
-    'A': 'Key',
-    'B': 'Original Value',
-    'C': 'Action',
-    'D': 'Value',
-    'E': 'Comment',
-}
-
 PARAM_TYPES = [
     'email',
     'address',
