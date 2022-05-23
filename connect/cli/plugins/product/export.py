@@ -4,6 +4,7 @@
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import os
+import copy
 import json
 from datetime import datetime
 from urllib import parse
@@ -161,6 +162,8 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
         cell=get_col_limit_by_ws_type(ws_type),
     )]
     col_headers = get_col_headers_by_ws_type(ws_type)
+    if ws_type == '_attributes':
+        col_headers = {c.column_letter: c.value for c in next(ws.iter_rows(min_row=1, max_row=1))}
     for cel in cels[0]:
         ws.column_dimensions[cel.column_letter].width = 25
         ws.column_dimensions[cel.column_letter].auto_size = True
@@ -178,10 +181,8 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
             if cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
         elif ws_type == '_attributes':
-            attr_column_width = 100
-            ws.column_dimensions['A'].width = attr_column_width
-            ws.column_dimensions['B'].width = attr_column_width
-            ws.column_dimensions['D'].width = attr_column_width
+            if cel.column_letter in ['A', 'B', 'D']:
+                ws.column_dimensions[cel.column_letter].width = 100
 
 
 def _calculate_commitment(item):
@@ -953,12 +954,11 @@ def _dump_translations(wb, client, product_id, silent):
 
 def _dump_translation_attr(wb, client, translation):
     external_wb = _get_translation_workbook(client.endpoint, client.api_key, translation['id'])
-    attr_ws = wb.create_sheet(f'{translation["id"]} ({translation["locale"]["id"]})')
+    attr_ws = wb.create_sheet(f'{translation["locale"]["id"]} ({translation["id"]})')
     for row in external_wb['Attributes']:
         for cell in row:
             attr_ws[cell.coordinate].value = cell.value
-            if cell.coordinate.startswith(('B', 'C')):
-                attr_ws[cell.coordinate].alignment = Alignment(wrap_text=True)
+            attr_ws[cell.coordinate].alignment = copy.copy(cell.alignment)
     _alter_attributes_sheet(attr_ws)
     _setup_ws_header(attr_ws, '_attributes')
 
