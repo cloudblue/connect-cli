@@ -963,7 +963,10 @@ def _dump_translation_attr(wb, client, translation):
     _setup_ws_header(attr_ws, '_attributes')
 
 
-def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
+def dump_product(  # noqa: CCR001
+    api_url, api_key, product_id, output_file,
+    silent, verbose=False, output_path=None, exclude_translations=False,
+):
     output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
     media_path = os.path.join(os.path.dirname(output_file), 'media')
     if not os.path.exists(media_path):
@@ -1023,7 +1026,8 @@ def dump_product(api_url, api_key, product_id, output_file, silent, verbose=Fals
         )
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
-        _dump_translations(wb, client, product_id, silent)
+        if not exclude_translations:
+            _dump_translations(wb, client, product_id, silent)
         wb.save(output_file)
 
     except ClientError as error:
