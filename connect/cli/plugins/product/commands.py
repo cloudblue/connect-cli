@@ -113,8 +113,15 @@ def cmd_list_products(config, query, page_size, always_continue):
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Directory where to store the export.',
 )
+@click.option(
+    '--exclude-translations',
+    '-e',
+    'exclude_translations',
+    is_flag=True,
+    help='Excludes translations and their attributes from being exported.',
+)
 @pass_config
-def cmd_dump_products(config, product_id, output_file, output_path):
+def cmd_dump_products(config, product_id, output_file, output_path, exclude_translations):
     acc_id = config.active.id
     acc_name = config.active.name
     if not config.silent:
@@ -130,6 +137,7 @@ def cmd_dump_products(config, product_id, output_file, output_path):
         config.silent,
         config.verbose,
         output_path,
+        exclude_translations,
     )
     if not config.silent:
         click.secho(
