@@ -1,8 +1,10 @@
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.actions import ActionsSynchronizer
 from connect.client import ConnectClient
 
 
 def test_skipped(get_sync_actions_env):
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -10,23 +12,23 @@ def test_skipped(get_sync_actions_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/actions_sync.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 1
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
 
 
 def test_validate_wrong_action(fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['C2'] = 'test'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -34,17 +36,17 @@ def test_validate_wrong_action(fs, get_sync_actions_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {
         2: ['Allowed action values are `-`, `create`, `update` or `delete`. test is not valid '
             'action.'],
     }
@@ -55,6 +57,7 @@ def test_validate_no_verbose_id(fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['C2'] = 'update'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -62,17 +65,17 @@ def test_validate_no_verbose_id(fs, get_sync_actions_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Verbose ID is required for update action.']}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {2: ['Verbose ID is required for update action.']}
 
 
 def test_validate_wrong_id(fs, get_sync_actions_env):
@@ -80,6 +83,7 @@ def test_validate_wrong_id(fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['C2'] = 'update'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -87,17 +91,17 @@ def test_validate_wrong_id(fs, get_sync_actions_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {
         2: ['Actions ID must contain only letters, numbers and `_`, provided wrong id'],
     }
 
@@ -107,6 +111,7 @@ def test_validate_wrong_scope(fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['G2'] = 'tier3'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -114,17 +119,17 @@ def test_validate_wrong_scope(fs, get_sync_actions_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {
         2: ['Action scope must be one of `asset`, `tier1` or `tier2`. Provided tier3'],
     }
 
@@ -133,6 +138,7 @@ def test_delete(fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -140,6 +146,7 @@ def test_delete(fs, get_sync_actions_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -149,20 +156,19 @@ def test_delete(fs, get_sync_actions_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_delete_404(fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -170,6 +176,7 @@ def test_delete_404(fs, get_sync_actions_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -179,20 +186,19 @@ def test_delete_404(fs, get_sync_actions_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_delete_500(fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -200,6 +206,7 @@ def test_delete_500(fs, get_sync_actions_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -209,14 +216,13 @@ def test_delete_500(fs, get_sync_actions_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
@@ -226,6 +232,7 @@ def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -233,6 +240,7 @@ def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -242,14 +250,12 @@ def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
@@ -257,6 +263,7 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -264,6 +271,7 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -273,14 +281,13 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
@@ -291,6 +298,7 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -298,6 +306,7 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -307,14 +316,12 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 1
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
@@ -323,6 +330,7 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -330,6 +338,7 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -339,11 +348,10 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}

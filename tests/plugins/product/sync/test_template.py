@@ -1,10 +1,12 @@
 from responses import matchers
 
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer
 from connect.client import ConnectClient
 
 
 def test_no_action(get_sync_templates_env):
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -12,16 +14,16 @@ def test_no_action(get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/templates_sync.xlsx', 'Templates')
-    skipped, created, updated, deleted, errors = synchronizer.sync()
+    synchronizer.sync()
 
-    assert skipped == 1
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
 
 
 def test_invalid_scope(fs, get_sync_templates_env):
@@ -29,6 +31,7 @@ def test_invalid_scope(fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['D2'] = 'noscope'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -36,17 +39,19 @@ def test_invalid_scope(fs, get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Valid scopes are `asset`, `tier1` or `tier2`, not noscope']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {
+        2: ['Valid scopes are `asset`, `tier1` or `tier2`, not noscope'],
+    }
 
 
 def test_invalid_type(fs, get_sync_templates_env):
@@ -54,6 +59,7 @@ def test_invalid_type(fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['E2'] = 'invalid'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -61,18 +67,20 @@ def test_invalid_type(fs, get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Valid template types are `pending`, `fulfillment` or inquiring. '
-                          'Provided invalid.']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {
+        2: ['Valid template types are `pending`, `fulfillment` or inquiring. '
+            'Provided invalid.'],
+    }
 
 
 def test_invalid_tier_type(fs, get_sync_templates_env):
@@ -81,6 +89,7 @@ def test_invalid_tier_type(fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['E2'] = 'inquire'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -88,17 +97,19 @@ def test_invalid_tier_type(fs, get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Tier templates must be fulfillment type only']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {
+        2: ['Tier templates must be fulfillment type only'],
+    }
 
 
 def test_invalid_no_title(fs, get_sync_templates_env):
@@ -106,6 +117,7 @@ def test_invalid_no_title(fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['B2'] = None
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -113,17 +125,17 @@ def test_invalid_no_title(fs, get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Title and Content are required']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {2: ['Title and Content are required']}
 
 
 def test_invalid_id(fs, get_sync_templates_env):
@@ -131,6 +143,7 @@ def test_invalid_id(fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['A2'] = 'XTL-1234'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -138,17 +151,17 @@ def test_invalid_id(fs, get_sync_templates_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Update operation requires template id']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {2: ['Update operation requires template id']}
 
 
 def test_create_template(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
@@ -157,6 +170,7 @@ def test_create_template(fs, get_sync_templates_env, mocked_templates_response, 
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -164,6 +178,7 @@ def test_create_template(fs, get_sync_templates_env, mocked_templates_response, 
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -173,14 +188,12 @@ def test_create_template(fs, get_sync_templates_env, mocked_templates_response, 
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 1
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_create_template_error(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
@@ -189,6 +202,7 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -196,6 +210,7 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -205,14 +220,13 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_create_template_for_tier_scope_ignore_type(
@@ -225,6 +239,7 @@ def test_create_template_for_tier_scope_ignore_type(
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -232,6 +247,7 @@ def test_create_template_for_tier_scope_ignore_type(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -255,14 +271,12 @@ def test_create_template_for_tier_scope_ignore_type(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 1
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_update_template_not_exists(
@@ -275,6 +289,7 @@ def test_update_template_not_exists(
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -282,6 +297,7 @@ def test_update_template_not_exists(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -291,14 +307,13 @@ def test_update_template_not_exists(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {
         2: ['Cannot update template TL-551-876-782 since does not exist in the product. Create it '
             'instead'],
     }
@@ -314,6 +329,7 @@ def test_delete_template_not_exists(
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -321,6 +337,7 @@ def test_delete_template_not_exists(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -330,14 +347,12 @@ def test_delete_template_not_exists(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_delete_template_500(
@@ -350,6 +365,7 @@ def test_delete_template_500(
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -357,6 +373,7 @@ def test_delete_template_500(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -366,14 +383,13 @@ def test_delete_template_500(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_delete_template(fs, get_sync_templates_env, mocked_responses):
@@ -381,6 +397,7 @@ def test_delete_template(fs, get_sync_templates_env, mocked_responses):
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -388,6 +405,7 @@ def test_delete_template(fs, get_sync_templates_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -397,14 +415,12 @@ def test_delete_template(fs, get_sync_templates_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_update_template_switch_type(
@@ -418,6 +434,7 @@ def test_update_template_switch_type(
     response['type'] = 'tier1'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -425,6 +442,7 @@ def test_update_template_switch_type(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -434,14 +452,13 @@ def test_update_template_switch_type(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {
         2: ['Switching scope or type is not supported. Original scope asset, requested scope '
             'asset. Original type tier1, requested type fulfillment'],
     }
@@ -456,6 +473,7 @@ def test_update_template(
     get_sync_templates_env['Templates']['C2'] = 'update'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -463,6 +481,7 @@ def test_update_template(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -478,14 +497,12 @@ def test_update_template(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_update_template_exception(
@@ -497,6 +514,7 @@ def test_update_template_exception(
     get_sync_templates_env['Templates']['C2'] = 'update'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -504,6 +522,7 @@ def test_update_template_exception(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -519,14 +538,13 @@ def test_update_template_exception(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Templates']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_update_template_for_tier_scope_ignore_type(
@@ -541,6 +559,7 @@ def test_update_template_for_tier_scope_ignore_type(
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -548,6 +567,7 @@ def test_update_template_for_tier_scope_ignore_type(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -577,11 +597,9 @@ def test_update_template_for_tier_scope_ignore_type(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Templates'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }

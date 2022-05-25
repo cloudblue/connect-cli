@@ -15,7 +15,7 @@ from connect.utils.terminal.markdown import render
 def continue_or_quit():
     while True:
         click.echo('')
-        click.echo("Press 'c' to continue or 'q' to quit ", nl=False)
+        click.echo("Press 'c' to continue or 'q' to quit", nl=False)
         c = click.getchar()
         click.echo()
         if c == 'c':

@@ -5,7 +5,7 @@ import pytest
 from click import ClickException
 from openpyxl import load_workbook
 
-from connect.cli.plugins.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.product.sync.base import ProductSynchronizer
 from connect.client import ConnectClient
 
