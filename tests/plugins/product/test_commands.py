@@ -346,6 +346,182 @@ def test_export_product(
                     assert product_sheet[cell].value == sample_sheet[cell].value
 
 
+def test_export_product_exclude_translations_sheets(
+    fs,
+    mocked_responses,
+    mocked_product_response,
+    mocked_categories_response,
+    mocked_media_response,
+    mocked_templates_response,
+    mocked_items_response,
+    mocked_ordering_params_response,
+    mocked_fulfillment_params_response,
+    mocked_configuration_params_response,
+    mocked_actions_response,
+    mocked_configurations_response,
+    mocked_locales_response,
+    mocked_primary_translation_response,
+    sample_product_workbook,
+):
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545',
+        json=mocked_product_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/PRD-276-377-545'
+            '-logo_aJD74iQ.png',
+        body=open('./tests/fixtures/image.png', 'rb').read(),
+        status=200,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/media.png',
+        body=open('./tests/fixtures/image.png', 'rb').read(),
+        status=200,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/media_jxr1ifH.png',
+        body=open('./tests/fixtures/image.png', 'rb').read(),
+        status=200,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/media/VA-392-495/PRD-276-377-545/media/media_cqhgp78.png',
+        body=open('./tests/fixtures/image.png', 'rb').read(),
+        status=200,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/categories',
+        json=mocked_categories_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/media',
+        json=mocked_media_response,
+        headers={
+            'Content-Range': 'items 0-2/3',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/templates',
+        json=mocked_templates_response,
+        headers={
+            'Content-Range': 'items 0-5/6',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items',
+        json=mocked_items_response,
+        headers={
+            'Content-Range': 'items 0-17/18',
+        },
+    )
+    ordering_query = re.compile(
+        r'https:\/\/localhost\/public\/v1\/products\/PRD-276-377-545\/parameters\?eq\(phase,'
+        r'ordering\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
+    )
+    fulfillment_query = re.compile(
+        r'https:\/\/localhost\/public\/v1\/products\/PRD-276-377-545\/parameters\?eq\(phase,'
+        r'fulfillment\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
+    )
+    configuration_query = re.compile(
+        r'https:\/\/localhost\/public\/v1\/products\/PRD-276-377-545\/parameters\?eq\(phase,'
+        r'configuration\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
+    )
+    mocked_responses.add(
+        method='GET',
+        url=ordering_query,
+        json=mocked_ordering_params_response,
+        headers={
+            'Content-Range': 'items 0-11/12',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url=fulfillment_query,
+        json=mocked_fulfillment_params_response,
+        headers={
+            'Content-Range': 'items 0-1/2',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url=configuration_query,
+        json=mocked_configuration_params_response,
+        headers={
+            'Content-Range': 'items 0-0/1',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions',
+        json=mocked_actions_response,
+        headers={
+            'Content-Range': 'items 0-1/2',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/configurations',
+        json=mocked_configurations_response,
+        headers={
+            'Content-Range': 'items 0-17/18',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/localization/locales',
+        json=mocked_locales_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url=(
+            'https://localhost/public/v1/localization/translations?'
+            'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=100&offset=0'
+        ),
+        json=mocked_primary_translation_response,
+    )
+    output_file = dump_product(
+        api_url='https://localhost/public/v1',
+        api_key='ApiKey SU111:1111',
+        product_id='PRD-276-377-545',
+        output_file='output.xlsx',
+        output_path=fs.root_path,
+        silent=True,
+        exclude_translations=True,
+    )
+
+    product_wb = load_workbook(output_file)
+
+    del sample_product_workbook['Translations']
+    del sample_product_workbook['FA (TRN-1079-0833-9890)']
+
+    for name in sample_product_workbook.sheetnames:
+        assert name in product_wb.sheetnames
+
+    ignore_sheet_cells = {
+        'General Information': ['B7'],
+    }
+    for sheet in sample_product_workbook.sheetnames:
+        sample_sheet = sample_product_workbook[sheet]
+        product_sheet = product_wb[sheet]
+        letter_limit = _get_col_limit_by_type(sheet)
+
+        for col in string.ascii_uppercase:
+            if col == letter_limit:
+                break
+            for row in range(1, sample_sheet.max_row + 1):
+                cell = f'{col}{row}'
+                if cell not in ignore_sheet_cells.get(sheet, []):
+                    assert product_sheet[cell].value == sample_sheet[cell].value
+
+
 def _get_col_limit_by_type(ws_type):
     if ws_type == 'General Information':
         return 'C'
