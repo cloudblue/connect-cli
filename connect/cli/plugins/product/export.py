@@ -31,7 +31,7 @@ from connect.cli.plugins.product.utils import (
     get_col_limit_by_ws_type,
     get_json_object_for_param,
 )
-from connect.cli.plugins.translation.export import (
+from connect.cli.plugins.shared.export import (
     _alter_attributes_sheet,
     _get_translation_workbook,
 )
