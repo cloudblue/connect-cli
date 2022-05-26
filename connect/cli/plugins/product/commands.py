@@ -324,12 +324,16 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
             fg='red',
         )
         exit(-1)
-
+    stats = SynchronizerStats()
+    stats.RESULTS_HEADER = stats.RESULTS_HEADER.replace(
+        "synchronization", f"synchronizing {source_product_id}",
+    )
     synchronizer = ProductCloner(
         config=config,
         source_account=source_account,
         destination_account=destination_account,
         product_id=source_product_id,
+        stats=stats,
 
     )
 
@@ -371,6 +375,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
             f'New product id {synchronizer.destination_product}',
             fg='green',
         )
+    stats.print()
 
 
 def media_sync(client, config, input_file, stats):
