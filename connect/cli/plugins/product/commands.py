@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
 import click
 from click.exceptions import ClickException
@@ -23,6 +23,7 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
+    TranslationsSynchronizer,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 
@@ -246,6 +247,12 @@ def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
         if not config.silent:
             click.secho(str(e), fg='blue')
 
+    try:
+        translations_sync(client, config, input_file, stats)
+    except SheetNotFoundError as e:
+        if not config.silent:
+            click.secho(str(e), fg='blue')
+
     stats.print()
 
 
@@ -441,6 +448,13 @@ def config_values_sync(client, config, input_file, stats):
 def item_sync(client, config, input_file, stats):
     synchronizer = ItemSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Items')
+    synchronizer.sync()
+    synchronizer.save(input_file)
+
+
+def translations_sync(client, config, input_file, stats):
+    synchronizer = TranslationsSynchronizer(client, config.silent, stats)
+    synchronizer.open(input_file, 'Translations')
     synchronizer.sync()
     synchronizer.save(input_file)
 
