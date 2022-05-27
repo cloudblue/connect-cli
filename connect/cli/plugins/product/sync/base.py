@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
 from zipfile import BadZipFile
 
@@ -23,6 +23,7 @@ class ProductSynchronizer:
         self._silent = silent
         self._product_id = None
         self._wb = None
+        self._ws = None
 
     def open(self, input_file, worksheet):
         self._open_workbook(input_file)
@@ -32,8 +33,8 @@ class ProductSynchronizer:
         product_id = ws['B5'].value
         if not self._client.products[product_id].exists():
             raise ClickException(f'Product {product_id} not found, create it first.')
-        ws = self._wb[worksheet]
-        self._validate_worksheet_sheet(ws, worksheet)
+        self._ws = self._wb[worksheet]
+        self._validate_worksheet_sheet(self._ws, worksheet)
 
         self._product_id = product_id
         return self._product_id

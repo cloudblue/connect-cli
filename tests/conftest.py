@@ -283,6 +283,18 @@ def get_sync_capabilities_env_ppu_enabled(fs, mocked_responses):
 
 
 @pytest.fixture(scope='function')
+def get_sync_translations_env(fs, mocked_responses):
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response),
+        )
+
+        return load_workbook('./tests/fixtures/translations_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
 def mocked_reports(fs):
     with open('./tests/fixtures/reports.json') as response:
         return json.load(response)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
 ITEMS_COLS_HEADERS = {
     'A': 'ID',
@@ -105,8 +105,9 @@ TRANSLATION_HEADERS = {
     'I': 'Autotranslation',
     'J': 'Completion',
     'K': 'Status',
-    'L': 'Created',
-    'M': 'Updated',
+    'L': 'Is primary',
+    'M': 'Created',
+    'N': 'Updated',
 }
 
 PARAM_TYPES = [
