@@ -32,7 +32,7 @@ def get_col_limit_by_ws_type(ws_type):
     elif ws_type == 'actions':
         return 'I'
     elif ws_type == 'translations':
-        return 'M'
+        return 'N'
     elif ws_type == '_attributes':
         return 'F'
     return 'Z'

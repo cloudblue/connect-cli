@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
 import os
 import copy
@@ -12,7 +12,6 @@ from urllib import parse
 import requests
 from click import ClickException
 from openpyxl import Workbook
-from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.utils import quote_sheetname
@@ -36,6 +35,19 @@ from connect.cli.plugins.shared.export import (
     _get_translation_workbook,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
+
+
+def _setup_locales_list(ws, client):
+    """
+    Fill list of locales to use with DataValidation. Return 'formula' string
+    to use.
+    """
+    locales = client.ns('localization').locales.all()
+    locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
+    ws['AB1'].value = 'Locales'
+    for idx, loc in enumerate(locales_list, 2):
+        ws[f'AB{idx}'].value = loc
+    return f'{quote_sheetname("General Information")}!$AB$2:$AB${idx}'
 
 
 def _setup_cover_sheet(ws, product, location, client, media_path):
@@ -100,10 +112,6 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
         wrap_text=True,
     )
     ws['A14'].value = 'Primary Translation Locale'
-    ws['A14'].comment = Comment(
-        "This attribute will not be updated on product sync",
-        "ccli product dump",
-    )
     primary_translation = (
         client.ns('localization').translations
         .filter(context__instance_id=product['id'], primary=True).first()
@@ -128,19 +136,6 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     )
     ws.add_data_validation(categories_validation)
     categories_validation.add('B8')
-
-    locales = client.ns('localization').locales.all()
-    locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
-    ws['AB1'].value = 'Locales'
-    for idx, loc in enumerate(locales_list, 2):
-        ws[f'AB{idx}'].value = loc
-    locales_validation = DataValidation(
-        type='list',
-        formula1=f'{quote_sheetname("General Information")}!$AB$2:$AB${idx}',
-        allow_blank=False,
-    )
-    ws.add_data_validation(locales_validation)
-    locales_validation.add('B14')
 
 
 def _dump_image(image_location, image_name, media_path):
@@ -404,13 +399,14 @@ def _fill_translation_row(ws, row_idx, translation):
     ws.cell(row_idx, 4, value=translation['context']['name'])
     ws.cell(row_idx, 5, value=translation['owner']['id'])
     ws.cell(row_idx, 6, value=translation['owner']['name'])
-    ws.cell(row_idx, 7, value=translation['locale']['name'])
+    ws.cell(row_idx, 7, value=f"{translation['locale']['id']} ({translation['locale']['name']})")
     ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
     ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
     ws.cell(row_idx, 10, value=_calculate_translation_completion(translation)).number_format = '0%'
     ws.cell(row_idx, 11, value=translation['status'])
-    ws.cell(row_idx, 12, value=translation['events'].get('created', {}).get('at', '-'))
-    ws.cell(row_idx, 13, value=translation['events'].get('updated', {}).get('at', '-'))
+    ws.cell(row_idx, 12, value='Yes' if translation['primary'] else 'No')
+    ws.cell(row_idx, 13, value=translation['events'].get('created', {}).get('at', '-'))
+    ws.cell(row_idx, 14, value=translation['events'].get('updated', {}).get('at', '-'))
 
 
 def _calculate_configuration_id(configuration):
@@ -909,7 +905,7 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def _dump_translations(wb, client, product_id, silent):
+def _dump_translations(wb, client, product_id, silent, locales_dv_formula):
     ws = wb.create_sheet('Translations')
     _setup_ws_header(ws, 'translations')
     ws.column_dimensions['F'].width = 30
@@ -930,12 +926,18 @@ def _dump_translations(wb, client, product_id, silent):
         formula1='"-,delete,update,create"',
         allow_blank=False,
     )
+    locales_validation = DataValidation(
+        type='list',
+        formula1=locales_dv_formula,
+        allow_blank=False,
+    )
     disabled_enabled = DataValidation(
         type='list',
         formula1='"Disabled,Enabled"',
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)
+    ws.add_data_validation(locales_validation)
     ws.add_data_validation(disabled_enabled)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
@@ -945,6 +947,7 @@ def _dump_translations(wb, client, product_id, silent):
         progress.update(1)
         _fill_translation_row(ws, row_idx, translation)
         action_validation.add(ws[f'B{row_idx}'])
+        locales_validation.add(ws[f'G{row_idx}'])
         disabled_enabled.add(ws[f'I{row_idx}'])
         _dump_translation_attr(wb, client, translation)
 
@@ -981,6 +984,9 @@ def dump_product(  # noqa: CCR001
         )
         product = client.products[product_id].get()
         wb = Workbook()
+
+        locales_dv_formula = _setup_locales_list(wb.active, client)
+
         connect_api_location = parse.urlparse(api_url)
         media_location = f'{connect_api_location.scheme}://{connect_api_location.netloc}'
         _setup_cover_sheet(
@@ -1027,7 +1033,7 @@ def dump_product(  # noqa: CCR001
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
         if not exclude_translations:
-            _dump_translations(wb, client, product_id, silent)
+            _dump_translations(wb, client, product_id, silent, locales_dv_formula)
         wb.save(output_file)
 
     except ClientError as error:
