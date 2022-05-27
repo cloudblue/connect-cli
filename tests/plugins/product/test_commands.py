@@ -245,6 +245,10 @@ def test_export_product(
         r'https:\/\/localhost\/public\/v1\/products\/PRD-276-377-545\/parameters\?eq\(phase,'
         r'configuration\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
     )
+    translation_query = re.compile(
+        r'https:\/\/localhost\/public\/v1\/localization\/translations\?eq\(context.instance_id,'
+        r'PRD-276-377-545\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
+    )
     mocked_responses.add(
         method='GET',
         url=ordering_query,
@@ -297,6 +301,14 @@ def test_export_product(
             'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=100&offset=0'
         ),
         json=mocked_primary_translation_response,
+    )
+    mocked_responses.add(
+        method='GET',
+        url=translation_query,
+        json=mocked_primary_translation_response,
+        headers={
+            'Content-Range': 'items 0-0/1',
+        },
     )
     output_file = dump_product(
         api_url='https://localhost/public/v1',
@@ -351,4 +363,6 @@ def _get_col_limit_by_type(ws_type):
         return 'G'
     elif ws_type == 'Configuration':
         return 'G'
+    elif ws_type == 'Translations':
+        return 'K'
     return 'Z'

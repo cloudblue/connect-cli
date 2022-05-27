@@ -387,6 +387,22 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 13, value=events.get('updated', {}).get('at', '-'))
 
 
+def _fill_translation_row(ws, row_idx, translation):
+    ws.cell(row_idx, 1, value=translation['id'])
+    ws.cell(row_idx, 2, value='-')
+    ws.cell(row_idx, 3, value=translation['context']['instance_id'])
+    ws.cell(row_idx, 4, value=translation['context']['name'])
+    ws.cell(row_idx, 5, value=translation['owner']['id'])
+    ws.cell(row_idx, 6, value=translation['owner']['name'])
+    ws.cell(row_idx, 7, value=translation['locale']['name'])
+    ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
+    ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
+    ws.cell(row_idx, 10, value=_calculate_translation_completion(translation)).number_format = '0%'
+    ws.cell(row_idx, 11, value=translation['status'])
+    ws.cell(row_idx, 12, value=translation['events'].get('created', {}).get('at', '-'))
+    ws.cell(row_idx, 13, value=translation['events'].get('updated', {}).get('at', '-'))
+
+
 def _calculate_configuration_id(configuration):
     conf_id = configuration['parameter']['id']
     if 'item' in configuration and 'id' in configuration['item']:
@@ -399,6 +415,16 @@ def _calculate_configuration_id(configuration):
         conf_id = f'{conf_id}#'
 
     return conf_id
+
+
+def _calculate_translation_completion(translation):
+    stats = translation['stats']
+    try:
+        return (
+            stats.get('translated') / stats.get('total')
+        )
+    except TypeError:
+        return '-'
 
 
 def _dump_actions(ws, client, product_id, silent):
@@ -873,6 +899,47 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
+def _dump_translations(ws, client, product_id, silent):
+    _setup_ws_header(ws, 'translations')
+    ws.column_dimensions['F'].width = 30
+    ws.column_dimensions['J'].width = 15
+    ws.column_dimensions['K'].width = 15
+
+    rql = R().context.instance_id.eq(product_id)
+
+    translations = (
+        client.ns('localization')
+        .translations
+        .filter(rql)
+    )
+    count = translations.count()
+
+    action_validation = DataValidation(
+        type='list',
+        formula1='"-,delete,update,create"',
+        allow_blank=False,
+    )
+    disabled_enabled = DataValidation(
+        type='list',
+        formula1='"Disabled,Enabled"',
+        allow_blank=False,
+    )
+    ws.add_data_validation(action_validation)
+    ws.add_data_validation(disabled_enabled)
+
+    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+
+    for row_idx, translation in enumerate(translations, 2):
+        progress.set_description(f'Processing translation {translation["id"]}')
+        progress.update(1)
+        _fill_translation_row(ws, row_idx, translation)
+        action_validation.add(ws[f'B{row_idx}'])
+        disabled_enabled.add(ws[f'I{row_idx}'])
+
+    progress.close()
+    print()
+
+
 def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
     output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
     media_path = os.path.join(os.path.dirname(output_file), 'media')
@@ -933,7 +1000,7 @@ def dump_product(api_url, api_key, product_id, output_file, silent, verbose=Fals
         )
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
-
+        _dump_translations(wb.create_sheet('Translations'), client, product_id, silent)
         wb.save(output_file)
 
     except ClientError as error:
