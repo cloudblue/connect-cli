@@ -4,10 +4,8 @@ import string
 import os
 
 import pytest
-
 from click import ClickException
 from click.testing import CliRunner
-
 from openpyxl import load_workbook
 
 from connect.cli.core.config import Config
@@ -54,7 +52,6 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
                     f'{fs.root_path}/test.xlsx',
                 ],
             )
-
             assert result.exit_code == 0
 
 

@@ -328,3 +328,10 @@ def mocked_resource_list_table():
         '| ZH-HANS |\n',
         '| ZH-HANS |\n',
     ]
+
+
+@pytest.fixture(scope='function')
+def mocked_translation_attributes_xlsx_response():
+    with open('./tests/fixtures/translation_attributes_response.xlsx') as response:
+        yield response.buffer
+

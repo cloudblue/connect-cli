@@ -1,12 +1,10 @@
 import os
 
-from freezegun import freeze_time
 import pytest
-from responses import matchers
-
 from click import ClickException
-
+from freezegun import freeze_time
 from openpyxl import load_workbook
+from responses import matchers
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.product.clone import ProductCloner

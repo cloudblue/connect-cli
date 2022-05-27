@@ -1,7 +1,6 @@
 import json
 
 import click
-
 import pytest
 
 from connect.cli.core.config import Config

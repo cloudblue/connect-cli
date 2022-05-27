@@ -5,7 +5,6 @@ from datetime import datetime
 import click
 import pytz
 from click import ClickException
-from cmr import render
 
 from connect.cli.core.http import get_user_agent
 from connect.cli.plugins.report.constants import AVAILABLE_RENDERERS, AVAILABLE_REPORTS
@@ -23,6 +22,7 @@ from connect.reports.datamodels import Account, Report
 from connect.reports.parser import parse
 from connect.reports.renderers import get_renderer
 from connect.reports.validator import validate, validate_with_schema
+from connect.utils.terminal.markdown import render
 
 
 def load_repo(repo_dir):

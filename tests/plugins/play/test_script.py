@@ -13,7 +13,6 @@ def test_script():
     assert ow.args == (1, 2, 3)
     assert ow.kwargs == {'a': 1, 'b': 2, 'c': 3}
 
-
     class BasicInitScript(Script):
         """Some Help Message"""
 
@@ -31,4 +30,4 @@ def test_script():
     assert type(s.vclient) == ConnectClient
 
     s.do()
-    s.do(context=dict(endpoint='https://api.cnct.tech/public/v1'))
+    s.do(context={'endpoint': 'https://api.cnct.tech/public/v1'})

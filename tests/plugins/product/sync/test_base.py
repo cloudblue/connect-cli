@@ -2,9 +2,7 @@ import os
 from shutil import copy2
 
 import pytest
-
 from click import ClickException
-
 from openpyxl import load_workbook
 
 from connect.cli.plugins.exceptions import SheetNotFoundError

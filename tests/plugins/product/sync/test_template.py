@@ -216,7 +216,7 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
 
 
 def test_create_template_for_tier_scope_ignore_type(
-    fs, get_sync_templates_env, mocked_templates_response, mocked_responses
+    fs, get_sync_templates_env, mocked_templates_response, mocked_responses,
 ):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['A2'] = None

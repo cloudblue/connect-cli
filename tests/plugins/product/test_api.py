@@ -1,5 +1,4 @@
 import pytest
-
 from click.exceptions import ClickException
 
 from connect.cli.plugins.product.api import (

@@ -1,8 +1,8 @@
 import click
-from cmr import render
 
 from connect.cli.core.utils import continue_or_quit
 from connect.cli.plugins.customer.constants import SYNC_RESULT_OUTPUT
+from connect.utils.terminal.markdown import render
 
 
 def print_sync_result(skipped, created, updated, errors):

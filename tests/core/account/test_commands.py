@@ -137,6 +137,5 @@ def test_list_accounts(config_mocker, mocker, ccli):
             'list',
         ],
     )
-
     assert result.exit_code == 0
-    assert '│VA-000│Account 0│  ✓   │\n│VA-001│Account 1│      │\n' in result.output
+    assert '│ VA-000 │ Account 0 │   ✓    │\n│ VA-001 │ Account 1 │        │\n' in result.output
