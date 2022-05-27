@@ -57,16 +57,7 @@ class TranslationSynchronizer:
         )
         translation_id = None
         if do_create:
-            if not yes:
-                click.confirm(
-                    click.style("A new translation will be created.\n", fg='yellow')
-                    + "The owner will be the current active account, "
-                    f"locale {general_data.locale_id} "
-                    f"and context '{general_data.context_name}' ({general_data.context_id}).\n"
-                    "Do you want to continue?",
-                    abort=True,
-                )
-            new_translation = self._create_translation(general_data)
+            new_translation = self._try_create_translation(yes, current_translation, general_data)
             if new_translation:
                 self._update_general_sheet(ws, new_translation)
                 translation_id = new_translation['id']
@@ -129,10 +120,26 @@ class TranslationSynchronizer:
         return (
             translation['owner']['id'] != self.account_id
             or translation['locale']['id'] != general_data.locale_id
-            or translation['context']['id'] != general_data.context_id
+            or self._is_different_context(translation, general_data)
         )
 
-    def _create_translation(self, general_data):
+    def _try_create_translation(self, yes, current_translation, general_data):
+        if (
+            current_translation
+            and self._is_different_context(current_translation, general_data)
+        ):
+            self._resolve_new_context(general_data)
+
+        if not yes:
+            click.confirm(
+                click.style("A new translation will be created.\n", fg='yellow')
+                + "The owner will be the current active account, "
+                f"locale {general_data.locale_id} "
+                f"and context '{general_data.context_name}' ({general_data.context_id}).\n"
+                "Do you want to continue?",
+                abort=True,
+            )
+
         try:
             translation = self._client.ns('localization').translations.create({
                 'context': {
@@ -150,8 +157,57 @@ class TranslationSynchronizer:
             return translation
         except ClientError as e:
             self.stats['Translation'].error(
-                f'Error while updating general translation information: {str(e)}',
+                f'Error while creating translation: {str(e)}',
             )
+
+    def _is_different_context(self, translation, general_data):
+        return (
+            general_data.context_id and general_data.context_id != translation['context']['id']
+            or (
+                general_data.context_instance_id
+                and general_data.context_instance_id != translation['context']['instance_id']
+            )
+        )
+
+    def _resolve_new_context(self, general_data):
+        """Check that there is no ambiguity on the new specified context,
+        and update the context_id accordingly."""
+        try:
+            if general_data.context_id:
+                ctx = self._get_context(general_data.context_id)
+                if not ctx:
+                    raise click.ClickException(
+                        f"The Context ID ({general_data.context_id}) doesn't exist",
+                    )
+                if (
+                    general_data.context_instance_id
+                    and general_data.context_instance_id != ctx['instance_id']
+                ):
+                    raise click.ClickException(
+                        f"The Instance ID ({general_data.context_instance_id}) doesn't correspond "
+                        f"to the Context ID ({general_data.context_id})",
+                    )
+                general_data.context_name = ctx['name']
+            elif general_data.context_instance_id:  # pragma: no branch
+                ctx = self._client.ns('localization').contexts.filter(
+                    instance_id=general_data.context_instance_id,
+                ).first()
+                if not ctx:
+                    raise click.ClickException(
+                        f"The Instance ID ({general_data.context_instance_id}) doesn't exist",
+                    )
+                general_data.context_id = ctx['id']
+                general_data.context_name = ctx['name']
+        except ClientError as error:
+            handle_http_error(error)
+
+    def _get_context(self, context_id):
+        try:
+            return self._client.ns('localization').contexts[context_id].get()
+        except ClientError as error:
+            if error.status_code == 404:
+                return None
+            raise
 
     @staticmethod
     def _update_general_sheet(ws, translation):
@@ -175,7 +231,7 @@ class TranslationSynchronizer:
             return translation['id']
         except ClientError as e:
             self.stats['Translation'].error(
-                f'Error while updating general translation information: {str(e)}',
+                f'Error while updating translation information: {str(e)}',
             )
 
     def _wait_for_autotranslation(self, translation_id, wait_seconds=None, max_counts=5):
