@@ -1,6 +1,10 @@
 import json
 from copy import deepcopy
 
+from openpyxl.styles import Alignment
+from openpyxl.utils import quote_sheetname
+from openpyxl.worksheet.datavalidation import DataValidation
+
 from connect.cli.plugins.product.constants import (
     ACTIONS_HEADERS,
     CAPABILITIES_COLS_HEADERS,
@@ -111,6 +115,62 @@ def get_json_object_for_param(original_param):
     del param['events']
 
     return json.dumps(param, indent=4, sort_keys=True)
+
+
+def fill_translation_row(ws, row_idx, translation, update_mode=False):
+    """
+    Fill translations worksheet row with data from a translation.
+    if 'update_mode' is True, then skip some cells that should not be overwritten.
+    """
+    ws.cell(row_idx, 1, value=translation['id'])
+    ws.cell(row_idx, 3, value=translation['context']['instance_id'])
+    ws.cell(row_idx, 4, value=translation['context']['name'])
+    ws.cell(row_idx, 5, value=translation['owner']['id'])
+    ws.cell(row_idx, 6, value=translation['owner']['name'])
+    ws.cell(row_idx, 7, value=f"{translation['locale']['id']} ({translation['locale']['name']})")
+    ws.cell(row_idx, 10, value=_calculate_translation_completion(translation)).number_format = '0%'
+    ws.cell(row_idx, 11, value=translation['status'])
+    ws.cell(row_idx, 12, value='Yes' if translation['primary'] else 'No')
+    ws.cell(row_idx, 13, value=translation['events'].get('created', {}).get('at', '-'))
+    ws.cell(row_idx, 14, value=translation['events'].get('updated', {}).get('at', '-'))
+    if not update_mode:
+        ws.cell(row_idx, 2, value='-')
+        ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
+        ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
+
+
+def _calculate_translation_completion(translation):
+    stats = translation['stats']
+    try:
+        return (
+            stats.get('translated') / stats.get('total')
+        )
+    except TypeError:
+        return '-'
+
+
+def setup_locale_data_validation(general_ws, translations_ws):
+    """
+    Setup DataValidation on locale column.
+    Some strange behavior makes it necessary to setup DataValidation every time the worksheet is
+    saved to ensure that it is not removed (probably because the locales list is in a formula
+    referencing a different sheet).
+    """
+    row_idx = 2
+    while general_ws[f'AB{row_idx + 1}'].value:
+        row_idx += 1
+
+    locales_validation = DataValidation(
+        type='list',
+        formula1='{sheet_name}!${column}$2:${column}${last_row_idx}'.format(
+            sheet_name=quote_sheetname(general_ws.title),
+            column='AB',
+            last_row_idx=row_idx,
+        ),
+        allow_blank=False,
+    )
+    translations_ws.add_data_validation(locales_validation)
+    locales_validation.add(f'G2:G{translations_ws.max_row}')
 
 
 class ParamSwitchNotSupported(Exception):

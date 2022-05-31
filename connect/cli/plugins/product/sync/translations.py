@@ -3,14 +3,16 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
+from functools import partial
 
 from tqdm import tqdm
 
 from connect.cli.plugins.product.constants import TRANSLATION_HEADERS
 from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.product.utils import fill_translation_row, setup_locale_data_validation
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
-
+from connect.client import ClientError
 
 fields = (v.replace(' ', '_').lower() for v in TRANSLATION_HEADERS.values())
 
@@ -23,15 +25,22 @@ class TranslationsSynchronizer(ProductSynchronizer):
         self._mstats = stats['Translations']
 
     def sync(self):
+        rows_data = defaultdict(dict)
         for row_idx, data in self._iterate_rows():
             self._set_process_description(f'Processing Product translation {data.translation_id}')
-            if data.action == '-':
+            if data.action == '-' or data.is_primary == 'Yes':
                 self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
             if row_errors:
                 self._mstats.error(row_errors, row_idx)
                 continue
+            rows_data[data.action][row_idx] = data
+        self._process_rows_data(rows_data)
+
+    def save(self, output_file):
+        setup_locale_data_validation(self._wb['General Information'], self._ws)
+        super().save(output_file)
 
     def _iterate_rows(self):
         self._progress = tqdm(
@@ -54,9 +63,6 @@ class TranslationsSynchronizer(ProductSynchronizer):
             )
             return errors
 
-        if data.action == 'delete' and data.is_primary == 'Yes':
-            errors.append('Can\'t delete the primary translation')
-
         if data.action in ('update', 'delete') and not data.translation_id:
             errors.append('Translation ID is required to update or delete a translation')
 
@@ -73,3 +79,65 @@ class TranslationsSynchronizer(ProductSynchronizer):
             errors.append('Locale is required to create a translation')
 
         return errors
+
+    def _process_rows_data(self, rows_data):
+        # for a consistent sync first delete translations, then update and create
+        for row_idx, data in rows_data['delete'].items():
+            self._handle_action(self._action_delete, row_idx, data)
+
+        for row_idx, data in rows_data['update'].items():
+            self._handle_action(self._action_update, row_idx, data)
+
+        if len(rows_data['create']) > 0:
+            # if there are any translations to create, then the context_id is needed
+            try:
+                ctx = self._client.ns('localization').contexts.filter(
+                    instance_id=self._product_id,
+                ).first()
+                for row_idx, data in rows_data['create'].items():
+                    self._handle_action(partial(self._action_create, ctx['id']), row_idx, data)
+            except ClientError as e:
+                self._mstats.error(str(e).split('\n'))
+
+    def _handle_action(self, action_handler, row_idx, data):
+        try:
+            translation = action_handler(data)
+            if translation:
+                fill_translation_row(self._ws, row_idx, translation, update_mode=True)
+        except Exception as e:
+            self._mstats.error(str(e).split('\n'), row_idx)
+
+    def _action_delete(self, data):
+        self._set_process_description(f'Deleting translation {data.translation_id}')
+        try:
+            self._client.ns('localization').translations[data.translation_id].delete()
+        except ClientError as e:
+            if e.status_code != 404:
+                raise
+        self._mstats.deleted()
+
+    def _action_update(self, data):
+        self._set_process_description(f'Updating translation {data.translation_id}')
+        payload = {
+            'description': data.description or "",
+            'auto': {
+                'enabled': data.autotranslation == 'Enabled',
+            },
+        }
+        translation = self._client.ns('localization').translations[data.translation_id].update(payload)
+        self._mstats.updated()
+        return translation
+
+    def _action_create(self, context_id, data):
+        self._set_process_description(f'Creating translation {data.translation_id}')
+        payload = {
+            'context': {'id': context_id},
+            "locale": {'id': data.locale.split()[0]},
+            'description': data.description or "",
+            'auto': {
+                'enabled': data.autotranslation == 'Enabled',
+            },
+        }
+        translation = self._client.ns('localization').translations.create(payload)
+        self._mstats.created()
+        return translation
