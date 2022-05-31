@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 from click.testing import CliRunner
-
 from openpyxl import load_workbook
 
 from connect.cli.core.config import Config

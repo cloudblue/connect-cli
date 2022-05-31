@@ -17,14 +17,12 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ConfigurationValuesSynchronizer(ProductSynchronizer):
+    def __init__(self, client, silent, stats):
+        super().__init__(client, silent)
+        self._mstats = stats['Configuration']
 
     def sync(self):  # noqa: CCR001
         ws = self._wb['Configuration']
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
-        deleted_items = []
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -33,11 +31,11 @@ class ConfigurationValuesSynchronizer(ProductSynchronizer):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 10)])
             row_indexes.set_description(f'Processing Configuration value {data.id}')
             if data.action == '-':
-                skipped_count += 1
+                self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
             if row_errors:
-                errors[row_idx] = row_errors
+                self._mstats.error(row_errors, row_idx)
                 continue
 
             scope_calc = data.id.split('#')
@@ -65,19 +63,11 @@ class ConfigurationValuesSynchronizer(ProductSynchronizer):
             try:
                 self._client.products[self._product_id].configurations.create(payload)
                 if data.action == 'delete':
-                    deleted_items.append(data)
+                    self._mstats.deleted()
                 else:
-                    updated_items.append(data)
+                    self._mstats.updated()
             except Exception as e:
-                errors[row_idx] = [str(e)]
-
-        return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            len(deleted_items),
-            errors,
-        )
+                self._mstats.error(str(e), row_idx)
 
     @staticmethod
     def _validate_row(data):

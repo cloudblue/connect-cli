@@ -2,11 +2,13 @@ from copy import deepcopy
 
 import pytest
 
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.capabilities import CapabilitiesSynchronizer
 from connect.client import ConnectClient
 
 
 def test_no_action(get_sync_capabilities_env):
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -14,14 +16,16 @@ def test_no_action(get_sync_capabilities_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/capabilities_sync.xlsx', 'Capabilities')
-    skipped, updated, errors = synchronizer.sync()
+    synchronizer.sync()
 
-    assert skipped == 9
-    assert updated == 0
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 9, 'errors': 0,
+    }
 
 
 def test_invalid_capability(fs, get_sync_capabilities_env):
@@ -29,6 +33,7 @@ def test_invalid_capability(fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['B2'].value = 'update'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -36,15 +41,17 @@ def test_invalid_capability(fs, get_sync_capabilities_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {2: ['Capability Invented is not valid capability']}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {2: ['Capability Invented is not valid capability']}
 
 
 def test_invalid_usage_schema(fs, get_sync_capabilities_env):
@@ -52,6 +59,7 @@ def test_invalid_usage_schema(fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C2'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -59,15 +67,17 @@ def test_invalid_usage_schema(fs, get_sync_capabilities_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {2: ['Schema magic is not supported']}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {2: ['Schema magic is not supported']}
 
 
 def test_invalid_tier_level(fs, get_sync_capabilities_env):
@@ -75,6 +85,7 @@ def test_invalid_tier_level(fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C8'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -82,15 +93,19 @@ def test_invalid_tier_level(fs, get_sync_capabilities_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {8: ['magic is not valid for Reseller Authorization level capability']}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {
+        8: ['magic is not valid for Reseller Authorization level capability'],
+    }
 
 
 def test_invalid_value(fs, get_sync_capabilities_env):
@@ -98,6 +113,7 @@ def test_invalid_value(fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['C10'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -105,15 +121,19 @@ def test_invalid_value(fs, get_sync_capabilities_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {10: ['Administrative Hold may be Enabled or Disabled, but not magic']}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {
+        10: ['Administrative Hold may be Enabled or Disabled, but not magic'],
+    }
 
 
 def test_ppu_enable_qt(
@@ -126,6 +146,7 @@ def test_ppu_enable_qt(
     get_sync_capabilities_env['Capabilities']['C2'].value = 'QT'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -133,6 +154,7 @@ def test_ppu_enable_qt(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -147,12 +169,12 @@ def test_ppu_enable_qt(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_change_schema(
@@ -165,6 +187,7 @@ def test_ppu_change_schema(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C2'].value = 'TR'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -172,6 +195,7 @@ def test_ppu_change_schema(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -186,12 +210,12 @@ def test_ppu_change_schema(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_disable(
@@ -204,6 +228,7 @@ def test_ppu_disable(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C2'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -211,6 +236,7 @@ def test_ppu_disable(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -225,12 +251,12 @@ def test_ppu_disable(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_dynamic_items_no_ppu(
@@ -242,6 +268,7 @@ def test_ppu_dynamic_items_no_ppu(
     get_sync_capabilities_env['Capabilities']['C3'].value = 'Enabled'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -249,15 +276,19 @@ def test_ppu_dynamic_items_no_ppu(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {3: ["Dynamic items support can't be enabled without Pay-as-you-go support"]}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {
+        3: ["Dynamic items support can't be enabled without Pay-as-you-go support"],
+    }
 
 
 def test_ppu_dynamic_items_no_ppu_no_enabled(
@@ -269,6 +300,7 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
     get_sync_capabilities_env['Capabilities']['C3'].value = 'Disabled'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -276,15 +308,16 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_enable_dynamic(
@@ -297,6 +330,7 @@ def test_ppu_enable_dynamic(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C3'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -304,6 +338,7 @@ def test_ppu_enable_dynamic(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -318,12 +353,12 @@ def test_ppu_enable_dynamic(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_disable_dynamic(
@@ -336,6 +371,7 @@ def test_ppu_disable_dynamic(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C3'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -343,6 +379,7 @@ def test_ppu_disable_dynamic(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -357,12 +394,12 @@ def test_ppu_disable_dynamic(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_future_no_ppu(
@@ -374,6 +411,7 @@ def test_ppu_future_no_ppu(
     get_sync_capabilities_env['Capabilities']['C4'].value = 'Enabled'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -381,15 +419,17 @@ def test_ppu_future_no_ppu(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 0
-    assert errors == {
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 8, 'errors': 1,
+    }
+    assert stats['Capabilities']._row_errors == {
         4: ["Report of future charges can't be enabled without Pay-as-you-go support"],
     }
 
@@ -403,6 +443,7 @@ def test_ppu_future_no_ppu_no_enabled(
     get_sync_capabilities_env['Capabilities']['C4'].value = 'Disabled'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -410,15 +451,16 @@ def test_ppu_future_no_ppu_no_enabled(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_enable_future(
@@ -431,6 +473,7 @@ def test_ppu_enable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C4'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -438,6 +481,7 @@ def test_ppu_enable_future(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -452,12 +496,12 @@ def test_ppu_enable_future(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 def test_ppu_disable_future(
@@ -470,6 +514,7 @@ def test_ppu_disable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C4'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -477,6 +522,7 @@ def test_ppu_disable_future(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     response = deepcopy(mocked_product_response)
@@ -491,12 +537,12 @@ def test_ppu_disable_future(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 @pytest.mark.parametrize(
@@ -521,6 +567,7 @@ def test_ppu_disable_feature(
     get_sync_capabilities_env_ppu_enabled['Capabilities'][f'C{row_action}'].value = 'Disabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -528,6 +575,7 @@ def test_ppu_disable_feature(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -537,12 +585,12 @@ def test_ppu_disable_feature(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 @pytest.mark.parametrize(
@@ -566,6 +614,7 @@ def test_features_enable_future(
     get_sync_capabilities_env_ppu_enabled['Capabilities'][f'C{row_action}'].value = 'Enabled'
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -573,6 +622,7 @@ def test_features_enable_future(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -582,12 +632,12 @@ def test_features_enable_future(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }
 
 
 @pytest.mark.parametrize(
@@ -608,6 +658,7 @@ def test_tier_level_feature(
     get_sync_capabilities_env_ppu_enabled['Capabilities']['C8'].value = tier_level
     get_sync_capabilities_env_ppu_enabled.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -615,6 +666,7 @@ def test_tier_level_feature(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -624,9 +676,9 @@ def test_tier_level_feature(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Capabilities')
+    synchronizer.sync()
 
-    skipped, updated, errors = synchronizer.sync()
-
-    assert skipped == 8
-    assert updated == 1
-    assert errors == {}
+    assert stats['Capabilities'].get_counts_as_dict() == {
+        'processed': 9, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 8, 'errors': 0,
+    }

@@ -1,9 +1,11 @@
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.configuration_values import ConfigurationValuesSynchronizer
 from connect.client import ConnectClient
 
 
 def test_skipped(get_sync_config_env):
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -11,17 +13,16 @@ def test_skipped(get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/configuration_sync.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 1
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
 
 
 def test_validate_no_id(fs, get_sync_config_env):
@@ -29,6 +30,7 @@ def test_validate_no_id(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['D2'] = 'update'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -36,17 +38,17 @@ def test_validate_no_id(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['ID is required for update operation']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['ID is required for update operation']}
 
 
 def test_validate_wrong_id_format(fs, get_sync_config_env):
@@ -54,6 +56,7 @@ def test_validate_wrong_id_format(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['D2'] = 'update'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -61,17 +64,17 @@ def test_validate_wrong_id_format(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['ID is not properly formatted']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['ID is not properly formatted']}
 
 
 def test_validate_wrong_id_format2(fs, get_sync_config_env):
@@ -79,6 +82,7 @@ def test_validate_wrong_id_format2(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['D2'] = 'update'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -86,17 +90,17 @@ def test_validate_wrong_id_format2(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['ID is not properly formatted']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['ID is not properly formatted']}
 
 
 def test_validate_update_no_value(fs, get_sync_config_env):
@@ -104,6 +108,7 @@ def test_validate_update_no_value(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['I2'] = None
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -111,17 +116,17 @@ def test_validate_update_no_value(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Value is required for update operation']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['Value is required for update operation']}
 
 
 def test_validate_invalid_action(fs, get_sync_config_env):
@@ -129,6 +134,7 @@ def test_validate_invalid_action(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['I2'] = None
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -136,17 +142,19 @@ def test_validate_invalid_action(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Action can be either `-` or `update`, provided rocket']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {
+        2: ['Action can be either `-` or `update`, provided rocket'],
+    }
 
 
 def test_validate_invalid_scope_param(fs, get_sync_config_env):
@@ -154,6 +162,7 @@ def test_validate_invalid_scope_param(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['B2'] = 'a'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -161,17 +170,17 @@ def test_validate_invalid_scope_param(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Parameter does not match configuration ID']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['Parameter does not match configuration ID']}
 
 
 def test_validate_invalid_scope_item(fs, get_sync_config_env):
@@ -179,6 +188,7 @@ def test_validate_invalid_scope_item(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['E2'] = 'a'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -186,17 +196,17 @@ def test_validate_invalid_scope_item(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Item does not match configuration ID']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['Item does not match configuration ID']}
 
 
 def test_validate_invalid_scope_marketplace(fs, get_sync_config_env):
@@ -205,6 +215,7 @@ def test_validate_invalid_scope_marketplace(fs, get_sync_config_env):
     get_sync_config_env['Configuration']['G2'] = 'a'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -212,17 +223,17 @@ def test_validate_invalid_scope_marketplace(fs, get_sync_config_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Marketplace does not match configuration ID']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['Marketplace does not match configuration ID']}
 
 
 def test_update(fs, get_sync_config_env, mocked_responses):
@@ -231,6 +242,7 @@ def test_update(fs, get_sync_config_env, mocked_responses):
     get_sync_config_env['Configuration']['D2'] = 'update'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -238,6 +250,7 @@ def test_update(fs, get_sync_config_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -249,14 +262,12 @@ def test_update(fs, get_sync_config_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_update_json(fs, get_sync_config_env, mocked_responses):
@@ -267,6 +278,7 @@ def test_update_json(fs, get_sync_config_env, mocked_responses):
 
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -274,6 +286,7 @@ def test_update_json(fs, get_sync_config_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -285,14 +298,12 @@ def test_update_json(fs, get_sync_config_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_delete(fs, get_sync_config_env, mocked_responses):
@@ -301,6 +312,7 @@ def test_delete(fs, get_sync_config_env, mocked_responses):
     get_sync_config_env['Configuration']['D2'] = 'delete'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -308,6 +320,7 @@ def test_delete(fs, get_sync_config_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -319,14 +332,12 @@ def test_delete(fs, get_sync_config_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_delete_500(fs, get_sync_config_env, mocked_responses):
@@ -335,6 +346,7 @@ def test_delete_500(fs, get_sync_config_env, mocked_responses):
     get_sync_config_env['Configuration']['D2'] = 'delete'
     get_sync_config_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ConfigurationValuesSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -342,6 +354,7 @@ def test_delete_500(fs, get_sync_config_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -351,11 +364,10 @@ def test_delete_500(fs, get_sync_config_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Configuration'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration']._row_errors == {2: ['500 Internal Server Error']}

@@ -13,8 +13,9 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
+from connect.cli.plugins.shared.sync_stats import SynchronizerStatsSingleModule
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.customer.constants import COL_HEADERS
-from connect.cli.plugins.exceptions import SheetNotFoundError
 
 fields = (v.replace(' ', '_').lower() for v in COL_HEADERS.values())
 
@@ -28,6 +29,7 @@ class CustomerSynchronizer:
         self._wb = None
         self.account_id = account_id
         self.hubs = ['HB-0000-0000']
+        self.stats = SynchronizerStatsSingleModule('Customers')
 
     def populate_hubs(self):
         if self.account_id.startswith('PA-'):
@@ -69,10 +71,7 @@ class CustomerSynchronizer:
 
     def sync(self):  # noqa: CCR001
         ws = self._wb['Customers']
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
+        self.stats.reset()
         parent_uuid = {}
         parent_external_id = {}
         parent_id = []
@@ -87,18 +86,18 @@ class CustomerSynchronizer:
                 f'Processing item {data.id or data.external_id or data.external_uid}',
             )
             if data.action == '-':
-                skipped_count += 1
+                self.stats.skipped()
                 continue
             row_errors = self._validate_row(data)
             if row_errors:
-                errors[row_idx] = row_errors
+                self.stats.error(row_errors, row_idx)
                 continue
             if data.parent_search_criteria and not data.parent_search_value:
-                errors[row_idx] = ["Parent search value is needed if criteria is set"]
+                self.stats.error("Parent search value is needed if criteria is set", row_idx)
                 continue
             if data.hub_id and (data.hub_id != '' or data.hub_id != '-'):
                 if data.hub_id not in self.hubs:
-                    errors[row_idx] = [f"Accounts on hub {data.hub_id} can not be modified"]
+                    self.stats.error(f"Accounts on hub {data.hub_id} can not be modified", row_idx)
                     continue
             name = f'{data.technical_contact_first_name} {data.technical_contact_last_name}'
             model = {
@@ -144,9 +143,10 @@ class CustomerSynchronizer:
                             pacc = self._client.ns('tier').accounts[data.parent_search_value].get()
                             parent_id.append(pacc['id'])
                         except ClientError:
-                            errors[row_idx] = [
+                            self.stats.error(
                                 f'Parent with id {data.parent_search_value} does not exist',
-                            ]
+                                row_idx,
+                            )
                             continue
                     model['parent']['id'] = data.parent_search_value
                 elif data.parent_search_criteria == 'external_id':
@@ -156,18 +156,22 @@ class CustomerSynchronizer:
                             pacc = self._client.ns('tier').accounts.filter(r).all()
                             pacc_count = pacc.count()
                             if pacc_count == 0:
-                                errors[row_idx] = [
+                                self.stats.error(
                                     f'Parent with external_id {data.parent_search_value} not found',
-                                ]
+                                    row_idx,
+                                )
                                 continue
                             elif pacc_count > 1:
-                                errors[row_idx] = [
+                                self.stats.error(
                                     f'More than one Parent with external_id {data.parent_search_value}',
-                                ]
+                                    row_idx,
+                                )
                                 continue
                             parent_external_id[data.parent_search_value] = pacc[0]['id']
                         except ClientError:
-                            errors[row_idx] = ['Error when obtaining parent data from Connect']
+                            self.stats.error(
+                                'Error when obtaining parent data from Connect', row_idx,
+                            )
                             continue
                     model['parent']['id'] = parent_external_id[data.parent_search_value]
                 else:
@@ -176,43 +180,45 @@ class CustomerSynchronizer:
                             r = R().external_uid.eq(str(data.parent_search_value))
                             pacc = self._client.ns('tier').accounts.filter(r).all()
                             if pacc.count() == 0:
-                                errors[row_idx] = [
+                                self.stats.error(
                                     f'Parent with external_uid {data.parent_search_value} not found',
-                                ]
+                                    row_idx,
+                                )
                                 continue
                             elif pacc.count() > 1:
-                                errors[row_idx] = [
+                                self.stats.error(
                                     f'More than one Parent with external_uid {data.parent_search_value}',
-                                ]
+                                    row_idx,
+                                )
                                 continue
                             parent_uuid[data.parent_search_value] = pacc[0]['id']
                         except ClientError:
-                            errors[row_idx] = ['Error when obtaining parent data from Connect']
+                            self.stats.error(
+                                'Error when obtaining parent data from Connect', row_idx,
+                            )
                             continue
                     model['parent']['id'] = parent_uuid[data.parent_search_value]
             if data.action == 'create':
                 try:
                     account = self._client.ns('tier').accounts.create(model)
                 except ClientError as e:
-                    errors[row_idx] = [f'Error when creating account: {str(e)}']
+                    self.stats.error(
+                        f'Error when creating account: {str(e)}', row_idx,
+                    )
                     continue
-                created_items.append(account)
+                self.stats.created()
                 self._update_sheet_row(ws, row_idx, account)
             else:
                 try:
                     model['id'] = data.id
                     account = self._client.ns('tier').accounts[data.id].update(model)
                 except ClientError as e:
-                    errors[row_idx] = [f'Error when updating account: {str(e)}']
+                    self.stats.error(
+                        f'Error when updating account: {str(e)}', row_idx,
+                    )
                     continue
-                updated_items.append(account)
+                self.stats.updated()
                 self._update_sheet_row(ws, row_idx, account)
-        return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            errors,
-        )
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, account):

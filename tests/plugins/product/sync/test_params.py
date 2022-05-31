@@ -1,9 +1,11 @@
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.params import ParamsSynchronizer
 from connect.client import ConnectClient
 
 
 def test_skipped(get_sync_params_env):
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -11,21 +13,21 @@ def test_skipped(get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/params_sync.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 1
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
 
 
 def test_skipped_fulfillment(get_sync_params_env):
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -33,17 +35,16 @@ def test_skipped_fulfillment(get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open('./tests/fixtures/params_sync.xlsx', 'Fulfillment Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 1
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Fulfillment Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
 
 
 def test_validate_no_id(fs, get_sync_params_env):
@@ -52,6 +53,7 @@ def test_validate_no_id(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -59,17 +61,17 @@ def test_validate_no_id(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Parameter must have an id']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['Parameter must have an id']}
 
 
 def test_validate_invalid_id(fs, get_sync_params_env):
@@ -77,6 +79,7 @@ def test_validate_invalid_id(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'update'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -84,17 +87,19 @@ def test_validate_invalid_id(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Parameter ID must contain only letters, numbers and `_`, provided XKL#']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
+        2: ['Parameter ID must contain only letters, numbers and `_`, provided XKL#'],
+    }
 
 
 def test_validate_invalid_switch(fs, get_sync_params_env):
@@ -102,6 +107,7 @@ def test_validate_invalid_switch(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['F2'] = 'fulfillment'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -109,17 +115,17 @@ def test_validate_invalid_switch(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
         2: ['Parameters of type ordering are only supported when processing Ordering Parameters. '
             'Has been provided fulfillment.'],
     }
@@ -130,6 +136,7 @@ def test_validate_invalid_action(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['A2'] = None
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -137,17 +144,19 @@ def test_validate_invalid_action(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Verbose ID is required on update and delete actions.']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
+        2: ['Verbose ID is required on update and delete actions.'],
+    }
 
 
 def test_validate_invalid_param_type(fs, get_sync_params_env):
@@ -155,6 +164,7 @@ def test_validate_invalid_param_type(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['H2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -162,17 +172,17 @@ def test_validate_invalid_param_type(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
         2: ['Parameter type rocket is not one of the supported ones:email,address,checkbox,'
             'choice,domain,subdomain,url,dropdown,object,password,phone,text'],
     }
@@ -183,6 +193,7 @@ def test_validate_invalid_scope(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['G2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -190,17 +201,17 @@ def test_validate_invalid_scope(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
         2: ['Only asset, tier1 and tier2 scopes are supported for Ordering Parameters'],
     }
 
@@ -210,6 +221,7 @@ def test_validate_invalid_scope_config(fs, get_sync_params_env):
     get_sync_params_env['Configuration Parameters']['G2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -217,17 +229,17 @@ def test_validate_invalid_scope_config(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Configuration Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {
+    assert stats['Configuration Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Configuration Parameters']._row_errors == {
         2: ['Only item, item_marketplace, marketplace and product scopes are supported for '
             'Configuration Parameters'],
     }
@@ -238,6 +250,7 @@ def test_validate_invalid_required(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['I2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -245,17 +258,17 @@ def test_validate_invalid_required(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Required must be either True or `-`']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['Required must be either True or `-`']}
 
 
 def test_validate_invalid_required2(fs, get_sync_params_env):
@@ -263,6 +276,7 @@ def test_validate_invalid_required2(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['J2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -270,17 +284,17 @@ def test_validate_invalid_required2(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Unique must be either True or `-`']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['Unique must be either True or `-`']}
 
 
 def test_validate_invalid_required3(fs, get_sync_params_env):
@@ -288,6 +302,7 @@ def test_validate_invalid_required3(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['K2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -295,17 +310,17 @@ def test_validate_invalid_required3(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Hidden must be either True or `-`']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['Hidden must be either True or `-`']}
 
 
 def test_validate_invalid_json(fs, get_sync_params_env):
@@ -313,6 +328,7 @@ def test_validate_invalid_json(fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['L2'] = 'nojson'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -320,23 +336,24 @@ def test_validate_invalid_json(fs, get_sync_params_env):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['JSON properties must have json format']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['JSON properties must have json format']}
 
 
 def test_validate_delete(fs, get_sync_params_env, mocked_responses):
     get_sync_params_env['Ordering Parameters']['C2'] = 'delete'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -344,6 +361,7 @@ def test_validate_delete(fs, get_sync_params_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -353,20 +371,19 @@ def test_validate_delete(fs, get_sync_params_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
     get_sync_params_env['Ordering Parameters']['C2'] = 'delete'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -374,6 +391,7 @@ def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -383,14 +401,12 @@ def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 1
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 1, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_validate_update_invalid_switch(
@@ -404,6 +420,7 @@ def test_validate_update_invalid_switch(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -411,6 +428,7 @@ def test_validate_update_invalid_switch(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -420,14 +438,15 @@ def test_validate_update_invalid_switch(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['Switching parameter type is not supported']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {
+        2: ['Switching parameter type is not supported'],
+    }
 
 
 def test_validate_update_invalid_switch_phase(
@@ -443,6 +462,7 @@ def test_validate_update_invalid_switch_phase(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -450,6 +470,7 @@ def test_validate_update_invalid_switch_phase(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -459,14 +480,13 @@ def test_validate_update_invalid_switch_phase(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['switching phase is not supported']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['switching phase is not supported']}
 
 
 def test_validate_update_invalid_switch_scope(
@@ -482,6 +502,7 @@ def test_validate_update_invalid_switch_scope(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -489,6 +510,7 @@ def test_validate_update_invalid_switch_scope(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -498,14 +520,13 @@ def test_validate_update_invalid_switch_scope(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['switching scope is not supported']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['switching scope is not supported']}
 
 
 def test_validate_update(
@@ -520,6 +541,7 @@ def test_validate_update(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -527,6 +549,7 @@ def test_validate_update(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -542,14 +565,12 @@ def test_validate_update(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 1
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_validate_create(
@@ -564,6 +585,7 @@ def test_validate_create(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -571,6 +593,7 @@ def test_validate_create(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -580,14 +603,12 @@ def test_validate_create(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 1
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
 
 
 def test_validate_create_connect_error(
@@ -600,6 +621,7 @@ def test_validate_create_connect_error(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -607,6 +629,7 @@ def test_validate_create_connect_error(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -616,14 +639,13 @@ def test_validate_create_connect_error(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 0
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {2: ['500 Internal Server Error']}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 1,
+    }
+    assert stats['Ordering Parameters']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_validate_create_no_constrains(
@@ -639,6 +661,7 @@ def test_validate_create_no_constrains(
 
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
+    stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -646,6 +669,7 @@ def test_validate_create_no_constrains(
             endpoint='https://localhost/public/v1',
         ),
         silent=True,
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -655,11 +679,9 @@ def test_validate_create_no_constrains(
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
 
-    skipped, created, updated, deleted, errors = synchronizer.sync()
-
-    assert skipped == 0
-    assert created == 1
-    assert updated == 0
-    assert deleted == 0
-    assert errors == {}
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }

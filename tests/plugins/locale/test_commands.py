@@ -1,8 +1,4 @@
-import pytest
 from click.testing import CliRunner
-
-
-pytestmark = pytest.mark.skip(reason='locale plugin has been temporary disabled')
 
 
 def test_list_locales(config_mocker, mocked_responses, mocked_locales_response, ccli):
@@ -34,7 +30,7 @@ def test_list_locales(config_mocker, mocked_responses, mocked_locales_response, 
     )
     assert result.exit_code == 0
     assert 'Current active account: VA-000 - Account 0' in result.output
-    assert '│EN-AU│Australian English│       ✖       │     -      │' in result.output
+    assert '│ EN-AU │ Australian English │        ✖        │      -       │' in result.output
 
 
 def test_list_with_page_size_less_than_zero(config_mocker, ccli):

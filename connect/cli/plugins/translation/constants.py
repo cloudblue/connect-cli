@@ -5,15 +5,6 @@
 
 from collections import namedtuple
 
-ColumnSettings = namedtuple('ColumnSettings', ['header', 'width'])
-
-ATTRIBUTES_COLS = {
-    'A': ColumnSettings('Key', 70),
-    'B': ColumnSettings('Action', 25),
-    'C': ColumnSettings('Value', 100),
-    'D': ColumnSettings('Comment', 30),
-}
-
 TRANSLATION_TABLE_HEADER = """
 
 
@@ -21,3 +12,26 @@ TRANSLATION_TABLE_HEADER = """
 | ID | Context_ID | Context_Type | Context_Name |Locale  | Auto | Status | Primary | Owner |
 |:--------|:-----------|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|
 """
+
+FieldSettings = namedtuple('FieldSettings', ['row_idx', 'title'])
+
+GENERAL_SHEET_FIELDS = {
+    'translation_id': FieldSettings(1, 'Translation'),
+    'owner_id': FieldSettings(2, 'Translation Owner ID'),
+    'owner_name': FieldSettings(3, 'Translation Owner Name'),
+    'locale_id': FieldSettings(4, 'Locale'),
+    'context_id': FieldSettings(5, 'Localization Context'),
+    'context_instance_id': FieldSettings(6, 'Instance ID'),
+    'context_name': FieldSettings(7, 'Instance Name'),
+    'description': FieldSettings(8, 'Description'),
+    'auto_enabled': FieldSettings(9, 'Auto-translation'),
+}
+
+ATTRIBUTES_SHEET_COLUMNS = [
+    'key',
+    'original value',
+    'action',
+    'value',
+    'comment',
+    'editor',
+]

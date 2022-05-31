@@ -1,14 +1,13 @@
 
-import random
-import sys
-
-from connect.cli.plugins.play.context import Context
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2021 Ingram Micro. All Rights Reserved.
-from connect.cli.plugins.play.script import OptionWrapper, Script
+import sys
+
+from connect.cli.plugins.play.context import Context
 from connect.cli.plugins.play.save import Save
+from connect.cli.plugins.play.script import OptionWrapper, Script
 
 
 class Script2(Script):
@@ -24,8 +23,6 @@ class Script2(Script):
         super().do(context=context)
         print('--- Init Script 2 ---')
 
-
-# __all__ = ('Script2',)  # intentional mistake
 
 if __name__ == '__main__':
     try:

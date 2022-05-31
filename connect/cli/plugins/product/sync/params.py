@@ -26,9 +26,11 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ParamsSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent):
+    def __init__(self, client, silent, stats):
         self._param_type = None
         self._worksheet_name = None
+        self.__stats = stats
+        self._mstats = None
         super(ParamsSynchronizer, self).__init__(client, silent)
 
     def open(self, input_file, worksheet):
@@ -39,15 +41,11 @@ class ParamsSynchronizer(ProductSynchronizer):
         elif worksheet == "Configuration Parameters":
             self._param_type = 'configuration'
         self._worksheet_name = worksheet
+        self._mstats = self.__stats[self._worksheet_name]
         return super(ParamsSynchronizer, self).open(input_file, worksheet)
 
     def sync(self):  # noqa: CCR001
         ws = self._wb[self._worksheet_name]
-        errors = {}
-        skipped_count = 0
-        created_items = []
-        updated_items = []
-        deleted_items = []
 
         row_indexes = trange(
             2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
@@ -56,12 +54,12 @@ class ParamsSynchronizer(ProductSynchronizer):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 15)])
             row_indexes.set_description(f'Processing param {data.id}')
             if data.action == '-':
-                skipped_count += 1
+                self._mstats.skipped()
                 continue
             row_errors = self._validate_row(data)
 
             if row_errors:
-                errors[row_idx] = row_errors
+                self._mstats.error(row_errors, row_idx)
                 continue
 
             if data.action == 'delete':
@@ -69,7 +67,7 @@ class ParamsSynchronizer(ProductSynchronizer):
                     self._client.products[self._product_id].parameters[data.verbose_id].delete()
                 except ClientError:
                     pass
-                deleted_items.append(data)
+                self._mstats.deleted()
                 continue
 
             param_payload = {}
@@ -101,9 +99,9 @@ class ParamsSynchronizer(ProductSynchronizer):
                         param_payload,
                     )
                     self._update_sheet_row(ws, row_idx, param)
-                    updated_items.append(param)
+                    self._mstats.updated()
                 except Exception as e:
-                    errors[row_idx] = [str(e)]
+                    self._mstats.error(str(e), row_idx)
 
             if data.action == 'create':
                 try:
@@ -111,17 +109,9 @@ class ParamsSynchronizer(ProductSynchronizer):
                         param_payload,
                     )
                     self._update_sheet_row(ws, row_idx, param)
-                    created_items.append(param)
+                    self._mstats.created()
                 except Exception as e:
-                    errors[row_idx] = [str(e)]
-
-        return (
-            skipped_count,
-            len(created_items),
-            len(updated_items),
-            len(deleted_items),
-            errors,
-        )
+                    self._mstats.error(str(e), row_idx)
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, param):

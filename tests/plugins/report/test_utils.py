@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import pytest
-
 from click import ClickException
 
 from connect.cli.plugins.report.utils import (

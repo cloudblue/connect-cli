@@ -63,15 +63,15 @@ def test_load_repo_invalid_repo(mocker):
 def test_list_reports(capsys):
     list_reports('./tests/fixtures/reports/basic_report')
     captured = capsys.readouterr()
-    assert '│entrypoint│test report│' in captured.out
+    assert '│ entrypoint │ test report │' in captured.out
 
 
 def test_show_report_info(capsys):
     show_report_info('./tests/fixtures/reports/report_v2', 'test_v2')
     captured = capsys.readouterr()
     assert 'reportsV2 (ID: test_v2)' in captured.out
-    assert '│pdf-portrait│Export data as PDF' in captured.out
-    assert '│json        │Export data as JSON' in captured.out
+    assert '│ pdf-portrait │ Export data as PDF                          │    ✓    │' in captured.out
+    assert '│ json         │ Export data as JSON                         │         │' in captured.out
 
 
 @pytest.mark.parametrize(

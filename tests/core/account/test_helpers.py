@@ -1,6 +1,5 @@
-import pytest
-
 import click
+import pytest
 
 from connect.cli.core.account.helpers import (
     activate_account,

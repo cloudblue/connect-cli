@@ -5,17 +5,17 @@
 import os
 
 import click
-from cmr import render
 import requests
 
 from connect.cli import get_version
 from connect.cli.core.constants import PYPI_JSON_API_URL
+from connect.utils.terminal.markdown import render
 
 
 def continue_or_quit():
     while True:
         click.echo('')
-        click.echo("Press 'c' to continue or 'q' to quit ", nl=False)
+        click.echo("Press 'c' to continue or 'q' to quit", nl=False)
         c = click.getchar()
         click.echo()
         if c == 'c':

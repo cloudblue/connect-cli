@@ -1,8 +1,4 @@
-import pytest
 from click.testing import CliRunner
-
-
-pytestmark = pytest.mark.skip(reason='translation plugin has been temporary disabled')
 
 
 def test_export(config_mocker, mocker, ccli):
@@ -55,7 +51,9 @@ def test_export_silent(config_mocker, mocker, ccli):
     assert result.output == ''
 
 
-def test_list_translations(config_mocker, mocked_responses, mocked_translation_response, ccli):
+def test_list_translations(
+    config_mocker, console_80_columns, mocked_responses, mocked_translation_response, ccli,
+):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/localization/translations',
@@ -76,7 +74,7 @@ def test_list_translations(config_mocker, mocked_responses, mocked_translation_r
     assert result.exit_code == 0
     assert 'Current active account: VA-000 - Account 0' in result.output
     assert (
-        '│TRN-8100-3865-4869│PRD-746-555-769│  product   │translation test product│Spanish│off │active│       │     │'
+        '│ TRN-8… │ PRD-7… │ produ… │ trans… │ Spanish │ off  │ active │        │       │'
         in result.output
     )
 

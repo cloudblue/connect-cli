@@ -18,8 +18,8 @@ def test_play_commands(fs, mocker):
     unimport()
     from connect.cli.ccli import main
 
-    mock_context = mocker.patch('connect.cli.plugins.play.commands.PlayOptions.context_file', None)
-    mock_args = mocker.patch('sys.argv', ['cmd', 'play', 'script1'])
+    mocker.patch('connect.cli.plugins.play.commands.PlayOptions.context_file', None)
+    mocker.patch('sys.argv', ['cmd', 'play', 'script1'])
     main()
 
 
@@ -30,6 +30,6 @@ def test_play_commands_rel(fs, mocker):
     unimport()
     from connect.cli.ccli import main
 
-    mock_context = mocker.patch('connect.cli.plugins.play.commands.PlayOptions.context_file', None)
-    mock_args = mocker.patch('sys.argv', ['cmd', 'play', 'script1'])
+    mocker.patch('connect.cli.plugins.play.commands.PlayOptions.context_file', None)
+    mocker.patch('sys.argv', ['cmd', 'play', 'script1'])
     main()

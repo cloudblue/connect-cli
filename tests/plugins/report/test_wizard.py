@@ -1,5 +1,5 @@
 import pytest
-from click import ClickException 
+from click import ClickException
 from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import DateTimeRangeValidator, DateTimeValidator, RequiredValidator
 
