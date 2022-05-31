@@ -5,6 +5,7 @@ from shutil import copy2
 
 import pytest
 import responses
+from responses.registries import OrderedRegistry
 import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
@@ -71,6 +72,12 @@ def config_mocker(mocker):
 @pytest.fixture(scope='function')
 def mocked_responses():
     with responses.RequestsMock() as rsps:
+        yield rsps
+
+
+@pytest.fixture(scope='function')
+def mocked_responses_ordered():
+    with responses.RequestsMock(registry=OrderedRegistry) as rsps:
         yield rsps
 
 
@@ -143,6 +150,12 @@ def mocked_locales_response():
 @pytest.fixture(scope='function')
 def mocked_primary_translation_response():
     with open('./tests/fixtures/primary_translation_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def mocked_new_translation_response():
+    with open('./tests/fixtures/new_translation_response.json') as response:
         return json.load(response)
 
 

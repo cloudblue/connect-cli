@@ -24,7 +24,7 @@ def dump_translation(
 
 
 def _alter_general_sheet(ws):
-    for row_idx in range(1, ws.max_row + 1):
+    for row_idx in range(1, ws.max_row + 1):  # pragma: no branch
         if ws.cell(row_idx, 1).value.lower() == 'auto-translation':
             disabled_enabled = DataValidation(
                 type='list',
