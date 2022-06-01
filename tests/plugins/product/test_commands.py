@@ -55,6 +55,49 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
             assert result.exit_code == 0
 
 
+def test_sync_command_exclude_translations(
+    fs, config_mocker, get_general_env, mocked_responses, ccli,
+):
+    mocked_responses.assert_all_requests_are_fired = False
+    with open('./tests/fixtures/units_response.json') as units_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/settings/units',
+            json=json.load(units_response),
+        )
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='PUT',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response),
+        )
+
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/localization/translations',
+        status=201,
+    )
+
+    get_general_env['Translations']['B3'] = 'create'
+    get_general_env['Translations']['G3'] = 'JA (Japanese)'
+    get_general_env['Translations']['I3'] = 'Disabled'
+    get_general_env.save(f'{fs.root_path}/test.xlsx')
+
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            'product', 'sync', '--yes', '--exclude-translations',
+            f'{fs.root_path}/test.xlsx',
+        ],
+    )
+    assert result.exit_code == 0
+    assert not any(
+        c.request.url.startswith('https://localhost/public/v1/localization/')
+        for c in mocked_responses.calls
+    )
+
+
 def test_list_products(fs, mocked_responses, ccli):
     with open('./tests/fixtures/product_response.json') as prod_response:
         mocked_responses.add(
