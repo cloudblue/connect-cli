@@ -290,6 +290,10 @@ def test_export_product(
         r'https:\/\/localhost\/public\/v1\/localization\/translations\?eq\(context.instance_id,'
         r'PRD-276-377-545\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
     )
+    translation_query2 = re.compile(
+        r'https:\/\/localhost\/public\/v1\/localization\/translations\?and\(eq\(context.instance_id,'
+        r'PRD-276-377-545\),eq\(primary,true\)\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
+    )
     mocked_responses.add(
         method='GET',
         url=ordering_query,
@@ -346,6 +350,14 @@ def test_export_product(
     mocked_responses.add(
         method='GET',
         url=translation_query,
+        json=mocked_primary_translation_response,
+        headers={
+            'Content-Range': 'items 0-0/1',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url=translation_query2,
         json=mocked_primary_translation_response,
         headers={
             'Content-Range': 'items 0-0/1',
@@ -526,7 +538,7 @@ def test_export_product_exclude_translations_sheets(
         method='GET',
         url=(
             'https://localhost/public/v1/localization/translations?'
-            'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=100&offset=0'
+            'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=1&offset=0'
         ),
         json=mocked_primary_translation_response,
     )
