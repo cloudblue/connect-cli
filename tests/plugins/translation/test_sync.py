@@ -6,6 +6,9 @@ from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.translation.sync import TranslationSynchronizer
 
 
+localization_base = "https://localhost/public/v1/localization"
+
+
 def get_client():
     return ConnectClient(
         api_key='ApiKey',
@@ -87,7 +90,7 @@ def test_get_translation_error_500(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         status=500,
     )
 
@@ -106,13 +109,13 @@ def test_update_and_skip_all_attributes(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
 
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -137,13 +140,13 @@ def test_update_fail(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
 
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         status=500,
     )
     client = get_client()
@@ -173,17 +176,17 @@ def test_update_attributes_fail(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/attributes',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869/attributes',
         status=500,
     )
     client = get_client()
@@ -211,24 +214,24 @@ def test_update_wait_autotranslate_attributes(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     auto_processing_response = mocked_translation_response.copy()
     auto_processing_response['auto']['status'] = 'on'
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=auto_processing_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/attributes',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869/attributes',
     )
     client = get_client()
     synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
@@ -268,19 +271,19 @@ def test_update_wait_autotranslate_fails(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     auto_processing_response = mocked_translation_response.copy()
     auto_processing_response['auto'] = wait_response_auto
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=auto_processing_response,
     )
     client = get_client()
@@ -305,17 +308,17 @@ def test_update(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='PUT',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/attributes',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869/attributes',
     )
     client = get_client()
     synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
@@ -341,13 +344,13 @@ def test_create_asks_confirmation(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        url=f'{localization_base}/translations/TRN-NON-EXISTENT',
         status=404,
     )
 
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -367,7 +370,7 @@ def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker)
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        url=f'{localization_base}/translations/TRN-NON-EXISTENT',
         status=404,
     )
 
@@ -386,13 +389,13 @@ def test_create_always_yes(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        url=f'{localization_base}/translations/TRN-NON-EXISTENT',
         status=404,
     )
 
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -418,13 +421,13 @@ def test_create_and_skip_all_attributes(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        url=f'{localization_base}/translations/TRN-NON-EXISTENT',
         status=404,
     )
 
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -447,12 +450,12 @@ def test_create_fail_skip_attributes(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-NON-EXISTENT',
+        url=f'{localization_base}/translations/TRN-NON-EXISTENT',
         status=404,
     )
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         status=500,
     )
     client = get_client()
@@ -479,12 +482,12 @@ def test_change_locale_causes_creation(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -506,13 +509,13 @@ def test_different_account_causes_creation(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
 
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -538,12 +541,12 @@ def test_change_context_causes_creation(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts/LCX-9999-9999-9999',
+        url=f'{localization_base}/contexts/LCX-9999-9999-9999',
         json={
             'id': 'LCX-9999-9999-9999',
             'instance_id': 'PRD-999-999-999', 'name': 'another product',
@@ -551,7 +554,7 @@ def test_change_context_causes_creation(
     )
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -575,12 +578,12 @@ def test_change_context_instance_causes_creation(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-999-999-999)&limit=100&offset=0',
+        url=f'{localization_base}/contexts?eq(instance_id,PRD-999-999-999)&limit=1&offset=0',
         headers={
             'Content-Range': 'items 0-0/1',
         },
@@ -591,7 +594,7 @@ def test_change_context_instance_causes_creation(
     )
     mocked_responses.add(
         method='POST',
-        url='https://localhost/public/v1/localization/translations',
+        url=f'{localization_base}/translations',
         json=mocked_translation_response,
     )
     client = get_client()
@@ -615,12 +618,12 @@ def test_change_context_ambiguity_fail(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts/LCX-9999-9999-9999',
+        url=f'{localization_base}/contexts/LCX-9999-9999-9999',
         json={
             'id': 'LCX-9999-9999-9999',
             'instance_id': 'PRD-999-999-999', 'name': 'another product',
@@ -653,12 +656,12 @@ def test_change_context_fail(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts/LCX-TRIGGER-ERROR',
+        url=f'{localization_base}/contexts/LCX-TRIGGER-ERROR',
         status=status,
     )
     client = get_client()
@@ -680,12 +683,12 @@ def test_change_context_instance_not_exists_fail(
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
+        url=f'{localization_base}/translations/TRN-8100-3865-4869',
         json=mocked_translation_response,
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-INEXISTENT)&limit=100&offset=0',
+        url=f'{localization_base}/contexts?eq(instance_id,PRD-INEXISTENT)&limit=1&offset=0',
         headers={
             'Content-Range': 'items 0-0/0',
         },

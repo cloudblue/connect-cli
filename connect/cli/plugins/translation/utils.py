@@ -17,10 +17,11 @@ def insert_column_ws(ws, column, width=None):
 
 
 def _get_column_widths(ws, total_columns):
-    return list(map(
-        lambda column: ws.column_dimensions[get_column_letter(column)].width,
-        range(1, total_columns + 1),
-    ))
+    return [
+        ws.column_dimensions[
+            get_column_letter(column)
+        ].width for column in range(1, total_columns + 1)
+    ]
 
 
 def _set_column_widths(ws, column_widths):
