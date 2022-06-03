@@ -308,7 +308,7 @@ def test_create_translation(
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=100&offset=0',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=1&offset=0',
         headers={
             'Content-Range': 'items 0-0/1',
         },
@@ -369,7 +369,7 @@ def test_create_translation_locale_not_autotranslation_error(
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=100&offset=0',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=1&offset=0',
         headers={
             'Content-Range': 'items 0-0/1',
         },
@@ -416,7 +416,7 @@ def test_create_translation_get_context_error(fs, get_sync_translations_env, moc
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=100&offset=0',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=1&offset=0',
         status=500,
     )
 
@@ -476,7 +476,7 @@ def test_several_actions_order_is_ok(fs, mocked_responses_ordered):
     )
     mocked_responses_ordered.add(
         method='GET',
-        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=100&offset=0',
+        url='https://localhost/public/v1/localization/contexts?eq(instance_id,PRD-276-377-545)&limit=1&offset=0',
         headers={
             'Content-Range': 'items 0-0/1',
         },
@@ -522,10 +522,9 @@ def test_locales_validation_still_present_after_update(fs, get_sync_translations
     synchronizer.save(f'{fs.root_path}/test.xlsx')
 
     wb = load_workbook(f'{fs.root_path}/test.xlsx')
-    assert any(map(
-        lambda data_validation: (
+    assert any(
+        (
             data_validation.formula1 == "'General Information'!$AB$2:$AB$98"
             and data_validation.sqref.ranges[0].coord == 'G2:G3'
-        ),
-        wb['Translations'].data_validations.dataValidation,
-    ))
+        ) for data_validation in wb['Translations'].data_validations.dataValidation
+    )
