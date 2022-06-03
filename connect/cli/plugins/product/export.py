@@ -26,9 +26,11 @@ from connect.cli.core.http import (
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.product.utils import (
+    fill_translation_row,
     get_col_headers_by_ws_type,
     get_col_limit_by_ws_type,
     get_json_object_for_param,
+    setup_locale_data_validation,
 )
 from connect.cli.plugins.shared.export import (
     _alter_attributes_sheet,
@@ -39,15 +41,13 @@ from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 def _setup_locales_list(ws, client):
     """
-    Fill list of locales to use with DataValidation. Return 'formula' string
-    to use.
+    Fill list of locales to use with DataValidation.
     """
     locales = client.ns('localization').locales.all()
     locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
     ws['AB1'].value = 'Locales'
     for idx, loc in enumerate(locales_list, 2):
         ws[f'AB{idx}'].value = loc
-    return f'{quote_sheetname("General Information")}!$AB$2:$AB${idx}'
 
 
 def _setup_cover_sheet(ws, product, location, client, media_path):
@@ -392,23 +392,6 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 13, value=events.get('updated', {}).get('at', '-'))
 
 
-def _fill_translation_row(ws, row_idx, translation):
-    ws.cell(row_idx, 1, value=translation['id'])
-    ws.cell(row_idx, 2, value='-')
-    ws.cell(row_idx, 3, value=translation['context']['instance_id'])
-    ws.cell(row_idx, 4, value=translation['context']['name'])
-    ws.cell(row_idx, 5, value=translation['owner']['id'])
-    ws.cell(row_idx, 6, value=translation['owner']['name'])
-    ws.cell(row_idx, 7, value=f"{translation['locale']['id']} ({translation['locale']['name']})")
-    ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
-    ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
-    ws.cell(row_idx, 10, value=_calculate_translation_completion(translation)).number_format = '0%'
-    ws.cell(row_idx, 11, value=translation['status'])
-    ws.cell(row_idx, 12, value='Yes' if translation['primary'] else 'No')
-    ws.cell(row_idx, 13, value=translation['events'].get('created', {}).get('at', '-'))
-    ws.cell(row_idx, 14, value=translation['events'].get('updated', {}).get('at', '-'))
-
-
 def _calculate_configuration_id(configuration):
     conf_id = configuration['parameter']['id']
     if 'item' in configuration and 'id' in configuration['item']:
@@ -421,16 +404,6 @@ def _calculate_configuration_id(configuration):
         conf_id = f'{conf_id}#'
 
     return conf_id
-
-
-def _calculate_translation_completion(translation):
-    stats = translation['stats']
-    try:
-        return (
-            stats.get('translated') / stats.get('total')
-        )
-    except TypeError:
-        return '-'
 
 
 def _dump_actions(ws, client, product_id, silent):
@@ -905,7 +878,7 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def _dump_translations(wb, client, product_id, silent, locales_dv_formula):
+def _dump_translations(wb, client, product_id, silent):
     ws = wb.create_sheet('Translations')
     _setup_ws_header(ws, 'translations')
     ws.column_dimensions['F'].width = 30
@@ -926,9 +899,9 @@ def _dump_translations(wb, client, product_id, silent, locales_dv_formula):
         formula1='"-,delete,update,create"',
         allow_blank=False,
     )
-    locales_validation = DataValidation(
+    no_action_validation = DataValidation(
         type='list',
-        formula1=locales_dv_formula,
+        formula1='"-"',
         allow_blank=False,
     )
     disabled_enabled = DataValidation(
@@ -937,7 +910,7 @@ def _dump_translations(wb, client, product_id, silent, locales_dv_formula):
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)
-    ws.add_data_validation(locales_validation)
+    ws.add_data_validation(no_action_validation)
     ws.add_data_validation(disabled_enabled)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
@@ -945,12 +918,15 @@ def _dump_translations(wb, client, product_id, silent, locales_dv_formula):
     for row_idx, translation in enumerate(translations, 2):
         progress.set_description(f'Processing translation {translation["id"]}')
         progress.update(1)
-        _fill_translation_row(ws, row_idx, translation)
-        action_validation.add(ws[f'B{row_idx}'])
-        locales_validation.add(ws[f'G{row_idx}'])
+        fill_translation_row(ws, row_idx, translation)
+        if translation['primary']:
+            no_action_validation.add(ws[f'B{row_idx}'])
+        else:
+            action_validation.add(ws[f'B{row_idx}'])
         disabled_enabled.add(ws[f'I{row_idx}'])
         _dump_translation_attr(wb, client, translation)
 
+    setup_locale_data_validation(wb['General Information'], ws)
     progress.close()
     print()
 
@@ -985,7 +961,7 @@ def dump_product(  # noqa: CCR001
         product = client.products[product_id].get()
         wb = Workbook()
 
-        locales_dv_formula = _setup_locales_list(wb.active, client)
+        _setup_locales_list(wb.active, client)
 
         connect_api_location = parse.urlparse(api_url)
         media_location = f'{connect_api_location.scheme}://{connect_api_location.netloc}'
@@ -1033,7 +1009,7 @@ def dump_product(  # noqa: CCR001
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
         if not exclude_translations:
-            _dump_translations(wb, client, product_id, silent, locales_dv_formula)
+            _dump_translations(wb, client, product_id, silent)
         wb.save(output_file)
 
     except ClientError as error:
