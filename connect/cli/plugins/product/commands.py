@@ -13,8 +13,7 @@ from connect.cli.core.config import pass_config
 from connect.cli.core.utils import continue_or_quit
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
-from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
-from connect.cli.plugins.shared.utils import wait_for_autotranslation
+from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
 from connect.cli.plugins.product.clone import ProductCloner
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (
@@ -27,9 +26,7 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
-    TranslationsSynchronizer,
 )
-from connect.cli.plugins.product.utils import get_translation_attributes_sheets
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
@@ -224,20 +221,6 @@ def cmd_sync_products(config, input_file, yes):
         stats.print()
 
 
-def sync_product_translations(client, config, input_file, stats):
-    try:
-        translations_autotranslating = translations_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
-
-    for sheetname in get_translation_attributes_sheets(input_file):
-        translation_id = sheetname.split()[1][1:-1]
-        if translation_id in translations_autotranslating:
-            wait_for_autotranslation(client, translation_id, silent=config.silent)
-        translation_attributes_sync(sheetname, translation_id, client, config, input_file, stats)
-
-
 @grp_product.command(
     name='clone',
     short_help='Create a clone of a product.',
@@ -324,9 +307,9 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
             fg='red',
         )
         exit(-1)
-    stats = SynchronizerStats()
+    stats = SynchronizerStats(operation='Clone')
     stats.RESULTS_HEADER = stats.RESULTS_HEADER.replace(
-        "synchronization", f"synchronizing {source_product_id}",
+        "synchronization", f"cloning {source_product_id}",
     )
     synchronizer = ProductCloner(
         config=config,
@@ -389,6 +372,7 @@ def actions_sync(client, config, input_file, stats):
     synchronizer = ActionsSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Actions')
     synchronizer.sync()
+    synchronizer.save(input_file)
 
 
 def templates_sync(client, config, input_file, stats):
@@ -427,21 +411,6 @@ def item_sync(client, config, input_file, stats):
     synchronizer = ItemSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Items')
     synchronizer.sync()
-    synchronizer.save(input_file)
-
-
-def translations_sync(client, config, input_file, stats):
-    synchronizer = TranslationsSynchronizer(client, config.silent, stats)
-    synchronizer.open(input_file, 'Translations')
-    synchronizer.sync()
-    synchronizer.save(input_file)
-    return synchronizer.translations_autotranslating
-
-
-def translation_attributes_sync(worksheet, translation_id, client, config, input_file, stats):
-    synchronizer = TranslationAttributesSynchronizer(client, config.silent, stats)
-    synchronizer.open(input_file, worksheet)
-    synchronizer.sync(translation_id)
     synchronizer.save(input_file)
 
 

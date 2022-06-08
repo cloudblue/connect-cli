@@ -11,11 +11,9 @@ from tqdm import trange
 from openpyxl.styles import Alignment
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
-from connect.cli.plugins.product.constants import (
-    PARAM_TYPES,
-    PARAMS_COLS_HEADERS,
-)
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.product.constants import PARAM_TYPES
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import PARAMS_COLS_HEADERS
 from connect.cli.plugins.product.utils import get_json_object_for_param, ParamSwitchNotSupported
 from connect.client import ClientError
 
@@ -87,11 +85,9 @@ class ParamsSynchronizer(ProductSynchronizer):
 
             if data.action == 'update':
                 try:
-                    original_param = self._client.products[self._product_id].parameters[
-                        data.verbose_id
-                    ].get()
-
-                    self._compare_param(original_param, data)
+                    original_param = self._get_original_param(data)
+                    if original_param:
+                        self._compare_param(original_param, data)
 
                     param = self._client.products[self._product_id].parameters[
                         data.verbose_id
@@ -105,6 +101,10 @@ class ParamsSynchronizer(ProductSynchronizer):
 
             if data.action == 'create':
                 try:
+                    original_param = self._get_original_param(data)
+                    if original_param:
+                        self._updated_or_skipped(ws, row_idx, original_param, param_payload)
+                        continue
                     param = self._client.products[self._product_id].parameters.create(
                         param_payload,
                     )
@@ -114,25 +114,26 @@ class ParamsSynchronizer(ProductSynchronizer):
                     self._mstats.error(str(e), row_idx)
 
     @staticmethod
-    def _update_sheet_row(ws, row_idx, param):
-        ws.cell(row_idx, 1, value=param['id']).alignment = Alignment(
-            horizontal='left',
-            vertical='top',
-        )
+    def _update_sheet_row(ws, row_idx, param=None):
         ws.cell(row_idx, 3, value='-')
-        ws.cell(row_idx, 12, value=get_json_object_for_param(param))
-        ws.cell(row_idx, 13, value=param['events']['created']['at']).alignment = Alignment(
-            horizontal='left',
-            vertical='top',
-        )
-        ws.cell(
-            row_idx,
-            14,
-            value=param['events'].get('updated', {}).get('at'),
-        ).alignment = Alignment(
-            horizontal='left',
-            vertical='top',
-        )
+        if param:
+            ws.cell(row_idx, 1, value=param['id']).alignment = Alignment(
+                horizontal='left',
+                vertical='top',
+            )
+            ws.cell(row_idx, 12, value=get_json_object_for_param(param))
+            ws.cell(row_idx, 13, value=param['events']['created']['at']).alignment = Alignment(
+                horizontal='left',
+                vertical='top',
+            )
+            ws.cell(
+                row_idx,
+                14,
+                value=param['events'].get('updated', {}).get('at'),
+            ).alignment = Alignment(
+                horizontal='left',
+                vertical='top',
+            )
 
     @staticmethod
     def _compare_param(original, data):
@@ -211,3 +212,30 @@ class ParamsSynchronizer(ProductSynchronizer):
                     'JSON properties must have json format',
                 )
         return errors
+
+    def _get_original_param(self, data):
+        filter_kwargs = {}
+        if data.verbose_id:
+            filter_kwargs['id'] = data.verbose_id
+        else:
+            filter_kwargs['name'] = data.id
+        return (
+            self._client.products[self._product_id].parameters
+            .filter(**filter_kwargs)
+            .first()
+        )
+
+    def _updated_or_skipped(self, ws, row_idx, original, payload):
+        original_filter = {k: v for k, v in original.items() if k in payload.keys()}
+
+        if original_filter == payload:
+            self._update_sheet_row(ws, row_idx)
+            self._mstats.skipped()
+        else:
+            param = self._client.products[self._product_id].parameters[
+                original["id"]
+            ].update(
+                payload,
+            )
+            self._update_sheet_row(ws, row_idx, param)
+            self._mstats.updated()

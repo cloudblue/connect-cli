@@ -433,8 +433,8 @@ def test_validate_update_invalid_switch(
 
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
-        json=mocked_ordering_params_response[0],
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
@@ -475,8 +475,8 @@ def test_validate_update_invalid_switch_phase(
 
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
-        json=mocked_ordering_params_response[0],
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
@@ -515,8 +515,8 @@ def test_validate_update_invalid_switch_scope(
 
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
-        json=mocked_ordering_params_response[0],
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
@@ -554,8 +554,8 @@ def test_validate_update(
 
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
-        json=response,
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response,
     )
 
     mocked_responses.add(
@@ -595,6 +595,11 @@ def test_validate_create(
         silent=True,
         stats=stats,
     )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=[],
+    )
 
     mocked_responses.add(
         method='POST',
@@ -605,6 +610,7 @@ def test_validate_create(
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
     synchronizer.sync()
 
+    print(stats.__dict__)
     assert stats['Ordering Parameters'].get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
         'deleted': 0, 'skipped': 0, 'errors': 0,
@@ -630,6 +636,11 @@ def test_validate_create_connect_error(
         ),
         silent=True,
         stats=stats,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=[],
     )
 
     mocked_responses.add(
@@ -671,6 +682,11 @@ def test_validate_create_no_constrains(
         silent=True,
         stats=stats,
     )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=[],
+    )
 
     mocked_responses.add(
         method='POST',
@@ -683,5 +699,81 @@ def test_validate_create_no_constrains(
 
     assert stats['Ordering Parameters'].get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }
+
+
+def test_validate_skip_create_if_already_exists(
+    fs,
+    get_sync_params_env,
+    mocked_responses,
+    mocked_ordering_params_response,
+):
+    get_sync_params_env['Ordering Parameters']['C2'] = 'create'
+
+    get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
+
+    stats = SynchronizerStats()
+    synchronizer = ParamsSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+        stats=stats,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response,
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
+
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
+
+
+def test_validate_skip_create_but_update_if_differs_from_source(
+    fs,
+    get_sync_params_env,
+    mocked_responses,
+    mocked_ordering_params_response,
+):
+    get_sync_params_env['Ordering Parameters']['C2'] = 'create'
+    get_sync_params_env['Ordering Parameters']['D2'] = 'Change on title test'
+
+    get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
+
+    stats = SynchronizerStats()
+    synchronizer = ParamsSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+        stats=stats,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters',
+        json=mocked_ordering_params_response[:1],
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
+        json=mocked_ordering_params_response[0],
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
+    synchronizer.sync()
+
+    assert stats['Ordering Parameters'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
         'deleted': 0, 'skipped': 0, 'errors': 0,
     }

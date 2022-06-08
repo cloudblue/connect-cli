@@ -293,6 +293,7 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
 def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
+    get_sync_actions_env['Actions']['B2'] = 'test_id'
 
     response = mocked_actions_response[0]
 
@@ -309,6 +310,14 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
         stats=stats,
     )
 
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions',
+        headers={
+            'Content-Range': 'items 0-3/4',
+        },
+        json=mocked_actions_response,
+    )
     mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/products/PRD-276-377-545/actions',
@@ -327,6 +336,7 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
 def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
+    get_sync_actions_env['Actions']['B2'] = 'test_id'
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -342,6 +352,14 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
     )
 
     mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions',
+        headers={
+            'Content-Range': 'items 0-3/4',
+        },
+        json=mocked_actions_response,
+    )
+    mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/products/PRD-276-377-545/actions',
         status=500,
@@ -355,3 +373,83 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
         'deleted': 0, 'skipped': 0, 'errors': 1,
     }
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
+
+
+def test_create_skip_if_action_id_already_exists(
+    fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+):
+    get_sync_actions_env['Actions']['A2'] = None
+    get_sync_actions_env['Actions']['C2'] = 'create'
+
+    get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
+
+    stats = SynchronizerStats()
+    synchronizer = ActionsSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+        stats=stats,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions',
+        headers={
+            'Content-Range': 'items 0-3/4',
+        },
+        json=mocked_actions_response,
+    )
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
+
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 0,
+        'deleted': 0, 'skipped': 1, 'errors': 0,
+    }
+
+
+def test_skip_create_if_action_id_exists_but_update_if_differs_from_source(
+    fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+):
+    get_sync_actions_env['Actions']['A2'] = None
+    get_sync_actions_env['Actions']['C2'] = 'create'
+    get_sync_actions_env['Actions']['F2'] = 'New Test Description'
+
+    get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
+
+    response = mocked_actions_response[0]
+
+    stats = SynchronizerStats()
+    synchronizer = ActionsSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        silent=True,
+        stats=stats,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions',
+        headers={
+            'Content-Range': 'items 0-3/4',
+        },
+        json=mocked_actions_response,
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/products/PRD-276-377-545/actions/ACT-276-377-545-001',
+        json=response,
+    )
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Actions')
+    synchronizer.sync()
+
+    assert stats['Actions'].get_counts_as_dict() == {
+        'processed': 1, 'created': 0, 'updated': 1,
+        'deleted': 0, 'skipped': 0, 'errors': 0,
+    }

@@ -4,10 +4,8 @@ from collections import namedtuple
 
 from tqdm import trange
 
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
-from connect.cli.plugins.product.constants import (
-    CONFIGURATION_HEADERS,
-)
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import CONFIGURATION_HEADERS
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 
 

@@ -15,15 +15,18 @@ from connect.cli.plugins.product.sync import (
     TemplatesSynchronizer,
 )
 from connect.client import ClientError, ConnectClient, RequestLogger
+from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
+from connect.cli.plugins.shared.utils import get_translation_attributes_sheets
 
 
 class ProductCloner:
-    def __init__(self, config, source_account, destination_account, product_id):
+    def __init__(self, config, source_account, destination_account, product_id, stats):
         self.fs = TempFS(identifier=f'_clone_{product_id}')
         self.config = config
         self.source_account = (source_account if source_account else config.active.id)
         self.destination_account = (destination_account if destination_account else config.active.id)
         self.product_id = product_id
+        self.stats = stats
         self.destination_product = None
         self.wb = None
 
@@ -60,6 +63,7 @@ class ProductCloner:
             synchronizer = ItemSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
             product_id = synchronizer.open(input_file, 'Items')
             items = client.products[product_id].items.all()
@@ -70,6 +74,7 @@ class ProductCloner:
             synchronizer = CapabilitiesSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
             synchronizer.open(input_file, 'Capabilities')
             synchronizer.sync()
@@ -82,6 +87,7 @@ class ProductCloner:
             synchronizer = TemplatesSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
 
             synchronizer.open(input_file, 'Templates')
@@ -98,6 +104,7 @@ class ProductCloner:
             synchronizer = ParamsSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
 
             synchronizer.open(input_file, "Ordering Parameters")
@@ -113,6 +120,7 @@ class ProductCloner:
             synchronizer = ActionsSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
 
             synchronizer.open(input_file, 'Actions')
@@ -122,10 +130,21 @@ class ProductCloner:
             synchronizer = MediaSynchronizer(
                 client,
                 self.config.silent,
+                self.stats,
             )
 
             synchronizer.open(input_file, 'Media')
             synchronizer.sync()
+            clickecho('\n')
+
+            sync_product_translations(
+                client,
+                self.config,
+                input_file,
+                self.stats,
+                save=False,
+                is_clone=True,
+            )
             clickecho('\n')
 
             self.config.activate(self.source_account)
@@ -218,6 +237,18 @@ class ProductCloner:
         for row in range(2, ws.max_row + 1):
             ws[f'A{row}'].value = ''
             ws[f'C{row}'].value = 'create'
+
+        ws = self.wb['Translations']
+        for row in range(2, ws.max_row + 1):
+            ws[f'A{row}'].value = ''
+            ws[f'B{row}'].value = 'create'
+        for sheetname in get_translation_attributes_sheets(self.wb):
+            ws = self.wb[sheetname]
+            value = 'update'
+            if sheetname.split()[0] == self.wb['General Information']['B14'].value[0:2]:
+                value = '-'
+            for row in range(2, ws.max_row + 1):
+                ws[f'C{row}'].value = value
         self.wb.save(f'{self.fs.root_path}/{self.product_id}/{self.product_id}.xlsx')
 
     @staticmethod

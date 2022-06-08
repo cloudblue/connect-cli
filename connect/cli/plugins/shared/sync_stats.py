@@ -35,8 +35,9 @@ class SynchronizerStats(dict):
 |:--------|--------:| --------:|--------:|----------:|----------:|----------:|
 """
 
-    def __init__(self, *args):
+    def __init__(self, *args, operation='Sync'):
         self._initial_modules = args
+        self.operation = operation
         self.reset()
 
     def __str__(self):
@@ -76,9 +77,8 @@ class SynchronizerStats(dict):
         )
         if total_error_count == 0:
             return
-
         click.secho(
-            f'\nSync operation had {total_error_count} errors, do you want to see them?',
+            f'\n{self.operation} operation had {total_error_count} errors, do you want to see them?',
             fg='yellow',
         )
         if not continue_or_quit():
