@@ -26,12 +26,3 @@ GENERAL_SHEET_FIELDS = {
     'description': FieldSettings(8, 'Description'),
     'auto_enabled': FieldSettings(9, 'Auto-translation'),
 }
-
-ATTRIBUTES_SHEET_COLUMNS = [
-    'key',
-    'original value',
-    'action',
-    'value',
-    'comment',
-    'editor',
-]

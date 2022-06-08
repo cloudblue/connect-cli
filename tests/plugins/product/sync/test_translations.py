@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 import responses
 from openpyxl import load_workbook
@@ -256,7 +258,9 @@ def test_delete_translation_fails(fs, get_sync_translations_env, mocked_response
     }
 
 
-def test_update_translation(fs, get_sync_translations_env, mocked_responses):
+def test_update_translation(
+    fs, get_sync_translations_env, mocked_new_translation_response, mocked_responses,
+):
     get_sync_translations_env['Translations']['B3'] = 'update'
     get_sync_translations_env['Translations']['H3'] = 'la nueva descripción'
     get_sync_translations_env['Translations']['I3'] = 'Disabled'
@@ -272,10 +276,13 @@ def test_update_translation(fs, get_sync_translations_env, mocked_responses):
         silent=True,
         stats=stats,
     )
+    response = deepcopy(mocked_new_translation_response)
+    response['id'] = 'TRN-1079-0833-9891'
     mocked_responses.add(
         method='PUT',
         url='https://localhost/public/v1/localization/translations/TRN-1079-0833-9891',
         status=200,
+        json=response,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Translations')
@@ -430,7 +437,7 @@ def test_create_translation_get_context_error(fs, get_sync_translations_env, moc
     assert stats['Translations']._errors == ['500 Internal Server Error']
 
 
-def test_several_actions_order_is_ok(fs, mocked_responses_ordered):
+def test_several_actions_order_is_ok(fs, mocked_new_translation_response, mocked_responses_ordered):
     wb = load_workbook('./tests/fixtures/translations_sync.xlsx')
     wb['Translations']['B2'] = 'update'
     wb['Translations']['H2'] = 'new description'
@@ -469,10 +476,13 @@ def test_several_actions_order_is_ok(fs, mocked_responses_ordered):
         url='https://localhost/public/v1/localization/translations/TRN-1079-0833-9897',
         status=204,
     )
+    response = deepcopy(mocked_new_translation_response)
+    response['id'] = 'TRN-1079-0833-9890'
     mocked_responses_ordered.add(
         method='PUT',
         url='https://localhost/public/v1/localization/translations/TRN-1079-0833-9890',
         status=200,
+        json=mocked_new_translation_response,
     )
     mocked_responses_ordered.add(
         method='GET',
@@ -489,13 +499,12 @@ def test_several_actions_order_is_ok(fs, mocked_responses_ordered):
         method='POST',
         url='https://localhost/public/v1/localization/translations',
         status=201,
+        json=mocked_new_translation_response,
     )
 
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Translations')
     synchronizer.sync()
 
-    print(stats['Translations']._row_errors)
-    print(stats['Translations']._errors)
     assert stats['Translations'].get_counts_as_dict() == {
         'processed': 4, 'created': 1, 'updated': 1,
         'deleted': 2, 'skipped': 0, 'errors': 0,
