@@ -1,9 +1,11 @@
-from collections import namedtuple
-from time import sleep
+# -*- coding: utf-8 -*-
+
+# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
+
 from types import SimpleNamespace
 
 import click
-from tqdm import tqdm, trange
 
 from connect.client import ClientError
 
@@ -12,13 +14,10 @@ from zipfile import BadZipFile
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.core.http import handle_http_error
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
-from connect.cli.plugins.translation.constants import (
-    ATTRIBUTES_SHEET_COLUMNS, GENERAL_SHEET_FIELDS,
-)
+from connect.cli.plugins.translation.constants import GENERAL_SHEET_FIELDS
 
 
 class TranslationSynchronizer:
@@ -26,28 +25,30 @@ class TranslationSynchronizer:
     Synchronize a translation from excel file. It may update an existing
     translation or create a new one depending on some checks.
     """
-    DEFAULT_WAIT_SECONDS = 1
-
-    def __init__(self, client, silent, account_id):
+    def __init__(self, client, silent, account_id, stats=None):
         self._client = client
         self._silent = silent
         self._wb = None
         self.account_id = account_id
-        self.stats = SynchronizerStats()
+        if stats is None:
+            stats = SynchronizerStats()
+        self._mstats = stats['Translation']
 
     def open(self, input_file):
         self._open_workbook(input_file)
-        if not {'General', 'Attributes'}.issubset(self._wb.sheetnames):
-            raise SheetNotFoundError(
-                "File must contain worksheets 'General' and 'Attributes' to synchronize, skipping",
-            )
+        if 'General' not in self._wb.sheetnames:
+            raise SheetNotFoundError("File does not contain worksheet 'General' to synchronize, skipping")
         self._validate_general_worksheet(self._wb['General'])
-        self._validate_attributes_worksheet(self._wb['Attributes'])
 
     def save(self, output_file):
         self._wb.save(output_file)
 
     def sync(self, yes):
+        """
+        Updates or creates the translation. Return the Translation ID and a boolean indicating
+        if should wait for autotranslation to finish.
+        If the operation is not successful then returns (None, False).
+        """
         ws = self._wb['General']
         general_data = self._read_general_data(ws)
         current_translation = self._get_translation(general_data.translation_id)
@@ -66,16 +67,11 @@ class TranslationSynchronizer:
         else:
             translation_id = self._update_translation(general_data)
 
-        if not translation_id:
-            return
-
-        if general_data.auto_enabled == 'Enabled' and (
-            do_create or not current_translation['auto']['enabled']
-        ):
-            self._wait_for_autotranslation(translation_id)
-        attributes = self._collect_attributes_to_update(self._wb['Attributes'])
-        if attributes:
-            self._update_attributes(translation_id, attributes, self._wb['Attributes'])
+        should_wait_for_autotranslation = (
+            translation_id and general_data.auto_enabled == 'Enabled'
+            and (do_create or not current_translation['auto']['enabled'])
+        )
+        return translation_id, should_wait_for_autotranslation
 
     def _open_workbook(self, input_file):
         try:
@@ -94,22 +90,11 @@ class TranslationSynchronizer:
                     f"{cell.coordinate} must be '{settings.title}', but it is '{cell.value}'",
                 )
 
-    @staticmethod
-    def _validate_attributes_worksheet(ws):
-        for col_idx, header in enumerate(ATTRIBUTES_SHEET_COLUMNS, 1):
-            if header == 'original value':
-                continue
-            cell = ws.cell(1, col_idx)
-            if cell.value != header:
-                raise click.ClickException(
-                    f"Column '{cell.coordinate}' must be '{header}', but it is '{cell.value}'",
-                )
-
-    def _get_translation(self, translation_id, raise_404=False):
+    def _get_translation(self, translation_id):
         try:
             return self._client.ns('localization').translations[translation_id].get()
         except ClientError as error:
-            if error.status_code == 404 and not raise_404:
+            if error.status_code == 404:
                 return None
             handle_http_error(error)
 
@@ -153,10 +138,10 @@ class TranslationSynchronizer:
                     'enabled': general_data.auto_enabled == 'Enabled',
                 },
             })
-            self.stats['Translation'].created()
+            self._mstats.created()
             return translation
         except ClientError as e:
-            self.stats['Translation'].error(
+            self._mstats.error(
                 f'Error while creating translation: {str(e)}',
             )
 
@@ -227,73 +212,12 @@ class TranslationSynchronizer:
                     'enabled': general_data.auto_enabled == 'Enabled',
                 },
             })
-            self.stats['Translation'].updated()
+            self._mstats.updated()
             return translation['id']
         except ClientError as e:
-            self.stats['Translation'].error(
+            self._mstats.error(
                 f'Error while updating translation information: {str(e)}',
             )
-
-    def _wait_for_autotranslation(self, translation_id, wait_seconds=None, max_counts=5):
-        progress = trange(0, max_counts, disable=self._silent, leave=False, bar_format=DEFAULT_BAR_FORMAT)
-        for _ in progress:
-            progress.set_description('Waiting for pending translation tasks')
-            sleep(wait_seconds or self.DEFAULT_WAIT_SECONDS)
-            translation = self._get_translation(translation_id, raise_404=True)
-            status = translation['auto']['status']
-            if status == 'processing':
-                pass
-            elif status in ('on', 'off'):
-                break
-            elif status == 'error':
-                translation['auto']['error_message']
-                raise click.ClickException(
-                    'The auto-translation task failed with error: '
-                    + translation['auto']['error_message'],
-                )
-            else:
-                raise click.ClickException(f'Unknown auto-translation status: {status}')
-        else:
-            raise click.ClickException('Timeout waiting for pending translation tasks')
-
-    def _collect_attributes_to_update(self, ws):
-        AttributeRow = namedtuple(
-            'AttributeRow',
-            (header.replace(' ', '_').lower() for header in ATTRIBUTES_SHEET_COLUMNS),
-        )
-
-        progress = tqdm(
-            enumerate(ws.iter_rows(min_row=2, values_only=True), 2),
-            total=ws.max_row - 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-
-        attributes = {}
-        for row_idx, row in progress:
-            row = AttributeRow(*row)
-            progress.set_description(f'Process attribute {row.key}')
-            if row.action == 'update':
-                attributes[row_idx] = {'key': row.key, 'value': row.value, 'comment': row.comment}
-            else:
-                self.stats['Attributes'].skipped()
-
-        return attributes
-
-    def _update_attributes(self, translation_id, attributes, ws):
-        try:
-            translation_res = self._client.ns('localization').translations[translation_id]
-            translation_res.attributes.bulk_update(list(attributes.values()))
-            self.stats['Attributes'].updated(len(attributes))
-            for row_idx in attributes.keys():
-                self._update_attributes_sheet_row(ws, row_idx)
-        except ClientError as e:
-            self.stats['Attributes'].error(
-                f'Error while updating attributes: {str(e)}',
-                range(1, len(attributes) + 1),
-            )
-
-    @staticmethod
-    def _update_attributes_sheet_row(ws, row_idx):
-        ws.cell(row_idx, 3, value='-')
 
     @staticmethod
     def _read_general_data(ws):

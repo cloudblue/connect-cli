@@ -1,6 +1,8 @@
+import re
 import json
 from copy import deepcopy
 
+from openpyxl import load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -172,6 +174,16 @@ def setup_locale_data_validation(general_ws, translations_ws):
     )
     translations_ws.add_data_validation(locales_validation)
     locales_validation.add(f'G2:G{translations_ws.max_row}')
+
+
+def get_translation_attributes_sheets(wb_filename):
+    """
+    return the list of worksheet names corresponding to translation attributes sheets in the given
+    workbook file.
+    """
+    pattern = r'^[\w-]{2,} \(TRN-\d{4}-\d{4}-\d{4}\)$'
+    wb = load_workbook(wb_filename)
+    return [sheetname for sheetname in wb.sheetnames if re.match(pattern, sheetname)]
 
 
 class ParamSwitchNotSupported(Exception):

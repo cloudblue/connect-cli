@@ -23,6 +23,15 @@ class TranslationsSynchronizer(ProductSynchronizer):
     def __init__(self, client, silent, stats):
         super().__init__(client, silent)
         self._mstats = stats['Translations']
+        self._translations_autotranslating = []
+
+    @property
+    def translations_autotranslating(self):
+        """
+        After a call to sync(), this is a list of translation IDs that potentially could have an
+        auto-translation task running.
+        """
+        return self._translations_autotranslating
 
     def sync(self):
         rows_data = defaultdict(dict)
@@ -81,6 +90,7 @@ class TranslationsSynchronizer(ProductSynchronizer):
         return errors
 
     def _process_rows_data(self, rows_data):
+        self._translations_autotranslating = []
         # for a consistent sync first delete translations, then update and create
         for row_idx, data in rows_data['delete'].items():
             self._handle_action(self._action_delete, row_idx, data)
@@ -126,6 +136,8 @@ class TranslationsSynchronizer(ProductSynchronizer):
         }
         translation = self._client.ns('localization').translations[data.translation_id].update(payload)
         self._mstats.updated()
+        if translation['auto']['enabled']:
+            self._translations_autotranslating.append(translation['id'])
         return translation
 
     def _action_create(self, context_id, data):
@@ -140,4 +152,6 @@ class TranslationsSynchronizer(ProductSynchronizer):
         }
         translation = self._client.ns('localization').translations.create(payload)
         self._mstats.created()
+        if translation['auto']['enabled']:
+            self._translations_autotranslating.append(translation['id'])
         return translation
