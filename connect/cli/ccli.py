@@ -10,6 +10,7 @@ from connect.cli.core.plugins import load_plugins
 
 
 def main():
+    _ignore_openpyxl_warnings()
     print('')
     try:
         load_plugins(cli)
@@ -25,6 +26,17 @@ def main():
         pass
     finally:
         print('')
+
+
+def _ignore_openpyxl_warnings():
+    """
+    Ignore warning about DataValidation extension not supported. This is shown when a xlsx file
+    with unsupported data validation is opened (tipically after saving the file from Excel, which
+    uses some custom extension).
+    To avoid losing data validation, it should be re-created each time the file is saved by the cli.
+    """
+    import warnings
+    warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl.worksheet._reader')
 
 
 if __name__ == '__main__':
