@@ -1,5 +1,6 @@
 from connect.cli.plugins.product.utils import (
     get_col_limit_by_ws_type,
+    get_translation_attributes_sheets,
     get_ws_type_by_worksheet_name,
 )
 
@@ -23,3 +24,9 @@ def test_get_ws_type_by_worksheet():
     assert 'actions' == get_ws_type_by_worksheet_name('Actions')
     assert 'translations' == get_ws_type_by_worksheet_name('Translations')
     assert get_ws_type_by_worksheet_name('CUSTOM') is None
+
+
+def test_get_translation_attributes_sheets():
+    sheetnames = get_translation_attributes_sheets('./tests/fixtures/translations_sync.xlsx')
+
+    assert sheetnames == ['FA (TRN-1079-0833-9890)', 'ES (TRN-1079-0833-9891)']
