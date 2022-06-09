@@ -119,15 +119,8 @@ def cmd_list_products(config, query, page_size, always_continue):
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Directory where to store the export.',
 )
-@click.option(
-    '--exclude-translations',
-    '-e',
-    'exclude_translations',
-    is_flag=True,
-    help='Excludes translations and their attributes from being exported.',
-)
 @pass_config
-def cmd_dump_products(config, product_id, output_file, output_path, exclude_translations):
+def cmd_dump_products(config, product_id, output_file, output_path):
     acc_id = config.active.id
     acc_name = config.active.name
     if not config.silent:
@@ -143,7 +136,6 @@ def cmd_dump_products(config, product_id, output_file, output_path, exclude_tran
         config.silent,
         config.verbose,
         output_path,
-        exclude_translations,
     )
     if not config.silent:
         click.secho(
@@ -164,15 +156,8 @@ def cmd_dump_products(config, product_id, output_file, output_path, exclude_tran
     is_flag=True,
     help='Answer yes to all questions.',
 )
-@click.option(
-    '--exclude-translations',
-    '-e',
-    'exclude_translations',
-    is_flag=True,
-    help='Excludes translations and their attributes from being synchronized.',
-)
 @pass_config
-def cmd_sync_products(config, input_file, yes, exclude_translations):
+def cmd_sync_products(config, input_file, yes):
     acc_id = config.active.id
     acc_name = config.active.name
 
@@ -233,8 +218,7 @@ def cmd_sync_products(config, input_file, yes, exclude_translations):
             if not config.silent:
                 click.secho(str(e), fg='blue')
 
-    if not exclude_translations:
-        sync_product_translations(client, config, input_file, stats)
+    sync_product_translations(client, config, input_file, stats)
 
     if not config.silent:
         stats.print()
