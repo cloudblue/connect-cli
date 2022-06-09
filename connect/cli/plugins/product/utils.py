@@ -152,9 +152,10 @@ def _calculate_translation_completion(translation):
 def setup_locale_data_validation(general_ws, translations_ws):
     """
     Setup DataValidation on locale column.
-    Some strange behavior makes it necessary to setup DataValidation every time the worksheet is
-    saved to ensure that it is not removed (probably because the locales list is in a formula
-    referencing a different sheet).
+    It is necessary to setup DataValidation every time the worksheet is saved to ensure that it is
+    not removed.
+    This is related to the openpyxl warning: DataValidation extension not supported and will be
+    removed.
     """
     row_idx = 2
     while general_ws[f'AB{row_idx + 1}'].value:
