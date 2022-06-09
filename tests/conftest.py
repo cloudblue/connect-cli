@@ -4,6 +4,7 @@ from shutil import copy2
 
 import pytest
 import responses
+from responses.registries import OrderedRegistry
 import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
@@ -59,6 +60,12 @@ def config_mocker(mocker):
 @pytest.fixture(scope='function')
 def mocked_responses():
     with responses.RequestsMock() as rsps:
+        yield rsps
+
+
+@pytest.fixture(scope='function')
+def mocked_responses_ordered():
+    with responses.RequestsMock(registry=OrderedRegistry) as rsps:
         yield rsps
 
 
@@ -131,6 +138,12 @@ def mocked_locales_response():
 @pytest.fixture(scope='function')
 def mocked_primary_translation_response():
     with open('./tests/fixtures/primary_translation_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def mocked_new_translation_response():
+    with open('./tests/fixtures/new_translation_response.json') as response:
         return json.load(response)
 
 
@@ -268,6 +281,18 @@ def get_sync_capabilities_env_ppu_enabled(fs, mocked_responses):
         )
 
         return load_workbook('./tests/fixtures/capabilities_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
+def get_sync_translations_env(fs, mocked_responses):
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response),
+        )
+
+        return load_workbook('./tests/fixtures/translations_sync.xlsx')
 
 
 @pytest.fixture(scope='function')

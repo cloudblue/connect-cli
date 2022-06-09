@@ -7,3 +7,4 @@ from connect.cli.plugins.product.sync.media import MediaSynchronizer  # noqa: F4
 from connect.cli.plugins.product.sync.params import ParamsSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.static_resources import StaticResourcesSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer  # noqa: F401
+from connect.cli.plugins.product.sync.translations import TranslationsSynchronizer  # noqa: F401

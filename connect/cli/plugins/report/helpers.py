@@ -118,6 +118,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         max_retries=5,
         default_headers=get_user_agent(),
         logger=RequestLogger() if config.verbose else None,
+        resourceset_append=False,
     )
 
     output_format = output_format or report.default_renderer

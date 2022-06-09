@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
 import os
+import copy
 import json
 from datetime import datetime
 from urllib import parse
@@ -11,7 +12,6 @@ from urllib import parse
 import requests
 from click import ClickException
 from openpyxl import Workbook
-from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.utils import quote_sheetname
@@ -26,11 +26,28 @@ from connect.cli.core.http import (
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.product.utils import (
+    fill_translation_row,
     get_col_headers_by_ws_type,
     get_col_limit_by_ws_type,
     get_json_object_for_param,
+    setup_locale_data_validation,
+)
+from connect.cli.plugins.shared.export import (
+    _alter_attributes_sheet,
+    _get_translation_workbook,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
+
+
+def _setup_locales_list(ws, client):
+    """
+    Fill list of locales to use with DataValidation.
+    """
+    locales = client.ns('localization').locales.all()
+    locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
+    ws['AB1'].value = 'Locales'
+    for idx, loc in enumerate(locales_list, 2):
+        ws[f'AB{idx}'].value = loc
 
 
 def _setup_cover_sheet(ws, product, location, client, media_path):
@@ -95,10 +112,6 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
         wrap_text=True,
     )
     ws['A14'].value = 'Primary Translation Locale'
-    ws['A14'].comment = Comment(
-        "This attribute will not be updated on product sync",
-        "ccli product dump",
-    )
     primary_translation = (
         client.ns('localization').translations
         .filter(context__instance_id=product['id'], primary=True).first()
@@ -124,19 +137,6 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     ws.add_data_validation(categories_validation)
     categories_validation.add('B8')
 
-    locales = client.ns('localization').locales.all()
-    locales_list = [f"{locale['id']} ({locale['name']})" for locale in locales]
-    ws['AB1'].value = 'Locales'
-    for idx, loc in enumerate(locales_list, 2):
-        ws[f'AB{idx}'].value = loc
-    locales_validation = DataValidation(
-        type='list',
-        formula1=f'{quote_sheetname("General Information")}!$AB$2:$AB${idx}',
-        allow_blank=False,
-    )
-    ws.add_data_validation(locales_validation)
-    locales_validation.add('B14')
-
 
 def _dump_image(image_location, image_name, media_path):
     image = requests.get(image_location)
@@ -157,6 +157,8 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
         cell=get_col_limit_by_ws_type(ws_type),
     )]
     col_headers = get_col_headers_by_ws_type(ws_type)
+    if ws_type == '_attributes':
+        col_headers = {c.column_letter: c.value for c in next(ws.iter_rows(min_row=1, max_row=1))}
     for cel in cels[0]:
         ws.column_dimensions[cel.column_letter].width = 25
         ws.column_dimensions[cel.column_letter].auto_size = True
@@ -173,6 +175,9 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
                 ws.column_dimensions[cel.column_letter].width = 100
             if cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
+        elif ws_type == '_attributes':
+            if cel.column_letter in ['A', 'B', 'D']:
+                ws.column_dimensions[cel.column_letter].width = 100
 
 
 def _calculate_commitment(item):
@@ -387,22 +392,6 @@ def _fill_item_row(ws, row_idx, item):
     ws.cell(row_idx, 13, value=events.get('updated', {}).get('at', '-'))
 
 
-def _fill_translation_row(ws, row_idx, translation):
-    ws.cell(row_idx, 1, value=translation['id'])
-    ws.cell(row_idx, 2, value='-')
-    ws.cell(row_idx, 3, value=translation['context']['instance_id'])
-    ws.cell(row_idx, 4, value=translation['context']['name'])
-    ws.cell(row_idx, 5, value=translation['owner']['id'])
-    ws.cell(row_idx, 6, value=translation['owner']['name'])
-    ws.cell(row_idx, 7, value=translation['locale']['name'])
-    ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
-    ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
-    ws.cell(row_idx, 10, value=_calculate_translation_completion(translation)).number_format = '0%'
-    ws.cell(row_idx, 11, value=translation['status'])
-    ws.cell(row_idx, 12, value=translation['events'].get('created', {}).get('at', '-'))
-    ws.cell(row_idx, 13, value=translation['events'].get('updated', {}).get('at', '-'))
-
-
 def _calculate_configuration_id(configuration):
     conf_id = configuration['parameter']['id']
     if 'item' in configuration and 'id' in configuration['item']:
@@ -415,16 +404,6 @@ def _calculate_configuration_id(configuration):
         conf_id = f'{conf_id}#'
 
     return conf_id
-
-
-def _calculate_translation_completion(translation):
-    stats = translation['stats']
-    try:
-        return (
-            stats.get('translated') / stats.get('total')
-        )
-    except TypeError:
-        return '-'
 
 
 def _dump_actions(ws, client, product_id, silent):
@@ -899,7 +878,8 @@ def _dump_items(ws, client, product_id, silent):
     print()
 
 
-def _dump_translations(ws, client, product_id, silent):
+def _dump_translations(wb, client, product_id, silent):
+    ws = wb.create_sheet('Translations')
     _setup_ws_header(ws, 'translations')
     ws.column_dimensions['F'].width = 30
     ws.column_dimensions['J'].width = 15
@@ -919,12 +899,18 @@ def _dump_translations(ws, client, product_id, silent):
         formula1='"-,delete,update,create"',
         allow_blank=False,
     )
+    no_action_validation = DataValidation(
+        type='list',
+        formula1='"-"',
+        allow_blank=False,
+    )
     disabled_enabled = DataValidation(
         type='list',
         formula1='"Disabled,Enabled"',
         allow_blank=False,
     )
     ws.add_data_validation(action_validation)
+    ws.add_data_validation(no_action_validation)
     ws.add_data_validation(disabled_enabled)
 
     progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
@@ -932,15 +918,33 @@ def _dump_translations(ws, client, product_id, silent):
     for row_idx, translation in enumerate(translations, 2):
         progress.set_description(f'Processing translation {translation["id"]}')
         progress.update(1)
-        _fill_translation_row(ws, row_idx, translation)
-        action_validation.add(ws[f'B{row_idx}'])
+        fill_translation_row(ws, row_idx, translation)
+        if translation['primary']:
+            no_action_validation.add(ws[f'B{row_idx}'])
+        else:
+            action_validation.add(ws[f'B{row_idx}'])
         disabled_enabled.add(ws[f'I{row_idx}'])
+        _dump_translation_attr(wb, client, translation)
 
+    setup_locale_data_validation(wb['General Information'], ws)
     progress.close()
     print()
 
 
-def dump_product(api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
+def _dump_translation_attr(wb, client, translation):
+    external_wb = _get_translation_workbook(client.endpoint, client.api_key, translation['id'])
+    attr_ws = wb.create_sheet(f'{translation["locale"]["id"]} ({translation["id"]})')
+    for row in external_wb['Attributes']:
+        for cell in row:
+            attr_ws[cell.coordinate].value = cell.value
+            attr_ws[cell.coordinate].alignment = copy.copy(cell.alignment)
+    _alter_attributes_sheet(attr_ws)
+    _setup_ws_header(attr_ws, '_attributes')
+
+
+def dump_product(  # noqa: CCR001
+    api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None,
+):
     output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
     media_path = os.path.join(os.path.dirname(output_file), 'media')
     if not os.path.exists(media_path):
@@ -955,6 +959,9 @@ def dump_product(api_url, api_key, product_id, output_file, silent, verbose=Fals
         )
         product = client.products[product_id].get()
         wb = Workbook()
+
+        _setup_locales_list(wb.active, client)
+
         connect_api_location = parse.urlparse(api_url)
         media_location = f'{connect_api_location.scheme}://{connect_api_location.netloc}'
         _setup_cover_sheet(
@@ -1000,7 +1007,7 @@ def dump_product(api_url, api_key, product_id, output_file, silent, verbose=Fals
         )
         _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
-        _dump_translations(wb.create_sheet('Translations'), client, product_id, silent)
+        _dump_translations(wb, client, product_id, silent)
         wb.save(output_file)
 
     except ClientError as error:

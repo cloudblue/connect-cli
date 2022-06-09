@@ -141,7 +141,7 @@ def test_get_item_by_mpn(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=100&offset=0',
+            'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
         status=200,
     )
@@ -166,7 +166,7 @@ def test_get_item_by_mpn_500(
 ):
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,MPN-R-001)&limit=100&offset=0',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,MPN-R-001)&limit=1&offset=0',
         status=500,
     )
 
@@ -191,7 +191,7 @@ def test_get_item_by_mpn_404(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=100&offset=0',
+            'MPN-R-001)&limit=1&offset=0',
         json=[],
         status=404,
     )

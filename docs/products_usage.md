@@ -42,7 +42,7 @@ To export a product to Excel run:
     $ ccli product export PRD-000-000-000
 ```
 
-This command will generate a excel file named PRD-000-000-000.xlsx in the current working directory.
+This command will generate an excel file named PRD-000-000-000.xlsx in the current working directory. By default the file will contain a sheet with a list of all the [translations](translations_usage.md) related to the product, and also a sheet of *translation attributes* per translation present in the list.
 
 
 ## Synchronize a product from Excel

@@ -278,3 +278,60 @@ def test_force_primarize_translation(config_mocker, mocker, mocked_translation_r
         'The translation TRN-8100-3865-4869 on translation test '
         'product has been successfully primarize.' in result.output
     )
+
+
+def test_sync_command_ok(config_mocker, fs, mocker, sample_translation_workbook, ccli):
+    sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
+    translation_sync_mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationSynchronizer.sync',
+        return_value=('TRN-8100-3865-4869', True),
+    )
+    wait_for_autotranslation_mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.wait_for_autotranslation',
+    )
+    translation_attr_sync_mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationAttributesSynchronizer.sync',
+    )
+    runner = CliRunner()
+    result = runner.invoke(ccli, ['translation', 'sync', f'{fs.root_path}/test.xlsx'])
+
+    assert result.exit_code == 0
+    translation_sync_mock.assert_called_once()
+    wait_for_autotranslation_mock.assert_called_once()
+    translation_attr_sync_mock.assert_called_once()
+
+
+def test_sync_command_handle_input_without_xlsx(config_mocker, mocker, ccli):
+    sync_open_mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationSynchronizer.open',
+    )
+    mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationSynchronizer.sync',
+        return_value=('TRN-8100-3865-4869', False),
+    )
+    mocker.patch('connect.cli.plugins.translation.commands.TranslationSynchronizer.save')
+    mocker.patch('connect.cli.plugins.translation.commands.TranslationAttributesSynchronizer')
+
+    runner = CliRunner()
+    result = runner.invoke(ccli, ['translation', 'sync', 'TRN-8100-3865-4869'])
+
+    assert result.exit_code == 0
+    sync_open_mock.assert_called_once_with('TRN-8100-3865-4869/TRN-8100-3865-4869.xlsx')
+
+
+def test_sync_command_skip_attributes_if_translation_sync_fails(config_mocker, mocker, ccli):
+    mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationSynchronizer.sync',
+        return_value=(None, False),
+    )
+    mocker.patch('connect.cli.plugins.translation.commands.TranslationSynchronizer.open')
+    mocker.patch('connect.cli.plugins.translation.commands.TranslationSynchronizer.save')
+    attr_sync_mock = mocker.patch(
+        'connect.cli.plugins.translation.commands.TranslationAttributesSynchronizer',
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(ccli, ['translation', 'sync', 'TRN-8100-3865-4869'])
+
+    assert result.exit_code == 0
+    attr_sync_mock.assert_not_called()

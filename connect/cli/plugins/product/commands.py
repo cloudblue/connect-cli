@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
+
+from functools import partial
 
 import click
 from click.exceptions import ClickException
@@ -11,6 +13,8 @@ from connect.cli.core.config import pass_config
 from connect.cli.core.utils import continue_or_quit
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
+from connect.cli.plugins.shared.utils import wait_for_autotranslation
 from connect.cli.plugins.product.clone import ProductCloner
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (
@@ -23,7 +27,9 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
+    TranslationsSynchronizer,
 )
+from connect.cli.plugins.product.utils import get_translation_attributes_sheets
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 
 
@@ -151,7 +157,7 @@ def cmd_dump_products(config, product_id, output_file, output_path):
     help='Answer yes to all questions.',
 )
 @pass_config
-def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
+def cmd_sync_products(config, input_file, yes):
     acc_id = config.active.id
     acc_name = config.active.name
 
@@ -193,52 +199,43 @@ def cmd_sync_products(config, input_file, yes):  # noqa: CCR001
         "synchronization", f"synchronizing {product_id}",
     )
 
-    try:
-        item_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
-    try:
-        capabilities_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
+    sync_tasks = [
+        item_sync,
+        capabilities_sync,
+        static_resources_sync,
+        templates_sync,
+        partial(params_sync, 'Ordering Parameters'),
+        partial(params_sync, 'Fulfillment Parameters'),
+        partial(params_sync, 'Configuration Parameters'),
+        actions_sync,
+        media_sync,
+        config_values_sync,
+    ]
+    for task in sync_tasks:
+        try:
+            task(client, config, input_file, stats)
+        except SheetNotFoundError as e:
+            if not config.silent:
+                click.secho(str(e), fg='blue')
 
-    try:
-        static_resources_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
+    sync_product_translations(client, config, input_file, stats)
 
-    try:
-        templates_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
+    if not config.silent:
+        stats.print()
 
-    param_task(client, config, input_file, 'Ordering Parameters', stats)
-    param_task(client, config, input_file, 'Fulfillment Parameters', stats)
-    param_task(client, config, input_file, 'Configuration Parameters', stats)
 
+def sync_product_translations(client, config, input_file, stats):
     try:
-        actions_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
-
-    try:
-        media_sync(client, config, input_file, stats)
+        translations_autotranslating = translations_sync(client, config, input_file, stats)
     except SheetNotFoundError as e:
         if not config.silent:
             click.secho(str(e), fg='blue')
 
-    try:
-        config_values_sync(client, config, input_file, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
-
-    stats.print()
+    for sheetname in get_translation_attributes_sheets(input_file):
+        translation_id = sheetname.split()[1][1:-1]
+        if translation_id in translations_autotranslating:
+            wait_for_autotranslation(client, translation_id, silent=config.silent)
+        translation_attributes_sync(sheetname, translation_id, client, config, input_file, stats)
 
 
 @grp_product.command(
@@ -376,15 +373,6 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
         )
 
 
-def param_task(client, config, input_file, worksheet, stats):
-    try:
-        result = params_sync(client, config, input_file, worksheet, stats)
-    except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
-    return result
-
-
 def media_sync(client, config, input_file, stats):
     synchronizer = MediaSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Media')
@@ -405,7 +393,7 @@ def templates_sync(client, config, input_file, stats):
     synchronizer.save(input_file)
 
 
-def params_sync(client, config, input_file, worksheet, stats):
+def params_sync(worksheet, client, config, input_file, stats):
     synchronizer = ParamsSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, worksheet)
     synchronizer.sync()
@@ -434,6 +422,21 @@ def item_sync(client, config, input_file, stats):
     synchronizer = ItemSynchronizer(client, config.silent, stats)
     synchronizer.open(input_file, 'Items')
     synchronizer.sync()
+    synchronizer.save(input_file)
+
+
+def translations_sync(client, config, input_file, stats):
+    synchronizer = TranslationsSynchronizer(client, config.silent, stats)
+    synchronizer.open(input_file, 'Translations')
+    synchronizer.sync()
+    synchronizer.save(input_file)
+    return synchronizer.translations_autotranslating
+
+
+def translation_attributes_sync(worksheet, translation_id, client, config, input_file, stats):
+    synchronizer = TranslationAttributesSynchronizer(client, config.silent, stats)
+    synchronizer.open(input_file, worksheet)
+    synchronizer.sync(translation_id)
     synchronizer.save(input_file)
 
 

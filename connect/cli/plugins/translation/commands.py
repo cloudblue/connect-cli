@@ -14,11 +14,14 @@ from connect.cli.core.utils import (
     row_format_resource,
     table_formater_resource,
 )
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.utils import wait_for_autotranslation
+from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
 from connect.cli.plugins.translation.constants import TRANSLATION_TABLE_HEADER
 from connect.cli.plugins.translation.activate import activate_translation
 from connect.cli.plugins.translation.export import dump_translation
 from connect.cli.plugins.translation.primarize import primarize_translation
-from connect.cli.plugins.translation.sync import TranslationSynchronizer
+from connect.cli.plugins.translation.translation_sync import TranslationSynchronizer
 
 
 @group(name='translation', short_help='Manage translations.')
@@ -255,10 +258,7 @@ def cmd_sync_translation(config, input_file, yes):
     acc_id = config.active.id
     acc_name = config.active.name
     if not config.silent:
-        click.secho(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
-        )
+        click.secho(f'Current active account: {acc_id} - {acc_name}\n', fg='blue')
 
     if '.xlsx' not in input_file:
         input_file = f'{input_file}/{input_file}.xlsx'
@@ -270,16 +270,23 @@ def cmd_sync_translation(config, input_file, yes):
         max_retries=3,
         logger=RequestLogger() if config.verbose else None,
     )
-    synchronizer = TranslationSynchronizer(
-        client=client,
-        silent=config.silent,
-        account_id=acc_id,
-    )
-    synchronizer.open(input_file)
-    synchronizer.sync(yes)
-    synchronizer.save(input_file)
+    stats = SynchronizerStats()
+
+    translation_sync = TranslationSynchronizer(client, config.silent, acc_id, stats)
+    translation_sync.open(input_file)
+    translation_id, should_wait_for_autotranslation = translation_sync.sync(yes)
+    translation_sync.save(input_file)
+
+    if translation_id:
+        if should_wait_for_autotranslation:
+            wait_for_autotranslation(client, translation_id, silent=config.silent)
+        attributes_sync = TranslationAttributesSynchronizer(client, config.silent, stats)
+        attributes_sync.open(input_file, 'Attributes')
+        attributes_sync.sync(translation_id)
+        attributes_sync.save(input_file)
+
     if not config.silent:
-        synchronizer.stats.print()
+        stats.print()
 
 
 def get_group():
