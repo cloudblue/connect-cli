@@ -141,7 +141,7 @@ class TranslationsSynchronizer(ProductSynchronizer):
         return translation
 
     def _action_create(self, context_id, data):
-        self._set_process_description(f'Creating translation {data.translation_id}')
+        self._set_process_description('Creating new translation')
         payload = {
             'context': {'id': context_id},
             "locale": {'id': data.locale.split()[0]},
