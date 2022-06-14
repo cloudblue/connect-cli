@@ -5,7 +5,7 @@ import responses
 from openpyxl import load_workbook
 
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.translations import TranslationsSynchronizer
+from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
 from connect.client import ConnectClient
 
 

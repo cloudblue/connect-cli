@@ -8,6 +8,7 @@ from responses import matchers
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.product.clone import ProductCloner
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_dump(mocker, config_mocker):
@@ -16,11 +17,14 @@ def test_dump(mocker, config_mocker):
     )
     config = Config()
     config.load('/tmp')
+
+    stats = SynchronizerStats()
     cloner = ProductCloner(
         config=config,
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        stats=stats,
     )
 
     cloner.dump()
@@ -35,11 +39,13 @@ def test_clean_wb(
     config = Config()
     config.load('/tmp')
 
+    stats = SynchronizerStats()
     cloner = ProductCloner(
         config=config,
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        stats=stats,
     )
 
     os.mkdir(
@@ -81,11 +87,13 @@ def test_create_product(
     config.load('/tmp')
     config.add_account('VA-000', 'Account 0', 'Api 0', 'https://localhost/public/v1')
 
+    stats = SynchronizerStats()
     cloner = ProductCloner(
         config=config,
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -149,11 +157,13 @@ def test_create_product_errordef(
     config.load('/tmp')
     config.add_account('VA-000', 'Account 0', 'Api 0', 'https://localhost/public/v1')
 
+    stats = SynchronizerStats()
     cloner = ProductCloner(
         config=config,
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        stats=stats,
     )
 
     mocked_responses.add(
@@ -198,11 +208,13 @@ def test_inject(
     config.load('/tmp')
     config.add_account('VA-000', 'Account 0', 'Api 0', 'https://localhost/public/v1')
 
+    stats = SynchronizerStats()
     cloner = ProductCloner(
         config=config,
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        stats=stats,
     )
 
     os.mkdir(
@@ -241,6 +253,9 @@ def test_inject(
     mocker.patch(
         'connect.cli.plugins.product.clone.ItemSynchronizer',
         return_value=FakeItemSynchronizer,
+    )
+    mocker.patch(
+        'connect.cli.plugins.product.clone.sync_product_translations',
     )
     mocked_responses.add(
         method='GET',

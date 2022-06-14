@@ -11,10 +11,10 @@ from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.product.constants import (
     BILLING_PERIOD,
     COMMITMENT,
-    ITEMS_COLS_HEADERS,
     PRECISIONS,
 )
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import ITEMS_COLS_HEADERS
 from connect.cli.plugins.product.api import (
     create_item,
     create_unit,
