@@ -25,16 +25,16 @@ from connect.cli.core.http import (
 )
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
-from connect.cli.plugins.product.utils import (
-    fill_translation_row,
-    get_col_headers_by_ws_type,
-    get_col_limit_by_ws_type,
-    get_json_object_for_param,
-    setup_locale_data_validation,
-)
+from connect.cli.plugins.product.utils import get_json_object_for_param
 from connect.cli.plugins.shared.export import (
     _alter_attributes_sheet,
     _get_translation_workbook,
+)
+from connect.cli.plugins.shared.utils import (
+    fill_translation_row,
+    get_col_headers_by_ws_type,
+    get_col_limit_by_ws_type,
+    setup_locale_data_validation,
 )
 from connect.client import ClientError, ConnectClient, R, RequestLogger
 

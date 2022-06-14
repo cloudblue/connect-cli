@@ -8,9 +8,9 @@ from functools import partial
 
 from tqdm import tqdm
 
-from connect.cli.plugins.product.constants import TRANSLATION_HEADERS
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
-from connect.cli.plugins.product.utils import fill_translation_row, setup_locale_data_validation
+from connect.cli.plugins.shared.constants import TRANSLATION_HEADERS
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.utils import fill_translation_row, setup_locale_data_validation
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.client import ClientError
 
@@ -24,6 +24,7 @@ class TranslationsSynchronizer(ProductSynchronizer):
         super().__init__(client, silent)
         self._mstats = stats['Translations']
         self._translations_autotranslating = []
+        self._new_translations = []
 
     @property
     def translations_autotranslating(self):
@@ -33,10 +34,14 @@ class TranslationsSynchronizer(ProductSynchronizer):
         """
         return self._translations_autotranslating
 
+    @property
+    def new_translations(self):
+        return self._new_translations
+
     def sync(self):
         rows_data = defaultdict(dict)
         for row_idx, data in self._iterate_rows():
-            self._set_process_description(f'Processing Product translation {data.translation_id}')
+            self._set_process_description(f'Processing Product translation {data.translation_id or data.locale}')
             if data.action == '-' or data.is_primary == 'Yes':
                 self._mstats.skipped()
                 continue
@@ -151,6 +156,7 @@ class TranslationsSynchronizer(ProductSynchronizer):
             },
         }
         translation = self._client.ns('localization').translations.create(payload)
+        self._new_translations.append(translation)
         self._mstats.created()
         if translation['auto']['enabled']:
             self._translations_autotranslating.append(translation['id'])

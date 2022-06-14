@@ -8,8 +8,8 @@ from collections import namedtuple
 from tqdm import trange
 
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
-from connect.cli.plugins.product.constants import TEMPLATES_HEADERS
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import TEMPLATES_HEADERS
+from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.client import ClientError
 
 fields = (v.replace(' ', '_').lower() for v in TEMPLATES_HEADERS.values())

@@ -367,6 +367,12 @@ def mocked_translation_attributes_xlsx_response():
         yield response.buffer
 
 
+@pytest.fixture(scope='function')
+def mocked_translation_attributes_response():
+    with open('./tests/fixtures/translation_attributes_response.json') as response:
+        return json.load(response)
+
+
 @pytest.fixture
 def extension_class_declaration():
     def _declaration(extension_name, with_variables=True):
