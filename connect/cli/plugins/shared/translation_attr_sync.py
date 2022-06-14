@@ -34,7 +34,7 @@ class TranslationAttributesSynchronizer:
         self._ws = None
         if stats is None:
             stats = SynchronizerStats()
-        self._mstats = stats['Attributes']
+        self._mstats = stats['Translations Attributes']
 
     @property
     def max_batch_size(self):
