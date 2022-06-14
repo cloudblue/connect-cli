@@ -2,11 +2,9 @@ from collections import namedtuple
 
 from tqdm import trange
 
-from connect.cli.plugins.product.constants import (
-    CAPABILITIES,
-    CAPABILITIES_COLS_HEADERS,
-)
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.product.constants import CAPABILITIES
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import CAPABILITIES_COLS_HEADERS
 from connect.cli.plugins.product.utils import cleanup_product_for_update
 from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 
@@ -46,7 +44,7 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                 try:
                     if data.capability == 'Pay-as-you-go support and schema':
                         if data.value != 'Disabled':
-                            if not product['capabilities']['ppu']:
+                            if not product['capabilities'].get('ppu', False):
                                 product['capabilities']['ppu'] = {
                                     'schema': data.value,
                                     'dynamic': False,
@@ -57,7 +55,7 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                         else:
                             product['capabilities']['ppu'] = None
                     if data.capability == 'Pay-as-you-go dynamic items support':
-                        if not product['capabilities']['ppu']:
+                        if not product['capabilities'].get('ppu', False):
                             if data.value == 'Enabled':
                                 raise Exception(
                                     "Dynamic items support can't be enabled without Pay-as-you-go "
@@ -70,7 +68,7 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             else:
                                 product['capabilities']['ppu']['dynamic'] = False
                     if data.capability == "Pay-as-you-go future charges support":
-                        if not product['capabilities']['ppu']:
+                        if not product['capabilities'].get('ppu', False):
                             if data.value == 'Enabled':
                                 raise Exception(
                                     "Report of future charges can't be enabled without Pay-as-you-go "

@@ -3,7 +3,7 @@ import os
 from click import ClickException
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-from connect.cli.plugins.product.sync.base import ProductSynchronizer
+from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.product.utils import cleanup_product_for_update
 from connect.client import ClientError
 

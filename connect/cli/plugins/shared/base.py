@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
-from connect.cli.plugins.product.utils import (
+from connect.cli.plugins.shared.utils import (
     get_col_headers_by_ws_type,
     get_col_limit_by_ws_type,
     get_ws_type_by_worksheet_name,
