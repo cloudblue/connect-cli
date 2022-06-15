@@ -610,7 +610,6 @@ def test_validate_create(
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
     synchronizer.sync()
 
-    print(stats.__dict__)
     assert stats['Ordering Parameters'].get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
         'deleted': 0, 'skipped': 0, 'errors': 0,
