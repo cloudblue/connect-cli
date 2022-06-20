@@ -1,4 +1,4 @@
-import click
+from click import ClickException
 
 from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
 from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
@@ -9,8 +9,8 @@ from connect.cli.plugins.shared.utils import (
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 
 
-def translations_sync(client, config, input_file, stats, save):
-    synchronizer = TranslationsSynchronizer(client, config.silent, stats)
+def translations_sync(client, progress, input_file, stats, save):
+    synchronizer = TranslationsSynchronizer(client, progress, stats)
     synchronizer.open(input_file, 'Translations')
     synchronizer.sync()
     if save:
@@ -18,23 +18,23 @@ def translations_sync(client, config, input_file, stats, save):
     return synchronizer
 
 
-def translation_attributes_sync(worksheet, translation, client, config, input_file, stats, save, is_clone):
-    synchronizer = TranslationAttributesSynchronizer(client, config.silent, stats)
+def translation_attributes_sync(worksheet, translation, client, progress, input_file, stats, save, is_clone):
+    synchronizer = TranslationAttributesSynchronizer(client, progress, stats)
     synchronizer.open(input_file, worksheet)
     synchronizer.sync(translation, is_clone)
     if save:
         synchronizer.save(input_file)
 
 
-def sync_product_translations(client, config, input_file, stats, save=True, is_clone=False):
+def sync_product_translations(client, progress, input_file, stats, save=True, is_clone=False):
     translations_autotranslating = []
     try:
-        synchronizer = translations_sync(client, config, input_file, stats, save)
+        synchronizer = translations_sync(client, progress, input_file, stats, save)
         translations_autotranslating = synchronizer.translations_autotranslating
         new_translations = synchronizer.new_translations
     except SheetNotFoundError as e:
-        if not config.silent:
-            click.secho(str(e), fg='blue')
+        raise ClickException(str(e))
+
     new_translations.insert(0, None)
     iter_translation = iter(new_translations)
     for sheetname in get_translation_attributes_sheets(input_file):
@@ -42,8 +42,8 @@ def sync_product_translations(client, config, input_file, stats, save=True, is_c
         if is_clone:
             translation = next(iter_translation)
         if translation in translations_autotranslating:
-            wait_for_autotranslation(client, translation, silent=config.silent)
+            wait_for_autotranslation(client, progress, translation)
         translation_attributes_sync(
             sheetname, translation, client,
-            config, input_file, stats, save, is_clone,
+            progress, input_file, stats, save, is_clone,
         )

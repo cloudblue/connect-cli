@@ -6,7 +6,6 @@
 import click
 from click import ClickException
 
-from connect.cli.core.account.constants import AVAILABLE_ACCOUNTS
 from connect.cli.core.account.helpers import (
     activate_account,
     add_account,
@@ -14,11 +13,8 @@ from connect.cli.core.account.helpers import (
 )
 from connect.cli.core.config import pass_config
 from connect.cli.core.constants import DEFAULT_ENDPOINT
-from connect.cli.core.utils import (
-    field_to_check_mark,
-    row_format_resource,
-    table_formater_resource,
-)
+from connect.cli.core.terminal import console
+from connect.cli.core.utils import field_to_check_mark
 
 
 @click.group(name='account', short_help='Manage configured accounts.')
@@ -41,8 +37,7 @@ def grp_account():
 @pass_config
 def cmd_add_account(config, api_key, endpoint):
     account_id, name = add_account(config, api_key, endpoint)
-    if not config.silent:
-        click.secho(f'New account added: {account_id} - {name}', fg='green')
+    console.secho(f'New account added: {account_id} - {name}', fg='green')
 
 
 @grp_account.command(
@@ -53,24 +48,23 @@ def cmd_add_account(config, api_key, endpoint):
 def cmd_list_account(config):
     if not config.accounts:
         raise ClickException('No account configured.')
-    accounts = [AVAILABLE_ACCOUNTS]
 
-    for acc in config.accounts.values():
-        active = field_to_check_mark(
-            acc.id == config.active.id,
-        )
-        row = row_format_resource(
-            acc.id,
-            acc.name,
-            active,
-        )
-        accounts.append(row)
+    console.header('Configured accounts')
 
-    table_formater_resource(
-        accounts,
-        len(config.accounts.values()),
-        paging=1,
-        page_size=1,
+    console.table(
+        columns=[
+            'ID',
+            'Name',
+            ('center', 'Active'),
+        ],
+        rows=[
+            (
+                acc.id,
+                acc.name,
+                field_to_check_mark(acc.id == config.active.id),
+            )
+            for acc in config.accounts.values()
+        ],
     )
 
 
@@ -82,11 +76,11 @@ def cmd_list_account(config):
 @pass_config
 def cmd_activate_account(config, id):
     acc = activate_account(config, id)
-    if not config.silent:
-        click.secho(
-            f'Current active account is: {acc.id} - {acc.name}',
-            fg='green',
-        )
+
+    console.secho(
+        f'Current active account is: {acc.id} - {acc.name}',
+        fg='green',
+    )
 
 
 @grp_account.command(
@@ -97,7 +91,7 @@ def cmd_activate_account(config, id):
 @pass_config
 def cmd_remove_account(config, id):
     acc = remove_account(config, id)
-    click.secho(
+    console.secho(
         f'Account removed: {acc.id} - {acc.name}',
         fg='green',
     )

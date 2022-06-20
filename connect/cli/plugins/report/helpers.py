@@ -2,12 +2,13 @@ import json
 import os
 from datetime import datetime
 
-import click
 import pytz
 from click import ClickException
 
-from connect.cli.core.http import get_user_agent
-from connect.cli.plugins.report.constants import AVAILABLE_RENDERERS, AVAILABLE_REPORTS
+from connect.cli.core.http import get_user_agent, RequestLogger
+from connect.cli.core.terminal import console
+from connect.cli.core.utils import field_to_check_mark
+from connect.cli.plugins.report.constants import AVAILABLE_REPORTS
 from connect.cli.plugins.report.utils import (
     get_renderer_by_id,
     get_report_by_id,
@@ -16,13 +17,12 @@ from connect.cli.plugins.report.utils import (
     Progress,
 )
 from connect.cli.plugins.report.wizard import get_report_inputs
-from connect.client import ConnectClient, RequestLogger
+from connect.client import ConnectClient
 from connect.reports.constants import CLI_ENV
 from connect.reports.datamodels import Account, Report
 from connect.reports.parser import parse
 from connect.reports.renderers import get_renderer
 from connect.reports.validator import validate, validate_with_schema
-from connect.utils.terminal.markdown import render
 
 
 def load_repo(repo_dir):
@@ -64,27 +64,39 @@ def list_reports(repo_dir):
         for report in repo.reports:
             repo_info.append(f'| {report.local_id} | {report.name} |\n')
 
-    click.echo(render(''.join(repo_info)))
+    console.markdown(''.join(repo_info))
 
 
 def show_report_info(repo_dir, local_id):
     repo = load_repo(repo_dir)
     report = get_report_by_id(repo, local_id)
+
     report_info = [
         f'# {report.name} (ID: {report.local_id})\n',
         '---\n\n',
         report.description,
         '\n\n---\n\n',
-        AVAILABLE_RENDERERS,
-
     ]
-    for renderer in report.renderers:
-        default = ' '
-        if renderer.id == report.default_renderer:
-            default = '\u2713'
-        report_info.append(
-            f'| {renderer.id} | {renderer.description} | {default} |\n')
-    click.echo(render(''.join(report_info)))
+
+    console.markdown(''.join(report_info))
+
+    console.header('Available output formats')
+
+    console.table(
+        columns=(
+            'ID',
+            'Description',
+            ('center', 'Default'),
+        ),
+        rows=[
+            (
+                renderer.id,
+                renderer.description,
+                field_to_check_mark(renderer.id == report.default_renderer),
+            )
+            for renderer in report.renderers
+        ],
+    )
 
 
 def execute_report(config, reports_dir, report_id, output_file, output_format):
@@ -117,7 +129,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         default_limit=500,
         max_retries=5,
         default_headers=get_user_agent(),
-        logger=RequestLogger() if config.verbose else None,
+        logger=RequestLogger(),
         resourceset_append=False,
     )
 
@@ -125,7 +137,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
 
     inputs = get_report_inputs(config, client, report, output_format)
 
-    click.echo(f'Preparing to run report {report_id}. Please wait...\n')
+    console.echo(f'Preparing to run report {report_id}. Please wait...\n')
 
     progress = Progress(report.name)
 
@@ -159,4 +171,4 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
     finally:
         progress.close()
 
-    click.echo(f'\nReport has been completed and saved as {out}\n')
+    console.echo(f'\nReport has been completed and saved as {out}\n')

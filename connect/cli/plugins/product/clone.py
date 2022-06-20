@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from click import ClickException, echo as clickecho
+from click import ClickException
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
 
@@ -14,79 +14,70 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     TemplatesSynchronizer,
 )
-from connect.client import ClientError, ConnectClient, RequestLogger
+from connect.client import ClientError
 from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
 from connect.cli.plugins.shared.utils import get_translation_attributes_sheets
 
 
 class ProductCloner:
-    def __init__(self, config, source_account, destination_account, product_id, stats):
+    def __init__(self, config, source_account, destination_account, product_id, progress, stats):
         self.fs = TempFS(identifier=f'_clone_{product_id}')
         self.config = config
         self.source_account = (source_account if source_account else config.active.id)
         self.destination_account = (destination_account if destination_account else config.active.id)
         self.product_id = product_id
         self.stats = stats
+        self.progress = progress
         self.destination_product = None
         self.wb = None
 
     def dump(self):
         dump_product(
-            api_url=self.config.active.endpoint,
-            api_key=self.config.active.api_key,
+            client=self.config.active.client,
             product_id=self.product_id,
             output_path=self.fs.root_path,
+            progress=self.progress,
             output_file='',
-            silent=self.config.silent,
-            verbose=self.config.verbose,
         )
 
     def inject(self):  # noqa: CCR001
         try:
             self.config.activate(self.destination_account)
             input_file = f'{self.fs.root_path}/{self.product_id}/{self.product_id}.xlsx'
-            client = ConnectClient(
-                api_key=self.config.active.api_key,
-                endpoint=self.config.active.endpoint,
-                use_specs=False,
-                max_retries=3,
-                logger=RequestLogger() if self.config.verbose else None,
-            )
             synchronizer = GeneralSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                None,
             )
 
             synchronizer.open(input_file, 'General Information')
             synchronizer.sync()
-            clickecho('\n')
             synchronizer = ItemSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
             product_id = synchronizer.open(input_file, 'Items')
-            items = client.products[product_id].items.all()
+            items = self.config.active.client.products[product_id].items.all()
             for item in items:
-                client.products[product_id].items[item['id']].delete()
+                self.config.active.client.products[product_id].items[item['id']].delete()
             synchronizer.sync()
-            clickecho('\n')
+
             synchronizer = CapabilitiesSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
             synchronizer.open(input_file, 'Capabilities')
             synchronizer.sync()
-            clickecho('\n')
-            templates = client.products[product_id].templates.all()
+
+            templates = self.config.active.client.products[product_id].templates.all()
             sample_templates = []
             for template in templates:
                 sample_templates.append(template['id'])
 
             synchronizer = TemplatesSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
 
@@ -95,57 +86,52 @@ class ProductCloner:
 
             for template in sample_templates:
                 try:
-                    client.products[product_id].templates[template].delete()
+                    self.config.active.client.products[product_id].templates[template].delete()
                 except ClientError:
                     # done intentionally till fulfillment in progress template not on public api
                     pass
 
-            clickecho('\n')
             synchronizer = ParamsSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
 
             synchronizer.open(input_file, "Ordering Parameters")
             synchronizer.sync()
-            clickecho('\n')
+
             synchronizer.open(input_file, "Fulfillment Parameters")
             synchronizer.sync()
-            clickecho('\n')
+
             synchronizer.open(input_file, "Configuration Parameters")
             synchronizer.sync()
-            clickecho('\n')
 
             synchronizer = ActionsSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
 
             synchronizer.open(input_file, 'Actions')
             synchronizer.sync()
-            clickecho('\n')
 
             synchronizer = MediaSynchronizer(
-                client,
-                self.config.silent,
+                self.config.active.client,
+                self.progress,
                 self.stats,
             )
 
             synchronizer.open(input_file, 'Media')
             synchronizer.sync()
-            clickecho('\n')
 
             sync_product_translations(
-                client,
-                self.config,
+                self.config.active.client,
+                self.progress,
                 input_file,
                 self.stats,
                 save=False,
                 is_clone=True,
             )
-            clickecho('\n')
 
             self.config.activate(self.source_account)
         except ClientError as e:
@@ -166,16 +152,9 @@ class ProductCloner:
         self.config.activate(self.destination_account)
 
         try:
-            client = ConnectClient(
-                api_key=self.config.active.api_key,
-                endpoint=self.config.active.endpoint,
-                use_specs=False,
-                max_retries=3,
-                logger=RequestLogger() if self.config.verbose else None,
-            )
-            category = self._get_cat_id(client, ws['B8'].value)
+            category = self._get_cat_id(self.config.active.client, ws['B8'].value)
             primary_locale_id = self._get_primary_locale_id(ws['B14'].value)
-            product = client.products.create(
+            product = self.config.active.client.products.create(
                 {
                     "name": name,
                     "category": {

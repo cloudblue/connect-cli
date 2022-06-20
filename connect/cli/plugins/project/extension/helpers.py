@@ -1,16 +1,15 @@
 import collections
 import os
 
-import click
 import yaml
 from click.exceptions import ClickException
 from interrogatio.core.dialog import dialogus
 from rich import box
-from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
 from rich.syntax import Syntax
 
+from connect.cli.core.terminal import console
 from connect.cli.plugins.project.extension.renderer import BoilerplateRenderer
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
 from connect.cli.plugins.project.extension.validations import validators
@@ -19,12 +18,10 @@ from connect.cli.plugins.project.extension.wizard import (
     get_questions,
     get_summary,
 )
-from connect.utils.terminal.markdown import render
-from connect.utils.terminal.markdown.theme import ConnectTheme
 
 
 def bootstrap_extension_project(config, data_dir, overwrite):
-    click.secho('Bootstraping extension project...\n', fg='blue')
+    console.secho('Bootstraping extension project...\n', fg='blue')
 
     answers = None
     statuses_by_event = {}
@@ -66,11 +63,11 @@ def bootstrap_extension_project(config, data_dir, overwrite):
     renderer = BoilerplateRenderer(data_dir, ctx, overwrite)
     project_dir = renderer.render()
 
-    click.echo(render(open(f'{project_dir}/HOWTO.md', 'r').read()))
+    console.markdown(open(f'{project_dir}/HOWTO.md', 'r').read())
 
 
 def validate_extension_project(config, project_dir):  # noqa: CCR001
-    click.secho(f'Validating project {project_dir}...\n', fg='blue')
+    console.secho(f'Validating project {project_dir}...\n', fg='blue')
 
     context = {}
 
@@ -84,9 +81,8 @@ def validate_extension_project(config, project_dir):  # noqa: CCR001
         if result.context:
             context.update(result.context)
 
-    console = Console(theme=ConnectTheme())
     if validation_items:
-        click.echo(render('# Extension validation results'))
+        console.markdown('# Extension validation results')
         for item in validation_items:
             table = Table(
                 box=box.ROUNDED,
@@ -111,16 +107,16 @@ def validate_extension_project(config, project_dir):  # noqa: CCR001
                 ) if item.code else '-',
             )
             console.print(table)
-        click.secho(
+        console.secho(
             f'Warning/errors have been found while validating the Extension Project {project_dir}.',
             fg='yellow',
         )
     else:
-        click.secho(f'Extension Project {project_dir} has been successfully validated.', fg='green')
+        console.secho(f'Extension Project {project_dir} has been successfully validated.', fg='green')
 
 
 def bump_runner_extension_project(project_dir: str):
-    click.secho(f'Bumping runner version on project {project_dir}...\n', fg='blue')
+    console.secho(f'Bumping runner version on project {project_dir}...\n', fg='blue')
 
     latest_version = get_pypi_runner_version()
     docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
@@ -143,4 +139,4 @@ def bump_runner_extension_project(project_dir: str):
             f'Error: {error}',
         )
 
-    click.secho(f'Runner version has been successfully updated to {latest_version}', fg='green')
+    console.secho(f'Runner version has been successfully updated to {latest_version}', fg='green')

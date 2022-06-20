@@ -9,11 +9,6 @@ from responses.registries import OrderedRegistry
 import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
-
-from connect.cli.core.config import Config
-from connect.cli.core.base import cli
-from connect.cli.core.plugins import load_plugins
-
 from tests.data import (
     CONFIG_DATA,
     EXTENSION_BG_EVENT,
@@ -33,14 +28,23 @@ def fs():
     return TempFS()
 
 
+@pytest.fixture(scope='session', autouse=True)
+def patch_console():
+    os.environ['COLUMNS'] = '132'
+    os.environ['NO_COLOR'] = '1'
+
+
 @pytest.fixture(scope='session')
 def ccli():
+    from connect.cli.core.base import cli
+    from connect.cli.core.plugins import load_plugins
     load_plugins(cli)
     return cli
 
 
 @pytest.fixture(scope='function')
 def config_vendor():
+    from connect.cli.core.config import Config
     config = Config()
     config.add_account('VA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
@@ -48,6 +52,7 @@ def config_vendor():
 
 @pytest.fixture(scope='function')
 def config_provider():
+    from connect.cli.core.config import Config
     config = Config()
     config.add_account('PA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
@@ -55,6 +60,7 @@ def config_provider():
 
 @pytest.fixture(scope='function')
 def config_unknown():
+    from connect.cli.core.config import Config
     config = Config()
     config.add_account('XA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
@@ -481,3 +487,27 @@ def test_schedulable_event():
 @pytest.fixture(scope='function')
 def console_80_columns(mocker):
     mocker.patch.dict(os.environ, {"COLUMNS": "80"})
+
+
+@pytest.fixture
+def mute_console():
+    from connect.cli.core.terminal import console
+    console.silent = True
+    yield
+    console.silent = False
+
+
+@pytest.fixture
+def always_yes_console():
+    from connect.cli.core.terminal import console
+    console.skip_confirm = True
+    yield
+    console.skip_confirm = False
+
+
+@pytest.fixture
+def verbose_console():
+    from connect.cli.core.terminal import console
+    console.verbose = True
+    yield
+    console.verbose = False

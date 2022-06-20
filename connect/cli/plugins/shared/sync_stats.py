@@ -5,10 +5,7 @@
 
 from collections import defaultdict
 
-import click
-
-from connect.utils.terminal.markdown import render
-from connect.cli.core.utils import continue_or_quit
+from connect.cli.core.terminal import console
 
 
 class SynchronizerStats(dict):
@@ -28,16 +25,21 @@ class SynchronizerStats(dict):
     stats['module name'].error(['second error', 'third error'], 7)  # add more errors in row #7
     stats['module name'].error('the error', range(1, 11))  # add an error in rows #1 to #10
     """
-    RESULTS_HEADER = """
-# Results of synchronization
 
-| Module | Processed | Created | Updated | Deleted | Skipped | Errors |
-|:--------|--------:| --------:|--------:|----------:|----------:|----------:|
-"""
+    COLUMNS = (
+        'Module',
+        ('right', 'Processed'),
+        ('right', 'Created'),
+        ('right', 'Updated'),
+        ('right', 'Deleted'),
+        ('right', 'Skipped'),
+        ('right', 'Errors'),
+    )
 
-    def __init__(self, *args, operation='Sync'):
+    def __init__(self, *args, operation='Sync', header='Results of synchronization'):
         self._initial_modules = args
         self.operation = operation
+        self.header = header
         self.reset()
 
     def __str__(self):
@@ -57,18 +59,19 @@ class SynchronizerStats(dict):
             self[module_name]
 
     def print(self):
+        console.header(self.header)
         self.print_results()
         self.print_errors()
 
     def print_results(self):
-        msg = self.RESULTS_HEADER
-        for module_stats in self.values():
-            row = '|{module}|{processed}|{created}|{updated}|{deleted}|{skipped}|{errors}|\n'
-            msg += row.format(
-                module=module_stats.name,
-                **module_stats.get_counts_as_dict(),
-            )
-        click.echo(f'\n{render(msg)}\n')
+        console.table(
+            columns=self.COLUMNS,
+            rows=[
+                (module_stats.name, *module_stats.get_counts_as_tuple())
+                for module_stats in self.values()
+            ],
+            expand=True,
+        )
 
     def print_errors(self):  # noqa: CCR001
         total_error_count = sum(
@@ -77,21 +80,20 @@ class SynchronizerStats(dict):
         )
         if total_error_count == 0:
             return
-        click.secho(
-            f'\n{self.operation} operation had {total_error_count} errors, do you want to see them?',
-            fg='yellow',
-        )
-        if not continue_or_quit():
-            return  # pragma: no cover
 
-        click.echo('')
+        console.confirm(
+            f'\n{self.operation} operation had {total_error_count} errors, do you want to see them?',
+            abort=True,
+        )
+
+        console.echo('')
         for module_stats in filter(lambda ms: ms._errors or ms._row_errors, self.values()):
-            click.secho(f'Module {module_stats.name}:\n', fg='magenta')
+            console.secho(f'Module {module_stats.name}:\n', fg='magenta')
 
             if module_stats._errors:
-                click.echo('  Errors')
-                click.echo("\n".join(f'    - {msg}' for msg in module_stats._errors))
-                click.echo('')
+                console.echo('  Errors')
+                console.echo("\n".join(f'    - {msg}' for msg in module_stats._errors))
+                console.echo('')
 
             # group rows with same error message to avoid long prints in bulk errors
             first_row = None
@@ -111,11 +113,11 @@ class SynchronizerStats(dict):
 
     def _print_error(self, error, row, last_row=None):
         if last_row is None or row == last_row:
-            click.echo(f'  Errors at row #{row}')
+            console.echo(f'  Errors at row #{row}')
         else:
-            click.echo(f'  Errors at rows #{row} to #{last_row}')
-        click.echo(error)
-        click.echo('')
+            console.echo(f'  Errors at rows #{row} to #{last_row}')
+        console.echo(error)
+        console.echo('')
 
 
 class _SynchronizerStatsModule:
@@ -174,6 +176,16 @@ class _SynchronizerStatsModule:
             'skipped': self._skipped,
             'errors': len(self._errors) + len(self._row_errors),
         }
+
+    def get_counts_as_tuple(self):
+        return (
+            self.get_processed_count(),
+            self._created,
+            self._updated,
+            self._deleted,
+            self._skipped,
+            len(self._errors) + len(self._row_errors),
+        )
 
 
 class SynchronizerStatsSingleModule(_SynchronizerStatsModule):

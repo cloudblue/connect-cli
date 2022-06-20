@@ -16,9 +16,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import Color, WHITE
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
-from tqdm import trange
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.core.http import (
     format_http_status,
     handle_http_error,
@@ -27,8 +25,8 @@ from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.product.utils import get_json_object_for_param
 from connect.cli.plugins.shared.export import (
-    _alter_attributes_sheet,
-    _get_translation_workbook,
+    alter_attributes_sheet,
+    get_translation_workbook,
 )
 from connect.cli.plugins.shared.utils import (
     fill_translation_row,
@@ -36,7 +34,7 @@ from connect.cli.plugins.shared.utils import (
     get_col_limit_by_ws_type,
     setup_locale_data_validation,
 )
-from connect.client import ClientError, ConnectClient, R, RequestLogger
+from connect.client import ClientError, R
 
 
 def _setup_locales_list(ws, client):
@@ -406,7 +404,7 @@ def _calculate_configuration_id(configuration):
     return conf_id
 
 
-def _dump_actions(ws, client, product_id, silent):
+def _dump_actions(ws, client, product_id, progress):
     _setup_ws_header(ws, 'actions')
 
     row_idx = 2
@@ -430,21 +428,19 @@ def _dump_actions(ws, client, product_id, silent):
         ws.add_data_validation(action_validation)
         ws.add_data_validation(scope_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing action', total=count)
 
     for action in actions:
-        progress.set_description(f'Processing action {action["id"]}')
-        progress.update(1)
+        progress.update(task, description=f'Processing action {action["id"]}', advance=1)
         _fill_action_row(ws, row_idx, action)
         action_validation.add(f'C{row_idx}')
         scope_validation.add(f'G{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_configuration(ws, client, product_id, silent):
+def _dump_configuration(ws, client, product_id, progress):
     _setup_ws_header(ws, 'configurations')
 
     row_idx = 2
@@ -463,21 +459,19 @@ def _dump_configuration(ws, client, product_id, silent):
 
     ws.add_data_validation(action_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing parameter configuration', total=count)
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
-        progress.set_description(f'Processing parameter configuration {conf_id}')
-        progress.update(1)
+        progress.update(task, description=f'Processing parameter configuration {conf_id}', advance=1)
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_parameters(ws, client, product_id, param_type, silent):
+def _dump_parameters(ws, client, product_id, param_type, progress):
     _setup_ws_header(ws, 'params')
 
     rql = R().phase.eq(param_type)
@@ -490,6 +484,7 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     if count == 0:
         # Product without params is strange, but may exist
         return
+
     action_validation = DataValidation(
         type='list',
         formula1='"-,create,update,delete"',
@@ -523,11 +518,14 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
     ws.add_data_validation(configuration_scope_validation)
     ws.add_data_validation(bool_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task(f'Processing {param_type} parameter', total=count)
 
     for param in params:
-        progress.set_description(f'Processing {param_type} parameter {param["id"]}')
-        progress.update(1)
+        progress.update(
+            task,
+            description=f'Processing {param_type} parameter {param["id"]}',
+            advance=1,
+        )
         _fill_param_row(ws, row_idx, param)
         action_validation.add(f'C{row_idx}')
         if param['phase'] == 'configuration':
@@ -540,11 +538,10 @@ def _dump_parameters(ws, client, product_id, param_type, silent):
         bool_validation.add(f'K{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_media(ws, client, product_id, silent, media_location, media_path):
+def _dump_media(ws, client, product_id, media_location, media_path, progress):
     _setup_ws_header(ws, 'media')
     row_idx = 2
 
@@ -564,20 +561,18 @@ def _dump_media(ws, client, product_id, silent, media_location, media_path):
         ws.add_data_validation(action_validation)
         ws.add_data_validation(type_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing media', total=count)
     for media in medias:
-        progress.set_description(f'Processing media {media["id"]}')
-        progress.update(1)
+        progress.update(task, description=f'Processing media {media["id"]}', advance=1)
         _fill_media_row(ws, row_idx, media, media_location, product_id, media_path)
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'D{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_external_static_links(ws, product, silent):
+def _dump_external_static_links(ws, product, progress):
     _setup_ws_header(ws, 'static_links')
     row_idx = 2
     count = len(product['customer_ui_settings']['download_links'])
@@ -597,12 +592,10 @@ def _dump_external_static_links(ws, product, silent):
         ws.add_data_validation(action_validation)
         ws.add_data_validation(link_type)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
-
-    progress.set_description("Processing static links")
+    task = progress.add_task('Processing static links', total=count)
 
     for link in product['customer_ui_settings']['download_links']:
-        progress.update(1)
+        progress.update(task, advance=1)
         ws.cell(row_idx, 1, value='Download')
         ws.cell(row_idx, 2, value=link['title'])
         ws.cell(row_idx, 3, value='-')
@@ -612,7 +605,7 @@ def _dump_external_static_links(ws, product, silent):
         row_idx += 1
 
     for link in product['customer_ui_settings']['documents']:
-        progress.update(1)
+        progress.update(task, advance=1)
         ws.cell(row_idx, 1, value='Documentation')
         ws.cell(row_idx, 2, value=link['title'])
         ws.cell(row_idx, 3, value='-')
@@ -621,14 +614,12 @@ def _dump_external_static_links(ws, product, silent):
         link_type.add(f'A{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_capabilities(ws, product, silent):  # noqa: CCR001
+def _dump_capabilities(ws, product, progress):  # noqa: CCR001
     _setup_ws_header(ws, 'capabilities')
-    progress = trange(0, 1, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
-    progress.set_description("Processing product capabilities")
+    task = progress.add_task('Processing product capabilities', total=1)
     capabilities = product['capabilities']
     ppu = product['capabilities'].get('ppu', False)
     tiers = capabilities['tiers']
@@ -682,10 +673,6 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
         'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
     )
     disabled_enabled.add(ws['C5'])
-
-    progress.update(1)
-    progress.close()
-    print()
 
     def _get_reporting_consumption(reservation_cap):
         if 'consumption' in reservation_cap and reservation_cap['consumption']:
@@ -768,10 +755,11 @@ def _dump_capabilities(ws, product, silent):  # noqa: CCR001
     while idx < 11:
         action_validation.add(f'B{idx}')
         idx = idx + 1
-    progress.update(1)
+
+    progress.update(task, advance=1)
 
 
-def _dump_templates(ws, client, product_id, silent):
+def _dump_templates(ws, client, product_id, progress):
     _setup_ws_header(ws, 'templates')
 
     row_idx = 2
@@ -800,23 +788,20 @@ def _dump_templates(ws, client, product_id, silent):
         ws.add_data_validation(scope_validation)
         ws.add_data_validation(type_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing template', total=count)
 
     for template in templates:
-        progress.set_description(f'Processing template {template["id"]}')
-        progress.update(1)
-
+        progress.update(task, description=f'Processing template {template["id"]}', advance=1)
         _fill_template_row(ws, row_idx, template)
         action_validation.add(f'C{row_idx}')
         scope_validation.add(f'D{row_idx}')
         type_validation.add(f'E{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_items(ws, client, product_id, silent):
+def _dump_items(ws, client, product_id, progress):
     _setup_ws_header(ws, 'items')
 
     row_idx = 2
@@ -861,11 +846,10 @@ def _dump_items(ws, client, product_id, silent):
     ws.add_data_validation(precision_validation)
     ws.add_data_validation(commitment_validation)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing item', total=count)
 
     for item in items:
-        progress.set_description(f'Processing item {item["id"]}')
-        progress.update(1)
+        progress.update(task, description=f'Processing item {item["id"]}', advance=1)
         _fill_item_row(ws, row_idx, item)
         action_validation.add(f'C{row_idx}')
         type_validation.add(f'F{row_idx}')
@@ -874,11 +858,10 @@ def _dump_items(ws, client, product_id, silent):
         commitment_validation.add(f'J{row_idx}')
         row_idx += 1
 
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
-def _dump_translations(wb, client, product_id, silent):
+def _dump_translations(wb, client, product_id, progress):
     ws = wb.create_sheet('Translations')
     _setup_ws_header(ws, 'translations')
     ws.column_dimensions['F'].width = 30
@@ -913,11 +896,10 @@ def _dump_translations(wb, client, product_id, silent):
     ws.add_data_validation(no_action_validation)
     ws.add_data_validation(disabled_enabled)
 
-    progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
+    task = progress.add_task('Processing translation', total=count)
 
     for row_idx, translation in enumerate(translations, 2):
-        progress.set_description(f'Processing translation {translation["id"]}')
-        progress.update(1)
+        progress.update(task, description=f'Processing translation {translation["id"]}', advance=1)
         fill_translation_row(ws, row_idx, translation)
         if translation['primary']:
             no_action_validation.add(ws[f'B{row_idx}'])
@@ -927,42 +909,35 @@ def _dump_translations(wb, client, product_id, silent):
         _dump_translation_attr(wb, client, translation)
 
     setup_locale_data_validation(wb['General Information'], ws)
-    progress.close()
-    print()
+    progress.update(task, completed=count)
 
 
 def _dump_translation_attr(wb, client, translation):
-    external_wb = _get_translation_workbook(client.endpoint, client.api_key, translation['id'])
+    external_wb = get_translation_workbook(client, translation['id'])
     attr_ws = wb.create_sheet(f'{translation["locale"]["id"]} ({translation["id"]})')
     for row in external_wb['Attributes']:
         for cell in row:
             attr_ws[cell.coordinate].value = cell.value
             attr_ws[cell.coordinate].alignment = copy.copy(cell.alignment)
-    _alter_attributes_sheet(attr_ws)
+    alter_attributes_sheet(attr_ws)
     _setup_ws_header(attr_ws, '_attributes')
 
 
 def dump_product(  # noqa: CCR001
-    api_url, api_key, product_id, output_file, silent, verbose=False, output_path=None,
+    client, product_id, output_file, progress, output_path=None,
 ):
     output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
     media_path = os.path.join(os.path.dirname(output_file), 'media')
     if not os.path.exists(media_path):
         os.mkdir(media_path)
     try:
-        client = ConnectClient(
-            api_key=api_key,
-            endpoint=api_url,
-            use_specs=False,
-            max_retries=3,
-            logger=RequestLogger() if verbose else None,
-        )
+
         product = client.products[product_id].get()
         wb = Workbook()
 
         _setup_locales_list(wb.active, client)
 
-        connect_api_location = parse.urlparse(api_url)
+        connect_api_location = parse.urlparse(client.endpoint)
         media_location = f'{connect_api_location.scheme}://{connect_api_location.netloc}'
         _setup_cover_sheet(
             wb.active,
@@ -971,43 +946,42 @@ def dump_product(  # noqa: CCR001
             client,
             media_path,
         )
-
-        _dump_capabilities(wb.create_sheet('Capabilities'), product, silent)
-        _dump_external_static_links(wb.create_sheet('Embedding Static Resources'), product, silent)
+        _dump_capabilities(wb.create_sheet('Capabilities'), product, progress)
+        _dump_external_static_links(wb.create_sheet('Embedding Static Resources'), product, progress)
         _dump_media(
             wb.create_sheet('Media'),
             client,
             product_id,
-            silent,
             media_location,
             media_path,
+            progress,
         )
-        _dump_templates(wb.create_sheet('Templates'), client, product_id, silent)
-        _dump_items(wb.create_sheet('Items'), client, product_id, silent)
+        _dump_templates(wb.create_sheet('Templates'), client, product_id, progress)
+        _dump_items(wb.create_sheet('Items'), client, product_id, progress)
         _dump_parameters(
             wb.create_sheet('Ordering Parameters'),
             client,
             product_id,
             'ordering',
-            silent,
+            progress,
         )
         _dump_parameters(
             wb.create_sheet('Fulfillment Parameters'),
             client,
             product_id,
             'fulfillment',
-            silent,
+            progress,
         )
         _dump_parameters(
             wb.create_sheet('Configuration Parameters'),
             client,
             product_id,
             'configuration',
-            silent,
+            progress,
         )
-        _dump_actions(wb.create_sheet('Actions'), client, product_id, silent)
-        _dump_configuration(wb.create_sheet('Configuration'), client, product_id, silent)
-        _dump_translations(wb, client, product_id, silent)
+        _dump_actions(wb.create_sheet('Actions'), client, product_id, progress)
+        _dump_configuration(wb.create_sheet('Configuration'), client, product_id, progress)
+        _dump_translations(wb, client, product_id, progress)
         wb.save(output_file)
 
     except ClientError as error:

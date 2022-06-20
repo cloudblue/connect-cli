@@ -1,10 +1,12 @@
+import os
 import platform
 from http import HTTPStatus
 
 import click
 
 from connect.cli import get_version
-from connect.client import ClientError
+from connect.cli.core.terminal import console
+from connect.client import ClientError, RequestLogger as _RequestLogger
 
 
 def get_user_agent():
@@ -35,3 +37,11 @@ def handle_http_error(res: ClientError):
         raise click.ClickException(f'{status}: {code} - {message}')
 
     raise click.ClickException(f'{status}: unexpected error.')
+
+
+class RequestLogger(_RequestLogger):
+    def __init__(self):
+        if not console.verbose or console.silent:
+            super().__init__(file=open(os.devnull, 'w'))
+        else:
+            super().__init__(file=None)

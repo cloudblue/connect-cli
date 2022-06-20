@@ -9,11 +9,13 @@ from click.testing import CliRunner
 from openpyxl import load_workbook
 from responses import matchers
 
+from connect.client import ConnectClient
 from connect.cli.core.config import Config
 from connect.cli.plugins.product.export import dump_product
+from connect.cli.plugins.product.sync import GeneralSynchronizer
 
 
-def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
+def test_sync_general_sync(fs, ccli, mocked_responses, get_general_env):
     config = Config()
     config.load(fs.root_path)
     config.add_account(
@@ -47,22 +49,59 @@ def test_sync_general_sync(fs, get_general_env, mocked_responses, ccli):
                 [
                     '-c',
                     fs.root_path,
+                    '--yes',
                     'product',
                     'sync',
-                    '--yes',
                     f'{fs.root_path}/test.xlsx',
                 ],
             )
             assert result.exit_code == 0
 
 
-def test_list_products(fs, mocked_responses, ccli):
+def test_sync_general_sync_general_errors(fs, mocker, ccli):
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+
+    mocker.patch.object(GeneralSynchronizer, 'open')
+    mocker.patch.object(GeneralSynchronizer, 'sync', return_value=['error1', 'error2'])
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            '--yes',
+            'product',
+            'sync',
+            f'{fs.root_path}/test.xlsx',
+        ],
+    )
+    assert result.exit_code != 0
+    assert 'Error synchronizing general product information: error1\nerror2' in result.output
+
+
+def test_list_products(mocker, fs, mocked_responses, ccli):
+    base_url = 'https://localhost/public/v1/products'
     with open('./tests/fixtures/product_response.json') as prod_response:
         mocked_responses.add(
             method='GET',
-            url='https://localhost/public/v1/products',
+            url=f'{base_url}?and(eq(visibility.owner,true),eq(version,null()))&limit=25&offset=0',
             json=[json.load(prod_response)],
         )
+
+    mocked_table = mocker.patch(
+        'connect.cli.plugins.product.commands.console.table',
+    )
+
     config = Config()
     config.load(fs.root_path)
     config.add_account(
@@ -86,7 +125,47 @@ def test_list_products(fs, mocked_responses, ccli):
     )
 
     assert result.exit_code == 0
-    assert "PRD-276-377-545 - My Produc" in result.output
+    assert mocked_table.mock_calls[0].kwargs['rows'] == [('PRD-276-377-545', 'My Product')]
+
+
+def test_list_products_provider(mocker, fs, mocked_responses, ccli):
+    base_url = 'https://localhost/public/v1/products'
+    query = 'and(eq(visibility.listing,true),eq(visibility.syndication,true))'
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url=f'{base_url}?{query}&limit=25&offset=0',
+            json=[json.load(prod_response)],
+        )
+
+    mocked_table = mocker.patch(
+        'connect.cli.plugins.product.commands.console.table',
+    )
+
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'PA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('PA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'list',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert mocked_table.mock_calls[0].kwargs['rows'] == [('PRD-276-377-545', 'My Product')]
 
 
 def test_export(config_mocker, mocker, ccli):
@@ -106,8 +185,8 @@ def test_export(config_mocker, mocker, ccli):
         ],
     )
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'PRD-000'
-    assert mock.mock_calls[0][1][3] is None
+    assert mock.mock_calls[0][1][1] == 'PRD-000'
+    assert mock.mock_calls[0][1][2] is None
     assert result.exit_code == 0
     assert 'The product PRD-000 has been successfully exported to PRD-000.xlsx.\n' in result.output
 
@@ -130,13 +209,13 @@ def test_export_custom_file(config_mocker, mocker, ccli):
         ],
     )
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'PRD-000'
-    assert mock.mock_calls[0][1][3] == '/tmp/my_product.xlsx'
+    assert mock.mock_calls[0][1][1] == 'PRD-000'
+    assert mock.mock_calls[0][1][2] == '/tmp/my_product.xlsx'
     assert result.exit_code == 0
     assert 'The product PRD-000 has been successfully exported to /tmp/my_product.xlsx.\n' in result.output
 
 
-def test_export_product_not_exists(fs, mocked_responses):
+def test_export_product_not_exists(mocker, fs, mocked_responses):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-0000',
@@ -144,18 +223,22 @@ def test_export_product_not_exists(fs, mocked_responses):
     )
     with pytest.raises(ClickException) as e:
         dump_product(
-            api_url='https://localhost/public/v1',
-            api_key='ApiKey SU111:1111',
+            ConnectClient(
+                'ApiKey SU111:1111',
+                endpoint='https://localhost/public/v1',
+                use_specs=False,
+            ),
             product_id='PRD-0000',
             output_path=fs.root_path,
             output_file='output.xlsx',
-            silent=True,
+            progress=mocker.MagicMock(),
         )
 
     assert str(e.value) == '404 - Not Found: Product PRD-0000 not found.'
 
 
 def test_export_product(
+    mocker,
     fs,
     mocked_responses,
     mocked_product_response,
@@ -334,12 +417,15 @@ def test_export_product(
         },
     )
     output_file = dump_product(
-        api_url='https://localhost/public/v1',
-        api_key='ApiKey SU111:1111',
+        ConnectClient(
+            'ApiKey SU111:1111',
+            endpoint='https://localhost/public/v1',
+            use_specs=False,
+        ),
         product_id='PRD-276-377-545',
         output_file='output.xlsx',
         output_path=fs.root_path,
-        silent=True,
+        progress=mocker.MagicMock(),
     )
 
     product_wb = load_workbook(output_file)
@@ -389,3 +475,261 @@ def _get_col_limit_by_type(ws_type):
     elif ws_type == 'Translations':
         return 'K'
     return 'Z'
+
+
+def test_clone(fs, ccli, mocker, mocked_responses):
+    mocker.patch('connect.cli.plugins.product.commands.console.confirm')
+    synchronizer = mocker.MagicMock()
+    mocked_cloner = mocker.patch(
+        'connect.cli.plugins.product.commands.ProductCloner',
+        return_value=synchronizer,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-000',
+    )
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            'PRD-000',
+        ],
+    )
+    assert result.exit_code == 0
+    mocked_cloner.assert_called_once_with(
+        config=mocker.ANY,
+        source_account='VA-000',
+        destination_account='VA-000',
+        product_id='PRD-000',
+        progress=mocker.ANY,
+        stats=mocker.ANY,
+    )
+    synchronizer.dump.assert_called_once()
+    synchronizer.load_wb.assert_called_once()
+    synchronizer.create_product.assert_called_once_with(name=None)
+    synchronizer.clean_wb.assert_called_once()
+    synchronizer.inject.assert_called_once()
+
+
+def test_clone_different_dest_account(fs, ccli, mocker, mocked_responses):
+    mocker.patch('connect.cli.plugins.product.commands.console.confirm')
+    synchronizer = mocker.MagicMock()
+    mocked_cloner = mocker.patch(
+        'connect.cli.plugins.product.commands.ProductCloner',
+        return_value=synchronizer,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-000',
+    )
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.add_account(
+        'VA-001',
+        'Account 2',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            '-d',
+            'VA-001',
+            'PRD-000',
+        ],
+    )
+    assert result.exit_code == 0
+    mocked_cloner.assert_called_once_with(
+        config=mocker.ANY,
+        source_account='VA-000',
+        destination_account='VA-001',
+        product_id='PRD-000',
+        progress=mocker.ANY,
+        stats=mocker.ANY,
+    )
+    synchronizer.dump.assert_called_once()
+    synchronizer.load_wb.assert_called_once()
+    synchronizer.create_product.assert_called_once_with(name=None)
+    synchronizer.clean_wb.assert_called_once()
+    synchronizer.inject.assert_called_once()
+
+
+def test_clone_only_vendor(fs, ccli):
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'PA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('PA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            'PRD-000',
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert 'The clone command is only available for vendor accounts.' in result.output
+
+
+def test_clone_invalid_name(fs, ccli):
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            '-n',
+            '*' * 33,
+            'PRD-000',
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert 'New product name can not exceed 32 chracters, provided as name' in result.output
+
+
+def test_clone_product_does_not_exist(fs, ccli, mocker, mocked_responses):
+    mocker.patch('connect.cli.plugins.product.commands.console.confirm')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-000',
+        status=404,
+    )
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            'PRD-000',
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert 'Product PRD-000 does not exist' in result.output
+
+
+def test_clone_invalid_source_account(fs, ccli):
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            '-s',
+            'VA-001',
+            'PRD-000',
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert 'The source account VA-001 does not exist' in result.output
+
+
+def test_clone_invalid_destination_account(fs, ccli):
+    config = Config()
+    config.load(fs.root_path)
+    config.add_account(
+        'VA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+        endpoint='https://localhost/public/v1',
+    )
+    config.activate('VA-000')
+    config.store()
+    assert os.path.isfile(f'{fs.root_path}/config.json') is True
+    runner = CliRunner()
+    result = runner.invoke(
+        ccli,
+        [
+            '-c',
+            fs.root_path,
+            'product',
+            'clone',
+            '-d',
+            'VA-001',
+            'PRD-000',
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert 'The destination account VA-001 does not exist' in result.output

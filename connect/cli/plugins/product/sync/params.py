@@ -7,10 +7,8 @@ import re
 from collections import namedtuple
 from json.decoder import JSONDecodeError
 
-from tqdm import trange
 from openpyxl.styles import Alignment
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import PARAMS_COLS_HEADERS
@@ -24,12 +22,12 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ParamsSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
+    def __init__(self, client, progress, stats):
         self._param_type = None
         self._worksheet_name = None
         self.__stats = stats
         self._mstats = None
-        super(ParamsSynchronizer, self).__init__(client, silent)
+        super(ParamsSynchronizer, self).__init__(client, progress)
 
     def open(self, input_file, worksheet):
         if worksheet == "Ordering Parameters":
@@ -45,12 +43,14 @@ class ParamsSynchronizer(ProductSynchronizer):
     def sync(self):  # noqa: CCR001
         ws = self._wb[self._worksheet_name]
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-        for row_idx in row_indexes:
+        task = self._progress.add_task('Processing param', total=ws.max_row - 1)
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 15)])
-            row_indexes.set_description(f'Processing param {data.id}')
+            self._progress.update(
+                task,
+                description=f'Processing param {data.id}',
+                advance=1,
+            )
             if data.action == '-':
                 self._mstats.skipped()
                 continue
@@ -112,6 +112,7 @@ class ParamsSynchronizer(ProductSynchronizer):
                     self._mstats.created()
                 except Exception as e:
                     self._mstats.error(str(e), row_idx)
+        self._progress.update(task, completed=ws.max_row - 1)
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, param=None):

@@ -5,12 +5,18 @@ import click
 from connect.cli import get_version
 from connect.cli.core.account.commands import grp_account
 from connect.cli.core.config import pass_config
+from connect.cli.core.terminal import console
 from connect.cli.core.utils import check_for_updates
 
 
 class CCliCommand(click.Command):
     def invoke(self, ctx):
         ctx.obj.validate()
+        active_account = ctx.obj.active
+        console.secho(
+            f'Current active account: {active_account.id} - {active_account.name}\n',
+            fg='blue',
+        )
         return super().invoke(ctx)
 
 
@@ -46,7 +52,7 @@ def group(name=None, **attrs):
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo(f'CloudBlue Connect CLI, version {get_version()}')
+    console.echo(f'CloudBlue Connect CLI, version {get_version()}')
     check_for_updates()
     ctx.exit()
 
@@ -75,15 +81,33 @@ def print_version(ctx, param, value):
     is_flag=True,
     help='Write verbose messages, including HTTP session',
 )
+@click.option(  # noqa: E304
+    '--yes',
+    '-y',
+    'yes',
+    is_flag=True,
+    help='Answer yes to all questions.',
+)
+@click.option(
+    '--page-size',
+    '-p',
+    'page_size',
+    type=click.IntRange(1),
+    help='Number of items per page.',
+    default=25,
+)
 @pass_config
 @click.pass_context
-def cli(ctx, config, config_dir, silent, verbose):
+def cli(ctx, config, config_dir, silent, verbose, yes, page_size):
     """CloudBlue Connect Command Line Interface"""
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
     config.load(config_dir)
-    config.silent = silent
-    config.verbose = verbose
+
+    console.silent = silent
+    console.verbose = verbose
+    console.skip_confirm = yes
+    console.page_size = page_size
 
 
 cli.add_command(grp_account)

@@ -7,7 +7,7 @@ from connect.cli.plugins.product.sync.capabilities import CapabilitiesSynchroniz
 from connect.client import ConnectClient
 
 
-def test_no_action(get_sync_capabilities_env):
+def test_no_action(mocker, get_sync_capabilities_env):
     stats = SynchronizerStats()
     synchronizer = CapabilitiesSynchronizer(
         client=ConnectClient(
@@ -15,7 +15,7 @@ def test_no_action(get_sync_capabilities_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -28,7 +28,7 @@ def test_no_action(get_sync_capabilities_env):
     }
 
 
-def test_invalid_capability(fs, get_sync_capabilities_env):
+def test_invalid_capability(mocker, fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['A2'].value = 'Invented'
     get_sync_capabilities_env['Capabilities']['B2'].value = 'update'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
@@ -40,7 +40,7 @@ def test_invalid_capability(fs, get_sync_capabilities_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -54,7 +54,7 @@ def test_invalid_capability(fs, get_sync_capabilities_env):
     assert stats['Capabilities']._row_errors == {2: ['Capability Invented is not valid capability']}
 
 
-def test_invalid_usage_schema(fs, get_sync_capabilities_env):
+def test_invalid_usage_schema(mocker, fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['B2'].value = 'update'
     get_sync_capabilities_env['Capabilities']['C2'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
@@ -66,7 +66,7 @@ def test_invalid_usage_schema(fs, get_sync_capabilities_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -80,7 +80,7 @@ def test_invalid_usage_schema(fs, get_sync_capabilities_env):
     assert stats['Capabilities']._row_errors == {2: ['Schema magic is not supported']}
 
 
-def test_invalid_tier_level(fs, get_sync_capabilities_env):
+def test_invalid_tier_level(mocker, fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['B8'].value = 'update'
     get_sync_capabilities_env['Capabilities']['C8'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
@@ -92,7 +92,7 @@ def test_invalid_tier_level(fs, get_sync_capabilities_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -108,7 +108,7 @@ def test_invalid_tier_level(fs, get_sync_capabilities_env):
     }
 
 
-def test_invalid_value(fs, get_sync_capabilities_env):
+def test_invalid_value(mocker, fs, get_sync_capabilities_env):
     get_sync_capabilities_env['Capabilities']['B10'].value = 'update'
     get_sync_capabilities_env['Capabilities']['C10'].value = 'magic'
     get_sync_capabilities_env.save(f'{fs.root_path}/test.xlsx')
@@ -120,7 +120,7 @@ def test_invalid_value(fs, get_sync_capabilities_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -137,6 +137,7 @@ def test_invalid_value(fs, get_sync_capabilities_env):
 
 
 def test_ppu_enable_qt(
+    mocker,
     fs,
     get_sync_capabilities_env,
     mocked_responses,
@@ -153,7 +154,7 @@ def test_ppu_enable_qt(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -178,6 +179,7 @@ def test_ppu_enable_qt(
 
 
 def test_ppu_change_schema(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -194,7 +196,7 @@ def test_ppu_change_schema(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -219,6 +221,7 @@ def test_ppu_change_schema(
 
 
 def test_ppu_disable(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -235,7 +238,7 @@ def test_ppu_disable(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -260,6 +263,7 @@ def test_ppu_disable(
 
 
 def test_ppu_dynamic_items_no_ppu(
+    mocker,
     fs,
     get_sync_capabilities_env,
     mocked_responses,
@@ -275,7 +279,7 @@ def test_ppu_dynamic_items_no_ppu(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -292,6 +296,7 @@ def test_ppu_dynamic_items_no_ppu(
 
 
 def test_ppu_dynamic_items_no_ppu_no_enabled(
+    mocker,
     fs,
     get_sync_capabilities_env,
     mocked_responses,
@@ -307,7 +312,7 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -321,6 +326,7 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
 
 
 def test_ppu_enable_dynamic(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -337,7 +343,7 @@ def test_ppu_enable_dynamic(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -362,6 +368,7 @@ def test_ppu_enable_dynamic(
 
 
 def test_ppu_disable_dynamic(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -378,7 +385,7 @@ def test_ppu_disable_dynamic(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -403,6 +410,7 @@ def test_ppu_disable_dynamic(
 
 
 def test_ppu_future_no_ppu(
+    mocker,
     fs,
     get_sync_capabilities_env,
     mocked_responses,
@@ -418,7 +426,7 @@ def test_ppu_future_no_ppu(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -435,6 +443,7 @@ def test_ppu_future_no_ppu(
 
 
 def test_ppu_future_no_ppu_no_enabled(
+    mocker,
     fs,
     get_sync_capabilities_env,
     mocked_responses,
@@ -450,7 +459,7 @@ def test_ppu_future_no_ppu_no_enabled(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -464,6 +473,7 @@ def test_ppu_future_no_ppu_no_enabled(
 
 
 def test_ppu_enable_future(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -480,7 +490,7 @@ def test_ppu_enable_future(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -505,6 +515,7 @@ def test_ppu_enable_future(
 
 
 def test_ppu_disable_future(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -521,7 +532,7 @@ def test_ppu_disable_future(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -557,6 +568,7 @@ def test_ppu_disable_future(
     ),
 )
 def test_ppu_disable_feature(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -574,7 +586,7 @@ def test_ppu_disable_feature(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -604,6 +616,7 @@ def test_ppu_disable_feature(
     ),
 )
 def test_features_enable_future(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -621,7 +634,7 @@ def test_features_enable_future(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -648,6 +661,7 @@ def test_features_enable_future(
     ),
 )
 def test_tier_level_feature(
+    mocker,
     fs,
     get_sync_capabilities_env_ppu_enabled,
     mocked_responses,
@@ -665,7 +679,7 @@ def test_tier_level_feature(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

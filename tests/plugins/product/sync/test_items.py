@@ -5,7 +5,7 @@ from connect.cli.plugins.product.sync.items import ItemSynchronizer
 from connect.client import ConnectClient
 
 
-def test_init(get_sync_items_env):
+def test_init(mocker, get_sync_items_env):
 
     stats = SynchronizerStats()
     synchronizer = ItemSynchronizer(
@@ -14,7 +14,7 @@ def test_init(get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -23,7 +23,7 @@ def test_init(get_sync_items_env):
     assert product_id == 'PRD-276-377-545'
 
 
-def test_skipped(get_sync_items_env):
+def test_skipped(mocker, get_sync_items_env):
 
     stats = SynchronizerStats()
     synchronizer = ItemSynchronizer(
@@ -32,7 +32,7 @@ def test_skipped(get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -52,7 +52,7 @@ def test_skipped(get_sync_items_env):
         ("update",),
     ),
 )
-def test_validate_row_errors_no_row_id(fs, get_sync_items_env, row_action):
+def test_validate_row_errors_no_row_id(mocker, fs, get_sync_items_env, row_action):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['B2'].value = None
     get_sync_items_env['Items']['C2'].value = row_action
@@ -64,7 +64,7 @@ def test_validate_row_errors_no_row_id(fs, get_sync_items_env, row_action):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -80,7 +80,7 @@ def test_validate_row_errors_no_row_id(fs, get_sync_items_env, row_action):
     }
 
 
-def test_validate_delete_published_item(fs, get_sync_items_env):
+def test_validate_delete_published_item(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['C2'].value = 'delete'
     get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
     stats = SynchronizerStats()
@@ -90,7 +90,7 @@ def test_validate_delete_published_item(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -106,7 +106,7 @@ def test_validate_delete_published_item(fs, get_sync_items_env):
     }
 
 
-def test_validate_create_published_item(fs, get_sync_items_env):
+def test_validate_create_published_item(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['C2'].value = 'create'
     get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
     stats = SynchronizerStats()
@@ -116,7 +116,7 @@ def test_validate_create_published_item(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -132,7 +132,7 @@ def test_validate_create_published_item(fs, get_sync_items_env):
     }
 
 
-def test_validate_create_no_mpn(fs, get_sync_items_env):
+def test_validate_create_no_mpn(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['B2'].value = None
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -144,7 +144,7 @@ def test_validate_create_no_mpn(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -160,7 +160,7 @@ def test_validate_create_no_mpn(fs, get_sync_items_env):
     }
 
 
-def test_validate_create_no_nome(fs, get_sync_items_env):
+def test_validate_create_no_nome(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['D2'].value = None
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -172,7 +172,7 @@ def test_validate_create_no_nome(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -188,7 +188,7 @@ def test_validate_create_no_nome(fs, get_sync_items_env):
     }
 
 
-def test_validate_create_no_description(fs, get_sync_items_env):
+def test_validate_create_no_description(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['E2'].value = None
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -200,7 +200,7 @@ def test_validate_create_no_description(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -216,7 +216,7 @@ def test_validate_create_no_description(fs, get_sync_items_env):
     }
 
 
-def test_validate_create_strange_type(fs, get_sync_items_env):
+def test_validate_create_strange_type(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['F2'].value = 'license'
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -228,7 +228,7 @@ def test_validate_create_strange_type(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -244,7 +244,7 @@ def test_validate_create_strange_type(fs, get_sync_items_env):
     }
 
 
-def test_validate_wrong_precision_reservation(fs, get_sync_items_env):
+def test_validate_wrong_precision_reservation(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['G2'].value = 'decimal'
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -256,7 +256,7 @@ def test_validate_wrong_precision_reservation(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -272,7 +272,7 @@ def test_validate_wrong_precision_reservation(fs, get_sync_items_env):
     }
 
 
-def test_validate_wrong_precision_ppu(fs, get_sync_items_env):
+def test_validate_wrong_precision_ppu(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['F2'].value = 'ppu'
     get_sync_items_env['Items']['G2'].value = 'decimal(12)'
@@ -285,7 +285,7 @@ def test_validate_wrong_precision_ppu(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -302,7 +302,7 @@ def test_validate_wrong_precision_ppu(fs, get_sync_items_env):
     }
 
 
-def test_validate_wrong_period_ppu(fs, get_sync_items_env):
+def test_validate_wrong_period_ppu(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['F2'].value = 'ppu'
     get_sync_items_env['Items']['I2'].value = 'yearly'
@@ -315,7 +315,7 @@ def test_validate_wrong_period_ppu(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -331,7 +331,7 @@ def test_validate_wrong_period_ppu(fs, get_sync_items_env):
     }
 
 
-def test_validate_wrong_period_reservation(fs, get_sync_items_env):
+def test_validate_wrong_period_reservation(mocker, fs, get_sync_items_env):
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['I2'].value = 'century'
     get_sync_items_env['Items']['C2'].value = 'create'
@@ -343,7 +343,7 @@ def test_validate_wrong_period_reservation(fs, get_sync_items_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -361,6 +361,7 @@ def test_validate_wrong_period_reservation(fs, get_sync_items_env):
 
 
 def test_create_item_exists_in_connect(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -383,7 +384,7 @@ def test_create_item_exists_in_connect(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -401,6 +402,7 @@ def test_create_item_exists_in_connect(
 
 
 def test_create_item_connect_exception(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -430,7 +432,7 @@ def test_create_item_connect_exception(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -447,6 +449,7 @@ def test_create_item_connect_exception(
 
 
 def test_create_item(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -476,7 +479,7 @@ def test_create_item(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -490,6 +493,7 @@ def test_create_item(
 
 
 def test_create_item_one_time(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -520,7 +524,7 @@ def test_create_item_one_time(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -534,6 +538,7 @@ def test_create_item_one_time(
 
 
 def test_create_item_yearly(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -564,7 +569,7 @@ def test_create_item_yearly(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -578,6 +583,7 @@ def test_create_item_yearly(
 
 
 def test_create_item_1_to_1_yearly(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -609,7 +615,7 @@ def test_create_item_1_to_1_yearly(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -623,6 +629,7 @@ def test_create_item_1_to_1_yearly(
 
 
 def test_create_item_validate_commitment(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -642,7 +649,7 @@ def test_create_item_validate_commitment(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -660,6 +667,7 @@ def test_create_item_validate_commitment(
 
 
 def test_create_item_validate_commitment_ppu(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -680,7 +688,7 @@ def test_create_item_validate_commitment_ppu(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -697,6 +705,7 @@ def test_create_item_validate_commitment_ppu(
 
 
 def test_create_item_validate_commitment_onetime(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -717,7 +726,7 @@ def test_create_item_validate_commitment_onetime(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -734,6 +743,7 @@ def test_create_item_validate_commitment_onetime(
 
 
 def test_create_item_validate_commitment_wrong_multiyear(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -754,7 +764,7 @@ def test_create_item_validate_commitment_wrong_multiyear(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -772,6 +782,7 @@ def test_create_item_validate_commitment_wrong_multiyear(
 
 
 def test_create_item_validate_commitment_wrong_multiyear_vs_commitment(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -792,7 +803,7 @@ def test_create_item_validate_commitment_wrong_multiyear_vs_commitment(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -809,6 +820,7 @@ def test_create_item_validate_commitment_wrong_multiyear_vs_commitment(
 
 
 def test_update_item(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -838,7 +850,7 @@ def test_update_item(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -852,6 +864,7 @@ def test_update_item(
 
 
 def test_delete_item(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -882,7 +895,7 @@ def test_delete_item(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -896,6 +909,7 @@ def test_delete_item(
 
 
 def test_update_item_no_connect_item(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -919,7 +933,7 @@ def test_update_item_no_connect_item(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -936,6 +950,7 @@ def test_update_item_no_connect_item(
 
 
 def test_update_item_no_item_connect(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -960,7 +975,7 @@ def test_update_item_no_item_connect(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -977,6 +992,7 @@ def test_update_item_no_item_connect(
 
 
 def test_update_item_draft(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1009,7 +1025,7 @@ def test_update_item_draft(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -1023,6 +1039,7 @@ def test_update_item_draft(
 
 
 def test_update_item_draft_ppu(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1057,7 +1074,7 @@ def test_update_item_draft_ppu(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -1071,6 +1088,7 @@ def test_update_item_draft_ppu(
 
 
 def test_update_item_draft_connect_exception(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1103,7 +1121,7 @@ def test_update_item_draft_connect_exception(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -1120,6 +1138,7 @@ def test_update_item_draft_connect_exception(
 
 
 def test_delete_item_not_exists(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1144,7 +1163,7 @@ def test_delete_item_not_exists(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -1161,6 +1180,7 @@ def test_delete_item_not_exists(
 
 
 def test_delete_item_connect_error(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1191,7 +1211,7 @@ def test_delete_item_connect_error(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -1208,6 +1228,7 @@ def test_delete_item_connect_error(
 
 
 def test_create_item_custom_uom(
+    mocker,
     fs,
     get_sync_items_env,
     mocked_responses,
@@ -1246,7 +1267,7 @@ def test_create_item_custom_uom(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

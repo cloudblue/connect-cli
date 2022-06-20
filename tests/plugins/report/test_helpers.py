@@ -66,12 +66,18 @@ def test_list_reports(capsys):
     assert '│ entrypoint │ test report │' in captured.out
 
 
-def test_show_report_info(capsys):
+def test_show_report_info(mocker):
+    mocked_table = mocker.patch(
+        'connect.cli.plugins.report.helpers.console.table',
+    )
+
     show_report_info('./tests/fixtures/reports/report_v2', 'test_v2')
-    captured = capsys.readouterr()
-    assert 'reportsV2 (ID: test_v2)' in captured.out
-    assert '│ pdf-portrait │ Export data as PDF                          │    ✓    │' in captured.out
-    assert '│ json         │ Export data as JSON                         │         │' in captured.out
+
+    assert mocked_table.mock_calls[0].kwargs['rows'] == [
+        ('xlsx', 'Export data in Microsoft Excel 2020 format.', ''),
+        ('json', 'Export data as JSON', ''),
+        ('pdf-portrait', 'Export data as PDF', '✓'),
+    ]
 
 
 @pytest.mark.parametrize(

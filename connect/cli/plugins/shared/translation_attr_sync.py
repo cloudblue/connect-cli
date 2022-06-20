@@ -6,7 +6,6 @@ import math
 from collections import namedtuple
 
 import click
-from tqdm import tqdm
 
 from connect.client import ClientError
 
@@ -15,7 +14,6 @@ from zipfile import BadZipFile
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.shared.constants import ATTRIBUTES_SHEET_COLUMNS
@@ -27,9 +25,9 @@ class TranslationAttributesSynchronizer:
     """
     _MAX_BATCH_SIZE = 10
 
-    def __init__(self, client, silent, stats=None):
+    def __init__(self, client, progress, stats=None):
         self._client = client
-        self._silent = silent
+        self._progress = progress
         self._wb = None
         self._ws = None
         if stats is None:
@@ -80,19 +78,19 @@ class TranslationAttributesSynchronizer:
             'AttributeRow',
             (header.replace(' ', '_').lower() for header in ATTRIBUTES_SHEET_COLUMNS),
         )
-
-        progress = tqdm(
-            enumerate(ws.iter_rows(min_row=2, values_only=True), 2),
-            total=ws.max_row - 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
+        task = self._progress.add_task('Process attribute', total=ws.max_row - 1)
         new_attrs = None
         if is_clone and translation is not None:
             translation_res = self._client.ns('localization').translations[translation['id']]
             new_attrs = translation_res.attributes.all()
         attributes = {}
-        for row_idx, row in progress:
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
             row = AttributeRow(*row)
-            progress.set_description(f'Process attribute {row.key}')
+            self._progress.update(
+                task,
+                description=f'Process attribute {row.key}',
+                advance=1,
+            )
             if row.action == 'update':
                 attributes[row_idx] = {'key': row.key, 'value': row.value, 'comment': row.comment}
                 if new_attrs:
@@ -108,6 +106,7 @@ class TranslationAttributesSynchronizer:
 
             else:
                 self._mstats.skipped()
+        self._progress.update(task, completed=ws.max_row - 1)
 
         return attributes
 

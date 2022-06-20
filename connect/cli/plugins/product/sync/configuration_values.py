@@ -2,11 +2,8 @@ import json
 import re
 from collections import namedtuple
 
-from tqdm import trange
-
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import CONFIGURATION_HEADERS
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 
 
 fields = (v.replace(' ', '_').lower() for v in CONFIGURATION_HEADERS.values())
@@ -15,19 +12,21 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ConfigurationValuesSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
-        super().__init__(client, silent)
+    def __init__(self, client, progress, stats):
+        super().__init__(client, progress)
         self._mstats = stats['Configuration']
 
     def sync(self):  # noqa: CCR001
         ws = self._wb['Configuration']
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-        for row_idx in row_indexes:
+        task = self._progress.add_task('Processing Configuration value', total=ws.max_row - 1)
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 10)])
-            row_indexes.set_description(f'Processing Configuration value {data.id}')
+            self._progress.update(
+                task,
+                description=f'Processing Configuration value {data.id}',
+                advance=1,
+            )
             if data.action == '-':
                 self._mstats.skipped()
                 continue
@@ -66,6 +65,7 @@ class ConfigurationValuesSynchronizer(ProductSynchronizer):
                     self._mstats.updated()
             except Exception as e:
                 self._mstats.error(str(e), row_idx)
+        self._progress.update(task, completed=ws.max_row - 1)
 
     @staticmethod
     def _validate_row(data):

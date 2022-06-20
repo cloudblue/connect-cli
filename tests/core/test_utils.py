@@ -3,27 +3,10 @@ import os.path
 
 import pytest
 from click import ClickException
+from requests import RequestException
 
 from connect.cli.core import utils
 from connect.cli.core.constants import PYPI_JSON_API_URL
-
-
-def test_continue_or_quit_c(mocker):
-    mocker.patch('connect.cli.core.utils.click.echo')
-    mocker.patch('connect.cli.core.utils.click.getchar', return_value='c')
-    assert utils.continue_or_quit() is True
-
-
-def test_continue_or_quit_q(mocker):
-    mocker.patch('connect.cli.core.utils.click.echo')
-    mocker.patch('connect.cli.core.utils.click.getchar', return_value='q')
-    assert utils.continue_or_quit() is False
-
-
-def test_continue_or_quit_invalid_plus_q(mocker):
-    mocker.patch('connect.cli.core.utils.click.echo')
-    mocker.patch('connect.cli.core.utils.click.getchar', side_effect=['z', 'q'])
-    assert utils.continue_or_quit() is False
 
 
 def test_check_for_updates_ok(mocker, capsys, mocked_responses):
@@ -48,6 +31,26 @@ def test_check_for_updates_is_latest(mocker, capsys, mocked_responses):
 
     assert 'You are running CloudBlue Connect CLI version 1.0.0. ' not in captured.out
     assert 'A newer version is available: 2.0.0' not in captured.out
+
+
+def test_check_for_updates_exception(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='1.0.0')
+    mocker.patch('connect.cli.core.utils.requests.get', side_effect=RequestException())
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+    assert captured.out == ''
+
+
+def test_check_for_updates_invalid_response(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='1.0.0')
+    mocked_responses.add('GET', PYPI_JSON_API_URL, status=400)
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+    assert captured.out == ''
 
 
 def test_validate_output_options(fs):
@@ -164,39 +167,3 @@ def test_row_format_resource():
     separators = len(fields) + 1
     assert '| ZH-HANS | Simplified Chinese | ✓ | - |\n' == utils.row_format_resource(*fields)
     assert separators == len(re.findall(r'\|', utils.row_format_resource(*fields)))
-
-
-def test_formater_not_echo_with_page_size_greater_than_paging(capsys, mocked_resource_list_table):
-
-    utils.table_formater_resource(
-        resource_str_list=mocked_resource_list_table,
-        count_of_resources=97,
-        paging=1,
-        page_size=10,
-    )
-    captured = capsys.readouterr()
-    assert '' == captured.out
-
-
-def test_formater_with_page_size_less_than_paging_and_modulo_equal_zero(capsys, mocked_resource_list_table):
-    utils.table_formater_resource(
-        resource_str_list=mocked_resource_list_table,
-        count_of_resources=97,
-        paging=2,
-        page_size=1,
-    )
-    captured = capsys.readouterr()
-    assert '╭─────────╮\n│   ID    │\n├─────────┤\n│ ZH-HANS │\n╰─────────╯\n\n' == captured.out
-
-
-def test_table_formater_page_size_equeal_paging(capsys, mocked_resource_list_table):
-
-    utils.table_formater_resource(
-        resource_str_list=mocked_resource_list_table[:2],
-        count_of_resources=97,
-        paging=1,
-        page_size=1,
-    )
-
-    captured = capsys.readouterr()
-    assert '╭─────────╮\n│   ID    │\n├─────────┤\n│ ZH-HANS │\n╰─────────╯\n\n' == captured.out

@@ -14,11 +14,11 @@ def get_client():
     )
 
 
-def test_sheet_not_found(fs, sample_translation_workbook):
+def test_sheet_not_found(mocker, fs, sample_translation_workbook):
     del sample_translation_workbook['Attributes']
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
 
     with pytest.raises(SheetNotFoundError) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
@@ -28,10 +28,10 @@ def test_sheet_not_found(fs, sample_translation_workbook):
     )
 
 
-def test_invalid_file_open(fs):
+def test_invalid_file_open(mocker, fs):
     fs.create('fake.xlsx')
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xlsx', 'Attributes')
@@ -39,10 +39,10 @@ def test_invalid_file_open(fs):
     assert str(e.value).endswith("is not a valid xlsx file.")
 
 
-def test_invalid_fileformat_open(fs):
+def test_invalid_fileformat_open(mocker, fs):
     fs.create('fake.xxx')
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xxx', 'Attributes')
@@ -51,13 +51,13 @@ def test_invalid_fileformat_open(fs):
 
 
 @pytest.mark.parametrize('col_idx', [1, 3, 4, 5, 6])
-def test_sheet_validation(fs, col_idx, sample_translation_workbook):
+def test_sheet_validation(mocker, fs, col_idx, sample_translation_workbook):
     cell = sample_translation_workbook['Attributes'].cell(1, col_idx)
     cell.value = 'invalid'
     coordinate = cell.coordinate
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
@@ -66,7 +66,7 @@ def test_sheet_validation(fs, col_idx, sample_translation_workbook):
     assert str(e.value).endswith("but it is 'invalid'")
 
 
-def test_update_fail(fs, mocked_responses, sample_translation_workbook):
+def test_update_fail(mocker, fs, mocked_responses, sample_translation_workbook):
     sample_translation_workbook['Attributes']['C2'].value = 'update'
     sample_translation_workbook['Attributes']['C5'].value = 'update'
     sample_translation_workbook['Attributes']['C8'].value = 'update'
@@ -79,7 +79,7 @@ def test_update_fail(fs, mocked_responses, sample_translation_workbook):
         status=500,
     )
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
 
     synchronizer.sync(translation='TRN-8100-3865-4869')
@@ -91,7 +91,7 @@ def test_update_fail(fs, mocked_responses, sample_translation_workbook):
     assert len(synchronizer._mstats._row_errors) == 5
 
 
-def test_update_ok(fs, mocked_responses, sample_translation_workbook):
+def test_update_ok(mocker, fs, mocked_responses, sample_translation_workbook):
     sample_translation_workbook['Attributes']['C2'].value = 'update'
     sample_translation_workbook['Attributes']['C5'].value = 'update'
     sample_translation_workbook['Attributes']['C8'].value = 'update'
@@ -104,7 +104,7 @@ def test_update_ok(fs, mocked_responses, sample_translation_workbook):
         status=200,
     )
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
 
     synchronizer.sync(translation='TRN-8100-3865-4869')
@@ -115,10 +115,10 @@ def test_update_ok(fs, mocked_responses, sample_translation_workbook):
     }
 
 
-def test_nothing_to_update(fs, sample_translation_workbook):
+def test_nothing_to_update(mocker, fs, sample_translation_workbook):
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     client = get_client()
-    synchronizer = TranslationAttributesSynchronizer(client=client, silent=True)
+    synchronizer = TranslationAttributesSynchronizer(client=client, progress=mocker.MagicMock())
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
 
     synchronizer.sync(translation='TRN-8100-3865-4869')
@@ -130,7 +130,7 @@ def test_nothing_to_update(fs, sample_translation_workbook):
 
 
 def test_update_for_clone_ok(
-    fs, mocked_responses, mocked_translation_response,
+    mocker, fs, mocked_responses, mocked_translation_response,
     mocked_translation_attributes_response, sample_translation_workbook,
 ):
     sample_translation_workbook['Attributes']['C2'].value = 'update'
@@ -156,7 +156,7 @@ def test_update_for_clone_ok(
     client = get_client()
     synchronizer = TranslationAttributesSynchronizer(
         client=client,
-        silent=True,
+        progress=mocker.MagicMock(),
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
 
@@ -169,7 +169,7 @@ def test_update_for_clone_ok(
 
 
 def test_not_update_if_not_differs_from_source_for_clone(
-    fs, mocked_responses, mocked_translation_response,
+    mocker, fs, mocked_responses, mocked_translation_response,
     mocked_translation_attributes_response, sample_translation_workbook,
 ):
     sample_translation_workbook['Attributes']['C2'].value = 'update'
@@ -192,7 +192,7 @@ def test_not_update_if_not_differs_from_source_for_clone(
     client = get_client()
     synchronizer = TranslationAttributesSynchronizer(
         client=client,
-        silent=True,
+        progress=mocker.MagicMock(),
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Attributes')
 

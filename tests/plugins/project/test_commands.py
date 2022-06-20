@@ -3,11 +3,8 @@ import os
 
 from click.testing import CliRunner
 
-from connect.cli.core.config import Config
 
-
-def test_bootstrap_report_command(fs, ccli, mocker, capsys):
-    mocker.patch.object(Config, 'validate')
+def test_bootstrap_report_command(fs, ccli, mocker, capsys, config_mocker):
     mocked_bootstrap = mocker.patch(
         'connect.cli.plugins.project.commands.bootstrap_report_project',
         side_effect=print('project_dir'),
@@ -24,15 +21,13 @@ def test_bootstrap_report_command(fs, ccli, mocker, capsys):
             f'{fs.root_path}/projects',
         ],
     )
-
     mocked_bootstrap.assert_called_once_with(f'{fs.root_path}/projects')
     captured = capsys.readouterr()
     assert 'project_dir' in captured.out
     assert result.exit_code == 0
 
 
-def test_validate_report_command(fs, ccli, mocker, capsys):
-    mocker.patch.object(Config, 'validate')
+def test_validate_report_command(fs, ccli, mocker, capsys, config_mocker):
     mocked_validate_project = mocker.patch(
         'connect.cli.plugins.project.commands.validate_report_project',
         side_effect=print('Report Project connect/.data/logan has been successfully validated.'),
@@ -56,8 +51,7 @@ def test_validate_report_command(fs, ccli, mocker, capsys):
     assert 'Report Project connect/.data/logan has been successfully validated.' == captured.out.strip()
 
 
-def test_add_report_command(fs, ccli, mocker, capsys):
-    mocker.patch.object(Config, 'validate')
+def test_add_report_command(fs, ccli, mocker, capsys, config_mocker):
     mocked_add_report = mocker.patch(
         'connect.cli.plugins.project.commands.add_report',
         side_effect=print('successfully added'),
@@ -83,8 +77,7 @@ def test_add_report_command(fs, ccli, mocker, capsys):
     assert 'successfully added' == captured.out.strip()
 
 
-def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
-    mocker.patch.object(Config, 'validate')
+def test_bootstrap_extension_command(fs, ccli, mocker, capsys, config_mocker):
     mocked_bootstrap = mocker.patch(
         'connect.cli.plugins.project.commands.bootstrap_extension_project',
         side_effect=print('project_dir'),
@@ -108,8 +101,7 @@ def test_bootstrap_extension_command(fs, ccli, mocker, capsys):
     assert result.exit_code == 0
 
 
-def test_validate_extension_command(fs, ccli, mocker):
-    mocker.patch.object(Config, 'validate')
+def test_validate_extension_command(fs, ccli, mocker, config_mocker):
     mocked_validate_project = mocker.patch(
         'connect.cli.plugins.project.commands.validate_extension_project',
     )
@@ -128,8 +120,7 @@ def test_validate_extension_command(fs, ccli, mocker):
     mocked_validate_project.assert_called_once()
 
 
-def test_bump_extension_command(fs, ccli, mocker, capsys):
-    mocker.patch.object(Config, 'validate')
+def test_bump_extension_command(fs, ccli, mocker, capsys, config_mocker):
     mocked_bump_runner = mocker.patch(
         'connect.cli.plugins.project.commands.bump_runner_extension_project',
         side_effect=print('Runner version has been successfully updated'),

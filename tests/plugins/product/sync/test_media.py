@@ -5,7 +5,7 @@ from connect.cli.plugins.product.sync.media import MediaSynchronizer
 from connect.client import ConnectClient
 
 
-def test_no_action(get_sync_media_env):
+def test_no_action(mocker, get_sync_media_env):
     stats = SynchronizerStats()
     synchronizer = MediaSynchronizer(
         client=ConnectClient(
@@ -13,7 +13,7 @@ def test_no_action(get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -26,7 +26,7 @@ def test_no_action(get_sync_media_env):
     }
 
 
-def test_validate_no_position(fs, get_sync_media_env):
+def test_validate_no_position(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['A2'] = None
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
@@ -38,7 +38,7 @@ def test_validate_no_position(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -54,7 +54,7 @@ def test_validate_no_position(fs, get_sync_media_env):
     }
 
 
-def test_validate_no_valid_id(fs, get_sync_media_env):
+def test_validate_no_valid_id(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'update'
     get_sync_media_env['Media']['B2'] = 'wrong'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
@@ -66,7 +66,7 @@ def test_validate_no_valid_id(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -82,7 +82,7 @@ def test_validate_no_valid_id(fs, get_sync_media_env):
     }
 
 
-def test_validate_no_image_file(fs, get_sync_media_env):
+def test_validate_no_image_file(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'update'
     get_sync_media_env['Media']['E2'] = None
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
@@ -94,7 +94,7 @@ def test_validate_no_image_file(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -108,7 +108,7 @@ def test_validate_no_image_file(fs, get_sync_media_env):
     assert stats['Media']._row_errors == {2: ['Image file is required']}
 
 
-def test_validate_wrong_action(fs, get_sync_media_env):
+def test_validate_wrong_action(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'XYZ'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -119,7 +119,7 @@ def test_validate_wrong_action(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -135,7 +135,7 @@ def test_validate_wrong_action(fs, get_sync_media_env):
     }
 
 
-def test_validate_wrong_type(fs, get_sync_media_env):
+def test_validate_wrong_type(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'wrong'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
@@ -147,7 +147,7 @@ def test_validate_wrong_type(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -163,7 +163,7 @@ def test_validate_wrong_type(fs, get_sync_media_env):
     }
 
 
-def test_validate_wrong_file(fs, get_sync_media_env):
+def test_validate_wrong_file(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['E2'] = 'wrong.png'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
@@ -175,7 +175,7 @@ def test_validate_wrong_file(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -191,7 +191,7 @@ def test_validate_wrong_file(fs, get_sync_media_env):
     }
 
 
-def test_validate_invalid_no_video_url(fs, get_sync_media_env):
+def test_validate_invalid_no_video_url(mocker, fs, get_sync_media_env):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
@@ -205,7 +205,7 @@ def test_validate_invalid_no_video_url(fs, get_sync_media_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -222,7 +222,7 @@ def test_validate_invalid_no_video_url(fs, get_sync_media_env):
 
 
 @pytest.mark.parametrize('video_domain', ('goe.com', 'vimeo.comyoutube.com'))
-def test_validate_invalid_video_url(fs, get_sync_media_env, video_domain):
+def test_validate_invalid_video_url(mocker, fs, get_sync_media_env, video_domain):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
@@ -236,7 +236,7 @@ def test_validate_invalid_video_url(fs, get_sync_media_env, video_domain):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -253,7 +253,7 @@ def test_validate_invalid_video_url(fs, get_sync_media_env, video_domain):
     }
 
 
-def test_delete(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -264,7 +264,7 @@ def test_delete(fs, get_sync_media_env, mocked_responses, mocked_media_response)
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -283,7 +283,7 @@ def test_delete(fs, get_sync_media_env, mocked_responses, mocked_media_response)
     }
 
 
-def test_delete_404(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete_404(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -294,7 +294,7 @@ def test_delete_404(fs, get_sync_media_env, mocked_responses, mocked_media_respo
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -313,7 +313,7 @@ def test_delete_404(fs, get_sync_media_env, mocked_responses, mocked_media_respo
     }
 
 
-def test_delete_500(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+def test_delete_500(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'delete'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -324,7 +324,7 @@ def test_delete_500(fs, get_sync_media_env, mocked_responses, mocked_media_respo
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -344,7 +344,7 @@ def test_delete_500(fs, get_sync_media_env, mocked_responses, mocked_media_respo
     assert stats['Media']._row_errors == {2: ['500 Internal Server Error']}
 
 
-def test_update_image(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+def test_update_image(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'update'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -355,7 +355,7 @@ def test_update_image(fs, get_sync_media_env, mocked_responses, mocked_media_res
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -374,7 +374,7 @@ def test_update_image(fs, get_sync_media_env, mocked_responses, mocked_media_res
     }
 
 
-def test_update_image_404(fs, get_sync_media_env, mocked_responses, mocked_media_response):
+def test_update_image_404(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response):
     get_sync_media_env['Media']['C2'] = 'update'
     get_sync_media_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -385,7 +385,7 @@ def test_update_image_404(fs, get_sync_media_env, mocked_responses, mocked_media
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -406,7 +406,7 @@ def test_update_image_404(fs, get_sync_media_env, mocked_responses, mocked_media
 
 
 @pytest.mark.parametrize('domain', ('youtu.be', 'vimeo.com', 'youtube.com'))
-def test_create_video(fs, get_sync_media_env, mocked_responses, mocked_media_response, domain):
+def test_create_video(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response, domain):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
@@ -421,7 +421,7 @@ def test_create_video(fs, get_sync_media_env, mocked_responses, mocked_media_res
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

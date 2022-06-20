@@ -5,9 +5,6 @@
 
 from collections import namedtuple
 
-from tqdm import trange
-
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.product.constants import (
     BILLING_PERIOD,
     COMMITMENT,
@@ -31,20 +28,22 @@ _RowData = namedtuple('RowData', fields)
 
 
 class ItemSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
+    def __init__(self, client, progress, stats):
         self._units = list(client.ns('settings').units.all())
         self._mstats = stats['Items']
-        super().__init__(client, silent)
+        super().__init__(client, progress)
 
     def sync(self):  # noqa: CCR001
         ws = self._wb["Items"]
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-        for row_idx in row_indexes:
+        task = self._progress.add_task('Processing item', total=ws.max_row - 1)
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 14)])
-            row_indexes.set_description(f'Processing item {data.id or data.mpn}')
+            self._progress.update(
+                task,
+                description=f'Processing item {data.id or data.mpn}',
+                advance=1,
+            )
             if data.action == '-':
                 self._mstats.skipped()
                 continue
@@ -68,7 +67,10 @@ class ItemSynchronizer(ProductSynchronizer):
                         row_idx,
                     )
                     continue
-                row_indexes.set_description(f"Creating item {data[1]}")
+                self._progress.update(
+                    task,
+                    description=f'Creating item {data[1]}',
+                )
                 try:
                     item = create_item(
                         self._client,
@@ -93,7 +95,10 @@ class ItemSynchronizer(ProductSynchronizer):
                     )
                     continue
 
-                row_indexes.set_description(f"Updating item {item['id']}")
+                self._progress.update(
+                    task,
+                    description=f"Updating item {item['id']}",
+                )
                 if item['status'] == 'published':
                     payload = {
                         'name': data.name,
@@ -129,6 +134,11 @@ class ItemSynchronizer(ProductSynchronizer):
                         row_idx,
                     )
                     continue
+
+                self._progress.update(
+                    task,
+                    description=f"Deleting item {item['id']}",
+                )
                 try:
                     delete_item(
                         self._client,
@@ -138,6 +148,7 @@ class ItemSynchronizer(ProductSynchronizer):
                     self._mstats.deleted()
                 except Exception as e:
                     self._mstats.error(str(e), row_idx)
+        self._progress.update(task, completed=ws.max_row - 1)
 
     @staticmethod
     def _validate_commitment(row):

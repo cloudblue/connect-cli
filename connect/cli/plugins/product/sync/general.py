@@ -9,10 +9,10 @@ from connect.client import ClientError
 
 
 class GeneralSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent):
+    def __init__(self, client, progress):
         self._category = None
         self._media_path = None
-        super(GeneralSynchronizer, self).__init__(client, silent)
+        super(GeneralSynchronizer, self).__init__(client, progress)
 
     def open(self, input_file, worksheet):
         self._open_workbook(input_file)

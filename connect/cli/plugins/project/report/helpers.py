@@ -8,7 +8,6 @@ import importlib
 import tempfile
 import shutil
 
-import click
 from click import ClickException
 from cookiecutter.main import cookiecutter
 from cookiecutter.config import DEFAULT_CONFIG, get_user_config
@@ -17,6 +16,7 @@ from cookiecutter.generate import generate_context, generate_files
 from cookiecutter.repository import determine_repo_dir
 from interrogatio.core.dialog import dialogus
 
+from connect.cli.core.terminal import console
 from connect.cli.plugins.project.git import get_highest_version, GitException
 from connect.cli.plugins.project.utils import purge_dir
 from connect.cli.plugins.project.report.constants import (
@@ -43,7 +43,7 @@ def purge_cookiecutters_dir():
 
 
 def bootstrap_report_project(data_dir):
-    click.secho('Bootstraping report project...\n', fg='blue')
+    console.secho('Bootstraping report project...\n', fg='blue')
     purge_cookiecutters_dir()
     answers = dialogus(
         BOOTSTRAP_QUESTIONS,
@@ -67,7 +67,7 @@ def bootstrap_report_project(data_dir):
             extra_context=answers,
             output_dir=data_dir,
         )
-        click.secho(f'\nReports Project location: {project_dir}', fg='blue')
+        console.secho(f'\nReports Project location: {project_dir}', fg='blue')
     except GitException as error:
         raise ClickException(f'\nAn error occured on tags retrieval: {error}')
     except RepositoryCloneFailed as error:
@@ -82,7 +82,7 @@ def bootstrap_report_project(data_dir):
 
 
 def validate_report_project(project_dir):
-    click.secho(f'Validating project {project_dir}...\n', fg='blue')
+    console.secho(f'Validating project {project_dir}...\n', fg='blue')
 
     data = _file_descriptor_validations(project_dir)
     errors = validate_with_schema(data)
@@ -98,7 +98,7 @@ def validate_report_project(project_dir):
     for report in report_project.reports:
         _entrypoint_validations(project_dir, report.entrypoint, report.report_spec)
 
-    click.secho(f'Report Project {project_dir} has been successfully validated.', fg='green')
+    console.secho(f'Report Project {project_dir} has been successfully validated.', fg='green')
 
 
 def add_report(project_dir, package_name):
@@ -114,7 +114,7 @@ def add_report(project_dir, package_name):
     if errors:
         raise ClickException(f'Invalid `reports.json`: {errors}')
 
-    click.secho(f'Adding new report to project {project_dir}...\n', fg='blue')
+    console.secho(f'Adding new report to project {project_dir}...\n', fg='blue')
 
     with tempfile.TemporaryDirectory() as add_report_tmpdir:
 
@@ -138,7 +138,7 @@ def add_report(project_dir, package_name):
 
         _add_report_to_descriptor(project_dir, report_dir, package_name)
 
-        click.secho('\nReport has been successfully created.', fg='blue')
+        console.secho('\nReport has been successfully created.', fg='blue')
 
 
 def _custom_cookiecutter(template, output_dir, project_slug, package_slug):

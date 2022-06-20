@@ -18,9 +18,9 @@ from connect.cli.plugins.shared.utils import (
 
 
 class ProductSynchronizer:
-    def __init__(self, client, silent):
+    def __init__(self, client, progress):
         self._client = client
-        self._silent = silent
+        self._progress = progress
         self._product_id = None
         self._wb = None
         self._ws = None

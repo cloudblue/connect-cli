@@ -3,30 +3,19 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from openpyxl.worksheet.datavalidation import DataValidation
-from tqdm import trange
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
-from connect.cli.core.http import (
-    handle_http_error,
-)
+from connect.cli.core.http import handle_http_error
+from connect.cli.core.terminal import console
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.customer.constants import COL_HEADERS
-from connect.client import ClientError, ConnectClient, RequestLogger
+from connect.client import ClientError
 
 
-def dump_customers(api_url, api_key, account_id, output_file, silent, verbose=False, output_path=None):  # noqa: CCR001
+def dump_customers(client, account_id, output_file, output_path=None):  # noqa: CCR001
     output_file = validate_output_options(
         output_path, output_file, default_dir_name=account_id, default_file_name='customers',
     )
     try:
-        client = ConnectClient(
-            max_retries=3,
-            api_key=api_key,
-            endpoint=api_url,
-            use_specs=False,
-            default_limit=1000,
-            logger=RequestLogger() if verbose else None,
-        )
         wb = Workbook()
         _prepare_worksheet(wb.create_sheet('Customers'))
         _add_countries(wb.create_sheet('Countries'))
@@ -34,12 +23,13 @@ def dump_customers(api_url, api_key, account_id, output_file, silent, verbose=Fa
         customers = client.ns('tier').accounts.all()
         row_idx = 2
         count = customers.count()
-        progress = trange(0, count, disable=silent, leave=True, bar_format=DEFAULT_BAR_FORMAT)
-        for customer in customers:
-            progress.set_description(f'Processing customer {customer["id"]}')
-            progress.update(1)
-            _fill_customer_row(wb['Customers'], row_idx, customer)
-            row_idx += 1
+        with console.progress() as progress:
+            task = progress.add_task('Processing customer', total=count)
+            for customer in customers:
+                progress.update(task, description=f'Processing customer {customer["id"]}', advance=1)
+                _fill_customer_row(wb['Customers'], row_idx, customer)
+                row_idx += 1
+            progress.update(task, completed=count)
     except ClientError as error:
         handle_http_error(error)
 

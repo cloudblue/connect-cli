@@ -3,12 +3,10 @@ import sys
 import traceback
 from datetime import timezone
 from importlib import import_module
-from threading import Lock
 
 from click import ClickException
-from tqdm import tqdm
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
+from connect.cli.core.terminal import console
 from connect.client import ClientError
 
 
@@ -66,27 +64,27 @@ def handle_report_exception():
     raise ClickException(f'\n{msg}\nTrace: {trace_string}')
 
 
-class Progress(tqdm):
+class Progress:
     def __init__(self, report_name):
         super().__init__()
-        self.lock = Lock()
-        self.desc = f'Processing report {report_name}...'
-        self.leave = True
-        self.bar_format = DEFAULT_BAR_FORMAT
+        self._progress = console.progress()
+        self._progress.start()
+        self._task = self._progress.add_task(f'Processing report {report_name}...')
         self.current_value = 0
-        self.monitor_interval = 1
-        self.miniters = 1
+        self.total = 100
 
     def __call__(self, value, max_value):
-        self.lock.acquire()
-        self.total = max_value
-        self.update(value - self.current_value)
+        self._progress.update(
+            self._task,
+            total=max_value,
+            advance=value - self.current_value,
+        )
         self.current_value = value
-        self.lock.release()
+        self.total = max_value
 
     def close(self):
         if self.total is None:
             self.total = 100
         if self.current_value < self.total:
             self(self.total, self.total)
-        super().close()
+        self._progress.stop()

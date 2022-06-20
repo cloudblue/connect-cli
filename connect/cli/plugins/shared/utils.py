@@ -10,11 +10,9 @@ from openpyxl import load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
-from tqdm import trange
 
 from connect.client import ClientError
 from connect.cli.core.http import handle_http_error
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.shared.constants import (
     ACTIONS_HEADERS,
     CAPABILITIES_COLS_HEADERS,
@@ -99,14 +97,15 @@ def get_col_headers_by_ws_type(ws_type):
         return TRANSLATION_HEADERS
 
 
-def wait_for_autotranslation(client, translation, wait_seconds=1, max_counts=5, silent=False):
+def wait_for_autotranslation(client, progress, translation, wait_seconds=1, max_counts=5):
     if isinstance(translation, dict):
         translation_id = translation['id']
     else:
         translation_id = translation
-    progress = trange(0, max_counts, disable=silent, leave=False, bar_format=DEFAULT_BAR_FORMAT)
-    for _ in progress:
-        progress.set_description('Waiting for pending translation tasks')
+
+    task = progress.add_task('Waiting for pending translation tasks', total=max_counts)
+    for _ in range(max_counts):
+        progress.update(task, advance=1)
         sleep(wait_seconds)
         try:
             translation = client.ns('localization').translations[translation_id].get()

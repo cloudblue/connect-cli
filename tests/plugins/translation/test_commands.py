@@ -18,8 +18,8 @@ def test_export(config_mocker, mocker, ccli):
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-0000-0000-0000'
-    assert mock.mock_calls[0][1][3] is None
+    assert mock.mock_calls[0][1][1] == 'TRN-0000-0000-0000'
+    assert mock.mock_calls[0][1][2] is None
     assert result.exit_code == 0
     assert (
         'The translation TRN-0000-0000-0000 has been successfully '
@@ -45,8 +45,8 @@ def test_export_silent(config_mocker, mocker, ccli):
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-0000-0000-0000'
-    assert mock.mock_calls[0][1][3] is None
+    assert mock.mock_calls[0][1][1] == 'TRN-0000-0000-0000'
+    assert mock.mock_calls[0][1][2] is None
     assert result.exit_code == 0
     assert result.output == ''
 
@@ -96,8 +96,8 @@ def test_activate_translation(config_mocker, mocker, mocked_translation_response
         input='y\n',
     )
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Warning: You are about to activate this translation.' in result.output
     assert (
@@ -125,8 +125,8 @@ def test_activate_translation_silent(config_mocker, mocker, mocked_translation_r
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Warning: You are about to activate this translation.' not in result.output
 
@@ -169,8 +169,8 @@ def test_force_activate_translation(config_mocker, mocker, mocked_translation_re
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Are you sure you want to Activate the translation TRN-8100-3865-4869 ? [y/N]:' not in result.output
     assert (
@@ -197,8 +197,8 @@ def test_primarize_translation_command(config_mocker, mocker, mocked_translation
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Warning: You are about to make this translation primary.' in result.output
     assert (
@@ -226,8 +226,8 @@ def test_primarize_translation_silent(config_mocker, mocker, mocked_translation_
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Warning: You are about to make this translation primary.' not in result.output
 
@@ -270,8 +270,8 @@ def test_force_primarize_translation(config_mocker, mocker, mocked_translation_r
     )
 
     mock.assert_called_once()
-    assert mock.mock_calls[0][1][2] == 'TRN-8100-3865-4869'
-    assert mock.mock_calls[0][1][3] is False
+    assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
+
     assert result.exit_code == 0
     assert 'Are you sure you want to Primarize the translation TRN-8100-3865-4869 ?' not in result.output
     assert (
@@ -294,7 +294,6 @@ def test_sync_command_ok(config_mocker, fs, mocker, sample_translation_workbook,
     )
     runner = CliRunner()
     result = runner.invoke(ccli, ['translation', 'sync', f'{fs.root_path}/test.xlsx'])
-
     assert result.exit_code == 0
     translation_sync_mock.assert_called_once()
     wait_for_autotranslation_mock.assert_called_once()

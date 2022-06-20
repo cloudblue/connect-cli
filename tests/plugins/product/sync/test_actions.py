@@ -3,7 +3,7 @@ from connect.cli.plugins.product.sync.actions import ActionsSynchronizer
 from connect.client import ConnectClient
 
 
-def test_skipped(get_sync_actions_env):
+def test_skipped(mocker, get_sync_actions_env):
     stats = SynchronizerStats()
     synchronizer = ActionsSynchronizer(
         client=ConnectClient(
@@ -11,7 +11,7 @@ def test_skipped(get_sync_actions_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -24,7 +24,7 @@ def test_skipped(get_sync_actions_env):
     }
 
 
-def test_validate_wrong_action(fs, get_sync_actions_env):
+def test_validate_wrong_action(mocker, fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['C2'] = 'test'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -35,7 +35,7 @@ def test_validate_wrong_action(fs, get_sync_actions_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -52,7 +52,7 @@ def test_validate_wrong_action(fs, get_sync_actions_env):
     }
 
 
-def test_validate_no_verbose_id(fs, get_sync_actions_env):
+def test_validate_no_verbose_id(mocker, fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'update'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
@@ -64,7 +64,7 @@ def test_validate_no_verbose_id(fs, get_sync_actions_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -78,7 +78,7 @@ def test_validate_no_verbose_id(fs, get_sync_actions_env):
     assert stats['Actions']._row_errors == {2: ['Verbose ID is required for update action.']}
 
 
-def test_validate_wrong_id(fs, get_sync_actions_env):
+def test_validate_wrong_id(mocker, fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['B2'] = 'wrong id'
     get_sync_actions_env['Actions']['C2'] = 'update'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
@@ -90,7 +90,7 @@ def test_validate_wrong_id(fs, get_sync_actions_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -106,7 +106,7 @@ def test_validate_wrong_id(fs, get_sync_actions_env):
     }
 
 
-def test_validate_wrong_scope(fs, get_sync_actions_env):
+def test_validate_wrong_scope(mocker, fs, get_sync_actions_env):
     get_sync_actions_env['Actions']['C2'] = 'update'
     get_sync_actions_env['Actions']['G2'] = 'tier3'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
@@ -118,7 +118,7 @@ def test_validate_wrong_scope(fs, get_sync_actions_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -134,7 +134,7 @@ def test_validate_wrong_scope(fs, get_sync_actions_env):
     }
 
 
-def test_delete(fs, get_sync_actions_env, mocked_responses):
+def test_delete(mocker, fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -145,7 +145,7 @@ def test_delete(fs, get_sync_actions_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -164,7 +164,7 @@ def test_delete(fs, get_sync_actions_env, mocked_responses):
     }
 
 
-def test_delete_404(fs, get_sync_actions_env, mocked_responses):
+def test_delete_404(mocker, fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -175,7 +175,7 @@ def test_delete_404(fs, get_sync_actions_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -194,7 +194,7 @@ def test_delete_404(fs, get_sync_actions_env, mocked_responses):
     }
 
 
-def test_delete_500(fs, get_sync_actions_env, mocked_responses):
+def test_delete_500(mocker, fs, get_sync_actions_env, mocked_responses):
     get_sync_actions_env['Actions']['C2'] = 'delete'
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -205,7 +205,7 @@ def test_delete_500(fs, get_sync_actions_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -225,7 +225,7 @@ def test_delete_500(fs, get_sync_actions_env, mocked_responses):
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
 
-def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
+def test_update(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['C2'] = 'update'
 
     response = mocked_actions_response[0]
@@ -239,7 +239,7 @@ def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -258,7 +258,7 @@ def test_update(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
     }
 
 
-def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
+def test_update_500(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['C2'] = 'update'
 
     get_sync_actions_env.save(f'{fs.root_path}/test.xlsx')
@@ -270,7 +270,7 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -290,7 +290,7 @@ def test_update_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
 
-def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
+def test_create(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
     get_sync_actions_env['Actions']['B2'] = 'test_id'
@@ -306,7 +306,7 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -333,7 +333,7 @@ def test_create(fs, get_sync_actions_env, mocked_responses, mocked_actions_respo
     }
 
 
-def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
+def test_create_500(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
     get_sync_actions_env['Actions']['B2'] = 'test_id'
@@ -347,7 +347,7 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -376,7 +376,7 @@ def test_create_500(fs, get_sync_actions_env, mocked_responses, mocked_actions_r
 
 
 def test_create_skip_if_action_id_already_exists(
-    fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+    mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
 ):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
@@ -390,7 +390,7 @@ def test_create_skip_if_action_id_already_exists(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -412,7 +412,7 @@ def test_create_skip_if_action_id_already_exists(
 
 
 def test_skip_create_if_action_id_exists_but_update_if_differs_from_source(
-    fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+    mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
 ):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
@@ -429,7 +429,7 @@ def test_skip_create_if_action_id_exists_but_update_if_differs_from_source(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

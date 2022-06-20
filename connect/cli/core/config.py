@@ -9,8 +9,9 @@ from dataclasses import dataclass
 
 from click import ClickException, make_pass_decorator
 
-
+from connect.client import ConnectClient
 from connect.cli.core.constants import DEFAULT_ENDPOINT
+from connect.cli.core.http import RequestLogger
 
 
 @dataclass
@@ -19,6 +20,7 @@ class Account:
     name: str
     api_key: str
     endpoint: str
+    client: ConnectClient
 
     def is_vendor(self):
         return self.id.startswith('VA-')
@@ -31,12 +33,17 @@ class Config(object):
     def __init__(self):
         self._config_path = None
         self._active = None
-        self._silent = True
         self._accounts = {}
-        self._verbose = False
 
     def add_account(self, id, name, api_key, endpoint=DEFAULT_ENDPOINT):
-        self._accounts[id] = Account(id, name, api_key, endpoint)
+        client = ConnectClient(
+            api_key,
+            endpoint=endpoint,
+            use_specs=False,
+            max_retries=3,
+            logger=RequestLogger(),
+        )
+        self._accounts[id] = Account(id, name, api_key, endpoint, client)
         if not self._active:
             self._active = self._accounts[id]
 
@@ -48,28 +55,15 @@ class Config(object):
     def accounts(self):
         return self._accounts
 
-    @property
-    def silent(self):
-        return self._silent
-
-    @silent.setter
-    def silent(self, val):
-        self._silent = val
-
-    @property
-    def verbose(self):
-        return self._verbose
-
-    @verbose.setter
-    def verbose(self, val):
-        self._verbose = val
-
     def activate(self, id):
         account = self._accounts.get(id)
         if account:
             self._active = account
             return
         raise ClickException(f'The account identified by {id} does not exist.')
+
+    def exists(self, id):
+        return id in self._accounts
 
     def remove_account(self, id):
         if id in self._accounts:
@@ -92,14 +86,32 @@ class Config(object):
             data = json.load(f)
             active_account_id = data['active']
             for account_data in data['accounts']:
-                account = Account(**account_data)
+
+                account = Account(
+                    **account_data,
+                    client=ConnectClient(
+                        account_data['api_key'],
+                        endpoint=account_data['endpoint'],
+                        use_specs=False,
+                        max_retries=3,
+                        logger=RequestLogger(),
+                    ),
+                )
                 self._accounts[account.id] = account
                 if account.id == active_account_id:
                     self._active = account
 
     def store(self):
         with open(self._config_path, 'w') as f:
-            accounts = [account.__dict__ for account in self._accounts.values()]
+            accounts = [
+                {
+                    'id': account.id,
+                    'name': account.name,
+                    'api_key': account.api_key,
+                    'endpoint': account.endpoint,
+                }
+                for account in self._accounts.values()
+            ]
             f.write(
                 json.dumps(
                     {

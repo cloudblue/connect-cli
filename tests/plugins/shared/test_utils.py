@@ -45,7 +45,7 @@ def get_client():
     )
 
 
-def test_wait_for_autotranslation_ok(mocked_responses, mocked_translation_response):
+def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translation_response):
     mocked_translation_response['auto']['status'] = 'on'
     mocked_responses.add(
         method='GET',
@@ -55,7 +55,7 @@ def test_wait_for_autotranslation_ok(mocked_responses, mocked_translation_respon
     client = get_client()
 
     try:
-        wait_for_autotranslation(client, 'TRN-8100-3865-4869', wait_seconds=0.001, silent=True)
+        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
     except Exception as e:
         pytest.fail(f'Unexpected error: {str(e)}')
 
@@ -73,7 +73,7 @@ def test_wait_for_autotranslation_ok(mocked_responses, mocked_translation_respon
     ),
 ])
 def test_update_wait_autotranslate_fails(
-    mocked_responses, mocked_translation_response, wait_response_auto, expected_error_msg,
+    mocker, mocked_responses, mocked_translation_response, wait_response_auto, expected_error_msg,
 ):
     mocked_translation_response['auto'] = wait_response_auto
     mocked_responses.add(
@@ -84,12 +84,12 @@ def test_update_wait_autotranslate_fails(
     client = get_client()
 
     with pytest.raises(click.ClickException) as e:
-        wait_for_autotranslation(client, 'TRN-8100-3865-4869', wait_seconds=0.001, silent=True)
+        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
 
     assert str(e.value) == expected_error_msg
 
 
-def test_update_wait_autotranslate_error(mocked_responses, mocked_translation_response):
+def test_update_wait_autotranslate_error(mocker, mocked_responses, mocked_translation_response):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869',
@@ -98,6 +98,6 @@ def test_update_wait_autotranslate_error(mocked_responses, mocked_translation_re
     client = get_client()
 
     with pytest.raises(click.ClickException) as e:
-        wait_for_autotranslation(client, 'TRN-8100-3865-4869', wait_seconds=0.001, silent=True)
+        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
 
     assert str(e.value) == "500 - Internal Server Error: unexpected error."

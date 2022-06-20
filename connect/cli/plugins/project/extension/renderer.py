@@ -3,8 +3,8 @@ from string import Template
 
 from click import ClickException
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from rich.console import Console
 
+from connect.cli.core.terminal import console
 from connect.cli.plugins.project.utils import purge_dir
 
 
@@ -19,16 +19,15 @@ class BoilerplateRenderer:
             keep_trailing_newline=True,
             autoescape=select_autoescape(),
         )
-        self.console = Console()
 
     def render(self):
-        with self.console.status("[magenta]Generating extension project"):
+        with console.status("[magenta]Generating extension project"):
             directories = self._create_directories()
             templates = self.env.list_templates()
             for template in templates:
                 out_dir = template.rsplit('/', 2)[-2]
                 self._render_template(template, directories[out_dir])
-            self.console.print()
+            console.print()
         return directories['project_dir']
 
     def _create_directories(self):
@@ -40,14 +39,14 @@ class BoilerplateRenderer:
         package_dir = os.path.join(project_dir, self.context['package_name'])
         tests_dir = os.path.join(project_dir, 'tests')
         os.makedirs(package_dir)
-        self.console.print(f'Directory {package_dir} created [bold green]\u2713[/bold green]')
+        console.print(f'Directory {package_dir} created [bold green]\u2713[/bold green]')
         os.makedirs(tests_dir, exist_ok=True)
-        self.console.print(f'Directory {tests_dir} created [bold green]\u2713[/bold green]')
+        console.print(f'Directory {tests_dir} created [bold green]\u2713[/bold green]')
         github_dir = None
         if self.context['use_github_actions'] == 'y':
             github_dir = os.path.join(project_dir, '.github', 'workflows')
             os.makedirs(github_dir, exist_ok=True)
-            self.console.print(f'Directory {github_dir} created [bold green]\u2713[/bold green]')
+            console.print(f'Directory {github_dir} created [bold green]\u2713[/bold green]')
         return {
             'project_dir': project_dir,
             'package_dir': package_dir,
@@ -64,4 +63,4 @@ class BoilerplateRenderer:
         rendered = template.render(self.context)
         with open(output_file, 'w') as outstream:
             outstream.write(f'{rendered.rstrip()}\n')
-        self.console.print(f'File {output_file} generated [bold green]\u2713[/bold green]')
+        console.print(f'File {output_file} generated [bold green]\u2713[/bold green]')
