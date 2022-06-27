@@ -7,6 +7,7 @@ import pytest
 from click import ClickException
 from click.testing import CliRunner
 from openpyxl import load_workbook
+from responses import matchers
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.product.export import dump_product
@@ -168,7 +169,7 @@ def test_export_product(
     mocked_actions_response,
     mocked_configurations_response,
     mocked_locales_response,
-    mocked_primary_translation_response,
+    mocked_product_translations_response,
     mocked_translation_attributes_xlsx_response,
     sample_product_workbook,
 ):
@@ -243,14 +244,6 @@ def test_export_product(
         r'https:\/\/localhost\/public\/v1\/products\/PRD-276-377-545\/parameters\?eq\(phase,'
         r'configuration\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
     )
-    translation_query = re.compile(
-        r'https:\/\/localhost\/public\/v1\/localization\/translations\?eq\(context.instance_id,'
-        r'PRD-276-377-545\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
-    )
-    translation_query2 = re.compile(
-        r'https:\/\/localhost\/public\/v1\/localization\/translations\?and\(eq\(context.instance_id,'
-        r'PRD-276-377-545\),eq\(primary,true\)\)&limit\=(100|[1-9]?[0-9])\&offset\=0',
-    )
     mocked_responses.add(
         method='GET',
         url=ordering_query,
@@ -298,34 +291,46 @@ def test_export_product(
     )
     mocked_responses.add(
         method='GET',
-        url=(
-            'https://localhost/public/v1/localization/translations?'
-            'and(eq(context.instance_id,PRD-457-715-047),eq(primary,true))&limit=100&offset=0'
-        ),
-        json=mocked_primary_translation_response,
+        url='https://localhost/public/v1/localization/translations',
+        match=[
+            matchers.query_string_matcher(
+                'and(eq(context.instance_id,PRD-276-377-545),eq(primary,true))&limit=1&offset=0',
+            ),
+        ],
+        json=mocked_product_translations_response[0:1],
     )
     mocked_responses.add(
         method='GET',
-        url=translation_query,
-        json=mocked_primary_translation_response,
+        url='https://localhost/public/v1/localization/translations',
+        match=[
+            matchers.query_string_matcher(
+                'eq(context.instance_id,PRD-276-377-545)&limit=0&offset=0',
+            ),
+        ],
+        json=mocked_product_translations_response,
         headers={
-            'Content-Range': 'items 0-0/1',
+            'Content-Range': 'items 0-1/1',
         },
     )
     mocked_responses.add(
         method='GET',
-        url=translation_query2,
-        json=mocked_primary_translation_response,
+        url='https://localhost/public/v1/localization/translations',
+        match=[
+            matchers.query_string_matcher(
+                'eq(context.instance_id,PRD-276-377-545)&limit=100&offset=0',
+            ),
+        ],
+        json=mocked_product_translations_response,
         headers={
-            'Content-Range': 'items 0-0/1',
+            'Content-Range': 'items 0-1/1',
         },
     )
     mocked_responses.add(
         method='GET',
-        url='https://localhost/public/v1/localization/translations/TRN-1079-0833-9890/attributes',
-        body=mocked_translation_attributes_xlsx_response,
+        url=re.compile('https://localhost/public/v1/localization/translations/TRN-1079-0833-989(0|1)/attributes'),
+        body=mocked_translation_attributes_xlsx_response.read(),
         headers={
-            'Contet-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
     )
     output_file = dump_product(
