@@ -75,6 +75,28 @@ def test_clean_wb(
 
     for row in range(2, 11):
         assert cloned_wb['Capabilities'][f'B{row}'].value == 'update'
+    for row in range(2, 7):
+        assert cloned_wb['Embedding Static Resources'][f'C{row}'].value == 'create'
+    for row in range(2, 5):
+        assert cloned_wb['Media'][f'C{row}'].value == 'create'
+    for row in range(2, 8):
+        assert cloned_wb['Templates'][f'C{row}'].value == 'create'
+    for row in range(2, 20):
+        assert cloned_wb['Items'][f'C{row}'].value == 'create'
+    for row in range(2, 14):
+        assert cloned_wb['Ordering Parameters'][f'C{row}'].value == 'create'
+    for row in range(2, 4):
+        assert cloned_wb['Fulfillment Parameters'][f'C{row}'].value == 'create'
+    for row in range(2, 3):
+        assert cloned_wb['Configuration Parameters'][f'C{row}'].value == 'create'
+    for row in range(2, 4):
+        assert cloned_wb['Actions'][f'C{row}'].value == 'create'
+    for row in range(2, 4):
+        assert cloned_wb['Translations'][f'B{row}'].value == 'create'
+    for row in range(2, 32):
+        assert cloned_wb['FA (TRN-1079-0833-9890)'][f'C{row}'].value == '-'
+    for row in range(2, 32):
+        assert cloned_wb['ES-AR (TRN-1079-0833-9891)'][f'C{row}'].value == 'update'
 
 
 @freeze_time('2022-04-05 20:15:00')
