@@ -136,8 +136,8 @@ def mocked_locales_response():
 
 
 @pytest.fixture(scope='function')
-def mocked_primary_translation_response():
-    with open('./tests/fixtures/primary_translation_response.json') as response:
+def mocked_product_translations_response():
+    with open('./tests/fixtures/product_translations_response.json') as response:
         return json.load(response)
 
 

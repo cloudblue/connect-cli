@@ -245,7 +245,7 @@ class ProductCloner:
         for sheetname in get_translation_attributes_sheets(self.wb):
             ws = self.wb[sheetname]
             value = 'update'
-            if sheetname.split()[0] == self.wb['General Information']['B14'].value[0:2]:
+            if sheetname.split()[0] == self.wb['General Information']['B14'].value.split()[0]:
                 value = '-'
             for row in range(2, ws.max_row + 1):
                 ws[f'C{row}'].value = value
