@@ -5,9 +5,6 @@
 
 from collections import namedtuple
 
-from tqdm import trange
-
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.shared.constants import TEMPLATES_HEADERS
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.client import ClientError
@@ -18,8 +15,8 @@ _RowData = namedtuple('RowData', fields)
 
 
 class TemplatesSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
-        super().__init__(client, silent)
+    def __init__(self, client, progress, stats):
+        super().__init__(client, progress)
         self._mstats = stats['Templates']
         self._action_handlers = {
             'create': self._action_create,
@@ -30,37 +27,39 @@ class TemplatesSynchronizer(ProductSynchronizer):
     def sync(self):
         ws = self._wb["Templates"]
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-        for row_idx in row_indexes:
+        task = self._progress.add_task('Processing Template', total=ws.max_row - 1)
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 9)])
-            row_indexes.set_description(f'Processing Template {data.id or data.title}')
+            self._progress.update(
+                task,
+                description=f'Processing Template {data.id or data.title}',
+                advance=1,
+            )
             try:
                 if data.action == '-':
                     self._mstats.skipped()
                 else:
-                    self._process_row(data, ws, row_indexes, row_idx)
+                    self._process_row(data, ws, task, row_idx)
             except Exception as e:
                 self._mstats.error(str(e).split('\n'), row_idx)
 
-    def _process_row(self, data, ws, row_indexes, row_idx):
+    def _process_row(self, data, ws, task, row_idx):
         row_errors = self._validate_row(data)
         if row_errors:
             raise Exception('\n'.join(row_errors))
-        template = self._action_handlers[data.action](data, row_indexes)
+        template = self._action_handlers[data.action](data, task)
         if template:
             self._update_sheet_row(ws, row_idx, template)
 
-    def _action_create(self, data, row_indexes):
-        row_indexes.set_description(f"Creating template {data.title}")
+    def _action_create(self, data, task):
+        self._progress.update(task, description=f'Creating template {data.title}')
         payload = self._row_to_payload(data)
         template = self._client.products[self._product_id].templates.create(payload)
         self._mstats.created()
         return template
 
-    def _action_update(self, data, row_indexes):
-        row_indexes.set_description(f"Updating template {data.id}")
+    def _action_update(self, data, task):
+        self._progress.update(task, description=f'Updating template {data.id}')
 
         try:
             current = self._client.products[self._product_id].templates[data.id].get()
@@ -84,8 +83,8 @@ class TemplatesSynchronizer(ProductSynchronizer):
         self._mstats.updated()
         return template
 
-    def _action_delete(self, data, row_indexes):
-        row_indexes.set_description(f"Deleting template {data.id}")
+    def _action_delete(self, data, task):
+        self._progress.update(task, description=f'Deleting template {data.id}')
         try:
             self._client.products[self._product_id].templates[data.id].delete()
         except ClientError as e:

@@ -1,6 +1,7 @@
 import click
 import pytest
 
+from connect.client import ConnectClient
 from connect.cli.plugins.translation.activate import activate_translation
 
 
@@ -16,8 +17,11 @@ def test_activate_translation(
     )
 
     translation = activate_translation(
-        api_url='https://localhost/public/v1',
-        api_key='ApiKey XXX',
+        ConnectClient(
+            'ApiKey XXX',
+            endpoint='https://localhost/public/v1',
+            use_specs=False,
+        ),
         translation_id='TRN-8100-3865-4869',
     )
 
@@ -39,8 +43,11 @@ def test_translation_already_activated(mocked_responses):
 
     with pytest.raises(click.ClickException) as e:
         activate_translation(
-            api_url='https://localhost/public/v1',
-            api_key='ApiKey XXX',
+            ConnectClient(
+                'ApiKey XXX',
+                endpoint='https://localhost/public/v1',
+                use_specs=False,
+            ),
             translation_id='TRN-8100-3865-4869',
         )
 
@@ -55,8 +62,11 @@ def test_activate_translation_not_exists(mocked_responses):
     )
     with pytest.raises(click.ClickException) as e:
         activate_translation(
-            api_url='https://localhost/public/v1',
-            api_key='ApiKey XXX',
+            ConnectClient(
+                'ApiKey XXX',
+                endpoint='https://localhost/public/v1',
+                use_specs=False,
+            ),
             translation_id='TRN-0000-0000-0000',
         )
     assert str(e.value) == '404 - Not Found: Translation TRN-0000-0000-0000 not found.'

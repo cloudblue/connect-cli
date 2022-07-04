@@ -9,7 +9,7 @@ from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
 from connect.client import ConnectClient
 
 
-def test_skipped(fs, get_sync_translations_env):
+def test_skipped(mocker, fs, get_sync_translations_env):
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
     stats = SynchronizerStats()
@@ -19,7 +19,7 @@ def test_skipped(fs, get_sync_translations_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -32,7 +32,7 @@ def test_skipped(fs, get_sync_translations_env):
     }
 
 
-def test_validate_invalid_action(fs, get_sync_translations_env):
+def test_validate_invalid_action(mocker, fs, get_sync_translations_env):
     get_sync_translations_env['Translations']['B3'] = 'invalid'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -43,7 +43,7 @@ def test_validate_invalid_action(fs, get_sync_translations_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -60,7 +60,7 @@ def test_validate_invalid_action(fs, get_sync_translations_env):
 
 
 @pytest.mark.parametrize('action', ('-', 'create', 'update', 'delete'))
-def test_validate_primary_is_skipped(fs, get_sync_translations_env, action):
+def test_validate_primary_is_skipped(mocker, fs, get_sync_translations_env, action):
     get_sync_translations_env['Translations']['B2'] = action
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -71,7 +71,7 @@ def test_validate_primary_is_skipped(fs, get_sync_translations_env, action):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -84,7 +84,7 @@ def test_validate_primary_is_skipped(fs, get_sync_translations_env, action):
     }
 
 
-def test_validate_translation_id(fs, get_sync_translations_env):
+def test_validate_translation_id(mocker, fs, get_sync_translations_env):
     get_sync_translations_env['Translations']['A3'] = None
     get_sync_translations_env['Translations']['B3'] = 'update'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
@@ -96,7 +96,7 @@ def test_validate_translation_id(fs, get_sync_translations_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -112,7 +112,7 @@ def test_validate_translation_id(fs, get_sync_translations_env):
     }
 
 
-def test_validate_autotranslation(fs, get_sync_translations_env):
+def test_validate_autotranslation(mocker, fs, get_sync_translations_env):
     get_sync_translations_env['Translations']['B3'] = 'update'
     get_sync_translations_env['Translations']['I3'] = 'invalid'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
@@ -124,7 +124,7 @@ def test_validate_autotranslation(fs, get_sync_translations_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -140,7 +140,7 @@ def test_validate_autotranslation(fs, get_sync_translations_env):
     }
 
 
-def test_validate_locale(fs, get_sync_translations_env):
+def test_validate_locale(mocker, fs, get_sync_translations_env):
     get_sync_translations_env['Translations']['B3'] = 'create'
     get_sync_translations_env['Translations']['G3'] = None
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
@@ -152,7 +152,7 @@ def test_validate_locale(fs, get_sync_translations_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -168,7 +168,7 @@ def test_validate_locale(fs, get_sync_translations_env):
     }
 
 
-def test_delete_translation(fs, get_sync_translations_env, mocked_responses):
+def test_delete_translation(mocker, fs, get_sync_translations_env, mocked_responses):
     get_sync_translations_env['Translations']['B3'] = 'delete'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -179,7 +179,7 @@ def test_delete_translation(fs, get_sync_translations_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -197,7 +197,7 @@ def test_delete_translation(fs, get_sync_translations_env, mocked_responses):
     }
 
 
-def test_delete_translation_not_found_is_ok(fs, get_sync_translations_env, mocked_responses):
+def test_delete_translation_not_found_is_ok(mocker, fs, get_sync_translations_env, mocked_responses):
     get_sync_translations_env['Translations']['B3'] = 'delete'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -208,7 +208,7 @@ def test_delete_translation_not_found_is_ok(fs, get_sync_translations_env, mocke
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -226,7 +226,7 @@ def test_delete_translation_not_found_is_ok(fs, get_sync_translations_env, mocke
     }
 
 
-def test_delete_translation_fails(fs, get_sync_translations_env, mocked_responses):
+def test_delete_translation_fails(mocker, fs, get_sync_translations_env, mocked_responses):
     get_sync_translations_env['Translations']['B3'] = 'delete'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -237,7 +237,7 @@ def test_delete_translation_fails(fs, get_sync_translations_env, mocked_response
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -259,7 +259,7 @@ def test_delete_translation_fails(fs, get_sync_translations_env, mocked_response
 
 
 def test_update_translation(
-    fs, get_sync_translations_env, mocked_new_translation_response, mocked_responses,
+    mocker, fs, get_sync_translations_env, mocked_new_translation_response, mocked_responses,
 ):
     get_sync_translations_env['Translations']['B3'] = 'update'
     get_sync_translations_env['Translations']['H3'] = 'la nueva descripción'
@@ -273,7 +273,7 @@ def test_update_translation(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     response = deepcopy(mocked_new_translation_response)
@@ -295,7 +295,7 @@ def test_update_translation(
 
 
 def test_create_translation(
-    fs, get_sync_translations_env, mocked_new_translation_response, mocked_responses,
+    mocker, fs, get_sync_translations_env, mocked_new_translation_response, mocked_responses,
 ):
     get_sync_translations_env['Translations']['B4'] = 'create'
     get_sync_translations_env['Translations']['G4'] = 'JA (Japanese)'
@@ -310,7 +310,7 @@ def test_create_translation(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -356,7 +356,7 @@ def test_create_translation(
 
 
 def test_create_translation_locale_not_autotranslation_error(
-    fs, get_sync_translations_env, mocked_responses,
+    mocker, fs, get_sync_translations_env, mocked_responses,
 ):
     get_sync_translations_env['Translations']['B4'] = 'create'
     get_sync_translations_env['Translations']['G4'] = 'ES-AR (Argentinian Spanish)'
@@ -371,7 +371,7 @@ def test_create_translation_locale_not_autotranslation_error(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -404,7 +404,7 @@ def test_create_translation_locale_not_autotranslation_error(
     }
 
 
-def test_create_translation_get_context_error(fs, get_sync_translations_env, mocked_responses):
+def test_create_translation_get_context_error(mocker, fs, get_sync_translations_env, mocked_responses):
     get_sync_translations_env['Translations']['B4'] = 'create'
     get_sync_translations_env['Translations']['G4'] = 'JA (Japanese)'
     get_sync_translations_env['Translations']['H4'] = 'This is the japanese translation'
@@ -418,7 +418,7 @@ def test_create_translation_get_context_error(fs, get_sync_translations_env, moc
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -437,7 +437,7 @@ def test_create_translation_get_context_error(fs, get_sync_translations_env, moc
     assert stats['Translations']._errors == ['500 Internal Server Error']
 
 
-def test_several_actions_order_is_ok(fs, mocked_new_translation_response, mocked_responses_ordered):
+def test_several_actions_order_is_ok(mocker, fs, mocked_new_translation_response, mocked_responses_ordered):
     wb = load_workbook('./tests/fixtures/translations_sync.xlsx')
     wb['Translations']['B2'] = 'update'
     wb['Translations']['H2'] = 'new description'
@@ -458,7 +458,7 @@ def test_several_actions_order_is_ok(fs, mocked_new_translation_response, mocked
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses_ordered.add(
@@ -511,7 +511,7 @@ def test_several_actions_order_is_ok(fs, mocked_new_translation_response, mocked
     }
 
 
-def test_locales_validation_still_present_after_update(fs, get_sync_translations_env):
+def test_locales_validation_still_present_after_update(mocker, fs, get_sync_translations_env):
     get_sync_translations_env['Translations']['B3'] = 'update'
     get_sync_translations_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -522,7 +522,7 @@ def test_locales_validation_still_present_after_update(fs, get_sync_translations
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

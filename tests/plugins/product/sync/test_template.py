@@ -5,7 +5,7 @@ from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer
 from connect.client import ConnectClient
 
 
-def test_no_action(get_sync_templates_env):
+def test_no_action(mocker, get_sync_templates_env):
     stats = SynchronizerStats()
     synchronizer = TemplatesSynchronizer(
         client=ConnectClient(
@@ -13,7 +13,7 @@ def test_no_action(get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -26,7 +26,7 @@ def test_no_action(get_sync_templates_env):
     }
 
 
-def test_invalid_scope(fs, get_sync_templates_env):
+def test_invalid_scope(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['D2'] = 'noscope'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -38,7 +38,7 @@ def test_invalid_scope(fs, get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -54,7 +54,7 @@ def test_invalid_scope(fs, get_sync_templates_env):
     }
 
 
-def test_invalid_type(fs, get_sync_templates_env):
+def test_invalid_type(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['E2'] = 'invalid'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -66,7 +66,7 @@ def test_invalid_type(fs, get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -83,7 +83,7 @@ def test_invalid_type(fs, get_sync_templates_env):
     }
 
 
-def test_invalid_tier_type(fs, get_sync_templates_env):
+def test_invalid_tier_type(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['D2'] = 'tier1'
     get_sync_templates_env['Templates']['E2'] = 'inquire'
@@ -96,7 +96,7 @@ def test_invalid_tier_type(fs, get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -112,7 +112,7 @@ def test_invalid_tier_type(fs, get_sync_templates_env):
     }
 
 
-def test_invalid_no_title(fs, get_sync_templates_env):
+def test_invalid_no_title(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['B2'] = None
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -124,7 +124,7 @@ def test_invalid_no_title(fs, get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -138,7 +138,7 @@ def test_invalid_no_title(fs, get_sync_templates_env):
     assert stats['Templates']._row_errors == {2: ['Title and Content are required']}
 
 
-def test_invalid_id(fs, get_sync_templates_env):
+def test_invalid_id(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'update'
     get_sync_templates_env['Templates']['A2'] = 'XTL-1234'
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -150,7 +150,7 @@ def test_invalid_id(fs, get_sync_templates_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -164,7 +164,7 @@ def test_invalid_id(fs, get_sync_templates_env):
     assert stats['Templates']._row_errors == {2: ['Update operation requires template id']}
 
 
-def test_create_template(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
+def test_create_template(mocker, fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['A2'] = None
 
@@ -177,7 +177,7 @@ def test_create_template(fs, get_sync_templates_env, mocked_templates_response, 
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -196,7 +196,7 @@ def test_create_template(fs, get_sync_templates_env, mocked_templates_response, 
     }
 
 
-def test_create_template_error(fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
+def test_create_template_error(mocker, fs, get_sync_templates_env, mocked_templates_response, mocked_responses):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['A2'] = None
 
@@ -209,7 +209,7 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -230,7 +230,7 @@ def test_create_template_error(fs, get_sync_templates_env, mocked_templates_resp
 
 
 def test_create_template_for_tier_scope_ignore_type(
-    fs, get_sync_templates_env, mocked_templates_response, mocked_responses,
+    mocker, fs, get_sync_templates_env, mocked_templates_response, mocked_responses,
 ):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['A2'] = None
@@ -246,7 +246,7 @@ def test_create_template_for_tier_scope_ignore_type(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -280,6 +280,7 @@ def test_create_template_for_tier_scope_ignore_type(
 
 
 def test_update_template_not_exists(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -296,7 +297,7 @@ def test_update_template_not_exists(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -320,6 +321,7 @@ def test_update_template_not_exists(
 
 
 def test_delete_template_not_exists(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -336,7 +338,7 @@ def test_delete_template_not_exists(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -356,6 +358,7 @@ def test_delete_template_not_exists(
 
 
 def test_delete_template_500(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -372,7 +375,7 @@ def test_delete_template_500(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -392,7 +395,7 @@ def test_delete_template_500(
     assert stats['Templates']._row_errors == {2: ['500 Internal Server Error']}
 
 
-def test_delete_template(fs, get_sync_templates_env, mocked_responses):
+def test_delete_template(mocker, fs, get_sync_templates_env, mocked_responses):
     get_sync_templates_env['Templates']['C2'] = 'delete'
 
     get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
@@ -404,7 +407,7 @@ def test_delete_template(fs, get_sync_templates_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -424,6 +427,7 @@ def test_delete_template(fs, get_sync_templates_env, mocked_responses):
 
 
 def test_update_template_switch_type(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -441,7 +445,7 @@ def test_update_template_switch_type(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -465,6 +469,7 @@ def test_update_template_switch_type(
 
 
 def test_update_template(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -480,7 +485,7 @@ def test_update_template(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -506,6 +511,7 @@ def test_update_template(
 
 
 def test_update_template_exception(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -521,7 +527,7 @@ def test_update_template_exception(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -548,6 +554,7 @@ def test_update_template_exception(
 
 
 def test_update_template_for_tier_scope_ignore_type(
+    mocker,
     fs,
     get_sync_templates_env,
     mocked_templates_response,
@@ -566,7 +573,7 @@ def test_update_template_for_tier_scope_ignore_type(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

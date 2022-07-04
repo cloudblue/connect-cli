@@ -1,4 +1,12 @@
+from zipfile import BadZipFile
+
+import pytest
+from click import ClickException
+from openpyxl import Workbook
+from openpyxl.utils.exceptions import InvalidFileException
+
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.client import ConnectClient
 
 
@@ -17,7 +25,6 @@ def test_sync_all_skip(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -35,7 +42,6 @@ def test_bad_action(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -51,7 +57,6 @@ def test_bad_account(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -67,7 +72,6 @@ def test_empty_address(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -82,7 +86,6 @@ def test_create_existing(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -101,7 +104,6 @@ def test_create_customer_no_parent(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -117,7 +119,6 @@ def test_update_customer_no_id(fs, customers_workbook):
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -137,7 +138,6 @@ def test_update_customer_no_account_connect(fs, customers_workbook, mocked_respo
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -158,7 +158,6 @@ def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -185,7 +184,6 @@ def test_create_account_connect_uuid(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -217,7 +215,6 @@ def test_create_account_connect_parent_id(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -244,7 +241,6 @@ def test_create_account_connect_parent_id_not_found(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -288,7 +284,6 @@ def test_create_account_connect_parent_external_id(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -319,7 +314,6 @@ def test_create_account_connect_parent_external_id_not_found(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -350,7 +344,6 @@ def test_create_account_connect_parent_external_id_more_than_one(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -394,7 +387,6 @@ def test_create_account_connect_parent_external_uid(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -425,7 +417,6 @@ def test_create_account_connect_parent_external_uid_not_found(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
@@ -456,8 +447,125 @@ def test_create_account_connect_parent_external_uid_more_than_one(
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
         client=client,
-        silent=True,
     )
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
     assert synchronizer.stats._row_errors == {3: ['More than one Parent with external_uid TA-7374-0753-1907']}
+
+
+def test_open_invalid_file(mocker):
+    mocker.patch(
+        'connect.cli.plugins.customer.sync.load_workbook',
+        side_effect=InvalidFileException('it is a json!'),
+    )
+
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=None,
+    )
+
+    with pytest.raises(ClickException) as cv:
+        synchronizer.open('file.xlsx', 'Customers')
+
+    assert str(cv.value) == 'it is a json!'
+
+
+def test_open_bad_zip(mocker):
+    mocker.patch(
+        'connect.cli.plugins.customer.sync.load_workbook',
+        side_effect=BadZipFile(),
+    )
+
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=None,
+    )
+
+    with pytest.raises(ClickException) as cv:
+        synchronizer.open('file.xlsx', 'Customers')
+
+    assert str(cv.value) == 'file.xlsx is not a valid xlsx file.'
+
+
+def test_open_sheet_not_found(mocker):
+    mocker.patch(
+        'connect.cli.plugins.customer.sync.load_workbook',
+        return_value=Workbook(),
+    )
+
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=None,
+    )
+
+    with pytest.raises(SheetNotFoundError) as cv:
+        synchronizer.open('file.xlsx', 'Customers')
+
+    assert str(cv.value) == 'File does not contain Customers to synchronize, skipping'
+
+
+def test_open_invalid_columns(mocker):
+    wb = Workbook()
+    ws = wb.create_sheet('Customers')
+    ws['A1'].value = 'Invalid column'
+    mocker.patch(
+        'connect.cli.plugins.customer.sync.load_workbook',
+        return_value=wb,
+    )
+
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=None,
+    )
+
+    with pytest.raises(ClickException) as cv:
+        synchronizer.open('file.xlsx', 'Customers')
+
+    assert str(cv.value) == 'Column `A1` must be `ID` and is `Invalid column`.'
+
+
+def test_populate_hubs(mocker, mocked_responses):
+    mocker.patch(
+        'connect.cli.plugins.customer.sync.load_workbook',
+        return_value=Workbook(),
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/hubs?limit=100&offset=0',
+        json=[
+            {
+                'id': 'HB-001',
+                'instance': {'type': 'custom'},
+            },
+            {
+                'id': 'HB-002',
+                'instance': {'type': 'OA'},
+            },
+        ],
+        headers={
+            'Content-Range': 'items 0-2/2',
+        },
+    )
+
+    synchronizer = CustomerSynchronizer(
+        account_id='PA-123',
+        client=get_client(),
+    )
+    synchronizer.populate_hubs()
+
+    assert synchronizer.hubs == [
+        'HB-0000-0000',
+        'HB-001',
+    ]
+
+
+def test_save(mocker):
+    synchronizer = CustomerSynchronizer(
+        account_id='PA-123',
+        client=None,
+    )
+    synchronizer._wb = mocker.MagicMock()
+
+    synchronizer.save('file.xlsx')
+
+    synchronizer._wb.save.assert_called_once_with('file.xlsx')

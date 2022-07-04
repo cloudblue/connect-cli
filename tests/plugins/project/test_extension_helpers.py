@@ -39,7 +39,7 @@ def test_bootstrap_extension_project_background(
     with_github_actions,
 ):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.click.echo')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(
         'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         return_value=runner_version,
@@ -191,7 +191,7 @@ def test_bootstrap_extension_project_interactive(
     with_github_actions,
 ):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.click.echo')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(
         'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         return_value=runner_version,
@@ -382,7 +382,7 @@ def test_bootstrap_wizard_cancel(mocker):
 
 def test_validate_extension_project(mocker, faker, fs, mocked_responses, config_vendor, capsys):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.click.echo')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(
         'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         side_effect=runner_version,
@@ -448,7 +448,7 @@ def test_validate_extension_project(mocker, faker, fs, mocked_responses, config_
 
 def test_validate_extension_project_error_exit(mocker, faker, fs, mocked_responses, config_vendor, capsys):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.click.echo')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(
         'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         side_effect=runner_version,

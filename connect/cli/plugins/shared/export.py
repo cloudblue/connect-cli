@@ -8,25 +8,19 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.filters import AutoFilter
 from openpyxl.utils import get_column_letter
 
-from connect.client import ClientError, ConnectClient
-from connect.client.utils import get_headers
+from connect.client import ClientError
 from connect.cli.core.http import format_http_status, handle_http_error
-from connect.cli.plugins.translation.utils import insert_column_ws, logged_request
+from connect.cli.plugins.translation.utils import insert_column_ws
 
 EXCEL_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 
-def _get_translation_workbook(api_url, api_key, translation_id, verbose=False):
+def get_translation_workbook(client, translation_id):
     try:
-        client = ConnectClient(api_key=api_key, endpoint=api_url, use_specs=False)
-        attributes_path = client.ns('localization').translations[translation_id].attributes.path
-        url = f'{api_url}/{attributes_path}'
-        response = logged_request('GET', url, verbose, headers={
-            'Content-type': EXCEL_CONTENT_TYPE, **get_headers(api_key),
-        })
-        if response.status_code != 200:
-            raise ClientError(status_code=response.status_code)
-        return load_workbook(filename=BytesIO(response.content))
+        xls_data = client.ns('localization').translations[translation_id].action('attributes').get(
+            headers={'Accept': EXCEL_CONTENT_TYPE},
+        )
+        return load_workbook(filename=BytesIO(xls_data))
     except ClientError as error:
         if error.status_code == 404:
             status = format_http_status(error.status_code)
@@ -34,7 +28,7 @@ def _get_translation_workbook(api_url, api_key, translation_id, verbose=False):
         handle_http_error(error)
 
 
-def _alter_attributes_sheet(ws):
+def alter_attributes_sheet(ws):
     # Search for the 'value' column
     for col_idx in range(1, ws.max_column + 1):
         if ws.cell(1, col_idx).value.lower() == 'value':

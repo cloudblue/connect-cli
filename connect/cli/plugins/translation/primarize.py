@@ -1,15 +1,16 @@
 import click
 
-from connect.client import ClientError, ConnectClient, RequestLogger
+from connect.client import ClientError, ConnectClient
 from connect.cli.core.http import (
     format_http_status,
     handle_http_error,
+    RequestLogger,
 )
 
 
 def primarize_translation(
     api_url, api_key,
-    translation_id, verbose=False,
+    translation_id,
 ):
     try:
         client = ConnectClient(
@@ -17,7 +18,7 @@ def primarize_translation(
             endpoint=api_url,
             use_specs=False,
             max_retries=3,
-            logger=RequestLogger() if verbose else None,
+            logger=RequestLogger(),
         )
         payload = {
             'primary': True,

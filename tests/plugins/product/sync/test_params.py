@@ -3,7 +3,7 @@ from connect.cli.plugins.product.sync.params import ParamsSynchronizer
 from connect.client import ConnectClient
 
 
-def test_skipped(get_sync_params_env):
+def test_skipped(mocker, get_sync_params_env):
 
     stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
@@ -12,7 +12,7 @@ def test_skipped(get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -25,7 +25,7 @@ def test_skipped(get_sync_params_env):
     }
 
 
-def test_skipped_fulfillment(get_sync_params_env):
+def test_skipped_fulfillment(mocker, get_sync_params_env):
 
     stats = SynchronizerStats()
     synchronizer = ParamsSynchronizer(
@@ -34,7 +34,7 @@ def test_skipped_fulfillment(get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -47,7 +47,7 @@ def test_skipped_fulfillment(get_sync_params_env):
     }
 
 
-def test_validate_no_id(fs, get_sync_params_env):
+def test_validate_no_id(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['A2'] = None
     get_sync_params_env['Ordering Parameters']['B2'] = None
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
@@ -60,7 +60,7 @@ def test_validate_no_id(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -74,7 +74,7 @@ def test_validate_no_id(fs, get_sync_params_env):
     assert stats['Ordering Parameters']._row_errors == {2: ['Parameter must have an id']}
 
 
-def test_validate_invalid_id(fs, get_sync_params_env):
+def test_validate_invalid_id(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['B2'] = 'XKL#'
     get_sync_params_env['Ordering Parameters']['C2'] = 'update'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -86,7 +86,7 @@ def test_validate_invalid_id(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -102,7 +102,7 @@ def test_validate_invalid_id(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_switch(fs, get_sync_params_env):
+def test_validate_invalid_switch(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['F2'] = 'fulfillment'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -114,7 +114,7 @@ def test_validate_invalid_switch(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -131,7 +131,7 @@ def test_validate_invalid_switch(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_action(fs, get_sync_params_env):
+def test_validate_invalid_action(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'update'
     get_sync_params_env['Ordering Parameters']['A2'] = None
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -143,7 +143,7 @@ def test_validate_invalid_action(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -159,7 +159,7 @@ def test_validate_invalid_action(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_param_type(fs, get_sync_params_env):
+def test_validate_invalid_param_type(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['H2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -171,7 +171,7 @@ def test_validate_invalid_param_type(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -188,7 +188,7 @@ def test_validate_invalid_param_type(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_scope(fs, get_sync_params_env):
+def test_validate_invalid_scope(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['G2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -200,7 +200,7 @@ def test_validate_invalid_scope(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -216,7 +216,7 @@ def test_validate_invalid_scope(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_scope_config(fs, get_sync_params_env):
+def test_validate_invalid_scope_config(mocker, fs, get_sync_params_env):
     get_sync_params_env['Configuration Parameters']['C2'] = 'create'
     get_sync_params_env['Configuration Parameters']['G2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -228,7 +228,7 @@ def test_validate_invalid_scope_config(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -245,7 +245,7 @@ def test_validate_invalid_scope_config(fs, get_sync_params_env):
     }
 
 
-def test_validate_invalid_required(fs, get_sync_params_env):
+def test_validate_invalid_required(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['I2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -257,7 +257,7 @@ def test_validate_invalid_required(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -271,7 +271,7 @@ def test_validate_invalid_required(fs, get_sync_params_env):
     assert stats['Ordering Parameters']._row_errors == {2: ['Required must be either True or `-`']}
 
 
-def test_validate_invalid_required2(fs, get_sync_params_env):
+def test_validate_invalid_required2(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['J2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -283,7 +283,7 @@ def test_validate_invalid_required2(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -297,7 +297,7 @@ def test_validate_invalid_required2(fs, get_sync_params_env):
     assert stats['Ordering Parameters']._row_errors == {2: ['Unique must be either True or `-`']}
 
 
-def test_validate_invalid_required3(fs, get_sync_params_env):
+def test_validate_invalid_required3(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['K2'] = 'rocket'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -309,7 +309,7 @@ def test_validate_invalid_required3(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -323,7 +323,7 @@ def test_validate_invalid_required3(fs, get_sync_params_env):
     assert stats['Ordering Parameters']._row_errors == {2: ['Hidden must be either True or `-`']}
 
 
-def test_validate_invalid_json(fs, get_sync_params_env):
+def test_validate_invalid_json(mocker, fs, get_sync_params_env):
     get_sync_params_env['Ordering Parameters']['C2'] = 'create'
     get_sync_params_env['Ordering Parameters']['L2'] = 'nojson'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
@@ -335,7 +335,7 @@ def test_validate_invalid_json(fs, get_sync_params_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -349,7 +349,7 @@ def test_validate_invalid_json(fs, get_sync_params_env):
     assert stats['Ordering Parameters']._row_errors == {2: ['JSON properties must have json format']}
 
 
-def test_validate_delete(fs, get_sync_params_env, mocked_responses):
+def test_validate_delete(mocker, fs, get_sync_params_env, mocked_responses):
     get_sync_params_env['Ordering Parameters']['C2'] = 'delete'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -360,7 +360,7 @@ def test_validate_delete(fs, get_sync_params_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -379,7 +379,7 @@ def test_validate_delete(fs, get_sync_params_env, mocked_responses):
     }
 
 
-def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
+def test_validate_delete_not_found(mocker, fs, get_sync_params_env, mocked_responses):
     get_sync_params_env['Ordering Parameters']['C2'] = 'delete'
     get_sync_params_env.save(f'{fs.root_path}/test.xlsx')
 
@@ -390,7 +390,7 @@ def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -410,6 +410,7 @@ def test_validate_delete_not_found(fs, get_sync_params_env, mocked_responses):
 
 
 def test_validate_update_invalid_switch(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -427,7 +428,7 @@ def test_validate_update_invalid_switch(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -450,6 +451,7 @@ def test_validate_update_invalid_switch(
 
 
 def test_validate_update_invalid_switch_phase(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -469,7 +471,7 @@ def test_validate_update_invalid_switch_phase(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -490,6 +492,7 @@ def test_validate_update_invalid_switch_phase(
 
 
 def test_validate_update_invalid_switch_scope(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -509,7 +512,7 @@ def test_validate_update_invalid_switch_scope(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -530,6 +533,7 @@ def test_validate_update_invalid_switch_scope(
 
 
 def test_validate_update(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -548,7 +552,7 @@ def test_validate_update(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -574,6 +578,7 @@ def test_validate_update(
 
 
 def test_validate_create(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -592,7 +597,7 @@ def test_validate_create(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -617,6 +622,7 @@ def test_validate_create(
 
 
 def test_validate_create_connect_error(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -633,7 +639,7 @@ def test_validate_create_connect_error(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -659,6 +665,7 @@ def test_validate_create_connect_error(
 
 
 def test_validate_create_no_constrains(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -678,7 +685,7 @@ def test_validate_create_no_constrains(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -703,6 +710,7 @@ def test_validate_create_no_constrains(
 
 
 def test_validate_skip_create_if_already_exists(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -719,7 +727,7 @@ def test_validate_skip_create_if_already_exists(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(
@@ -738,6 +746,7 @@ def test_validate_skip_create_if_already_exists(
 
 
 def test_validate_skip_create_but_update_if_differs_from_source(
+    mocker,
     fs,
     get_sync_params_env,
     mocked_responses,
@@ -755,7 +764,7 @@ def test_validate_skip_create_but_update_if_differs_from_source(
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=mocker.MagicMock(),
         stats=stats,
     )
     mocked_responses.add(

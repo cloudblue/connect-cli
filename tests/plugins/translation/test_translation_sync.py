@@ -21,7 +21,7 @@ def test_sheet_not_found(fs, sample_translation_workbook):
     del sample_translation_workbook['General']
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
 
     with pytest.raises(SheetNotFoundError) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx')
@@ -34,7 +34,7 @@ def test_sheet_not_found(fs, sample_translation_workbook):
 def test_invalid_file_open(fs):
     fs.create('fake.xlsx')
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xlsx')
@@ -45,7 +45,7 @@ def test_invalid_file_open(fs):
 def test_invalid_fileformat_open(fs):
     fs.create('fake.xxx')
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xxx')
@@ -58,7 +58,7 @@ def test_sheet_validation(fs, row_to_invalidate, sample_translation_workbook):
     sample_translation_workbook['General'][f'A{row_to_invalidate}'].value = 'invalid'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
 
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx')
@@ -78,10 +78,10 @@ def test_get_translation_error_500(
     )
 
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
     with pytest.raises(click.ClickException) as e:
-        synchronizer.sync(yes=False)
+        synchronizer.sync()
 
     assert "500 - Internal Server Error" in str(e.value)
 
@@ -103,10 +103,10 @@ def test_update_ok(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 0, 'updated': 1,
@@ -130,10 +130,10 @@ def test_update_fail(
         status=500,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 0, 'updated': 0,
@@ -144,7 +144,7 @@ def test_update_fail(
 def test_create_asks_confirmation(
     fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -159,10 +159,10 @@ def test_create_asks_confirmation(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     captured = capsys.readouterr()
     assert "A new translation will be created." in captured.out
@@ -170,7 +170,7 @@ def test_create_asks_confirmation(
 
 
 def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker):
-    mocker.patch('click.termui.visible_prompt_func', return_value='n')
+    mocker.patch('builtins.input', lambda *args: 'n')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -180,15 +180,16 @@ def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker)
     )
 
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
     with pytest.raises(click.exceptions.Abort):
-        synchronizer.sync(yes=False)
+        synchronizer.sync()
 
 
 def test_create_always_yes(
-    fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook,
+    always_yes_console, fs, capsys, mocked_responses,
+    mocked_translation_response, sample_translation_workbook,
 ):
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -204,10 +205,9 @@ def test_create_always_yes(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
-
-    synchronizer.sync(yes=True)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
@@ -221,7 +221,7 @@ def test_create_always_yes(
 def test_create_fail(
     fs, mocked_responses, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -235,10 +235,10 @@ def test_create_fail(
         status=500,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 0, 'updated': 0,
@@ -249,7 +249,7 @@ def test_create_fail(
 def test_change_locale_causes_creation(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B4'].value = 'DE'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -263,10 +263,10 @@ def test_change_locale_causes_creation(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
@@ -277,7 +277,7 @@ def test_change_locale_causes_creation(
 def test_different_account_causes_creation(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
         method='GET',
@@ -291,10 +291,10 @@ def test_different_account_causes_creation(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-999-999', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-999-999', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
@@ -307,7 +307,7 @@ def test_change_context_causes_creation(
     fs, ctx_instance_id, mocked_responses, mocked_translation_response,
     sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
     sample_translation_workbook['General']['B6'].value = ctx_instance_id
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -330,10 +330,10 @@ def test_change_context_causes_creation(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
@@ -344,7 +344,7 @@ def test_change_context_causes_creation(
 def test_change_context_instance_causes_creation(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = ''
     sample_translation_workbook['General']['B6'].value = 'PRD-999-999-999'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -370,10 +370,10 @@ def test_change_context_instance_causes_creation(
         json=mocked_translation_response,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    synchronizer.sync(yes=False)
+    synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
         'processed': 1, 'created': 1, 'updated': 0,
@@ -384,7 +384,7 @@ def test_change_context_instance_causes_creation(
 def test_change_context_ambiguity_fail(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
     sample_translation_workbook['General']['B6'].value = 'PRD-DIFFERENT-PRODUCT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -402,11 +402,11 @@ def test_change_context_ambiguity_fail(
         },
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
     with pytest.raises(click.ClickException) as e:
-        synchronizer.sync(yes=False)
+        synchronizer.sync()
 
     assert str(e.value) == (
         "The Instance ID (PRD-DIFFERENT-PRODUCT) doesn't correspond "
@@ -422,7 +422,7 @@ def test_change_context_fail(
     fs, status, error_msg, mocked_responses, mocked_translation_response,
     sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-TRIGGER-ERROR'
     sample_translation_workbook['General']['B6'].value = ''
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -437,11 +437,11 @@ def test_change_context_fail(
         status=status,
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
     with pytest.raises(click.ClickException) as e:
-        synchronizer.sync(yes=False)
+        synchronizer.sync()
 
     assert str(e.value) == error_msg
 
@@ -449,7 +449,7 @@ def test_change_context_fail(
 def test_change_context_instance_not_exists_fail(
     fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
 ):
-    mocker.patch('click.termui.visible_prompt_func', return_value='y')
+    mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = ''
     sample_translation_workbook['General']['B6'].value = 'PRD-INEXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -467,10 +467,10 @@ def test_change_context_instance_not_exists_fail(
         json=[],
     )
     client = get_client()
-    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client, silent=True)
+    synchronizer = TranslationSynchronizer(account_id='VA-063-000', client=client)
     synchronizer.open(f'{fs.root_path}/test.xlsx')
 
     with pytest.raises(click.ClickException) as e:
-        synchronizer.sync(yes=False)
+        synchronizer.sync()
 
     assert str(e.value) == "The Instance ID (PRD-INEXISTENT) doesn't exist"

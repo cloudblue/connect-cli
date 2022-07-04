@@ -22,7 +22,7 @@ def test_sheet_not_found(fs):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -45,7 +45,7 @@ def test_no_product_id(fs):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -63,7 +63,7 @@ def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
     mocked_responses.add(
         method='GET',
@@ -88,7 +88,7 @@ def test_validate_no_prod_category(fs, get_general_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     mocked_responses.remove(
@@ -111,7 +111,7 @@ def test_validate_invalid_prod_category(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -130,7 +130,7 @@ def test_validate_invalid_icon(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -151,7 +151,7 @@ def test_validate_invalid_icon_file(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -172,7 +172,7 @@ def test_validate_long_short_description(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -194,7 +194,7 @@ def test_validate_detailed_description(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -213,7 +213,7 @@ def test_validate_embedding_description(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -232,7 +232,7 @@ def test_validate_embedding_long_description(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -250,7 +250,7 @@ def test_open(fs, get_general_env):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
     product_id = synchronizer.open(
         f'{fs.root_path}/test.xlsx', 'General Information',
@@ -267,7 +267,7 @@ def test_sync_409(fs, get_general_env, mocked_responses):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
     product_id = synchronizer.open(
         f'{fs.root_path}/test.xlsx', 'General Information',
@@ -299,7 +299,7 @@ def test_sync(fs, get_general_env, mocked_responses):
                 api_key='ApiKey SU:123',
                 endpoint='https://localhost/public/v1',
             ),
-            silent=True,
+            progress=None,
         )
         product_id = synchronizer.open(
             f'{fs.root_path}/test.xlsx', 'General Information',

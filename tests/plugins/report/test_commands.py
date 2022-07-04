@@ -193,7 +193,6 @@ def test_input_parameters(mocker, fs, ccli):
     )
 
     assert result.exit_code == 0
-    assert "100%" in result.output
 
 
 def test_basic_report(fs, ccli):

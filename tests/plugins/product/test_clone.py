@@ -24,6 +24,7 @@ def test_dump(mocker, config_mocker):
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -33,6 +34,7 @@ def test_dump(mocker, config_mocker):
 
 
 def test_clean_wb(
+    mocker,
     config_mocker,
     fs,
 ):
@@ -45,6 +47,7 @@ def test_clean_wb(
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -101,6 +104,7 @@ def test_clean_wb(
 
 @freeze_time('2022-04-05 20:15:00')
 def test_create_product(
+    mocker,
     mocked_responses,
     mocked_categories_response,
     mocked_product_response,
@@ -115,6 +119,7 @@ def test_create_product(
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -169,6 +174,7 @@ def test_create_product(
 
 
 def test_create_product_errordef(
+    mocker,
     config_mocker,
     fs,
     mocked_responses,
@@ -185,6 +191,7 @@ def test_create_product_errordef(
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 
@@ -236,6 +243,7 @@ def test_inject(
         source_account='VA-000',
         destination_account='VA-000',
         product_id='PRD-123',
+        progress=mocker.MagicMock(),
         stats=stats,
     )
 

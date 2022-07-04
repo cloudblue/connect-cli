@@ -1,6 +1,6 @@
 from openpyxl import Workbook
 
-from connect.cli.plugins.translation.utils import insert_column_ws, logged_request
+from connect.cli.plugins.translation.utils import insert_column_ws
 
 
 def test_insert_column_ws():
@@ -52,35 +52,3 @@ def test_insert_column_ws_extra_right():
     assert ws.column_dimensions['B'].width == 35
     assert ws.column_dimensions['C'].width == 90
     assert ws.column_dimensions['D'].width == 50
-
-
-def test_logged_request_verbose(mocked_responses, capsys):
-    mocked_responses.add(
-        method='GET',
-        url='https://test/url',
-    )
-
-    logged_request('GET', 'https://test/url', verbose=True)
-
-    captured = capsys.readouterr()
-    stdout_lines = [line.strip() for line in captured.out.strip().split('\n')]
-    assert stdout_lines == [
-        "--- HTTP Request ---",
-        "GET https://test/url",
-        "",
-        "--- HTTP Response ---",
-        "200 OK",
-        "Content-Type: text/plain",
-    ]
-
-
-def test_logged_request_no_verbose(mocked_responses, capsys):
-    mocked_responses.add(
-        method='GET',
-        url='https://test/url',
-    )
-
-    logged_request('GET', 'https://test/url', verbose=False)
-
-    captured = capsys.readouterr()
-    assert captured.out.strip() == ''

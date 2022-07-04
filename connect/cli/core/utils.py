@@ -9,19 +9,7 @@ import requests
 
 from connect.cli import get_version
 from connect.cli.core.constants import PYPI_JSON_API_URL
-from connect.utils.terminal.markdown import render
-
-
-def continue_or_quit():
-    while True:
-        click.echo('')
-        click.echo("Press 'c' to continue or 'q' to quit", nl=False)
-        c = click.getchar()
-        click.echo()
-        if c == 'c':
-            return True
-        if c == 'q':
-            return False
+from connect.cli.core.terminal import console
 
 
 def check_for_updates(*args):
@@ -32,11 +20,13 @@ def check_for_updates(*args):
             version = data['info']['version']
             current = get_version()
             if version != current:
-                click.secho(
-                    f'\nYou are running CloudBlue Connect CLI version {current}. '
-                    f'A newer version is available: {version}.\n',
+                console.echo()
+                console.secho(
+                    f'You are running CloudBlue Connect CLI version {current}. '
+                    f'A newer version is available: {version}.',
                     fg='yellow',
                 )
+                console.echo()
     except requests.RequestException:
         pass
 
@@ -55,7 +45,7 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
     output_path = os.path.join(output_path, default_dir_name)
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-    elif not os.path.isdir(output_path):
+    elif not os.path.isdir(output_path):  # pragma: no branch
         raise click.ClickException(
             f"Exists a file with name '{os.path.basename(output_path)}' but a directory is "
             "expected, please rename it",
@@ -86,23 +76,3 @@ def row_format_resource(*fields):
         :param fields: fields to be converted to row.
         """
     return ('| {} ' * len(fields)).format(*fields) + '|\n'  # noqa: P103
-
-
-def table_formater_resource(resource_str_list, count_of_resources, paging, page_size):
-    """Helps to render resources in chunks of `page_size`.
-
-        :param resource_str_list: list of row-formated resources, must contain table header as first element.
-        :param count_of_resources: the count of resources available in api response.
-        :param paging: keep track of iteration on resources in order to meet certain conditions.
-        :param page_size: size of resources chunks displayed at once, helpful if the command allow to paginate.
-    """
-    header = resource_str_list[:1]
-    if paging % page_size == 0:
-        start = 1 if paging == page_size else paging - page_size
-        if paging > page_size:
-            start += 1
-        click.echo(render(''.join(header + resource_str_list[start:])))
-    else:
-        start = count_of_resources - ((paging - 1) % page_size)
-        if resource_str_list[start:] and len(resource_str_list[1:]) == count_of_resources:
-            click.echo(render(''.join(header + resource_str_list[start:])))

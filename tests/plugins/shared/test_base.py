@@ -17,7 +17,7 @@ def test_open(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
     mocked_responses.add(
         method='GET',
@@ -40,7 +40,7 @@ def test_invalid_file_open(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -56,7 +56,7 @@ def test_invalid_zip_open(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(ClickException) as e:
@@ -72,7 +72,7 @@ def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
     mocked_responses.add(
         method='GET',
@@ -98,7 +98,7 @@ def test_sheet_not_found(fs):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(SheetNotFoundError) as e:
@@ -121,7 +121,7 @@ def test_invalid_items_sheet(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     mocked_responses.add(
@@ -145,7 +145,7 @@ def test_no_sync():
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     with pytest.raises(NotImplementedError) as e:
@@ -162,7 +162,7 @@ def test_save(fs, mocked_responses, mocked_product_response):
             api_key='ApiKey SU:123',
             endpoint='https://localhost/public/v1',
         ),
-        silent=True,
+        progress=None,
     )
 
     mocked_responses.add(

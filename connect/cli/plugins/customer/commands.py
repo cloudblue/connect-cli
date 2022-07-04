@@ -6,9 +6,9 @@ import warnings
 
 import click
 
-from connect.client import ConnectClient, RequestLogger
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
+from connect.cli.core.terminal import console
 from connect.cli.plugins.customer.export import dump_customers
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
 
@@ -39,26 +39,18 @@ def grp_customer():
 @pass_config
 def cmd_export_customers(config, output_path, output_file):
     acc_id = config.active.id
-    acc_name = config.active.name
-    if not config.silent:
-        click.secho(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
-        )
+
     outfile = dump_customers(
-        api_url=config.active.endpoint,
-        api_key=config.active.api_key,
+        client=config.active.client,
         output_file=output_file,
-        silent=config.silent,
         output_path=output_path,
         account_id=acc_id,
-        verbose=config.verbose,
     )
-    if not config.silent:
-        click.secho(
-            f'\nCustomers of account {acc_id} have been successfully exported to {outfile}',
-            fg='green',
-        )
+
+    console.secho(
+        f'\nCustomers of account {acc_id} have been successfully exported to {outfile}',
+        fg='green',
+    )
 
 
 @grp_customer.command(
@@ -67,45 +59,22 @@ def cmd_export_customers(config, output_path, output_file):
 )
 
 @click.argument('input_file', metavar='input_file', nargs=1, required=True)  # noqa: E304
-@click.option(  # noqa: E304
-    '--yes',
-    '-y',
-    'yes',
-    is_flag=True,
-    help='Answer yes to all questions.',
-)
 @pass_config
-def cmd_sync_customers(config, input_file, yes):
+def cmd_sync_customers(config, input_file):
     acc_id = config.active.id
-    acc_name = config.active.name
 
     if '.xlsx' not in input_file:
         input_file = f'{input_file}/{input_file}.xlsx'
 
-    if not config.silent:
-        click.secho(
-            f'Current active account: {acc_id} - {acc_name}\n',
-            fg='blue',
-        )
-    client = ConnectClient(
-        api_key=config.active.api_key,
-        endpoint=config.active.endpoint,
-        use_specs=False,
-        max_retries=3,
-        logger=RequestLogger() if config.verbose else None,
-    )
-
     synchronizer = CustomerSynchronizer(
-        client=client,
-        silent=config.silent,
+        client=config.active.client,
         account_id=acc_id,
     )
     warnings.filterwarnings("ignore", category=UserWarning)
     synchronizer.open(input_file, 'Customers')
     synchronizer.sync()
     synchronizer.save(input_file)
-    if not config.silent:
-        synchronizer.stats.print()
+    synchronizer.stats.print()
 
 
 def get_group():

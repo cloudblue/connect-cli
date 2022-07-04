@@ -1,9 +1,6 @@
 from collections import namedtuple
 from urllib.parse import urlparse
 
-from tqdm import trange
-
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.shared.constants import STATIC_LINK_HEADERS
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.product.utils import cleanup_product_for_update
@@ -15,21 +12,24 @@ _RowData = namedtuple('RowData', fields)
 
 
 class StaticResourcesSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
-        super().__init__(client, silent)
+    def __init__(self, client, progress, stats):
+        super().__init__(client, progress)
         self._mstats = stats['Static Resources']
 
     def sync(self):  # noqa: CCR001
         ws = self._wb['Embedding Static Resources']
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
+        task = self._progress.add_task('Processing item', total=ws.max_row - 1)
+
         download = []
         documentation = []
-        for row_idx in row_indexes:
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 5)])
-            row_indexes.set_description(f'Processing item {data.title or data.type}')
+            self._progress.update(
+                task,
+                description=f'Processing item {data.title or data.type}',
+                advance=1,
+            )
             if data.action not in ('-', 'create', 'delete'):
                 self._mstats.skipped()
                 continue
@@ -60,6 +60,7 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
             else:
                 self._mstats.created()
 
+        self._progress.update(task, completed=ws.max_row - 1)
         product = cleanup_product_for_update(self._client.products[self._product_id].get())
         try:
             product['customer_ui_settings']['download_links'] = download

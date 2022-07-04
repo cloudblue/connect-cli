@@ -38,10 +38,10 @@ def test_list_with_page_size_less_than_zero(config_mocker, ccli):
     result = runner.invoke(
         ccli,
         [
-            'locale',
-            'list',
             '-p',
             '-1',
+            'locale',
+            'list',
         ],
     )
     assert result.exit_code == 2

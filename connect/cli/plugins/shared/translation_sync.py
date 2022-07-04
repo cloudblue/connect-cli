@@ -6,12 +6,9 @@
 from collections import defaultdict, namedtuple
 from functools import partial
 
-from tqdm import tqdm
-
 from connect.cli.plugins.shared.constants import TRANSLATION_HEADERS
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.utils import fill_translation_row, setup_locale_data_validation
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.client import ClientError
 
 fields = (v.replace(' ', '_').lower() for v in TRANSLATION_HEADERS.values())
@@ -20,8 +17,8 @@ _RowData = namedtuple('RowData', fields)
 
 
 class TranslationsSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
-        super().__init__(client, silent)
+    def __init__(self, client, progress, stats):
+        super().__init__(client, progress)
         self._mstats = stats['Translations']
         self._translations_autotranslating = []
         self._new_translations = []
@@ -51,22 +48,23 @@ class TranslationsSynchronizer(ProductSynchronizer):
                 continue
             rows_data[data.action][row_idx] = data
         self._process_rows_data(rows_data)
+        self._progress.update(self._task, completed=self._ws.max_row - 1)
 
     def save(self, output_file):
         setup_locale_data_validation(self._wb['General Information'], self._ws)
         super().save(output_file)
 
     def _iterate_rows(self):
-        self._progress = tqdm(
-            enumerate(self._ws.iter_rows(min_row=2, values_only=True), 2),
-            total=self._ws.max_row - 1, disable=self._silent, leave=True,
-            bar_format=DEFAULT_BAR_FORMAT,
+        self._task = self._progress.add_task(
+            'Processing Product translation',
+            total=self._ws.max_row - 1,
         )
-        for row_idx, row in self._progress:
+        for row_idx, row in enumerate(self._ws.iter_rows(min_row=2, values_only=True), 2):
+            self._progress.update(self._task, advance=1)
             yield row_idx, _RowData(*row)
 
     def _set_process_description(self, msg):
-        self._progress.set_description(msg)
+        self._progress.update(self._task, description=msg)
 
     @staticmethod
     def _validate_row(data):

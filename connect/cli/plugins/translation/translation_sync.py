@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.core.http import handle_http_error
+from connect.cli.core.terminal import console
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.translation.constants import GENERAL_SHEET_FIELDS
@@ -25,9 +26,8 @@ class TranslationSynchronizer:
     Synchronize a translation from excel file. It may update an existing
     translation or create a new one depending on some checks.
     """
-    def __init__(self, client, silent, account_id, stats=None):
+    def __init__(self, client, account_id, stats=None):
         self._client = client
-        self._silent = silent
         self._wb = None
         self.account_id = account_id
         if stats is None:
@@ -43,7 +43,7 @@ class TranslationSynchronizer:
     def save(self, output_file):
         self._wb.save(output_file)
 
-    def sync(self, yes):
+    def sync(self):
         """
         Updates or creates the translation. Return the Translation ID and a boolean indicating
         if should wait for autotranslation to finish.
@@ -58,12 +58,12 @@ class TranslationSynchronizer:
         )
         translation_id = None
         if do_create:
-            new_translation = self._try_create_translation(yes, current_translation, general_data)
+            new_translation = self._try_create_translation(current_translation, general_data)
             if new_translation:
                 self._update_general_sheet(ws, new_translation)
                 translation_id = new_translation['id']
-                if not self._silent:  # pragma: no cover
-                    click.secho(f"\nCreated new translation {translation_id}\n", fg='yellow')
+
+                console.secho(f"\nCreated new translation {translation_id}\n", fg='yellow')
         else:
             translation_id = self._update_translation(general_data)
 
@@ -108,22 +108,21 @@ class TranslationSynchronizer:
             or self._is_different_context(translation, general_data)
         )
 
-    def _try_create_translation(self, yes, current_translation, general_data):
+    def _try_create_translation(self, current_translation, general_data):
         if (
             current_translation
             and self._is_different_context(current_translation, general_data)
         ):
             self._resolve_new_context(general_data)
 
-        if not yes:
-            click.confirm(
-                click.style("A new translation will be created.\n", fg='yellow')
-                + "The owner will be the current active account, "
-                f"locale {general_data.locale_id} "
-                f"and context '{general_data.context_name}' ({general_data.context_id}).\n"
-                "Do you want to continue?",
-                abort=True,
-            )
+        console.confirm(
+            click.style("A new translation will be created.\n", fg='yellow')
+            + "The owner will be the current active account, "
+            f"locale {general_data.locale_id} "
+            f"and context '{general_data.context_name}' ({general_data.context_id}).\n"
+            "Do you want to continue?",
+            abort=True,
+        )
 
         try:
             translation = self._client.ns('localization').translations.create({

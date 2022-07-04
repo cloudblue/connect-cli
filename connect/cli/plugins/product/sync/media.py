@@ -6,10 +6,8 @@ import os
 from collections import namedtuple
 from urllib.parse import urlparse
 
-from tqdm import trange
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-from connect.cli.core.constants import DEFAULT_BAR_FORMAT
 from connect.cli.plugins.shared.constants import MEDIA_COLS_HEADERS
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.client import ClientError
@@ -21,10 +19,10 @@ _RowData = namedtuple('RowData', fields)
 
 
 class MediaSynchronizer(ProductSynchronizer):
-    def __init__(self, client, silent, stats):
+    def __init__(self, client, progress, stats):
         self._media_path = None
         self._mstats = stats['Media']
-        super(MediaSynchronizer, self).__init__(client, silent)
+        super(MediaSynchronizer, self).__init__(client, progress)
 
     def open(self, input_file, worksheet):
         self._media_path = input_file.rsplit('/', 1)[0]
@@ -33,12 +31,14 @@ class MediaSynchronizer(ProductSynchronizer):
     def sync(self):  # noqa: CCR001
         ws = self._wb['Media']
 
-        row_indexes = trange(
-            2, ws.max_row + 1, disable=self._silent, leave=True, bar_format=DEFAULT_BAR_FORMAT,
-        )
-        for row_idx in row_indexes:
+        task = self._progress.add_task('Processing Media', total=ws.max_row - 1)
+        for row_idx in range(2, ws.max_row + 1):
             data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 7)])
-            row_indexes.set_description(f'Processing Media {data.id or data.position or "New"}')
+            self._progress.update(
+                task,
+                description=f'Processing Media {data.id or data.position or "New"}',
+                advance=1,
+            )
 
             if data.action == '-':
                 self._mstats.skipped()
@@ -113,6 +113,7 @@ class MediaSynchronizer(ProductSynchronizer):
                     self._mstats.created()
             except Exception as e:
                 self._mstats.error(str(e), row_idx)
+        self._progress.update(task, completed=ws.max_row - 1)
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, media):

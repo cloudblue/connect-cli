@@ -70,7 +70,7 @@ def test_add_account_custom_endpoint(mocker, ccli, config_mocker):
 def test_remove_account(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.remove_account',
-        side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
+        side_effect=lambda *args: Account('VA-000', 'Account 0', '', '', None),
     )
     runner = CliRunner()
     result = runner.invoke(
@@ -90,7 +90,7 @@ def test_remove_account(mocker, ccli, config_mocker):
 def test_activate_account(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.activate_account',
-        side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
+        side_effect=lambda *args: Account('VA-000', 'Account 0', '', '', None),
     )
     runner = CliRunner()
     result = runner.invoke(
@@ -110,7 +110,7 @@ def test_activate_account(mocker, ccli, config_mocker):
 def test_activate_account_silent(mocker, ccli, config_mocker):
     mock = mocker.patch(
         'connect.cli.core.account.commands.activate_account',
-        side_effect=lambda *args: Account('VA-000', 'Account 0', '', ''),
+        side_effect=lambda *args: Account('VA-000', 'Account 0', '', '', None),
     )
     runner = CliRunner()
     result = runner.invoke(

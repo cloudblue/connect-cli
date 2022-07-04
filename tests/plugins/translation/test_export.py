@@ -4,6 +4,7 @@ import pytest
 from click import ClickException
 from openpyxl import load_workbook
 
+from connect.client import ConnectClient
 from connect.cli.plugins.translation.export import dump_translation
 
 
@@ -30,8 +31,11 @@ def test_dump_translation(
     )
 
     output_file = dump_translation(
-        api_url='https://localhost/public/v1',
-        api_key='ApiKey XXX',
+        ConnectClient(
+            'ApiKey XXX',
+            endpoint='https://localhost/public/v1',
+            use_specs=False,
+        ),
         translation_id='TRN-8100-3865-4869',
         output_file='translation.xlsx',
         output_path=fs.root_path,
@@ -61,8 +65,11 @@ def test_dump_translation_not_exists(fs, mocked_responses):
     )
     with pytest.raises(ClickException) as e:
         dump_translation(
-            api_url='https://localhost/public/v1',
-            api_key='ApiKey XXX',
+            ConnectClient(
+                'ApiKey XXX',
+                endpoint='https://localhost/public/v1',
+                use_specs=False,
+            ),
             translation_id='TRN-0000-0000-0000',
             output_file='translation.xlsx',
             output_path=fs.root_path,
