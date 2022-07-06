@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link href="{{ package_dir }}/{{ initial_report_slug }}/templates/pdf/template.css" rel="stylesheet">
+        <title>Report</title>
+    </head>
+    <body>
+        <table>
+        {% raw %}
+        {% for row in data %}
+            <tr>
+            {% for col in row %}
+                <td>{{ col }}</td>
+            {% endfor %}
+            </tr>
+        {% endfor %}
+        {% endraw %}
+        </table>
+    </body>
+</html>

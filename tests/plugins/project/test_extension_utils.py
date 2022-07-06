@@ -2,7 +2,8 @@ import pytest
 from click import ClickException
 
 from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
-from connect.cli.plugins.project.extension.utils import get_pypi_runner_version
+from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
+from connect.client import ClientError
 
 
 def test_get_pypi_runner_version(mocker, mocked_responses):
@@ -59,3 +60,13 @@ def test_get_pypi_runner_version_no_releases(mocker, mocked_responses):
     )
 
     assert get_pypi_runner_version() == '26.0'
+
+
+def test_get_event_definitions_client_error(mocker):
+    config = mocker.MagicMock()
+    config.active.client = mocker.MagicMock(side_effect=ClientError)
+
+    with pytest.raises(ClickException) as exc:
+        get_event_definitions(config)
+
+    assert str(exc.value) == 'Error getting event definitions: Unexpected error'
