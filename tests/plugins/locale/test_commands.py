@@ -45,4 +45,4 @@ def test_list_with_page_size_less_than_zero(config_mocker, ccli):
         ],
     )
     assert result.exit_code == 2
-    assert '-1 is smaller than the minimum valid value 1' in result.output
+    assert "Error: Invalid value for '--page-size' / '-p': -1 is not in the range x>=1." in result.output

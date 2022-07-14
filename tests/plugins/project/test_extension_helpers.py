@@ -443,7 +443,7 @@ def test_validate_extension_project(mocker, faker, fs, mocked_responses, config_
     validate_extension_project(config_vendor, project_dir)
 
     captured = capsys.readouterr()
-    assert 'has been successfully validated.' in captured.out
+    assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
 
 
 def test_validate_extension_project_error_exit(mocker, faker, fs, mocked_responses, config_vendor, capsys):
