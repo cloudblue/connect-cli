@@ -19,7 +19,7 @@ trio = ["trio (>=0.16)"]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -488,7 +488,7 @@ python-dateutil = ">=2.7"
 name = "fs"
 version = "2.4.16"
 description = "Python's filesystem abstraction layer"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1374,8 +1374,8 @@ test = ["pytest"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.8,<4"
-content-hash = "b086fb6b9b78e1dfcdf1bc82e9d9237eb00ea616a4f36d973eb8c3af2a773aec"
+python-versions = "^3.8"
+content-hash = "4adc19d8f2fdc186b4206f72eaa394371cc0894cf647e9462944bfc95bbdf869"
 
 [metadata.files]
 anyio = [
