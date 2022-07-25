@@ -78,7 +78,7 @@ def test_invalid_type(mocker, fs, get_sync_templates_env):
         'deleted': 0, 'skipped': 0, 'errors': 1,
     }
     assert stats['Templates']._row_errors == {
-        2: ['Valid template types are `pending`, `fulfillment` or inquiring. '
+        2: ['Valid template types are `pending`, `fulfillment` or `inquiring`. '
             'Provided invalid.'],
     }
 

@@ -123,7 +123,7 @@ class TemplatesSynchronizer(ProductSynchronizer):
             return errors
         if data.type not in ('pending', 'fulfillment', 'inquire'):
             errors.append(
-                f'Valid template types are `pending`, `fulfillment` or inquiring. Provided '
+                f'Valid template types are `pending`, `fulfillment` or `inquiring`. Provided '
                 f'{data.type}.',
             )
         if (data.scope == 'tier1' or data.scope == 'tier2') and data.type != 'fulfillment':
