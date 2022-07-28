@@ -776,7 +776,7 @@ def _dump_templates(ws, client, product_id, progress):
     )
     type_validation = DataValidation(
         type='list',
-        formula1='"fulfillment,inquire"',
+        formula1='"pending,fulfillment,inquire"',
         allow_blank=False,
     )
 
