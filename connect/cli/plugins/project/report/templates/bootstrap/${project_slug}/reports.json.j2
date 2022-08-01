@@ -1,0 +1,61 @@
+{
+    "name": "{{ project_name }}",
+    "readme_file": "README.md",
+    "version": "{{ version }}",
+    "language": "python",
+    "reports": [
+        {
+            "name": "{{ initial_report_name }}",
+            "readme_file": "{{ package_name }}/{{ initial_report_slug }}/README.md",
+            "entrypoint": "{{ package_name }}.{{ initial_report_slug }}.entrypoint.generate",
+            "audience": [
+                "provider",
+                "vendor"
+            ],
+            "report_spec": "2",
+            "parameters": [],
+            "renderers": [
+                {
+                    "id": "xlsx",
+                    "type": "xlsx",
+                    "default": {% if initial_report_renderer=='xlsx' %}true{% else %}false{% endif %},
+                    "description": "Export data in Microsoft Excel 2020 format.",
+                    "template": "{{ package_name }}/{{ initial_report_slug }}/templates/xlsx/template.xlsx",
+                    "args": {
+                        "start_row": 2,
+                        "start_col": 1
+                    }
+                },
+                {
+                    "id": "json",
+                    "type": "json",
+                    "default": {% if initial_report_renderer=='json' %}true{% else %}false{% endif %},
+                    "description": "Export data as JSON"
+                },
+                {
+                    "id": "csv",
+                    "type": "csv",
+                    "default": {% if initial_report_renderer=='csv' %}true{% else %}false{% endif %},
+                    "description": "Export data as CSV"
+                },
+                {
+                    "id": "xml",
+                    "type": "jinja2",
+                    "default": {% if initial_report_renderer=='xml' %}true{% else %}false{% endif %},
+                    "description": "Export data as XML",
+                    "template": "{{ package_name }}/{{ initial_report_slug }}/templates/xml/template.xml.j2"
+                },
+                {
+                    "id": "pdf-portrait",
+                    "type": "pdf",
+                    "default": {% if initial_report_renderer=='pdf' %}true{% else %}false{% endif %},
+                    "description": "Export data as PDF (portrait)",
+                    "template": "{{ package_name }}/{{ initial_report_slug }}/templates/pdf/template.html.j2",
+                    "args": {
+                        "css_file": "{{ package_name }}/{{ initial_report_slug }}/templates/pdf/template.css"
+                    }
+                }
+            ]
+        }
+    ]
+}

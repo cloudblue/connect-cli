@@ -1,0 +1,8 @@
+[flake8]
+exclude = .idea,.vscode,.git,pg_data,venv,env,msmiddleware/settings/*.py,*/migrations/*.py,
+show-source = True
+max-line-length = 100
+application-import-names = {{ package_name }}
+import-order-style = smarkets
+max-cognitive-complexity = 15
+ignore = FI1,I100,W503

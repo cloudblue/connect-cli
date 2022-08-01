@@ -10,7 +10,7 @@ from rich.table import Table
 from rich.syntax import Syntax
 
 from connect.cli.core.terminal import console
-from connect.cli.plugins.project.extension.renderer import BoilerplateRenderer
+from connect.cli.plugins.project.renderer import BoilerplateRenderer
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
 from connect.cli.plugins.project.extension.validations import validators
 from connect.cli.plugins.project.extension.wizard import (
@@ -20,10 +20,9 @@ from connect.cli.plugins.project.extension.wizard import (
 )
 
 
-def bootstrap_extension_project(config, data_dir, overwrite):
+def bootstrap_extension_project(config, output_dir, overwrite):
     console.secho('Bootstraping extension project...\n', fg='blue')
 
-    answers = None
     statuses_by_event = {}
 
     definitions = get_event_definitions(config)
@@ -60,8 +59,39 @@ def bootstrap_extension_project(config, data_dir, overwrite):
         else:
             ctx.update({var: answer})
 
-    renderer = BoilerplateRenderer(data_dir, ctx, overwrite)
-    project_dir = renderer.render()
+    project_dir = os.path.join(output_dir, ctx['project_slug'])
+    if not overwrite and os.path.exists(project_dir):
+        raise ClickException(f'The destination directory {project_dir} already exists.')
+
+    exclude = [
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+        ),
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+            'workflows',
+        ),
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+            'workflows',
+            'build.yml.j2',
+        ),
+    ] if answers['use_github_actions'] == 'n' else None
+    renderer = BoilerplateRenderer(
+        context=ctx,
+        template_folder=os.path.join(
+            os.path.dirname(__file__),
+            'templates',
+            'bootstrap',
+        ),
+        output_dir=output_dir,
+        overwrite=overwrite,
+        exclude=exclude,
+    )
+    renderer.render()
 
     console.markdown(open(f'{project_dir}/HOWTO.md', 'r').read())
 

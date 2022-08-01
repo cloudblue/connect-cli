@@ -1,28 +1,18 @@
-#  Copyright © 2021 CloudBlue. All rights reserved.
+#  Copyright © 2022 CloudBlue. All rights reserved.
 
 import json
 import os
 import sys
 import inspect
 import importlib
-import tempfile
-import shutil
+import functools
 
 from click import ClickException
-from cookiecutter.main import cookiecutter
-from cookiecutter.config import DEFAULT_CONFIG, get_user_config
-from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
-from cookiecutter.generate import generate_context, generate_files
-from cookiecutter.repository import determine_repo_dir
 from interrogatio.core.dialog import dialogus
+from openpyxl import Workbook
 
+from connect.cli import get_version
 from connect.cli.core.terminal import console
-from connect.cli.plugins.project.git import get_highest_version, GitException
-from connect.cli.plugins.project.utils import purge_dir
-from connect.cli.plugins.project.report.constants import (
-    PROJECT_REPORT_BOILERPLATE_TAG,
-    PROJECT_REPORT_BOILERPLATE_URL,
-)
 from connect.cli.plugins.project.report.wizard import (
     ADD_REPORT_QUESTIONS,
     BOOTSTRAP_QUESTIONS,
@@ -31,6 +21,7 @@ from connect.cli.plugins.project.report.wizard import (
     REPORT_BOOTSTRAP_WIZARD_INTRO,
     REPORT_SUMMARY,
 )
+from connect.cli.plugins.project.renderer import BoilerplateRenderer
 from connect.reports.parser import parse
 from connect.reports.validator import (
     validate,
@@ -38,13 +29,9 @@ from connect.reports.validator import (
 )
 
 
-def purge_cookiecutters_dir():
-    purge_dir(DEFAULT_CONFIG['cookiecutters_dir'])
-
-
-def bootstrap_report_project(data_dir):
+def bootstrap_report_project(output_dir, overwrite):
     console.secho('Bootstraping report project...\n', fg='blue')
-    purge_cookiecutters_dir()
+
     answers = dialogus(
         BOOTSTRAP_QUESTIONS,
         'Reports project bootstrap',
@@ -57,28 +44,46 @@ def bootstrap_report_project(data_dir):
     if not answers:
         raise ClickException('Aborted by user input')
 
-    try:
-        checkout_tag = PROJECT_REPORT_BOILERPLATE_TAG or get_highest_version(PROJECT_REPORT_BOILERPLATE_URL)[0]
+    project_dir = os.path.join(output_dir, answers['project_slug'])
+    if not overwrite and os.path.exists(project_dir):
+        raise ClickException(f'The destination directory {project_dir} already exists.')
 
-        project_dir = cookiecutter(
-            PROJECT_REPORT_BOILERPLATE_URL,
-            checkout=checkout_tag,
-            no_input=True,
-            extra_context=answers,
-            output_dir=data_dir,
-        )
-        console.secho(f'\nReports Project location: {project_dir}', fg='blue')
-    except GitException as error:
-        raise ClickException(f'\nAn error occured on tags retrieval: {error}')
-    except RepositoryCloneFailed as error:
-        raise ClickException(f'\nAn error occured while cloning the project: {error}')
-    except OutputDirExistsException as error:
-        project_path = str(error).split('"')[1]
-        raise ClickException(
-            f'\nThe directory "{project_path}" already exists, '
-            '\nif you would like to use that name, please delete '
-            'the directory or use another location.',
-        )
+    exclude = [
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+        ),
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+            'workflows',
+        ),
+        os.path.join(
+            answers['project_slug'],
+            '.github',
+            'workflows',
+            'build.yml.j2',
+        ),
+    ] if answers['use_github_actions'] == 'n' else None
+    answers['cli_version'] = get_version()
+    renderer = BoilerplateRenderer(
+        context=answers,
+        template_folder=os.path.join(os.path.dirname(__file__), 'templates', 'bootstrap'),
+        output_dir=project_dir,
+        overwrite=overwrite,
+        exclude=exclude,
+        post_render=functools.partial(
+            generate_empty_xlsx,
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                answers['initial_report_slug'],
+            ),
+        ),
+    )
+    renderer.render()
+
+    console.markdown(open(f'{project_dir}/HOWTO.md', 'r').read())
 
 
 def validate_report_project(project_dir):
@@ -102,9 +107,10 @@ def validate_report_project(project_dir):
 
 
 def add_report(project_dir, package_name):
-    if not os.path.isdir(f'{project_dir}/{package_name}'):
+    project_path = os.path.join(project_dir, package_name)
+    if not os.path.exists(project_path):
         raise ClickException(
-            f'The directory package called `{package_name}` does not exist,'
+            f'The directory package called `{project_path}` does not exist,'
             '\nPlease, create it or choose an existing one using `-n` option.',
         )
 
@@ -116,105 +122,132 @@ def add_report(project_dir, package_name):
 
     console.secho(f'Adding new report to project {project_dir}...\n', fg='blue')
 
-    with tempfile.TemporaryDirectory() as add_report_tmpdir:
-
-        # Instead of using cookiecutter use the internals
-        report_dir, report_slug = _custom_cookiecutter(
-            PROJECT_REPORT_BOILERPLATE_URL,
-            add_report_tmpdir,
-            project_dir,
-            package_name,
-        )
-        if os.path.isdir(f'{project_dir}/{package_name}/{report_slug}'):
-            raise ClickException(
-                f'\nThe report directory called `{project_dir}/{package_name}/{report_slug}` already exists, '
-                '\nplease, choose other report name or delete the existing one.',
-            )
-
-        shutil.move(
-            f'{report_dir}/{package_name}/{report_slug}',
-            f'{project_dir}/{package_name}/',
-        )
-
-        _add_report_to_descriptor(project_dir, report_dir, package_name)
-
-        console.secho('\nReport has been successfully created.', fg='blue')
-
-
-def _custom_cookiecutter(template, output_dir, project_slug, package_slug):
-
-    config_dict = get_user_config(
-        config_file=None, default_config=False,
-    )
-
-    template_name = os.path.splitext(os.path.basename(template))[0]
-
-    repo_dir = os.path.join(config_dict['cookiecutters_dir'], template_name)
-    if os.path.isdir(repo_dir):
-        purge_dir(repo_dir)
-
-    repo_dir, _ = determine_repo_dir(
-        template=template,
-        abbreviations=config_dict['abbreviations'],
-        clone_to_dir=config_dict['cookiecutters_dir'],
-        checkout=None,
-        no_input=False,
-        password=None,
-        directory=None,
-    )
-
-    context_file = os.path.join(repo_dir, 'cookiecutter.json')
-    context = generate_context(
-        context_file=context_file,
-        default_context=config_dict['default_context'],
-        extra_context=None,
-    )
-
     answers = dialogus(
         ADD_REPORT_QUESTIONS,
-        'Add report to existing project',
+        'Reports add project',
         intro=REPORT_ADD_WIZARD_INTRO,
         summary=REPORT_SUMMARY,
-        finish_text='Add',
+        finish_text='Create',
         previous_text='Back',
     )
 
     if not answers:
         raise ClickException('Aborted by user input')
 
-    context['cookiecutter']['_template'] = template
-    context['cookiecutter']['project_slug'] = project_slug
-    context['cookiecutter']['package_slug'] = package_slug
-    context['cookiecutter']['initial_report_name'] = answers['initial_report_name']
-    context['cookiecutter']['initial_report_slug'] = answers['initial_report_slug']
-    context['cookiecutter']['initial_report_description'] = answers['initial_report_description']
-    context['cookiecutter']['initial_report_renderer'] = answers['initial_report_renderer']
+    report_path = os.path.join(project_path, answers['initial_report_slug'])
+    if os.path.exists(report_path):
+        raise ClickException(
+            f'\nThe report directory called `{report_path}` already exists, '
+            '\nplease, choose other report name or delete the existing one.',
+        )
 
-    result = _generate_files(context, output_dir, repo_dir)
-
-    return result, context['cookiecutter']['initial_report_slug']
-
-
-def _generate_files(context, output_dir, repo_dir):
-    result = generate_files(
-        repo_dir=repo_dir,
-        context=context,
-        overwrite_if_exists=False,
-        skip_if_file_exists=False,
-        output_dir=output_dir,
+    template_folder = os.path.join(os.path.dirname(__file__), 'templates', 'add')
+    renderer = BoilerplateRenderer(
+        context=answers,
+        template_folder=template_folder,
+        output_dir=project_path,
+        post_render=functools.partial(
+            generate_empty_xlsx,
+            answers['initial_report_slug'],
+        ),
     )
-    return result
+    renderer.render()
+
+    _add_report_to_descriptor(
+        project_dir=project_dir,
+        package_dir=package_name,
+        context=renderer.context,
+    )
+
+    console.secho(
+        f'\nReport {answers["initial_report_slug"]} has been successfully added to the project'
+        f' {project_dir}.',
+        fg='blue',
+    )
 
 
-def _add_report_to_descriptor(project_dir, report_dir, package_slug):
+def _add_report_to_descriptor(project_dir, package_dir, context):
     project_descriptor = os.path.join(project_dir, 'reports.json')
     project_desc = json.load(open(project_descriptor, 'r'))
 
-    temporal_descriptor = os.path.join(report_dir, 'reports.json')
-    temporal_desc = json.load(open(temporal_descriptor, 'r'))
-
-    report_dict = temporal_desc['reports'][0]
-    project_desc['reports'].append(report_dict)
+    report = {
+        'name': context['initial_report_name'],
+        'readme_file': os.path.join(package_dir, context['initial_report_slug'], 'README.md'),
+        'entrypoint': f"{package_dir}.{context['initial_report_slug']}.entrypoint.generate",
+        'audience': [
+            'provider',
+            'vendor',
+        ],
+        'report_spec': '2',
+        'parameters': [],
+        'renderers': [
+            {
+                'id': 'xlsx',
+                'type': 'xlsx',
+                'default': True if context['initial_report_renderer'] == 'xlsx' else False,
+                'description': 'Export data in Microsoft Excel 2020 format.',
+                'template': os.path.join(
+                    package_dir,
+                    context['initial_report_slug'],
+                    'templates',
+                    'xlsx',
+                    'template.xlsx',
+                ),
+                'args': {
+                    'start_row': 2,
+                    'start_col': 1,
+                },
+            },
+            {
+                'id': 'json',
+                'type': 'json',
+                'default': True if context['initial_report_renderer'] == 'json' else False,
+                'description': 'Export data as JSON',
+            },
+            {
+                'id': 'csv',
+                'type': 'csv',
+                'default': True if context['initial_report_renderer'] == 'csv' else False,
+                'description': 'Export data as CSV',
+            },
+            {
+                'id': 'xml',
+                'type': 'jinja2',
+                'default': True if context['initial_report_renderer'] == 'xml' else False,
+                'description': 'Export data as XML',
+                'template': os.path.join(
+                    package_dir,
+                    context['initial_report_slug'],
+                    'templates',
+                    'xml',
+                    'template.xml.j2',
+                ),
+            },
+            {
+                'id': 'pdf-portrait',
+                'type': 'pdf',
+                'default': True if context['initial_report_renderer'] == 'pdf' else False,
+                'description': 'Export data as PDF (portrait)',
+                'template': os.path.join(
+                    package_dir,
+                    context['initial_report_slug'],
+                    'templates',
+                    'pdf',
+                    'template.html.j2',
+                ),
+                'args': {
+                    'css_file': os.path.join(
+                        package_dir,
+                        context['initial_report_slug'],
+                        'templates',
+                        'pdf',
+                        'template.css',
+                    ),
+                },
+            },
+        ],
+    }
+    project_desc['reports'].append(report)
 
     json.dump(
         project_desc,
@@ -260,3 +293,25 @@ def _entrypoint_validations(project_dir, entrypoint, report_spec):
             '\n>> def generate(client=None, input_data=None, progress_callback=None, '
             'renderer_type=None, extra_context_callback=None) <<',
         )
+
+
+def generate_empty_xlsx(dest_dir, base_dir, context):
+    destination = os.path.join(
+        base_dir,
+        dest_dir,
+        'templates',
+        'xlsx',
+    )
+    os.makedirs(destination, exist_ok=True)
+    wb = Workbook(
+        write_only=True,
+    )
+    wb.create_sheet('Data')
+    file_path = os.path.join(
+        destination,
+        'template.xlsx',
+    )
+    wb.save(
+        file_path,
+    )
+    console.print(f'File {file_path} generated [bold green]\u2713[/bold green]')

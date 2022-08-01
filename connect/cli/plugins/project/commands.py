@@ -1,4 +1,4 @@
-#  Copyright © 2021 CloudBlue. All rights reserved.
+#  Copyright © 2022 CloudBlue. All rights reserved.
 
 import os
 
@@ -43,8 +43,14 @@ def grp_project_report():
     required=True,
     help='Directory where the new report project will be created.',
 )
-def cmd_bootstrap_report_project(output_dir):
-    bootstrap_report_project(output_dir)
+@click.option(
+    '--force-overwrite', '-f',
+    is_flag=True,
+    help='Overwrite the destination project directory if exists.',
+    default=False,
+)
+def cmd_bootstrap_report_project(output_dir, force_overwrite):
+    bootstrap_report_project(output_dir, force_overwrite)
 
 
 @grp_project_report.command(
@@ -104,6 +110,7 @@ def grp_project_extension():
     '--force-overwrite', '-f',
     is_flag=True,
     help='Overwrite the destination project directory if exists.',
+    default=False,
 )
 @pass_config
 def cmd_bootstrap_extension_project(config, output_dir, force_overwrite):

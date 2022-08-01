@@ -1,4 +1,5 @@
-#  Copyright © 2021 CloudBlue. All rights reserved.
+#  Copyright © 2022 CloudBlue. All rights reserved.
+
 import configparser
 import os
 import tempfile
@@ -22,7 +23,6 @@ from connect.cli.plugins.project.utils import slugify
 @pytest.mark.parametrize('with_schedulable', (True, False))
 @pytest.mark.parametrize('with_github_actions', (True, False))
 def test_bootstrap_extension_project_background(
-    fs,
     faker,
     mocker,
     mocked_responses,
@@ -38,135 +38,133 @@ def test_bootstrap_extension_project_background(
     with_schedulable,
     with_github_actions,
 ):
-    runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
-        return_value=runner_version,
-    )
-    config_vendor.load(config_dir='/tmp')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner_version = f'{faker.random_number()}.{faker.random_number()}'
+        mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+            return_value=runner_version,
+        )
+        config_vendor.load(config_dir='/tmp')
 
-    mocked_responses.add(
-        method='GET',
-        url=f'{config_vendor.active.endpoint}/devops/event-definitions',
-        headers={
-            'Content-Range': 'items 0-0/1',
-        },
-        json=[
-            {
-                'type': 'sample_background_event',
-                'group': 'Group',
-                'name': 'Sample Event',
-                'category': 'background',
-                'object_statuses': ['status1', 'status2'],
+        mocked_responses.add(
+            method='GET',
+            url=f'{config_vendor.active.endpoint}/devops/event-definitions',
+            headers={
+                'Content-Range': 'items 0-0/1',
             },
-        ],
-    )
+            json=[
+                {
+                    'type': 'sample_background_event',
+                    'group': 'Group',
+                    'name': 'Sample Event',
+                    'category': 'background',
+                    'object_statuses': ['status1', 'status2'],
+                },
+            ],
+        )
 
-    data = {
-        'project_name': faker.name(),
-        'project_slug': slugify(faker.name()),
-        'description': 'desc',
-        'package_name': slugify(faker.name()),
-        'author': 'connect',
-        'version': '1.0',
-        'license': 'Apache',
-        'use_github_actions': 'y' if with_github_actions else 'n',
-        'use_asyncio': 'y' if async_impl else 'n',
-        'include_schedules_example': 'y' if with_schedulable else 'n',
-        'include_variables_example': 'y' if with_variables else 'n',
-        'api_key': faker.pystr(),
-        'environment_id': f'ENV-{faker.random_number()}',
-        'server_address': faker.domain_name(2),
-        'background_group': ['sample_background_event'],
-    }
+        data = {
+            'project_name': faker.name(),
+            'project_slug': slugify(faker.name()),
+            'description': 'desc',
+            'package_name': slugify(faker.name()),
+            'author': 'connect',
+            'version': '1.0',
+            'license': 'Apache',
+            'use_github_actions': 'y' if with_github_actions else 'n',
+            'use_asyncio': 'y' if async_impl else 'n',
+            'include_schedules_example': 'y' if with_schedulable else 'n',
+            'include_variables_example': 'y' if with_variables else 'n',
+            'api_key': faker.pystr(),
+            'environment_id': f'ENV-{faker.random_number()}',
+            'server_address': faker.domain_name(2),
+            'background_group': ['sample_background_event'],
+        }
 
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.dialogus',
-        return_value=data,
-    )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.dialogus',
+            return_value=data,
+        )
 
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
+        bootstrap_extension_project(config=config_vendor, output_dir=tmpdir, overwrite=False)
 
-    bootstrap_extension_project(config_vendor, output_dir, False)
+        classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
-    classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
+        env_file_name = f".{data['project_slug']}_dev.env"
 
-    env_file_name = f".{data['project_slug']}_dev.env"
+        env_file = open(os.path.join(tmpdir, data['project_slug'], env_file_name)).read()
+        assert f'export API_KEY="{data["api_key"]}"' in env_file
+        assert f'export ENVIRONMENT_ID="{data["environment_id"]}"' in env_file
+        assert f'export SERVER_ADDRESS="{data["server_address"]}"' in env_file
 
-    env_file = open(os.path.join(output_dir, data['project_slug'], env_file_name)).read()
-    assert f'export API_KEY="{data["api_key"]}"' in env_file
-    assert f'export ENVIRONMENT_ID="{data["environment_id"]}"' in env_file
-    assert f'export SERVER_ADDRESS="{data["server_address"]}"' in env_file
+        docker_compose_yml = yaml.safe_load(
+            open(os.path.join(tmpdir, data['project_slug'], 'docker-compose.yml')),
+        )
 
-    docker_compose_yml = yaml.safe_load(
-        open(os.path.join(output_dir, data['project_slug'], 'docker-compose.yml')),
-    )
+        for service_suffix in ('dev', 'bash', 'test'):
+            service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
+            assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
+            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
+            assert service['env_file'] == [env_file_name]
 
-    for service_suffix in ('dev', 'bash', 'test'):
-        service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
-        assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-        assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
-        assert service['env_file'] == [env_file_name]
+        pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
-    pyproject_toml = toml.load(os.path.join(output_dir, data['project_slug'], 'pyproject.toml'))
+        ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
+        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
 
-    ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-    assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        if with_github_actions:
+            assert os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'build.yml'),
+            ) is True
 
-    if with_github_actions:
-        assert os.path.exists(
-            os.path.join(output_dir, data['project_slug'], '.github', 'workflows', 'build.yml'),
-        ) is True
+        parser = configparser.ConfigParser()
+        parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
 
-    parser = configparser.ConfigParser()
-    parser.read(os.path.join(output_dir, data['project_slug'], '.flake8'))
+        assert parser['flake8']['application-import-names'] == data['package_name']
 
-    assert parser['flake8']['application-import-names'] == data['package_name']
+        flake8_style_guide = flake8.get_style_guide(
+            show_source=parser['flake8']['show-source'],
+            max_line_length=int(parser['flake8']['max-line-length']),
+            application_import_names=parser['flake8']['application-import-names'],
+            import_order_style=parser['flake8']['import-order-style'],
+            max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
+            ignore=parser['flake8']['ignore'],
+            exclude=parser['flake8']['exclude'],
+        )
 
-    flake8_style_guide = flake8.get_style_guide(
-        show_source=parser['flake8']['show-source'],
-        max_line_length=int(parser['flake8']['max-line-length']),
-        application_import_names=parser['flake8']['application-import-names'],
-        import_order_style=parser['flake8']['import-order-style'],
-        max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
-        ignore=parser['flake8']['ignore'],
-        exclude=parser['flake8']['exclude'],
-    )
+        report = flake8_style_guide.check_files([
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+        ])
+        assert report.total_errors == 0
 
-    report = flake8_style_guide.check_files([
-        os.path.join(output_dir, data['project_slug'], data['package_name'], 'extension.py'),
-        os.path.join(output_dir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
-    ])
-    assert report.total_errors == 0
+        extension_py = open(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+        ).read()
 
-    extension_py = open(
-        os.path.join(output_dir, data['project_slug'], data['package_name'], 'extension.py'),
-    ).read()
+        expected_imports = extension_imports(
+            with_schedulable=with_schedulable,
+            with_variables=with_variables,
+        )
 
-    expected_imports = extension_imports(
-        with_schedulable=with_schedulable,
-        with_variables=with_variables,
-    )
+        assert expected_imports in extension_py
+        assert extension_class_declaration(
+            classname_prefix,
+            with_variables=with_variables,
+        ) in extension_py
 
-    assert expected_imports in extension_py
-    assert extension_class_declaration(
-        classname_prefix,
-        with_variables=with_variables,
-    ) in extension_py
+        assert extension_bg_event(async_impl=async_impl) in extension_py
 
-    assert extension_bg_event(async_impl=async_impl) in extension_py
+        test_py = open(
+            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+        ).read()
 
-    test_py = open(
-        os.path.join(output_dir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
-    ).read()
+        assert test_bg_event(classname_prefix, async_impl=async_impl) in test_py
 
-    assert test_bg_event(classname_prefix, async_impl=async_impl) in test_py
-
-    if with_schedulable:
-        assert extension_schedulable_event(async_impl=async_impl) in extension_py
-        assert test_schedulable_event(classname_prefix, async_impl=async_impl) in test_py
+        if with_schedulable:
+            assert extension_schedulable_event(async_impl=async_impl) in extension_py
+            assert test_schedulable_event(classname_prefix, async_impl=async_impl) in test_py
 
 
 @pytest.mark.parametrize('async_impl', (True, False))
@@ -174,7 +172,6 @@ def test_bootstrap_extension_project_background(
 @pytest.mark.parametrize('with_schedulable', (True, False))
 @pytest.mark.parametrize('with_github_actions', (True, False))
 def test_bootstrap_extension_project_interactive(
-    fs,
     faker,
     mocker,
     mocked_responses,
@@ -190,134 +187,171 @@ def test_bootstrap_extension_project_interactive(
     with_schedulable,
     with_github_actions,
 ):
-    runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
-        return_value=runner_version,
-    )
-    config_vendor.load(config_dir='/tmp')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner_version = f'{faker.random_number()}.{faker.random_number()}'
+        mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+            return_value=runner_version,
+        )
+        config_vendor.load(config_dir='/tmp')
 
-    mocked_responses.add(
-        method='GET',
-        url=f'{config_vendor.active.endpoint}/devops/event-definitions',
-        headers={
-            'Content-Range': 'items 0-0/1',
-        },
-        json=[
-            {
-                'type': 'sample_interactive_event',
-                'group': 'Group',
-                'name': 'Sample Event',
-                'category': 'interactive',
-                'object_statuses': ['status1', 'status2'],
+        mocked_responses.add(
+            method='GET',
+            url=f'{config_vendor.active.endpoint}/devops/event-definitions',
+            headers={
+                'Content-Range': 'items 0-0/1',
             },
-        ],
-    )
+            json=[
+                {
+                    'type': 'sample_interactive_event',
+                    'group': 'Group',
+                    'name': 'Sample Event',
+                    'category': 'interactive',
+                    'object_statuses': ['status1', 'status2'],
+                },
+            ],
+        )
 
-    data = {
-        'project_name': faker.name(),
-        'project_slug': slugify(faker.name()),
-        'description': 'desc',
-        'package_name': slugify(faker.name()),
-        'author': 'connect',
-        'version': '1.0',
-        'license': 'Apache',
-        'use_github_actions': 'y' if with_github_actions else 'n',
-        'use_asyncio': 'y' if async_impl else 'n',
-        'include_schedules_example': 'y' if with_schedulable else 'n',
-        'include_variables_example': 'y' if with_variables else 'n',
-        'api_key': faker.pystr(),
-        'environment_id': f'ENV-{faker.random_number()}',
-        'server_address': faker.domain_name(2),
-        'interactive_group': ['sample_interactive_event'],
-    }
+        data = {
+            'project_name': faker.name(),
+            'project_slug': slugify(faker.name()),
+            'description': 'desc',
+            'package_name': slugify(faker.name()),
+            'author': 'connect',
+            'version': '1.0',
+            'license': 'Apache',
+            'use_github_actions': 'y' if with_github_actions else 'n',
+            'use_asyncio': 'y' if async_impl else 'n',
+            'include_schedules_example': 'y' if with_schedulable else 'n',
+            'include_variables_example': 'y' if with_variables else 'n',
+            'api_key': faker.pystr(),
+            'environment_id': f'ENV-{faker.random_number()}',
+            'server_address': faker.domain_name(2),
+            'interactive_group': ['sample_interactive_event'],
+        }
 
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.dialogus',
-        return_value=data,
-    )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.dialogus',
+            return_value=data,
+        )
 
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
+        bootstrap_extension_project(config_vendor, tmpdir, False)
 
-    bootstrap_extension_project(config_vendor, output_dir, False)
+        env_file_name = f".{data['project_slug']}_dev.env"
 
-    env_file_name = f".{data['project_slug']}_dev.env"
+        env_file = open(os.path.join(tmpdir, data['project_slug'], env_file_name)).read()
+        assert f'export API_KEY="{data["api_key"]}"' in env_file
+        assert f'export ENVIRONMENT_ID="{data["environment_id"]}"' in env_file
+        assert f'export SERVER_ADDRESS="{data["server_address"]}"' in env_file
 
-    env_file = open(os.path.join(output_dir, data['project_slug'], env_file_name)).read()
-    assert f'export API_KEY="{data["api_key"]}"' in env_file
-    assert f'export ENVIRONMENT_ID="{data["environment_id"]}"' in env_file
-    assert f'export SERVER_ADDRESS="{data["server_address"]}"' in env_file
+        docker_compose_yml = yaml.safe_load(
+            open(os.path.join(tmpdir, data['project_slug'], 'docker-compose.yml')),
+        )
 
-    docker_compose_yml = yaml.safe_load(
-        open(os.path.join(output_dir, data['project_slug'], 'docker-compose.yml')),
-    )
+        for service_suffix in ('dev', 'bash', 'test'):
+            service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
+            assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
+            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
+            assert service['env_file'] == [env_file_name]
 
-    for service_suffix in ('dev', 'bash', 'test'):
-        service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
-        assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-        assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
-        assert service['env_file'] == [env_file_name]
+        classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
-    classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
+        pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
-    pyproject_toml = toml.load(os.path.join(output_dir, data['project_slug'], 'pyproject.toml'))
+        ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
+        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
 
-    ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-    assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        if with_github_actions:
+            assert os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'build.yml'),
+            ) is True
 
-    if with_github_actions:
-        assert os.path.exists(
-            os.path.join(output_dir, data['project_slug'], '.github', 'workflows', 'build.yml'),
-        ) is True
+        parser = configparser.ConfigParser()
+        parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
 
-    parser = configparser.ConfigParser()
-    parser.read(os.path.join(output_dir, data['project_slug'], '.flake8'))
+        assert parser['flake8']['application-import-names'] == data['package_name']
 
-    assert parser['flake8']['application-import-names'] == data['package_name']
+        flake8_style_guide = flake8.get_style_guide(
+            show_source=parser['flake8']['show-source'],
+            max_line_length=int(parser['flake8']['max-line-length']),
+            application_import_names=parser['flake8']['application-import-names'],
+            import_order_style=parser['flake8']['import-order-style'],
+            max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
+            ignore=parser['flake8']['ignore'],
+            exclude=parser['flake8']['exclude'],
+        )
 
-    flake8_style_guide = flake8.get_style_guide(
-        show_source=parser['flake8']['show-source'],
-        max_line_length=int(parser['flake8']['max-line-length']),
-        application_import_names=parser['flake8']['application-import-names'],
-        import_order_style=parser['flake8']['import-order-style'],
-        max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
-        ignore=parser['flake8']['ignore'],
-        exclude=parser['flake8']['exclude'],
-    )
+        report = flake8_style_guide.check_files([
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+        ])
+        assert report.total_errors == 0
 
-    report = flake8_style_guide.check_files([
-        os.path.join(output_dir, data['project_slug'], data['package_name'], 'extension.py'),
-        os.path.join(output_dir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
-    ])
-    assert report.total_errors == 0
+        extension_py = open(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+        ).read()
 
-    extension_py = open(
-        os.path.join(output_dir, data['project_slug'], data['package_name'], 'extension.py'),
-    ).read()
+        expected_imports = extension_imports(
+            with_schedulable=with_schedulable,
+            with_variables=with_variables,
+            with_background=False,
+            with_interactive=True,
+        )
 
-    expected_imports = extension_imports(
-        with_schedulable=with_schedulable,
-        with_variables=with_variables,
-        with_background=False,
-        with_interactive=True,
-    )
+        assert expected_imports in extension_py
+        assert extension_class_declaration(classname_prefix, with_variables=with_variables) in extension_py
 
-    assert expected_imports in extension_py
-    assert extension_class_declaration(classname_prefix, with_variables=with_variables) in extension_py
+        assert extension_interactive_event(async_impl=async_impl) in extension_py
 
-    assert extension_interactive_event(async_impl=async_impl) in extension_py
+        test_py = open(
+            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+        ).read()
 
-    test_py = open(
-        os.path.join(output_dir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
-    ).read()
+        assert test_interactive_event(classname_prefix, async_impl=async_impl) in test_py
 
-    assert test_interactive_event(classname_prefix, async_impl=async_impl) in test_py
+        if with_schedulable:
+            assert extension_schedulable_event(async_impl=async_impl) in extension_py
+            assert test_schedulable_event(classname_prefix, async_impl=async_impl) in test_py
 
-    if with_schedulable:
-        assert extension_schedulable_event(async_impl=async_impl) in extension_py
-        assert test_schedulable_event(classname_prefix, async_impl=async_impl) in test_py
+
+def test_bootstrap_extension_project_wizard_cancel(mocker):
+    mocker.patch('connect.cli.plugins.project.extension.helpers.get_event_definitions')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.get_questions')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.get_summary')
+    mocker.patch('connect.cli.plugins.project.extension.helpers.dialogus', return_value=None)
+
+    with pytest.raises(ClickException) as cv:
+        bootstrap_extension_project(None, 'dir', False)
+
+    assert str(cv.value) == 'Aborted by user input'
+
+
+def test_bootstrap_extension_project_if_destination_exists(mocker):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        mocker.patch('connect.cli.plugins.project.extension.helpers.get_event_definitions', return_value=[])
+        mocker.patch('connect.cli.plugins.project.extension.helpers.get_questions')
+        mocker.patch('connect.cli.plugins.project.extension.helpers.get_summary')
+        mocker.patch('connect.cli.plugins.project.extension.helpers.get_pypi_runner_version')
+        project_folder = 'existing_folder'
+        ctx = {
+            'project_slug': project_folder,
+            'base_dir': tmpdir,
+            'background': {},
+            'interactive': {},
+        }
+        mocker.patch('connect.cli.plugins.project.extension.helpers.dialogus', return_value=ctx)
+        dst_dir = os.path.join(tmpdir, project_folder)
+        os.makedirs(dst_dir)
+
+        with pytest.raises(ClickException) as cv:
+            bootstrap_extension_project(config=None, output_dir=tmpdir, overwrite=False)
+
+        d = os.path.join(
+            tmpdir,
+            project_folder,
+        )
+        assert str(cv.value) == f'The destination directory {d} already exists.'
 
 
 def test_bump_runner_version(mocker, capsys):
@@ -368,82 +402,68 @@ def _mock_pypi_version(mocker):
     )
 
 
-def test_bootstrap_wizard_cancel(mocker):
-    mocker.patch('connect.cli.plugins.project.extension.helpers.get_event_definitions')
-    mocker.patch('connect.cli.plugins.project.extension.helpers.get_questions')
-    mocker.patch('connect.cli.plugins.project.extension.helpers.get_summary')
-    mocker.patch('connect.cli.plugins.project.extension.helpers.dialogus', return_value=None)
+def test_validate_extension_project(mocker, faker, mocked_responses, config_vendor, capsys):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner_version = f'{faker.random_number()}.{faker.random_number()}'
+        mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+            side_effect=runner_version,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.validations.get_pypi_runner_version',
+            side_effect=runner_version,
+        )
+        config_vendor.load(config_dir='/tmp')
 
-    with pytest.raises(ClickException) as cv:
-        bootstrap_extension_project(None, 'dir', False)
-
-    assert str(cv.value) == 'Aborted by user input'
-
-
-def test_validate_extension_project(mocker, faker, fs, mocked_responses, config_vendor, capsys):
-    runner_version = f'{faker.random_number()}.{faker.random_number()}'
-    mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
-        side_effect=runner_version,
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.get_pypi_runner_version',
-        side_effect=runner_version,
-    )
-    config_vendor.load(config_dir='/tmp')
-
-    mocked_responses.add(
-        method='GET',
-        url=f'{config_vendor.active.endpoint}/devops/event-definitions',
-        headers={
-            'Content-Range': 'items 0-0/1',
-        },
-        json=[
-            {
-                'type': 'sample_background_event',
-                'group': 'Group',
-                'name': 'Sample Event',
-                'category': 'background',
-                'object_statuses': ['status1', 'status2'],
+        mocked_responses.add(
+            method='GET',
+            url=f'{config_vendor.active.endpoint}/devops/event-definitions',
+            headers={
+                'Content-Range': 'items 0-0/1',
             },
-        ],
-    )
+            json=[
+                {
+                    'type': 'sample_background_event',
+                    'group': 'Group',
+                    'name': 'Sample Event',
+                    'category': 'background',
+                    'object_statuses': ['status1', 'status2'],
+                },
+            ],
+        )
 
-    data = {
-        'project_name': faker.name(),
-        'project_slug': slugify(faker.name()),
-        'description': 'desc',
-        'package_name': slugify(faker.name()),
-        'author': 'connect',
-        'version': '1.0',
-        'license': 'Apache',
-        'use_github_actions': 'n',
-        'use_asyncio': 'n',
-        'include_schedules_example': 'y',
-        'include_variables_example': 'y',
-        'api_key': faker.pystr(),
-        'environment_id': f'ENV-{faker.random_number()}',
-        'server_address': faker.domain_name(2),
-        'background_group': ['sample_background_event'],
-    }
+        data = {
+            'project_name': faker.name(),
+            'project_slug': slugify(faker.name()),
+            'description': 'desc',
+            'package_name': slugify(faker.name()),
+            'author': 'connect',
+            'version': '1.0',
+            'license': 'Apache',
+            'use_github_actions': 'n',
+            'use_asyncio': 'n',
+            'include_schedules_example': 'y',
+            'include_variables_example': 'y',
+            'api_key': faker.pystr(),
+            'environment_id': f'ENV-{faker.random_number()}',
+            'server_address': faker.domain_name(2),
+            'background_group': ['sample_background_event'],
+        }
 
-    mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.dialogus',
-        return_value=data,
-    )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.dialogus',
+            return_value=data,
+        )
 
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
+        bootstrap_extension_project(config_vendor, tmpdir, False)
 
-    bootstrap_extension_project(config_vendor, output_dir, False)
+        project_dir = os.path.join(tmpdir, data['project_slug'])
 
-    project_dir = os.path.join(output_dir, data['project_slug'])
+        validate_extension_project(config_vendor, project_dir)
 
-    validate_extension_project(config_vendor, project_dir)
-
-    captured = capsys.readouterr()
-    assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
+        captured = capsys.readouterr()
+        assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
 
 
 def test_validate_extension_project_error_exit(mocker, faker, fs, mocked_responses, config_vendor, capsys):
@@ -494,17 +514,15 @@ def test_validate_extension_project_error_exit(mocker, faker, fs, mocked_respons
         'connect.cli.plugins.project.extension.helpers.dialogus',
         return_value=data,
     )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        project_dir = os.path.join(tmpdir, data['project_slug'])
 
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
+        bootstrap_extension_project(config_vendor, tmpdir, False)
 
-    bootstrap_extension_project(config_vendor, output_dir, False)
+        os.unlink(os.path.join(project_dir, 'pyproject.toml'))
 
-    project_dir = os.path.join(output_dir, data['project_slug'])
-    os.unlink(os.path.join(project_dir, 'pyproject.toml'))
+        validate_extension_project(config_vendor, project_dir)
 
-    validate_extension_project(config_vendor, project_dir)
+        captured = capsys.readouterr()
 
-    captured = capsys.readouterr()
-
-    assert 'Warning/errors have been found' in captured.out
+        assert 'Warning/errors have been found' in captured.out

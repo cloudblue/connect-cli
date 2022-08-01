@@ -1,18 +1,17 @@
-#  Copyright © 2021 CloudBlue. All rights reserved.
+#  Copyright © 2022 CloudBlue. All rights reserved.
 
+import configparser
 import os
 import json
 import tempfile
-import subprocess
 
 import pytest
+import toml
 from click import ClickException
-from cookiecutter.config import DEFAULT_CONFIG
-from cookiecutter.exceptions import OutputDirExistsException, RepositoryCloneFailed
+from flake8.api import legacy as flake8
 
 from connect.cli.plugins.project.report.helpers import (
     _add_report_to_descriptor,
-    _custom_cookiecutter,
     _entrypoint_validations,
     add_report,
     bootstrap_report_project,
@@ -20,171 +19,143 @@ from connect.cli.plugins.project.report.helpers import (
 )
 
 
-def _cookiecutter_result(local_path):
-    os.makedirs(f'{local_path}/project_dir/reports/report_dir')
-    open(f'{local_path}/project_dir/reports/report_dir/README.md', 'w').write('# Report')
-
-
-@pytest.mark.parametrize('exists_cookiecutter_dir', (True, False))
-def test_bootstrap_report_project(fs, mocker, capsys, exists_cookiecutter_dir):
-    mocked_cookiecutter = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.cookiecutter',
-        return_value='project_dir',
-    )
-    mocked_dialogus = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.dialogus',
-        return_value={
+@pytest.mark.parametrize('with_github_actions', (True, False))
+def test_bootstrap_report_project(mocker, capsys, with_github_actions):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        data = {
             'project_name': 'foo',
             'project_slug': 'foobar',
             'package_name': 'bar',
             'initial_report_name': 'first',
             'initial_report_slug': 'initial_report_slug',
             'initial_report_renderer': 'json',
-            'license': 'super one',
-            'use_github_actions': 'y',
-        },
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.open',
-        mocker.mock_open(read_data='#Project'),
-    )
+            'use_github_actions': 'y' if with_github_actions else 'n',
+            'description': 'blabla',
+            'version': '1.0',
+            'author': 'James Bond',
+            'license': 'mit',
+        }
+        mocked_dialogus = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.dialogus',
+            return_value=data,
+        )
+        mocked_open = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.open',
+            mocker.mock_open(read_data=str({})),
+        )
 
-    report_json = {
-        'name': 'my super project',
-        'reports': [
-            {
-                'name': 'first repo',
-                'entrypoint': 'reports/first_repo/entrypoint/generate',
-                'renderers': [{'id': 'json'}],
-            },
-        ],
-        'parameters': [],
-    }
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.open',
-        mocker.mock_open(read_data=str(report_json)),
-    )
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.json.load',
-        return_value=mocked_open.return_value,
-    )
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.json.dump',
-        return_value=mocked_open.return_value,
-    )
+        bootstrap_report_project(output_dir=tmpdir, overwrite=True)
 
-    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
-    mock_called_process = mocker.patch(
-        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
-    )
-    mock_called_process.stdout = b"""commit1	refs/tags/21.1
-                  commit2	refs/tags/21.10
-                  commit3	refs/tags/21.11
-                  commit4	refs/tags/21.9"""
-    mock_subprocess_run.return_value = mock_called_process
-    mocker.patch('connect.cli.plugins.project.git.get_version', return_value='21.2')
-    cookie_dir = f'{fs.root_path}/.cookiecutters'
-    if exists_cookiecutter_dir:
-        os.mkdir(cookie_dir)
-    DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
+        project_dir = os.path.join(tmpdir, data["project_slug"])
+        mocked_open.assert_called_with(os.path.join(project_dir, 'HOWTO.md'), 'r')
+        captured = capsys.readouterr()
 
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
-    bootstrap_report_project(output_dir)
+        assert f'Folder /{data["project_slug"]} created' in captured.out
+        assert f'Folder /{data["project_slug"]}/{data["package_name"]} created' in captured.out
+        assert (
+            f'Folder /{data["project_slug"]}/{data["package_name"]}/{data["initial_report_slug"]}'
+            ' created'
+        ) in captured.out
+        assert mocked_dialogus.call_count == 1
 
-    captured = capsys.readouterr()
-    assert 'project_dir' in captured.out
-    assert mocked_cookiecutter.call_args_list[0][1]['checkout'] == '21.11'
-    assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 1
+        pyproject_toml = toml.load(
+            os.path.join(
+                tmpdir,
+                data['project_slug'],
+                'pyproject.toml',
+            ),
+        )
+
+        report_pyp = pyproject_toml['tool']['poetry']
+
+        assert report_pyp['name'] == data['project_slug']
+        assert report_pyp['description'] == data['description']
+        assert report_pyp['version'] == data['version']
+        assert report_pyp['authors'] == [data['author']]
+        assert report_pyp['license'] == data['license']
+        assert report_pyp['packages'] == [{'include': data['package_name']}]
+        assert pyproject_toml['tool']['pytest']['ini_options']['addopts'] == (
+            f"--cov={data['package_name']} --cov-report=term-missing:skip-covered --cov-report=html --cov-report=xml"
+        )
+
+        assert os.path.exists(
+            os.path.join(
+                project_dir,
+                '.github',
+                'workflows',
+                'build.yml',
+            ),
+        ) is with_github_actions
+
+        parser = configparser.ConfigParser()
+        parser.read(
+            os.path.join(
+                tmpdir,
+                data['project_slug'],
+                '.flake8',
+            ),
+        )
+
+        assert parser['flake8']['application-import-names'] == data['package_name']
+
+        flake8_style_guide = flake8.get_style_guide(
+            show_source=parser['flake8']['show-source'],
+            max_line_length=int(parser['flake8']['max-line-length']),
+            application_import_names=parser['flake8']['application-import-names'],
+            import_order_style=parser['flake8']['import-order-style'],
+            max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
+            ignore=parser['flake8']['ignore'],
+            exclude=parser['flake8']['exclude'],
+        )
+
+        report = flake8_style_guide.check_files([
+            os.path.join(project_dir, data['package_name'], 'reports.json'),
+            os.path.join(project_dir, 'tests', f'test_{data["project_slug"]}.py'),
+        ])
+        assert report.total_errors == 0
+
+        report_folder = (
+            f"{project_dir}/{data['package_name']}/{data['initial_report_slug']}"
+        )
+
+        for path in (
+            f"{report_folder}/templates",
+            f"{report_folder}/templates/pdf",
+            f"{report_folder}/templates/pdf/template.css",
+            f"{report_folder}/templates/pdf/template.html.j2",
+            f"{report_folder}/templates/xml",
+            f"{report_folder}/templates/xml/template.xml.j2",
+            f"{report_folder}/templates/xlsx",
+            f"{report_folder}/__init__.py",
+            f"{report_folder}/entrypoint.py",
+            f"{report_folder}/README.md",
+        ):
+            assert os.path.exists(
+                path,
+            ), f'{path} does not exists: {os.listdir(report_folder)} {os.listdir(f"{report_folder}/templates")}'
 
 
-def test_bootstrap_direxists_error(fs, mocker):
-    mocked_cookiecutter = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.cookiecutter',
-        side_effect=OutputDirExistsException('dir "project_dir" exists'),
-    )
+def test_bootstrap_report_project_wizard_cancel(mocker):
+    mocker.patch('connect.cli.plugins.project.report.helpers.dialogus', return_value=None)
+
+    with pytest.raises(ClickException) as cv:
+        bootstrap_report_project('dir', True)
+
+    assert str(cv.value) == 'Aborted by user input'
+
+
+def test_bootstrap_dir_exists_error(mocker):
     mocked_dialogus = mocker.patch(
         'connect.cli.plugins.project.report.helpers.dialogus',
-        return_value={
-            'project_name': 'foo',
-            'package_name': 'bar',
-            'initial_report_name': 'first',
-            'initial_report_renderer': 'json',
-            'license': 'super one',
-            'use_github_actions': 'y',
-        },
+        return_value={'project_slug': 'project'},
     )
-    cookie_dir = f'{fs.root_path}/.cookiecutters'
-    os.mkdir(cookie_dir)
-    DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
-
-    output_dir = f'{fs.root_path}/projects'
-    os.mkdir(output_dir)
-
-    with pytest.raises(ClickException):
-        bootstrap_report_project(output_dir)
-    assert mocked_cookiecutter.call_count == 1
-    assert mocked_dialogus.call_count == 1
-
-
-@pytest.mark.parametrize('raise_exception', (subprocess.CalledProcessError(1, []), RepositoryCloneFailed()))
-def test_bootstrap_report_project_git_error(fs, mocker, raise_exception):
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.cookiecutter',
-        return_value='project_dir',
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.dialogus',
-        return_value={
-            'project_name': 'foo',
-            'project_slug': 'foobar',
-            'package_name': 'bar',
-            'initial_report_name': 'first',
-            'initial_report_slug': 'initial_report_slug',
-            'initial_report_renderer': 'json',
-            'license': 'super one',
-            'use_github_actions': 'y',
-        },
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.open',
-        mocker.mock_open(read_data='#Project'),
-    )
-
-    report_json = {
-        'name': 'my super project',
-        'reports': [
-            {
-                'name': 'first repo',
-                'entrypoint': 'reports/first_repo/entrypoint/generate',
-                'renderers': [{'id': 'json'}],
-            },
-        ],
-        'parameters': [],
-    }
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.open',
-        mocker.mock_open(read_data=str(report_json)),
-    )
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.json.load',
-        return_value=mocked_open.return_value,
-    )
-    mocked_open = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.json.dump',
-        return_value=mocked_open.return_value,
-    )
-
-    mock_subprocess_run = mocker.patch('connect.cli.plugins.project.git.subprocess.run')
-    mock_called_process = mocker.patch(
-        'connect.cli.plugins.project.git.subprocess.CompletedProcess',
-    )
-    mock_called_process.check_returncode.side_effect = raise_exception
-    mock_subprocess_run.return_value = mock_called_process
-
-    with pytest.raises(ClickException):
-        bootstrap_report_project('')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = f'{tmpdir}/project'
+        os.mkdir(output_dir)
+        with pytest.raises(ClickException) as exc:
+            bootstrap_report_project(tmpdir, False)
+        assert str(exc.value) == f'The destination directory {tmpdir}/project already exists.'
+        assert mocked_dialogus.call_count == 1
 
 
 def test_validate_report_project(capsys):
@@ -196,57 +167,54 @@ def test_validate_report_project(capsys):
     assert 'successfully' in captured.out
 
 
-def test_validate_report_no_descriptor_file(fs):
-    with pytest.raises(ClickException) as error:
-        validate_report_project(fs.root_path)
+def test_validate_report_no_descriptor_file():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with pytest.raises(ClickException) as error:
+            validate_report_project(tmpdir)
+        assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
 
-    assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
 
-
-def test_validate_report_wrong_descriptor_file(fs, mocked_reports):
+def test_validate_report_wrong_descriptor_file(mocked_reports):
     wrong_data = f'{mocked_reports} - extrachar'
-
-    with open(f'{fs.root_path}/reports.json', 'w') as fp:
-        fp.write(wrong_data)
-
-    with pytest.raises(ClickException) as error:
-        validate_report_project(f'{fs.root_path}')
-
-    assert str(error.value) == 'The report project descriptor `reports.json` is not a valid json file.'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(f'{tmpdir}/reports.json', 'w') as fp:
+            fp.write(wrong_data)
+        with pytest.raises(ClickException) as error:
+            validate_report_project(f'{tmpdir}')
+        assert str(error.value) == 'The report project descriptor `reports.json` is not a valid json file.'
 
 
-def test_validate_report_schema(fs, mocked_reports):
+def test_validate_report_schema(mocked_reports):
     wrong_data = mocked_reports
     # no valid value for 'reports' field
     wrong_data['reports'] = 'string'
-
-    with open(f'{fs.root_path}/reports.json', 'w') as fp:
-        json.dump(wrong_data, fp)
-
-    with pytest.raises(ClickException) as error:
-        validate_report_project(f'{fs.root_path}')
-
-    assert 'Invalid `reports.json`: \'string\' is not of type' in str(error.value)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(f'{tmpdir}/reports.json', 'w') as fp:
+            json.dump(wrong_data, fp)
+        with pytest.raises(ClickException) as error:
+            validate_report_project(f'{tmpdir}')
+        assert 'Invalid `reports.json`: \'string\' is not of type' in str(error.value)
 
 
-def test_validate_report_missing_files(fs, mocked_reports):
-    with open(f'{fs.root_path}/reports.json', 'w') as fp:
-        json.dump(mocked_reports, fp)
+def test_validate_report_missing_files(mocked_reports):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(f'{tmpdir}/reports.json', 'w') as fp:
+            json.dump(mocked_reports, fp)
 
-    # validate function will fail due to missing project files
-    # like `readme.md` for instance, let's try it...
-    with pytest.raises(ClickException) as error:
-        validate_report_project(f'{fs.root_path}')
+        # validate function will fail due to missing project files
+        # like `readme.md` for instance, let's try it...
+        with pytest.raises(ClickException) as error:
+            validate_report_project(f'{tmpdir}')
 
-    assert 'repository property `readme_file` cannot be resolved to a file' in str(error.value)
+        assert 'repository property `readme_file` cannot be resolved to a file' in str(error.value)
 
 
-def test_entrypoint_wrong_import(fs):
-    with open(f'{fs.root_path}/entrypoint.py', 'w') as fp:
-        fp.write('import foo')
-
-    with pytest.raises(ClickException):
-        _entrypoint_validations(fs.root_path, 'entrypoint', '1')
+def test_entrypoint_wrong_import():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(f'{tmpdir}/entrypoint.py', 'w') as fp:
+            fp.write('import foo')
+        with pytest.raises(ClickException):
+            _entrypoint_validations(tmpdir, 'entrypoint', '1')
 
 
 @pytest.mark.parametrize(
@@ -268,7 +236,7 @@ def test_add_report_no_package_dir(fs):
         add_report(f'{fs.root_path}/project_dir', package_name)
 
 
-def test_add_report_wrong_descriptor_project_file(fs, mocker, mocked_reports):
+def test_add_report_wrong_descriptor_project_file(mocker, mocked_reports):
     desc_validations_mocked = mocker.patch(
         'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
         return_value=mocked_reports,
@@ -288,32 +256,55 @@ def test_add_report_wrong_descriptor_project_file(fs, mocker, mocked_reports):
     assert schema_validation_mocked.call_count == 1
 
 
-def test_add_report_existing_repo_dir(fs, mocker, mocked_reports):
-    desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
-        return_value=mocked_reports,
-    )
-    schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.validate_with_schema',
-        return_value=[],
-    )
-    cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._custom_cookiecutter',
-        side_effect=_cookiecutter_result(fs.root_path),
-        return_value=(f'{fs.root_path}/project_dir', 'report_dir'),
-    )
+def test_add_report_existing_repo_dir(mocker):
     with tempfile.TemporaryDirectory() as tmp_project_dir:
+        desc_validations_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
+            return_value=f'{tmp_project_dir}/project_dir',
+        )
+        schema_validation_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.validate_with_schema',
+            return_value=[],
+        )
+        mocked_dialogus = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.dialogus',
+            return_value={'initial_report_slug': 'report_dir'},
+        )
         os.makedirs(f'{tmp_project_dir}/project_dir/reports/report_dir')
         with pytest.raises(ClickException) as error:
             add_report(f'{tmp_project_dir}/project_dir', package_name='reports')
 
     assert f'`{tmp_project_dir}/project_dir/reports/report_dir` already exists,' in str(error.value)
-    assert cookie_mocked.call_count == 1
     assert desc_validations_mocked.call_count == 1
     assert schema_validation_mocked.call_count == 1
+    assert mocked_dialogus.call_count == 1
 
 
-def test_add_report(fs, mocker, mocked_reports):
+def test_add_report_empty_answers(mocker):
+    with tempfile.TemporaryDirectory() as tmp_project_dir:
+        desc_validations_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
+            return_value=f'{tmp_project_dir}/project_dir',
+        )
+        schema_validation_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.validate_with_schema',
+            return_value=[],
+        )
+        mocked_dialogus = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.dialogus',
+            return_value={},
+        )
+        os.makedirs(f'{tmp_project_dir}/project_dir/reports')
+        with pytest.raises(ClickException) as error:
+            add_report(f'{tmp_project_dir}/project_dir', package_name='reports')
+
+    assert 'Aborted by user input' in str(error.value)
+    assert desc_validations_mocked.call_count == 1
+    assert schema_validation_mocked.call_count == 1
+    assert mocked_dialogus.call_count == 1
+
+
+def test_add_report(mocker, mocked_reports):
     desc_validations_mocked = mocker.patch(
         'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
         return_value=mocked_reports,
@@ -322,152 +313,74 @@ def test_add_report(fs, mocker, mocked_reports):
         'connect.cli.plugins.project.report.helpers.validate_with_schema',
         return_value=[],
     )
-    cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._custom_cookiecutter',
-        side_effect=_cookiecutter_result(fs.root_path),
-        return_value=(f'{fs.root_path}/project_dir', 'report_dir'),
-    )
-
-    assert os.path.isdir(cookie_mocked.return_value[0])
-    assert os.path.isfile(f'{cookie_mocked.return_value[0]}/reports/report_dir/README.md')
-
-    cookie_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._add_report_to_descriptor',
-    )
-
-    cookie_dir = f'{fs.root_path}/.cookiecutters'
-    os.mkdir(cookie_dir)
-    DEFAULT_CONFIG['cookiecutters_dir'] = cookie_dir
-    with tempfile.TemporaryDirectory() as project_dir:
-        os.mkdir(f'{project_dir}/reports')
-        add_report(project_dir, package_name='reports')
-        assert os.path.isdir(f'{project_dir}/reports/report_dir')
-
-    assert cookie_mocked.call_count == 1
-    assert desc_validations_mocked.call_count == 1
-    assert schema_validation_mocked.call_count == 1
-
-
-def test_add_report_to_descriptor(fs, mocked_reports, mocker):
-    _cookiecutter_result(fs.root_path)
-    with open(f'{fs.root_path}/project_dir/reports.json', 'w') as fp:
-        json.dump(mocked_reports, fp)
-
-    with tempfile.TemporaryDirectory() as tmp_data:
-        os.mkdir(f'{tmp_data}/project_dir')
-        with open(f'{tmp_data}/project_dir/reports.json', 'w') as fp:
-            json.dump(mocked_reports, fp)
-
-        _add_report_to_descriptor(
-            f'{tmp_data}/project_dir',
-            f'{fs.root_path}/project_dir',
-            'reports',
-        )
-        with open(f'{tmp_data}/project_dir/reports.json', 'r') as fp:
-            data = json.load(fp)
-
-            assert len(data['reports']) == 2
-
-
-def test_custom_cookiecutter(fs, mocker):
-    cookiecutter_json_content = {
-        'project_name': 'project name',
-        'project_slug': 'project_name',
-        'package_name': 'reports',
-        'package_slug': 'reports',
-        'initial_report_name': 'report name',
-        'initial_report_slug': 'initial_report_name',
-        'initial_report_description': 'desc',
-        'author': 'me',
-    }
     mocked_dialogus = mocker.patch(
         'connect.cli.plugins.project.report.helpers.dialogus',
         return_value={
-            'initial_report_name': 'report name',
-            'initial_report_slug': 'report_name',
-            'initial_report_description': 'desc',
-            'initial_report_renderer': 'json',
-            'author': 'me',
+            'initial_report_slug': 'report_dir',
+            'project_slug': 'project_dir',
         },
     )
-    config_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.get_user_config',
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.shutil.rmtree',
-    )
-    repo_dir_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.determine_repo_dir',
-    )
-    generate_context_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.generate_context',
-        return_value={
-            'cookiecutter': cookiecutter_json_content,
-        },
-    )
-    generate_files_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.generate_files',
-        return_value=f'{fs.root_path}/project_name',
+    add_report_mocked = mocker.patch(
+        'connect.cli.plugins.project.report.helpers._add_report_to_descriptor',
     )
 
-    with tempfile.TemporaryDirectory() as cookiedir_tmp:
-        template = f'{cookiedir_tmp}/boilerplate'
-        os.mkdir(template)
-        json.dump(
-            cookiecutter_json_content,
-            open(f'{template}/cookiecutter.json', 'w'),
-        )
-        repo_dir_mocked.return_value = (template, False)
-        config_mocked.return_value = {
-            'cookiecutters_dir': f'{cookiedir_tmp}',
-            'abbreviations': ['gh'],
-            'default_context': None,
-        }
+    with tempfile.TemporaryDirectory() as project_folder:
+        project_dir = os.path.join(project_folder, 'project_dir')
+        os.makedirs(os.path.join(project_dir, 'reports'))
+        add_report(project_dir=project_dir, package_name='reports')
 
-        report_dir, report_slug = _custom_cookiecutter(
-            template,
-            fs.root_path,
-            'project_name',
-            'project_slug',
-        )
+        report_dir = os.path.join(project_dir, 'reports', 'report_dir')
 
-    assert report_slug == 'report_name'
-    assert report_dir == f'{fs.root_path}/project_name'
-    assert repo_dir_mocked.call_count == 1
-    assert generate_context_mocked.call_count == 1
-    assert generate_files_mocked.call_count == 1
-    assert config_mocked.call_count == 1
+        for path in (
+            report_dir,
+            f"{report_dir}/templates",
+            f"{report_dir}/templates/pdf",
+            f"{report_dir}/templates/pdf/template.css",
+            f"{report_dir}/templates/pdf/template.html.j2",
+            f"{report_dir}/templates/xml",
+            f"{report_dir}/templates/xml/template.xml.j2",
+            f"{report_dir}/templates/xlsx",
+            f"{report_dir}/__init__.py",
+            f"{report_dir}/entrypoint.py",
+            f"{report_dir}/README.md",
+        ):
+            assert os.path.exists(
+                path,
+            ), f'{path} does not exists'
+
+        for path in (
+            report_dir,
+            f"{report_dir}/templates",
+            f"{report_dir}/templates/pdf",
+            f"{report_dir}/templates/xml",
+            f"{report_dir}/templates/xlsx",
+        ):
+            assert os.path.isdir(
+                path,
+            ), f'{path} it is not a directory'
+
+    assert desc_validations_mocked.call_count == 1
+    assert schema_validation_mocked.call_count == 1
     assert mocked_dialogus.call_count == 1
+    assert add_report_mocked.call_count == 1
 
 
-def test_bootstrap_wizard_cancel(mocker):
-    mocker.patch('connect.cli.plugins.project.report.helpers.purge_cookiecutters_dir')
-    mocker.patch('connect.cli.plugins.project.report.helpers.dialogus', return_value=None)
-
-    with pytest.raises(ClickException) as cv:
-        bootstrap_report_project('dir')
-
-    assert str(cv.value) == 'Aborted by user input'
-
-
-def test_custom_cookiecutter_wizard_cancel(mocker):
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.get_user_config',
-        return_value={
-            'cookiecutters_dir': 'dir',
-            'abbreviations': '',
-            'default_context': {},
-        },
-    )
-    mocker.patch('connect.cli.plugins.project.report.helpers.os.path.isdir', return_value=False)
-    mocker.patch(
-        'connect.cli.plugins.project.report.helpers.determine_repo_dir',
-        return_value=('dir', None),
-    )
-    mocker.patch('connect.cli.plugins.project.report.helpers.generate_context')
-    mocker.patch('connect.cli.plugins.project.report.helpers.dialogus', return_value=None)
-
-    with pytest.raises(ClickException) as cv:
-        _custom_cookiecutter('dir/template.json', None, None, None)
-
-    assert str(cv.value) == 'Aborted by user input'
+def test_add_report_to_descriptor(mocked_reports):
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project_dir'
+        os.mkdir(project_dir)
+        with open(f'{project_dir}/reports.json', 'w') as fp:
+            json.dump(mocked_reports, fp)
+        ctx = {
+            'initial_report_name': 'report',
+            'initial_report_slug': '',
+            'initial_report_renderer': 'pdf',
+        }
+        _add_report_to_descriptor(
+            project_dir=project_dir,
+            package_dir='reports',
+            context=ctx,
+        )
+        with open(f'{project_dir}/reports.json', 'r') as fp:
+            data = json.load(fp)
+            assert len(data['reports']) == 2
