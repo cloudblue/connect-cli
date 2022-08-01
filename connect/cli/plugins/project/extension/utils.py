@@ -2,8 +2,8 @@ import requests
 from click import ClickException
 
 from connect.cli import get_version
+from connect.cli.core.utils import sort_and_filter_tags
 from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
-from connect.cli.plugins.project.utils import sort_and_filter_tags
 from connect.client import ClientError
 
 

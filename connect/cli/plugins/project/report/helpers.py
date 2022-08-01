@@ -2,9 +2,6 @@
 
 import json
 import os
-import sys
-import inspect
-import importlib
 import functools
 
 from click import ClickException
@@ -21,12 +18,9 @@ from connect.cli.plugins.project.report.wizard import (
     REPORT_BOOTSTRAP_WIZARD_INTRO,
     REPORT_SUMMARY,
 )
+from connect.cli.plugins.project.utils import show_validation_result_table
+from connect.cli.plugins.project.report.validations import validate_reports_json, validators
 from connect.cli.plugins.project.renderer import BoilerplateRenderer
-from connect.reports.parser import parse
-from connect.reports.validator import (
-    validate,
-    validate_with_schema,
-)
 
 
 def bootstrap_report_project(output_dir, overwrite):
@@ -86,26 +80,6 @@ def bootstrap_report_project(output_dir, overwrite):
     console.markdown(open(f'{project_dir}/HOWTO.md', 'r').read())
 
 
-def validate_report_project(project_dir):
-    console.secho(f'Validating project {project_dir}...\n', fg='blue')
-
-    data = _file_descriptor_validations(project_dir)
-    errors = validate_with_schema(data)
-    if errors:
-        raise ClickException(f'Invalid `reports.json`: {errors}')
-
-    report_project = parse(project_dir, data)
-
-    errors = validate(report_project)
-    if errors:
-        raise ClickException(f'Invalid `reports.json`: {",".join(errors)}')
-
-    for report in report_project.reports:
-        _entrypoint_validations(project_dir, report.entrypoint, report.report_spec)
-
-    console.secho(f'Report Project {project_dir} has been successfully validated.', fg='green')
-
-
 def add_report(project_dir, package_name):
     project_path = os.path.join(project_dir, package_name)
     if not os.path.exists(project_path):
@@ -115,9 +89,9 @@ def add_report(project_dir, package_name):
         )
 
     # Required: check if the project descriptor is valid
-    project_desc = _file_descriptor_validations(project_dir)
-    errors = validate_with_schema(project_desc)
-    if errors:
+    validation_result = validate_reports_json(project_dir, None)
+    if validation_result.items:
+        errors = [error.message for error in validation_result.items]
         raise ClickException(f'Invalid `reports.json`: {errors}')
 
     console.secho(f'Adding new report to project {project_dir}...\n', fg='blue')
@@ -256,45 +230,6 @@ def _add_report_to_descriptor(project_dir, package_dir, context):
     )
 
 
-def _file_descriptor_validations(project_dir):
-    descriptor_file = os.path.join(project_dir, 'reports.json')
-    if not os.path.isfile(descriptor_file):
-        raise ClickException(
-            f'The directory `{project_dir}` does not look like a report project directory, '
-            'the mandatory `reports.json` file descriptor is not present.',
-        )
-    try:
-        data = json.load(open(descriptor_file, 'r'))
-    except json.JSONDecodeError:
-        raise ClickException(
-            'The report project descriptor `reports.json` is not a valid json file.',
-        )
-    return data
-
-
-def _entrypoint_validations(project_dir, entrypoint, report_spec):
-    # Package validation
-    sys.path.append(os.path.join(os.getcwd(), project_dir))
-    package = entrypoint.rsplit('.', 1)[0]
-    try:
-        entrypoint_module = importlib.import_module(package)
-    except ImportError as error:
-        raise ClickException(f'\nErrors detected on entrypoint module: {error}')
-
-    # Function validation
-    if report_spec == '1' and len(inspect.signature(entrypoint_module.generate).parameters) != 3:
-        raise ClickException(
-            'Wrong arguments on `generate` function. The signature must be:'
-            '\n>> def generate(client, parameters, progress_callback) <<',
-        )
-    if report_spec == '2' and len(inspect.signature(entrypoint_module.generate).parameters) != 5:
-        raise ClickException(
-            'Wrong arguments on `generate` function. The signature must be:'
-            '\n>> def generate(client=None, input_data=None, progress_callback=None, '
-            'renderer_type=None, extra_context_callback=None) <<',
-        )
-
-
 def generate_empty_xlsx(dest_dir, base_dir, context):
     destination = os.path.join(
         base_dir,
@@ -315,3 +250,29 @@ def generate_empty_xlsx(dest_dir, base_dir, context):
         file_path,
     )
     console.print(f'File {file_path} generated [bold green]\u2713[/bold green]')
+
+
+def validate_report_project(project_dir):  # noqa: CCR001
+    console.secho(f'Validating project {project_dir}...\n', fg='blue')
+
+    context = {}
+
+    validation_items = []
+
+    for validator in validators:
+        result = validator(project_dir, context)
+        validation_items.extend(result.items)
+        if result.must_exit:
+            break
+        if result.context:
+            context.update(result.context)
+
+    if validation_items:
+        console.markdown('# Report validation results')
+        show_validation_result_table(validation_items)
+        console.secho(
+            f'Warning/errors have been found while validating the Report Project {project_dir}.',
+            fg='yellow',
+        )
+    else:
+        console.secho(f'Report Project {project_dir} has been successfully validated.', fg='green')

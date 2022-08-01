@@ -1,14 +1,12 @@
-import dataclasses
 import importlib
 import inspect
 import os
 import re
 import sys
-from typing import List, Literal, Optional
 
-import toml
 import yaml
 
+from connect.cli.plugins.project.validators import get_code_context, ValidationItem, ValidationResult
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
 from connect.eaas.core.extension import Extension
 from connect.eaas.core.responses import (
@@ -17,75 +15,17 @@ from connect.eaas.core.responses import (
     ProductActionResponse,
     ValidationResponse,
 )
-
-
-@dataclasses.dataclass
-class ValidationItem:
-    level: Literal['WARNING', 'ERROR']
-    message: str
-    file: Optional[str] = None
-    start_line: Optional[int] = None
-    lineno: Optional[int] = None
-    code: Optional[str] = None
-
-
-@dataclasses.dataclass
-class ValidationResult:
-    items: List[ValidationItem]
-    must_exit: bool = False
-    context: Optional[dict] = None
-
-
-def get_code_context(obj, pattern):
-    source_lines = inspect.getsourcelines(obj)
-    file = inspect.getsourcefile(obj)
-    start_line = source_lines[1]
-    lineno = source_lines[1]
-    code = ''.join(source_lines[0])
-
-    for idx, line in enumerate(source_lines[0]):  # pragma: no branchs
-        if pattern in line:
-            lineno += idx
-            break
-
-    if inspect.ismodule(obj):
-        code = ''.join(code.splitlines(keepends=True)[0:lineno + 3])
-
-    return {
-        'file': file,
-        'start_line': start_line,
-        'lineno': lineno,
-        'code': code,
-    }
+from connect.cli.plugins.project.validators import load_project_toml_file
 
 
 def validate_pyproject_toml(config, project_dir, context):
     messages = []
-    descriptor_file = os.path.join(project_dir, 'pyproject.toml')
-    if not os.path.isfile(descriptor_file):
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                (
-                    f'The directory *{project_dir}* does not look like an extension project directory, '
-                    'the mandatory *pyproject.toml* project descriptor file is not present.'
-                ),
-                descriptor_file,
-            ),
-        )
-        return ValidationResult(messages, True)
-    try:
-        data = toml.load(descriptor_file)
-    except toml.TomlDecodeError:
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                'The extension project descriptor file *pyproject.toml* is not valid.',
-                descriptor_file,
-            ),
-        )
-        return ValidationResult(messages, True)
 
+    data = load_project_toml_file(project_dir)
+    if isinstance(data, ValidationResult):
+        return data
+
+    descriptor_file = os.path.join(project_dir, 'pyproject.toml')
     dependencies = data['tool']['poetry']['dependencies']
 
     if 'connect-extension-runner' in dependencies:
@@ -264,7 +204,7 @@ def validate_events(config, project_dir, context):
             messages.append(
                 ValidationItem(
                     'ERROR',
-                    f'The handler for the event *{event["event_type"]}* has an invalid signature: "{sig_str}"',
+                    f'The handler for the event *{event["event_type"]}* has an invalid signature: *{sig_str}*',
                     **get_code_context(method, sig_str),
                 ),
             )

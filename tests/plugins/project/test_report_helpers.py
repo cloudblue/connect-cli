@@ -12,11 +12,11 @@ from flake8.api import legacy as flake8
 
 from connect.cli.plugins.project.report.helpers import (
     _add_report_to_descriptor,
-    _entrypoint_validations,
     add_report,
     bootstrap_report_project,
     validate_report_project,
 )
+from connect.cli.plugins.project.validators import ValidationItem, ValidationResult
 
 
 @pytest.mark.parametrize('with_github_actions', (True, False))
@@ -158,75 +158,83 @@ def test_bootstrap_dir_exists_error(mocker):
         assert mocked_dialogus.call_count == 1
 
 
-def test_validate_report_project(capsys):
+def test_validate_report_project_successfully(capsys, mocker):
     project_dir = './tests/fixtures/reports/basic_report'
-
+    validator_f = mocker.MagicMock(return_value=ValidationResult([]))
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.validators',
+        [validator_f],
+    )
     validate_report_project(project_dir)
-
+    validator_f.assert_called_with(project_dir, {})
     captured = capsys.readouterr()
-    assert 'successfully' in captured.out
+    assert f'Validating project {project_dir}...' in captured.out
+    assert f'Report Project {project_dir} has been successfully validated' in captured.out
 
 
-def test_validate_report_no_descriptor_file():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with pytest.raises(ClickException) as error:
-            validate_report_project(tmpdir)
-        assert 'the mandatory `reports.json` file descriptor is not present' in str(error.value)
+def test_validate_report_project_with_error(capsys, mocker):
+    project_dir = './tests/fixtures/reports/basic_report'
+    validator_f = mocker.MagicMock(
+        return_value=ValidationResult(
+            [
+                ValidationItem(
+                    'ERROR',
+                    'error_message',
+                ),
+            ],
+            context={'some': 'context'},
+        ),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.validators',
+        [validator_f],
+    )
+    validate_report_project(project_dir)
+    validator_f.assert_called_with(project_dir, {'some': 'context'})
+    captured = capsys.readouterr()
+    assert f'Validating project {project_dir}...' in captured.out
+    assert 'ERROR' in captured.out
+    assert 'error_message' in captured.out
+    assert f'Warning/errors have been found while validating the Report Project {project_dir}.' in captured.out
 
 
-def test_validate_report_wrong_descriptor_file(mocked_reports):
-    wrong_data = f'{mocked_reports} - extrachar'
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with open(f'{tmpdir}/reports.json', 'w') as fp:
-            fp.write(wrong_data)
-        with pytest.raises(ClickException) as error:
-            validate_report_project(f'{tmpdir}')
-        assert str(error.value) == 'The report project descriptor `reports.json` is not a valid json file.'
-
-
-def test_validate_report_schema(mocked_reports):
-    wrong_data = mocked_reports
-    # no valid value for 'reports' field
-    wrong_data['reports'] = 'string'
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with open(f'{tmpdir}/reports.json', 'w') as fp:
-            json.dump(wrong_data, fp)
-        with pytest.raises(ClickException) as error:
-            validate_report_project(f'{tmpdir}')
-        assert 'Invalid `reports.json`: \'string\' is not of type' in str(error.value)
-
-
-def test_validate_report_missing_files(mocked_reports):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with open(f'{tmpdir}/reports.json', 'w') as fp:
-            json.dump(mocked_reports, fp)
-
-        # validate function will fail due to missing project files
-        # like `readme.md` for instance, let's try it...
-        with pytest.raises(ClickException) as error:
-            validate_report_project(f'{tmpdir}')
-
-        assert 'repository property `readme_file` cannot be resolved to a file' in str(error.value)
-
-
-def test_entrypoint_wrong_import():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with open(f'{tmpdir}/entrypoint.py', 'w') as fp:
-            fp.write('import foo')
-        with pytest.raises(ClickException):
-            _entrypoint_validations(tmpdir, 'entrypoint', '1')
-
-
-@pytest.mark.parametrize(
-    'spec_version',
-    ('1', '2'),
-)
-def test_entrypoint_wrong_signature(fs, spec_version):
-    with open(f'{fs.root_path}/wrong_signature.py', 'w') as bad_signature:
-        bad_signature.write('def generate(client, parameters): pass')
-
-    with pytest.raises(ClickException):
-        _entrypoint_validations(fs.root_path, 'wrong_signature', spec_version)
+def test_validate_report_project_with_error_must_exit(capsys, mocker):
+    project_dir = './tests/fixtures/reports/basic_report'
+    validator_one = mocker.MagicMock(
+        return_value=ValidationResult(
+            [
+                ValidationItem(
+                    'ERROR',
+                    'error_message',
+                ),
+            ],
+            must_exit=True,
+        ),
+    )
+    validator_two = mocker.MagicMock(
+        return_value=ValidationResult(
+            [
+                ValidationItem(
+                    'ERROR2',
+                    'error2_message',
+                ),
+            ],
+        ),
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.report.helpers.validators',
+        [validator_one, validator_two],
+    )
+    validate_report_project(project_dir)
+    validator_one.assert_called_with(project_dir, {})
+    assert validator_two.called is False
+    captured = capsys.readouterr()
+    assert f'Validating project {project_dir}...' in captured.out
+    assert 'ERROR' in captured.out
+    assert 'error_message' in captured.out
+    assert 'ERROR2' not in captured.out
+    assert 'error2_message' not in captured.out
+    assert f'Warning/errors have been found while validating the Report Project {project_dir}.' in captured.out
 
 
 def test_add_report_no_package_dir(fs):
@@ -236,14 +244,10 @@ def test_add_report_no_package_dir(fs):
         add_report(f'{fs.root_path}/project_dir', package_name)
 
 
-def test_add_report_wrong_descriptor_project_file(mocker, mocked_reports):
-    desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
-        return_value=mocked_reports,
-    )
-    schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.validate_with_schema',
-        return_value=['error'],
+def test_add_report_wrong_descriptor_project_file(mocker):
+    validate_reports_json_mocked = mocker.patch(
+        'connect.cli.plugins.project.report.helpers.validate_reports_json',
+        return_value=ValidationResult([ValidationItem('ERROR', 'error')]),
     )
 
     with tempfile.TemporaryDirectory() as tmp_project_dir:
@@ -252,19 +256,14 @@ def test_add_report_wrong_descriptor_project_file(mocker, mocked_reports):
             add_report(f'{tmp_project_dir}/project_dir', 'reports')
 
     assert 'error' in str(error.value)
-    assert desc_validations_mocked.call_count == 1
-    assert schema_validation_mocked.call_count == 1
+    assert validate_reports_json_mocked.call_count == 1
 
 
 def test_add_report_existing_repo_dir(mocker):
     with tempfile.TemporaryDirectory() as tmp_project_dir:
-        desc_validations_mocked = mocker.patch(
-            'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
-            return_value=f'{tmp_project_dir}/project_dir',
-        )
-        schema_validation_mocked = mocker.patch(
-            'connect.cli.plugins.project.report.helpers.validate_with_schema',
-            return_value=[],
+        validation_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.validate_reports_json',
+            return_value=ValidationResult([]),
         )
         mocked_dialogus = mocker.patch(
             'connect.cli.plugins.project.report.helpers.dialogus',
@@ -275,20 +274,15 @@ def test_add_report_existing_repo_dir(mocker):
             add_report(f'{tmp_project_dir}/project_dir', package_name='reports')
 
     assert f'`{tmp_project_dir}/project_dir/reports/report_dir` already exists,' in str(error.value)
-    assert desc_validations_mocked.call_count == 1
-    assert schema_validation_mocked.call_count == 1
+    assert validation_mocked.call_count == 1
     assert mocked_dialogus.call_count == 1
 
 
 def test_add_report_empty_answers(mocker):
     with tempfile.TemporaryDirectory() as tmp_project_dir:
-        desc_validations_mocked = mocker.patch(
-            'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
-            return_value=f'{tmp_project_dir}/project_dir',
-        )
-        schema_validation_mocked = mocker.patch(
-            'connect.cli.plugins.project.report.helpers.validate_with_schema',
-            return_value=[],
+        validate_reports_json_mocked = mocker.patch(
+            'connect.cli.plugins.project.report.helpers.validate_reports_json',
+            return_value=ValidationResult([]),
         )
         mocked_dialogus = mocker.patch(
             'connect.cli.plugins.project.report.helpers.dialogus',
@@ -299,19 +293,14 @@ def test_add_report_empty_answers(mocker):
             add_report(f'{tmp_project_dir}/project_dir', package_name='reports')
 
     assert 'Aborted by user input' in str(error.value)
-    assert desc_validations_mocked.call_count == 1
-    assert schema_validation_mocked.call_count == 1
+    assert validate_reports_json_mocked.call_count == 1
     assert mocked_dialogus.call_count == 1
 
 
-def test_add_report(mocker, mocked_reports):
-    desc_validations_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers._file_descriptor_validations',
-        return_value=mocked_reports,
-    )
-    schema_validation_mocked = mocker.patch(
-        'connect.cli.plugins.project.report.helpers.validate_with_schema',
-        return_value=[],
+def test_add_report(mocker):
+    validate_reports_json_mocked = mocker.patch(
+        'connect.cli.plugins.project.report.helpers.validate_reports_json',
+        return_value=ValidationResult([]),
     )
     mocked_dialogus = mocker.patch(
         'connect.cli.plugins.project.report.helpers.dialogus',
@@ -359,8 +348,7 @@ def test_add_report(mocker, mocked_reports):
                 path,
             ), f'{path} it is not a directory'
 
-    assert desc_validations_mocked.call_count == 1
-    assert schema_validation_mocked.call_count == 1
+    assert validate_reports_json_mocked.call_count == 1
     assert mocked_dialogus.call_count == 1
     assert add_report_mocked.call_count == 1
 

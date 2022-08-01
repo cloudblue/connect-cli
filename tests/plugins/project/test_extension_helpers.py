@@ -466,7 +466,7 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
         assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
 
 
-def test_validate_extension_project_error_exit(mocker, faker, fs, mocked_responses, config_vendor, capsys):
+def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, config_vendor, capsys):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
     mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(
