@@ -3,7 +3,6 @@ import toml
 import yaml
 
 from connect.cli.plugins.project.extension.validations import (
-    get_code_context,
     validate_docker_compose_yml,
     validate_events,
     validate_extension_class,
@@ -31,7 +30,9 @@ def test_validate_pyproject_toml_file_not_found(mocker):
     item = result.items[0]
     assert isinstance(item, ValidationItem)
     assert item.level == 'ERROR'
-    assert 'the mandatory *pyproject.toml* project descriptor file is not present.' in item.message
+    assert (
+        'The mandatory *pyproject.toml* project descriptor file is not present in the folder fake_dir.'
+    ) in item.message
     assert item.file == 'fake_dir/pyproject.toml'
 
 
@@ -41,7 +42,7 @@ def test_validate_pyproject_toml_invalid_toml(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         side_effect=toml.TomlDecodeError('error', 'error', 0),
     )
 
@@ -53,7 +54,7 @@ def test_validate_pyproject_toml_invalid_toml(mocker):
     item = result.items[0]
     assert isinstance(item, ValidationItem)
     assert item.level == 'ERROR'
-    assert 'The extension project descriptor file *pyproject.toml* is not valid.' in item.message
+    assert 'The project descriptor file *pyproject.toml* is not a valid toml file.' in item.message
     assert item.file == 'fake_dir/pyproject.toml'
 
 
@@ -63,7 +64,7 @@ def test_validate_pyproject_toml_depends_on_runner(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -100,7 +101,7 @@ def test_validate_pyproject_toml_missed_eaas_core_dependency(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -135,7 +136,7 @@ def test_validate_pyproject_toml_no_extension_declaration(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -167,7 +168,7 @@ def test_validate_pyproject_toml_invalid_extension_declaration(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -204,7 +205,7 @@ def test_validate_pyproject_toml_import_error(mocker):
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -252,7 +253,7 @@ def test_validate_pyproject_toml_deprecated_responses(mocker, deprecated, replac
         return_value=True,
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.toml.load',
+        'connect.cli.plugins.project.validators.toml.load',
         return_value={
             'tool': {
                 'poetry': {
@@ -866,63 +867,3 @@ def test_validate_docker_compose_yml(mocker):
     assert isinstance(result, ValidationResult)
     assert result.must_exit is False
     assert len(result.items) == 0
-
-
-def test_get_code_context_module(mocker, faker):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
-        return_value='path/file.py',
-    )
-
-    code_lines = [f'{line}\n' for line in faker.paragraphs(nb=10)]
-
-    code = ''.join(code_lines)
-
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcelines',
-        return_value=(
-            code_lines,
-            1,
-        ),
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.ismodule',
-        return_value=True,
-    )
-
-    result = get_code_context(mocker.MagicMock(), 'country store build before')
-
-    assert result['file'] == 'path/file.py'
-    assert result['start_line'] == 1
-    assert result['lineno'] == 7
-    assert result['code'] == ''.join(code.splitlines(keepends=True)[0:7 + 3])
-
-
-def test_get_code_context_function(mocker, faker):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
-        return_value='path/file.py',
-    )
-
-    code_lines = [f'{line}\n' for line in faker.paragraphs(nb=10)]
-
-    code = ''.join(code_lines)
-
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcelines',
-        return_value=(
-            code_lines,
-            1,
-        ),
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.ismodule',
-        return_value=False,
-    )
-
-    result = get_code_context(mocker.MagicMock(), 'country store build before')
-
-    assert result['file'] == 'path/file.py'
-    assert result['start_line'] == 1
-    assert result['lineno'] == 7
-    assert result['code'] == ''.join(code.splitlines(keepends=True))

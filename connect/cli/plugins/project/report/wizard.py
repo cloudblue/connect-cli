@@ -22,6 +22,51 @@ REPORT_ADD_WIZARD_INTRO = (
 )
 
 
+ADD_REPORT_QUESTIONS = [  # pragma: no cover
+    {
+        'name': 'initial_report_name',
+        'label': 'Report: name',
+        'type': 'input',
+        'description': 'Enter the name of your new reports: ',
+        'default': 'Another Awesome Report',
+        'validators': (RequiredValidator(message='Please, provide a report name.'),),
+    },
+    {
+        'name': 'initial_report_slug',
+        'label': 'Report: module',
+        'type': 'input',
+        'description': 'Enter the module name of your new reports: ',
+        'default': lambda x: slugify(x['initial_report_name']),
+        'validators': (
+            RequiredValidator(message='Please, provide a report module name.'),
+            PythonIdentifierValidator(),
+        ),
+    },
+    {
+        'name': 'initial_report_description',
+        'label': 'Report: description',
+        'type': 'input',
+        'description': 'Briefly describe your new report: ',
+        'default': 'This report provides all data I need',
+        'validators': (RequiredValidator(message='Please, provide a description.'),),
+    },
+    {
+        'name': 'initial_report_renderer',
+        'label': 'Report: default format',
+        'type': 'selectone',
+        'description': 'Select the default output format for your new report: ',
+        'values': [
+            ('xlsx', 'Microsoft Excel 2020 (XLSX)'),
+            ('csv', 'Comma Separated Values (CSV)'),
+            ('pdf', 'Portable Document Format (PDF)'),
+            ('json', 'Javascript Object Notation (JSON)'),
+            ('jinja2', 'Custom format using a Jinja2 template'),
+        ],
+        'formatting_template': '${label}',
+    },
+]
+
+
 BOOTSTRAP_QUESTIONS = [  # pragma: no cover
     {
         'name': 'project_name',
@@ -141,51 +186,6 @@ BOOTSTRAP_QUESTIONS = [  # pragma: no cover
         'label': 'Report: default format',
         'type': 'selectone',
         'description': 'Select the default output format for your initial report: ',
-        'values': [
-            ('xlsx', 'Microsoft Excel 2020 (XLSX)'),
-            ('csv', 'Comma Separated Values (CSV)'),
-            ('pdf', 'Portable Document Format (PDF)'),
-            ('json', 'Javascript Object Notation (JSON)'),
-            ('jinja2', 'Custom format using a Jinja2 template'),
-        ],
-        'formatting_template': '${label}',
-    },
-]
-
-
-ADD_REPORT_QUESTIONS = [  # pragma: no cover
-    {
-        'name': 'initial_report_name',
-        'label': 'Report: name',
-        'type': 'input',
-        'description': 'Enter the name of your new reports: ',
-        'default': 'Another Awesome Report',
-        'validators': (RequiredValidator(message='Please, provide a report name.'),),
-    },
-    {
-        'name': 'initial_report_slug',
-        'label': 'Report: module',
-        'type': 'input',
-        'description': 'Enter the module name of your new reports: ',
-        'default': lambda x: slugify(x['initial_report_name']),
-        'validators': (
-            RequiredValidator(message='Please, provide a report module name.'),
-            PythonIdentifierValidator(),
-        ),
-    },
-    {
-        'name': 'initial_report_description',
-        'label': 'Report: description',
-        'type': 'input',
-        'description': 'Briefly describe your new report: ',
-        'default': 'This report provides all data I need',
-        'validators': (RequiredValidator(message='Please, provide a description.'),),
-    },
-    {
-        'name': 'initial_report_renderer',
-        'label': 'Report: default format',
-        'type': 'selectone',
-        'description': 'Select the default output format for your new report: ',
         'values': [
             ('xlsx', 'Microsoft Excel 2020 (XLSX)'),
             ('csv', 'Comma Separated Values (CSV)'),

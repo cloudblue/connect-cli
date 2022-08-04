@@ -1,7 +1,7 @@
 import subprocess
 
 from connect.cli import get_version
-from connect.cli.plugins.project.utils import sort_and_filter_tags
+from connect.cli.core.utils import sort_and_filter_tags
 
 
 class GitException(Exception):
