@@ -51,6 +51,17 @@ ADD_REPORT_QUESTIONS = [  # pragma: no cover
         'validators': (RequiredValidator(message='Please, provide a description.'),),
     },
     {
+        'name': 'use_asyncio',
+        'label': 'Report: asyncio',
+        'type': 'selectone',
+        'description': 'Do you want to develop your Report using the Python asyncio library?',
+        'values': [
+            ('n', 'No'),
+            ('y', 'Yes'),
+        ],
+        'formatting_template': '${label}',
+    },
+    {
         'name': 'initial_report_renderer',
         'label': 'Report: default format',
         'type': 'selectone',
@@ -119,6 +130,17 @@ BOOTSTRAP_QUESTIONS = [  # pragma: no cover
             RequiredValidator(message='Please, provide a package name.'),
             PythonIdentifierValidator(),
         ),
+    },
+    {
+        'name': 'use_asyncio',
+        'label': 'Project: asyncio',
+        'type': 'selectone',
+        'description': 'Do you want to develop your Report using the Python asyncio library?',
+        'values': [
+            ('n', 'No'),
+            ('y', 'Yes'),
+        ],
+        'formatting_template': '${label}',
     },
     {
         'name': 'version',
@@ -202,6 +224,7 @@ REPORT_SUMMARY = """<b><blue>Report</blue></b>
     <b>Name:</b> ${initial_report_name}
     <b>Description:</b> ${initial_report_description}
     <b>Output format:</b> ${initial_report_renderer}
+    <b>Use Asyncio:</b> ${use_asyncio}
 """
 
 BOOTSTRAP_SUMMARY = """<b><blue>Project</blue></b>
