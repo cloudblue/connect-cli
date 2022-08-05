@@ -3,7 +3,7 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 
-def generate(
+{% if use_asyncio == 'y' %}async {% endif %}def generate(
     client=None,
     input_data=None,
     progress_callback=None,

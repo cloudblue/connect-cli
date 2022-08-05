@@ -7,11 +7,13 @@ import pytest
 
 from {{ package_name }}.{{ initial_report_slug }}.entrypoint import generate
 
-
-def test_{{ initial_report_slug }}(
+{% if use_asyncio == 'y' %}
+@pytest.mark.asyncio
+{%- endif %}
+{% if use_asyncio == 'y' %}async {% endif %}def test_{{ initial_report_slug }}(
     mocker,
     progress,
-    client_factory,
+    {% if use_asyncio == 'y' %}async_client_factory{% else %}sync_client_factory{% endif %},
     response_factory,
     extra_context_callback,
 ):
@@ -61,7 +63,7 @@ def test_{{ initial_report_slug }}(
 
     # create a client instance
 
-    client = client_factory(responses)
+    client = {% if use_asyncio == 'y' %}async_client_factory{% else %}sync_client_factory{% endif %}(responses)
 
     # create extra context information on the renderer used, if needed
     
@@ -74,8 +76,8 @@ def test_{{ initial_report_slug }}(
     :type progress: MagicMock
     :param mocker: mocker class
     :type mocker: mocker
-    :param client_factory: Function that returns an instance of client
-    :type client_factory: func
+    :param {% if use_asyncio == 'y' %}async_client_factory{% else %}sync_client_factory{% endif %}: Function that returns an instance of client
+    :type {% if use_asyncio == 'y' %}async_client_factory{% else %}sync_client_factory{% endif %}: func
     :param response_factory: Function that creates ConnectClient reponses.
     :type response_factory: func
     :param extra_context_callback: Function that creates extra context information.

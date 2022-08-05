@@ -9,10 +9,14 @@ from types import MethodType
 from urllib.parse import parse_qs
 
 import pytest
+{% if use_asyncio == 'y' -%}
+import httpx
+{% endif -%}
+{% if use_asyncio != 'y' -%}
 import requests
+{% endif -%}
 import responses
-
-from connect.client import ConnectClient
+from connect.client import {% if use_asyncio == 'y' %}AsyncConnectClient{% else %}ConnectClient{% endif %}
 
 
 ConnectResponse = namedtuple(
@@ -45,6 +49,53 @@ def _parse_qs(url):
                 query = k
 
     return query, ordering, select
+
+
+def _mock_kwargs_generator(response_iterator, url):
+    res = next(response_iterator)
+
+    query, ordering, select = _parse_qs(url)
+    if res.query:
+        assert query == res.query, 'RQL query does not match.'
+    if res.ordering:
+        assert ordering == res.ordering, 'RQL ordering does not match.'
+    if res.select:
+        assert select == res.select, 'RQL select does not match.'
+    mock_kwargs = {
+        'match_querystring': False,
+    }
+    if res.count is not None:
+        end = 0 if res.count == 0 else res.count - 1
+        mock_kwargs['status'] = 200
+        mock_kwargs['headers'] = {'Content-Range': f'items 0-{end}/{res.count}'}
+        mock_kwargs['json'] = []
+
+    mock_kwargs.update(_value_arg_validation(res))
+    return mock_kwargs
+
+
+def _value_arg_validation(res):
+    result = {}
+    if isinstance(res.value, Iterable):
+        count = len(res.value)
+        end = 0 if count == 0 else count - 1
+        result['status'] = 200
+        result['json'] = res.value
+        result['headers'] = {
+            'Content-Range': f'items 0-{end}/{count}',
+        }
+    elif isinstance(res.value, dict):
+        result['status'] = res.status or 200
+        result['json'] = res.value
+    elif res.value is None:
+        if res.exception:
+            result['body'] = res.exception
+        else:
+            result['status'] = res.status
+    else:
+        result['status'] = res.status or 200
+        result['body'] = str(res.value)
+    return result
 
 
 @pytest.fixture
@@ -86,12 +137,13 @@ def response_factory():
     return _create_response
 
 
+{% if use_asyncio == 'y' %}@pytest.mark.asyncio{%- endif %}
 @pytest.fixture
-def client_factory():
+{% if use_asyncio == 'y' %}async {% endif %}def {% if use_asyncio == 'y' %}async_client_factory(httpx_mock){% else %}sync_client_factory(){% endif %}:
     def _create_client(connect_responses):
         response_iterator = iter(connect_responses)
 
-        def _execute_http_call(self, method, url, kwargs):
+        {% if use_asyncio == 'y' %}async {% endif %}def _execute_http_call(self, method, url, kwargs):
             res = next(response_iterator)
 
             query, ordering, select = _parse_qs(url)
@@ -130,19 +182,27 @@ def client_factory():
             else:
                 mock_kwargs['status'] = res.status or 200
                 mock_kwargs['body'] = str(res.value)
-
+            {% if use_asyncio == 'y' %}
+            httpx_mock.add_response(
+                method.upper(),
+                url,
+                **mock_kwargs,
+            )
+            async with httpx.AsyncClient() as client:
+                self.response = await client.request(method, url, **kwargs)
+            {% else %}
             with responses.RequestsMock() as rsps:
                 rsps.add(
                     method.upper(),
                     url,
                     **mock_kwargs,
                 )
-
                 self.response = requests.request(method, url, **kwargs)
+            {% endif %}
                 if self.response.status_code >= 400:
                     self.response.raise_for_status()
 
-        client = ConnectClient('Key', use_specs=False)
+        client = {% if use_asyncio == 'y' %}AsyncConnectClient{% else %}ConnectClient{% endif %}('Key', use_specs=False)
         client._execute_http_call = MethodType(_execute_http_call, client)
         return client
     return _create_client
