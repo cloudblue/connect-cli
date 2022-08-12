@@ -5,6 +5,7 @@
 
 import re
 from collections import namedtuple
+from functools import partial
 
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import (
@@ -74,7 +75,9 @@ class ActionsSynchronizer(ProductSynchronizer):
 
             if data.action == 'create':
                 try:
-                    original_action = list(filter(lambda x: x['action'] == data.id, actions))
+                    def _check_if_matches(data, x):
+                        return x['action'] == data.id
+                    original_action = list(filter(partial(_check_if_matches, data), actions))
                     if original_action:
                         self._updated_or_skipped(ws, row_idx, original_action[0], payload)
                         continue

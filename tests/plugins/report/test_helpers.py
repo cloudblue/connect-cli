@@ -1,3 +1,4 @@
+import inspect
 import json
 
 import pytest
@@ -11,8 +12,9 @@ from connect.cli.plugins.report.helpers import (
     show_report_info,
 )
 from connect.cli.plugins.report.utils import Progress
-from connect.client import ConnectClient
-from connect.reports.datamodels import RendererDefinition, ReportDefinition
+from connect.client import AsyncConnectClient, ConnectClient
+from connect.reports.datamodels import Account, RendererDefinition, Report, ReportDefinition
+from connect.reports.constants import CLI_ENV
 
 
 def test_load_repo_ok():
@@ -252,3 +254,163 @@ def test_execute_report_fail(mocker):
     )
 
     mocked_handle_exc.assert_called_once()
+
+
+async def _async_generate(*args):
+    yield 'a'
+
+
+async def _async_coroutine(*args):
+    return ['a']
+
+
+@pytest.mark.parametrize(
+    ('entrypoint', 'check_is'),
+    (
+        (_async_generate, inspect.isasyncgenfunction),
+        (_async_coroutine, inspect.iscoroutinefunction),
+    ),
+)
+def test_execute_report_v2_async(mocker, entrypoint, check_is):
+    mocked_repo = mocker.MagicMock()
+    mocked_load_repo = mocker.patch(
+        'connect.cli.plugins.report.helpers.load_repo',
+        return_value=mocked_repo,
+    )
+
+    mocked_report = mocker.MagicMock(
+        renderers=[
+            RendererDefinition('path', 'pdf', 'pdf', 'test'),
+        ],
+        audience=['provider'],
+        default_renderer='pdf',
+        template='template',
+        args=['args'],
+        type='pdf',
+    )
+    mocked_get_report_by_id = mocker.patch(
+        'connect.cli.plugins.report.helpers.get_report_by_id',
+        return_value=mocked_report,
+    )
+
+    param_inputs = {'param_id': 'param_value'}
+    mocked_get_report_inputs = mocker.patch(
+        'connect.cli.plugins.report.helpers.get_report_inputs',
+        return_value=param_inputs,
+    )
+
+    render_def_mock = mocker.MagicMock()
+    render_def_mock.type = 'pdf'
+    render_def_mock.template = 'template'
+    render_def_mock.args = ['args']
+    mocked_get_renderer_by_id = mocker.patch(
+        'connect.cli.plugins.report.helpers.get_renderer_by_id',
+        return_value=render_def_mock,
+    )
+
+    renderer_mock = mocker.MagicMock()
+    renderer_mock.set_extra_context = mocker.MagicMock()
+    mocked_get_renderer = mocker.patch(
+        'connect.cli.plugins.report.helpers.get_renderer',
+        return_value=renderer_mock,
+    )
+
+    mocked_get_report_entrypoint = mocker.patch(
+        'connect.cli.plugins.report.helpers.get_report_entrypoint',
+        return_value=entrypoint,
+    )
+
+    mocked_execute_report_async = mocker.patch('connect.cli.plugins.report.helpers.execute_report_async')
+
+    config = Config()
+    config.add_account(
+        'PA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+    )
+    config.activate('PA-000')
+
+    execute_report(
+        config,
+        './tests/fixtures/reports/report_v2',
+        'test_v2',
+        'out_file',
+        None,
+    )
+
+    mocked_load_repo.assert_called_with('./tests/fixtures/reports/report_v2')
+
+    mocked_get_report_by_id.assert_called_with(mocked_repo, 'test_v2')
+
+    mocked_get_report_entrypoint.assert_called_with(mocked_report)
+
+    assert mocked_get_report_inputs.mock_calls[0].args[0] == config
+    assert isinstance(mocked_get_report_inputs.mock_calls[0].args[1], AsyncConnectClient)
+    assert mocked_get_report_inputs.mock_calls[0].args[2] == mocked_report
+    assert mocked_get_report_inputs.mock_calls[0].args[3] == 'pdf'
+
+    mocked_get_renderer_by_id.assert_called_with(mocked_report, 'pdf')
+
+    assert mocked_get_renderer.mock_calls[0].args[0] == mocked_report.type
+    assert mocked_get_renderer.mock_calls[0].args[1] == CLI_ENV
+    assert mocked_get_renderer.mock_calls[0].args[2] == './tests/fixtures/reports/report_v2'
+    assert isinstance(mocked_get_renderer.mock_calls[0].args[3], Account)
+    assert isinstance(mocked_get_renderer.mock_calls[0].args[4], Report)
+    assert mocked_get_renderer.mock_calls[0].args[5] == mocked_report.template
+    assert mocked_get_renderer.mock_calls[0].args[6] == mocked_report.args
+
+    assert check_is(mocked_execute_report_async.mock_calls[0].args[0])
+    expected_args = mocked_execute_report_async.mock_calls[0].args[1]
+    assert isinstance(expected_args[0], AsyncConnectClient)
+    assert expected_args[1] == param_inputs
+    assert isinstance(expected_args[2], Progress)
+    assert mocked_execute_report_async.mock_calls[0].args[2] == renderer_mock
+    assert mocked_execute_report_async.mock_calls[0].args[3] == 'out_file'
+
+
+@pytest.mark.parametrize(
+    'entrypoint',
+    (
+        _async_generate,
+        _async_coroutine,
+    ),
+)
+def test_execute_report_async_render_async(mocker, entrypoint):
+    renderer_mock = mocker.AsyncMock()
+    renderer_mock.set_extra_context = mocker.MagicMock()
+
+    async def mock_render_async(
+        data,
+        output_file,
+        start_time=None,
+    ):
+        if inspect.isasyncgen(data):
+            assert [item async for item in data] == ['a']
+        else:
+            assert data == ['a']
+    renderer_mock.render_async = mock_render_async
+    mocker.patch(
+        'connect.cli.plugins.report.helpers.get_renderer',
+        return_value=renderer_mock,
+    )
+
+    mocker.patch(
+        'connect.cli.plugins.report.helpers.get_report_entrypoint',
+        return_value=entrypoint,
+    )
+
+    config = Config()
+    config.add_account(
+        'PA-000',
+        'Account 1',
+        'ApiKey XXXX:YYYY',
+    )
+    config.activate('PA-000')
+
+    execute_report(
+        config,
+        './tests/fixtures/reports/report_v2',
+        'test_v2',
+        'out_file',
+        None,
+    )
