@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 import json
 import os
 from datetime import datetime
@@ -17,7 +19,7 @@ from connect.cli.plugins.report.utils import (
     Progress,
 )
 from connect.cli.plugins.report.wizard import get_report_inputs
-from connect.client import ConnectClient
+from connect.client import AsyncConnectClient, ConnectClient
 from connect.reports.constants import CLI_ENV
 from connect.reports.datamodels import Account, Report
 from connect.reports.parser import parse
@@ -99,6 +101,26 @@ def show_report_info(repo_dir, local_id):
     )
 
 
+async def execute_report_async(entrypoint, args, renderer, output_file):
+    if inspect.iscoroutinefunction(entrypoint):
+        data = await entrypoint(*args)
+    else:
+        data = entrypoint(*args)
+    return await renderer.render_async(
+        data,
+        output_file,
+        start_time=datetime.now(tz=pytz.utc),
+    )
+
+
+def _run_render(is_async, entrypoint, args, renderer, output_file):
+    if is_async:
+        return asyncio.run(execute_report_async(entrypoint, args, renderer, output_file))
+    else:
+        data = entrypoint(*args)
+        return renderer.render(data, output_file, start_time=datetime.now(tz=pytz.utc))
+
+
 def execute_report(config, reports_dir, report_id, output_file, output_format):
     repo = load_repo(reports_dir)
     report = get_report_by_id(repo, report_id)
@@ -122,7 +144,10 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
 
     entrypoint = get_report_entrypoint(report)
 
-    client = ConnectClient(
+    is_async = inspect.isasyncgenfunction(entrypoint) or inspect.iscoroutinefunction(entrypoint)
+
+    client_class = AsyncConnectClient if is_async else ConnectClient
+    client = client_class(
         config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
@@ -162,9 +187,8 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
                     renderer.set_extra_context,
                 ],
             )
-        data = entrypoint(*args)
+        out = _run_render(is_async, entrypoint, args, renderer, output_file)
 
-        out = renderer.render(data, output_file, start_time=datetime.now(tz=pytz.utc))
     except Exception:
         handle_report_exception()
         return
