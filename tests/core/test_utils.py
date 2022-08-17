@@ -1,4 +1,3 @@
-import re
 import os.path
 from collections import OrderedDict
 
@@ -9,7 +8,6 @@ from requests import RequestException
 from connect.cli.core import utils
 from connect.cli.core.constants import PYPI_JSON_API_URL
 from connect.cli.core.utils import (
-    _ConnectVersionTag,
     sort_and_filter_tags,
 )
 
@@ -162,18 +160,6 @@ def test_field_to_check_mark_with_false_value():
     assert '-' == utils.field_to_check_mark(False, false_value='-')
 
 
-def test_row_format_resource():
-    fields = (
-        'ZH-HANS',
-        'Simplified Chinese',
-        '✓',
-        '-',
-    )
-    separators = len(fields) + 1
-    assert '| ZH-HANS | Simplified Chinese | ✓ | - |\n' == utils.row_format_resource(*fields)
-    assert separators == len(re.findall(r'\|', utils.row_format_resource(*fields)))
-
-
 @pytest.mark.parametrize(
     ('tags', 'expected'),
     (
@@ -234,49 +220,3 @@ def test_row_format_resource():
 def test_sort_and_filter_tags(tags, expected):
     sorted_tags = sort_and_filter_tags(tags, '21')
     assert sorted_tags == expected
-
-
-@pytest.mark.parametrize(
-    ('str', 'result'),
-    (
-        ('0.0.0', True),
-        ('0.0.4', True),
-        ('1.0.0', True),
-        ('1.2.0', True),
-        ('1.2.3', True),
-        ('0.0', True),
-        ('1.0', True),
-        ('10.20', True),
-        ('99999999999999999999999.999999999999999999.99999999999999999', True),
-        ('v0.0.4', True),
-        ('v1.2', True),
-        ('v01.23', True),
-        ('01.23', True),
-        ('01.23a1', True),
-        ('01.23b3', True),
-        ('01.23rc1', False),
-        ('1.1.2-prerelease+meta', False),
-        ('1.v2.0', False),
-        ('1.', False),
-        ('v1', False),
-    ),
-)
-def test_connect_version_tag(str, result):
-    assert (_ConnectVersionTag(str).plain_tag is None) == result
-
-
-@pytest.mark.parametrize(
-    'value',
-    (
-        '0.2.0',
-        'plain-tag-0.0.2a2',
-    ),
-)
-def test_connect_version_tag_eq_comparison(value):
-    first = _ConnectVersionTag(value)
-    assert first == value
-    assert first == _ConnectVersionTag(value)
-
-
-def test_connect_version_tag_invalid_comparison():
-    assert not _ConnectVersionTag(str) == 10

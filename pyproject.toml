@@ -73,7 +73,6 @@ rich = "^12.4.1"
 poetry-core = "^1.0.8"
 
 [tool.poetry.dev-dependencies]
-
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
@@ -105,6 +104,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "-p no:cacheprovider --cov=connect.cli --cov-report=html --cov-report xml --cov-report term"
+filterwarnings = [
+    #flake8 get_style_guide deprecated API
+    "ignore:visit_Str is deprecated",
+    #openpyxl Data Validation extension is not supported and will be removed
+    "ignore::UserWarning",
+]
 
 [tool.coverage.run]
 branch = true
