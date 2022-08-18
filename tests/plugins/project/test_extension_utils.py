@@ -101,18 +101,12 @@ def test_check_extension_not_hub():
     data = {'extension_type': 'products'}
     assert check_extension_not_hub(data) is True
 
-    data['extension_type'] = 'multiaccount'
-    assert check_extension_not_hub(data) is True
-
     data['extension_type'] = 'hub'
     assert check_extension_not_hub(data) is False
 
 
 def test_check_extension_not_multi_account():
-    data = {'extension_type': 'products'}
-    assert check_extension_not_multi_account(data) is True
-
-    data['extension_type'] = 'multiaccount'
+    data = {'extension_type': 'multiaccount'}
     assert check_extension_not_multi_account(data) is False
 
     data['extension_type'] = 'hub'
@@ -124,7 +118,4 @@ def test_check_extension_not_products():
     assert check_extension_not_products(data) is False
 
     data['extension_type'] = 'multiaccount'
-    assert check_extension_not_products(data) is True
-
-    data['extension_type'] = 'hub'
     assert check_extension_not_products(data) is True
