@@ -1,7 +1,8 @@
 import os
+import json
+from mimetypes import guess_type
 
 from click import ClickException
-from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.product.utils import cleanup_product_for_update
@@ -102,32 +103,24 @@ class GeneralSynchronizer(ProductSynchronizer):
         product['category']['id'] = self._category
         # Solution for v22 to avoid issue while updating capabilities
         del product['capabilities']['subscription']['change']['editable_ordering_parameters']
-        try:
-            self._client.products[self._product_id].update(product)
-        except ClientError as e:
-            errors.append(
-                f'Error while updating general product information: {str(e)}',
-            )
-            return errors
-        payload = MultipartEncoder(
-            fields={
-                'icon': (
-                    ws['B9'].value,
-                    open(
-                        os.path.join(
-                            self._media_path,
-                            'media',
-                            ws['B9'].value,
-                        ),
-                        "rb",
-                    ),
-                ),
-            },
+        product['customer_ui_settings'] = json.dumps(product['customer_ui_settings'])
+        image_name = ws['B9'].value
+        image_data = open(
+            os.path.join(
+                self._media_path,
+                'media',
+                ws['B9'].value,
+            ),
+            "rb",
         )
+        image_type, _ = guess_type(image_name)
+        data = {
+            'body': (None, json.dumps(product), 'application/json'),
+            'icon': (image_name, image_data, image_type),
+        }
         try:
             self._client.products[self._product_id].update(
-                data=payload,
-                headers={'Content-Type': payload.content_type},
+                files=data,
             )
         except ClientError as e:
             errors.append(

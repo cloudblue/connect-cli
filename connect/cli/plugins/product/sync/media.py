@@ -5,8 +5,8 @@
 import os
 from collections import namedtuple
 from urllib.parse import urlparse
-
-from requests_toolbelt.multipart.encoder import MultipartEncoder
+import json
+from mimetypes import guess_type
 
 from connect.cli.plugins.shared.constants import MEDIA_COLS_HEADERS
 from connect.cli.plugins.shared.base import ProductSynchronizer
@@ -59,55 +59,39 @@ class MediaSynchronizer(ProductSynchronizer):
                     else:
                         self._mstats.error(str(e), row_idx)
                     continue
-            if data.type == 'image':
-                payload = MultipartEncoder(
-                    fields={
-                        'type': (data.type, data.type),
-                        'position': (str(data.position), str(data.position)),
-                        'thumbnail': (
-                            data.image_file,
-                            open(
-                                os.path.join(
-                                    self._media_path,
-                                    'media',
-                                    data.image_file,
-                                ),
-                                "rb",
-                            ),
-                        ),
-                    },
-                )
-            else:
-                payload = MultipartEncoder(
-                    fields={
-                        'type': (data.type, data.type),
-                        'position': (str(data.position), str(data.position)),
-                        'thumbnail': (
-                            data.image_file,
-                            open(
-                                os.path.join(
-                                    self._media_path,
-                                    'media',
-                                    data.image_file,
-                                ),
-                                "rb",
-                            ),
-                        ),
-                        'url': data.video_url_location,
-                    },
-                )
+
+            image_data = open(
+                os.path.join(
+                    self._media_path,
+                    'media',
+                    data.image_file,
+                ),
+                "rb",
+            )
+            image_type, _ = guess_type(data.image_file)
+            body = {
+                'type': data.type,
+                'position': str(data.position),
+            }
+
+            if data.type != 'image':
+                body['url'] = data.video_url_location
+
+            payload = {
+                'body': (None, json.dumps(body), 'application/json'),
+                'thumbnail': (data.image_file, image_data, image_type),
+            }
+
             try:
                 if data.action == 'update':
                     media = self._client.products[self._product_id].media[data.id].update(
-                        data=payload,
-                        headers={'Content-Type': payload.content_type},
+                        files=payload,
                     )
                     self._update_sheet_row(ws, row_idx, media)
                     self._mstats.updated()
                 else:
                     media = self._client.products[self._product_id].media.create(
-                        data=payload,
-                        headers={'Content-Type': payload.content_type},
+                        files=payload,
                     )
                     self._update_sheet_row(ws, row_idx, media)
                     self._mstats.created()
