@@ -23,10 +23,11 @@ Commands:
 
 Multiple reports are available to the `connect-cli` tool, additionally you can create your owns and run them.
 
+If the report is located to another folder you could use the flag `-d` to reference the project location.
 
 ### List built-in reports
 
-to list available reports you can run:
+To list available reports you can run:
 
 ```
     $ ccli report list
@@ -34,17 +35,28 @@ to list available reports you can run:
 
 ### Get information about a report
 
+To get the information of an specific report run:
+
+```
+    $ ccli report info {ID}
+```
 
 ### Execute a report
 
-to execute a concrete report, you must get the id from the list before and execute:
+To execute a concrete report, you must get the id from the list before and execute:
 
 ```
     $ ccli report execute {ID}
 ```
 
-for example:
+For example:
 
 ```
     $ ccli report execute fulfillment_requests
+```
+
+If the report is located to another folder you could run:
+
+```
+    $ ccli report execute fulfillment_requests -d /my/other/folder
 ```
