@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+# All rights reserved.
+#
+from connect.eaas.core.decorators import router, web_app
+from connect.eaas.core.extension import WebAppExtension
+
+
+@web_app(router)
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension(WebAppExtension):
+    @router.get('/settings')
+    def retrieve_settings_example(
+        self,
+        example_args: dict,
+    ):
+        pass

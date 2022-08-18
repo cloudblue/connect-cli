@@ -2,6 +2,13 @@ from urllib.parse import urlparse
 
 from interrogatio.validators import RequiredValidator
 
+from connect.cli.plugins.project.extension.utils import (
+    check_extension_not_events_application,
+    check_extension_not_hub,
+    check_extension_not_multi_account,
+    check_extension_not_products,
+    get_extension_types,
+)
 from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
@@ -31,12 +38,11 @@ def get_summary(config, definitions):
 
     event_answers = '\n'.join(
         (
-            f'<b><blue>{group}</blue></b>\n'
-            f'    <b>{group} types:</b> '
-            '${' + f'{category}_' + slugify(group.lower()) + '}'
+            f'<b><blue>{extension_type_name} {category} events:</blue></b>\n'
+            '    ${' + f'{extension_type}_{category}_' + 'events}'
         )
-        for category, category_events in definitions.items()
-        for group in category_events.keys()
+        for extension_type, extension_type_name in get_extension_types(config)
+        for category in ['background', 'interactive']
     ) + '\n'
 
     examples = """<b><blue>Examples</blue></b>
@@ -174,26 +180,93 @@ def get_questions(config, definitions):
         },
     ]
 
-    event_questions = []
+    extension_type = [
+        {
+            'name': 'extension_type',
+            'label': 'Extension: Extension type',
+            'type': 'selectone',
+            'description': 'Type of extension: ',
+            'values': get_extension_types(config),
+            'formatting_template': '${label}',
+        },
+        {
+            'name': 'application_types',
+            'label': 'Extension: Application type',
+            'type': 'selectmany',
+            'description': 'Type of application: ',
+            'values': [
+                ('webapp', 'Web app'),
+                ('anvil', 'Anvil app'),
+                ('events', 'Events app'),
+            ],
+            'formatting_template': '${label}',
+            'disabled': check_extension_not_multi_account,
+        },
+    ]
 
-    for category, cagegory_events in definitions.items():
-        for group, events in cagegory_events.items():
-            event_questions.append(
-                {
-                    'name': f'{category}_{slugify(group.lower())}',
-                    'label': f'{category.title()}: {group.lower()}',
-                    'type': 'selectmany',
-                    'description': (
-                        f'What types of {group.title()} {category} '
-                        'events do you want your Extension to process ?'
-                    ),
-                    'values': [
-                        (event['type'], event['name'])
-                        for event in events
-                    ],
-                    'formatting_template': '${label}',
-                },
-            )
+    if config.active.is_provider():
+        event_questions = [
+            {
+                'name': f'hub_{category}_events',
+                'label': f'Hub integration: {category} events',
+                'type': 'selectmany',
+                'description': (
+                    f'What types of {category}'
+                    'events do you want your Extension to process ?'
+                ),
+                'values': [
+                    (event['type'], f'{event["group"]}: {event["name"]}')
+                    for event in definitions['hub'][category]
+                ],
+                'formatting_template': '${label}',
+                'disabled': check_extension_not_hub,
+            }
+            for category in [
+                'background', 'interactive',
+            ] if len(definitions['hub'][category]) > 0
+        ]
+    else:
+        event_questions = [
+            {
+                'name': f'products_{category}_events',
+                'label': f'Fulfillment Automation: {category} events',
+                'type': 'selectmany',
+                'description': (
+                    f'What types of {category}'
+                    'events do you want your Extension to process ?'
+                ),
+                'values': [
+                    (event['type'], f'{event["group"]}: {event["name"]}')
+                    for event in definitions['products'][category]
+                ],
+                'formatting_template': '${label}',
+                'disabled': check_extension_not_products,
+            }
+            for category in [
+                'background', 'interactive',
+            ] if len(definitions['products'][category]) > 0
+        ]
+
+    event_questions.extend([
+        {
+            'name': f'multiaccount_{category}_events',
+            'label': f'Multi-Account installation: {category} events',
+            'type': 'selectmany',
+            'description': (
+                f'What types of {category}'
+                'events do you want your Extension to process ?'
+            ),
+            'values': [
+                (event['type'], f'{event["group"]}: {event["name"]}')
+                for event in definitions['multiaccount'][category]
+            ],
+            'formatting_template': '${label}',
+            'disabled': check_extension_not_events_application,
+        }
+        for category in [
+            'background', 'interactive',
+        ] if len(definitions['multiaccount'][category]) > 0
+    ])
 
     examples = [
         {
@@ -220,4 +293,4 @@ def get_questions(config, definitions):
         },
     ]
 
-    return project + environment + event_questions + examples
+    return project + environment + extension_type + event_questions + examples

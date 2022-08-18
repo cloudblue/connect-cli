@@ -25,3 +25,33 @@ def get_pypi_runner_version():
     if tags:
         return tags.popitem()[0]
     return content['info']['version']
+
+
+def get_extension_types(config):
+    if config.active.is_provider():
+        extension_types = [('hub', 'Hub integration')]
+    else:
+        extension_types = [('products', 'Fulfillment Automation')]
+
+    extension_types.append(('multiaccount', 'Multi-Account installation'))
+    return extension_types
+
+
+def check_extension_not_multi_account(context):
+    return context.get('extension_type') != 'multiaccount'
+
+
+def check_extension_not_hub(context):
+    return context.get('extension_type') != 'hub'
+
+
+def check_extension_not_products(context):
+    return context.get('extension_type') != 'products'
+
+
+def check_extension_not_events_application(context):
+    return (
+        context.get('extension_type') == 'multiaccount'
+        and 'events' not in context.get('application_types', [])
+        or context.get('extension_type') != 'multiaccount'
+    )

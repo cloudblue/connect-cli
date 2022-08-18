@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+# All rights reserved.
+#
+from connect.eaas.core.decorators import anvil_key_variable, variables
+from connect.eaas.core.extension import AnvilExtension
+
+
+@anvil_key_variable('ANVIL_API_KEY')
+@variables([{
+    'name': 'VAR_NAME_1',
+    'initial_value': 'VAR_VALUE_1',
+    'secure': False,
+}])
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension(AnvilExtension):
+    pass

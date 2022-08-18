@@ -4,4 +4,26 @@
   "version": "{{ version }}",
   "readme_url": "https://example.com/README.md",
   "changelog_url": "https://example.com/CHANGELOG.md"
+  {%- if extension_type == 'multiaccount' and 'webapp' in application_types%}
+  "ui": {
+    "settings": {
+      "label": "Settings",
+      "url": "/static/settings.html"
+    },
+    "customer": {
+      "label": "Customer Portal UI",
+      "url": "/static/customer.html"
+    },
+    "modules": {
+      "label": "Main Page",
+      "url": "/static/index.html",
+      "children": [
+        {
+          "label": "Page 1",
+          "url": "/static/page1.html"
+        }
+      ]
+    }
+  }
+  {%- endif %}
 }

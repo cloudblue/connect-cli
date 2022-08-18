@@ -17,17 +17,17 @@ from connect.cli.plugins.project.extension.wizard import (
 )
 
 
-def bootstrap_extension_project(config, output_dir, overwrite):
+def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
     console.secho('Bootstraping extension project...\n', fg='blue')
 
-    statuses_by_event = {}
+    statuses_by_event = collections.defaultdict(lambda: collections.defaultdict())
 
     definitions = get_event_definitions(config)
     grouped_definitions = collections.defaultdict(lambda: collections.defaultdict(list))
 
     for elem in definitions:
-        statuses_by_event[elem['type']] = elem['object_statuses']
-        grouped_definitions[elem['category']][elem['group']].append(elem)
+        statuses_by_event[elem['extension_type']][elem['type']] = elem['object_statuses']
+        grouped_definitions[elem['extension_type']][elem['category']].append(elem)
 
     answers = dialogus(
         get_questions(config, grouped_definitions),
@@ -42,17 +42,17 @@ def bootstrap_extension_project(config, output_dir, overwrite):
         raise ClickException('Aborted by user input')
 
     ctx = {
-        'statuses_by_event': statuses_by_event,
-        'background': {},
-        'interactive': {},
+        'statuses_by_event': statuses_by_event[answers['extension_type']],
+        'background': [],
+        'interactive': [],
         'runner_version': get_pypi_runner_version(),
     }
 
     for var, answer in answers.items():
-        if var.startswith('background_'):
-            ctx['background'].update({var: answer})
-        elif var.startswith('interactive_'):
-            ctx['interactive'].update({var: answer})
+        if 'background_events' in var:
+            ctx['background'] = answer
+        elif 'interactive_events' in var:
+            ctx['interactive'] = answer
         else:
             ctx.update({var: answer})
 
@@ -60,23 +60,104 @@ def bootstrap_extension_project(config, output_dir, overwrite):
     if not overwrite and os.path.exists(project_dir):
         raise ClickException(f'The destination directory {project_dir} already exists.')
 
-    exclude = [
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-        ),
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-            'workflows',
-        ),
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-            'workflows',
-            'build.yml.j2',
-        ),
-    ] if answers['use_github_actions'] == 'n' else None
+    exclude = []
+
+    if answers['use_github_actions'] == 'n':
+        exclude = [
+            os.path.join(
+                answers['project_slug'],
+                '.github',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                '.github',
+                'workflows',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                '.github',
+                'workflows',
+                'build.yml.j2',
+            ),
+        ]
+
+    if 'webapp' not in answers.get('application_types', []):
+        exclude.extend([
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+                'customer.html.j2',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+                'index.html.j2',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+                'page1.html.j2',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+                'settings.html.j2',
+            ),
+        ])
+
+    if answers['extension_type'] != 'multiaccount':
+        exclude.extend([
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'events.py.j2',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'anvil.py.j2',
+            ),
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'webapp.py.j2',
+            ),
+        ])
+    else:
+        exclude.append(
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'extension.py.j2',
+            ),
+        )
+        if 'events' not in answers['application_types']:
+            exclude.append(
+                os.path.join(
+                    answers['project_slug'],
+                    'tests',
+                    f'test_{answers["project_slug"]}.py.j2',
+                ),
+            )
+        for app_type in ['anvil', 'events', 'webapp']:
+            if app_type not in answers['application_types']:
+                exclude.append(
+                    os.path.join(
+                        answers['project_slug'],
+                        answers['package_name'],
+                        f'{app_type}.py.j2',
+                    ),
+                )
+
     renderer = BoilerplateRenderer(
         context=ctx,
         template_folder=os.path.join(
