@@ -3,10 +3,9 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 import os
-import re
 from collections import OrderedDict
-from distutils.version import StrictVersion
 
+from packaging.version import InvalidVersion, Version
 import click
 import requests
 
@@ -15,54 +14,22 @@ from connect.cli.core.constants import PYPI_JSON_API_URL
 from connect.cli.core.terminal import console
 
 
-class _ConnectVersionTag(StrictVersion):
-
-    version_re = re.compile(
-        r'^v?(\d+) \. (\d+) (\. (\d+))? ([ab](\d+))?$',
-        re.VERBOSE | re.ASCII,
-    )
-
-    plain_tag = None
-
-    def parse(self, vstring):
+def _get_correct_sorted_versions(tags):
+    versions = []
+    for tag in tags:
         try:
-            super().parse(vstring)
-        except Exception:
-            print('Exception ', vstring)
-            self.plain_tag = vstring
-
-    def _cmp_plain_tag(self, actual, other):
-        if actual and other:
-            if actual == other:
-                return 0
-            return -1 if actual < other else 1
-        elif not actual and other:
-            return 1
-        if actual and not other:
-            return -1
-        return None
-
-    def _cmp(self, other):
-        if isinstance(other, str):
-            other = _ConnectVersionTag(other)
-        elif not isinstance(other, _ConnectVersionTag):
-            return NotImplemented
-
-        result = self._cmp_plain_tag(self.plain_tag, other.plain_tag)
-        if result is not None:
-            return result
-
-        return super()._cmp(other)
+            Version(tag)
+            versions.append(tag)
+        except InvalidVersion:
+            continue
+    return sorted(versions, key=Version)
 
 
 def sort_and_filter_tags(tags, desired_major):
     sorted_tags = OrderedDict()
-    for tag in sorted(tags.keys(), key=_ConnectVersionTag):
-        match = _ConnectVersionTag.version_re.match(tag)
-        if not match:
-            continue
-        major = match.group(1)
-        if major != desired_major:
+    for tag in _get_correct_sorted_versions(tags.keys()):
+        version = Version(tag)
+        if str(version.major) != desired_major:
             continue
         sorted_tags[tag] = tags[tag]
 
@@ -126,14 +93,3 @@ def field_to_check_mark(predicate, false_value=''):
     return (
         '\u2713' if predicate else false_value
     )
-
-
-def row_format_resource(*fields):
-    """Transform a variable number of fields to a `table-row` format.
-        ```
-            >>> row_format_resource(a,b,c,d)
-            '| a | b | c | d |'
-        ```
-        :param fields: fields to be converted to row.
-        """
-    return ('| {} ' * len(fields)).format(*fields) + '|\n'  # noqa: P103
