@@ -5,11 +5,3 @@ AVAILABLE_REPORTS = """
 | ID | Name |
 |:--------|:--------|
 """
-
-AVAILABLE_RENDERERS = """
-# Available output formats
-
-
-| ID | Description | Default |
-|:--------|:--------|:-----:|
-"""
