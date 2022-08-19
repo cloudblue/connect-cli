@@ -2,7 +2,7 @@ import click
 import pytest
 
 from connect.client import ConnectClient
-from connect.cli.plugins.shared.utils import wait_for_autotranslation
+from connect.cli.plugins.shared.utils import _calculate_translation_completion, wait_for_autotranslation
 from connect.cli.plugins.shared.utils import (
     get_col_limit_by_ws_type,
     get_translation_attributes_sheets,
@@ -45,7 +45,14 @@ def get_client():
     )
 
 
-def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translation_response):
+@pytest.mark.parametrize(
+    'translation',
+    (
+        'TRN-8100-3865-4869',
+        {'id': 'TRN-8100-3865-4869'},
+    ),
+)
+def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translation_response, translation):
     mocked_translation_response['auto']['status'] = 'on'
     mocked_responses.add(
         method='GET',
@@ -55,7 +62,7 @@ def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translatio
     client = get_client()
 
     try:
-        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
+        wait_for_autotranslation(client, mocker.MagicMock(), translation, wait_seconds=0.001)
     except Exception as e:
         pytest.fail(f'Unexpected error: {str(e)}')
 
@@ -101,3 +108,13 @@ def test_update_wait_autotranslate_error(mocker, mocked_responses, mocked_transl
         wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
 
     assert str(e.value) == "500 - Internal Server Error: unexpected error."
+
+
+@pytest.mark.parametrize(
+    ('translation', 'result'),
+    (
+        ({'stats': {'translated': 1, 'total': 4}}, 0.25),
+        ({'stats': {'translated': 'a', 'total': 3}}, '-'),
+    ))
+def test__calculate_translation_completion(translation, result):
+    assert _calculate_translation_completion(translation) == result
