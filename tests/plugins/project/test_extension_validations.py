@@ -12,7 +12,7 @@ from connect.cli.plugins.project.extension.validations import (
     ValidationItem,
     ValidationResult,
 )
-from connect.eaas.core.extension import Extension
+from connect.eaas.core.extension import EventsExtension, Extension
 from connect.eaas.core.responses import (
     CustomEventResponse,
     ProcessingResponse,
@@ -307,7 +307,7 @@ def test_validate_extension_class_invalid_superclass(mocker):
         'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
         return_value='/dir/file.py',
     )
-    context = {'extension_class': KeyError}
+    context = {'extension_classes': {'webapp': KeyError}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is True
@@ -317,7 +317,7 @@ def test_validate_extension_class_invalid_superclass(mocker):
     assert item.level == 'ERROR'
     assert (
         'The extension class *KeyError* '
-        'is not a subclass of *connect.eaas.core.extension.Extension*.'
+        'is not a subclass of *connect.eaas.core.extension.WebAppExtension*.'
     ) in item.message
     assert item.file == '/dir/file.py'
 
@@ -333,7 +333,7 @@ def test_validate_extension_class_descriptor_not_found(mocker):
     class MyExt(Extension):
         pass
 
-    context = {'extension_class': MyExt}
+    context = {'extension_classes': {'extension': MyExt}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is True
@@ -359,12 +359,12 @@ def test_validate_extension_class_descriptor_with_declarations(mocker, descripto
         return_value='/dir/file.py',
     )
 
-    mocker.patch.object(Extension, 'get_descriptor', return_value=descriptor)
+    mocker.patch.object(EventsExtension, 'get_descriptor', return_value=descriptor)
 
-    class MyExt(Extension):
+    class MyExt(EventsExtension):
         pass
 
-    context = {'extension_class': MyExt}
+    context = {'extension_classes': {'extension': MyExt}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is False

@@ -13,7 +13,12 @@ from connect.cli.plugins.project.validators import (
     ValidationResult,
 )
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
-from connect.eaas.core.extension import Extension
+from connect.eaas.core.extension import (
+    AnvilExtension,
+    EventsExtension,
+    Extension,
+    WebAppExtension,
+)
 from connect.eaas.core.responses import (
     CustomEventResponse,
     ProcessingResponse,
@@ -103,7 +108,7 @@ def validate_pyproject_toml(config, project_dir, context):  # noqa: CCR001
                         ),
                     )
 
-            extensions[f'{extension_type}_class'] = getattr(extension_module, class_name)
+            extensions[extension_type] = getattr(extension_module, class_name)
 
     if not extensions:
         messages.append(
@@ -122,29 +127,44 @@ def validate_pyproject_toml(config, project_dir, context):  # noqa: CCR001
         )
         return ValidationResult(messages, True)
 
-    return ValidationResult(messages, False, extensions)
+    return ValidationResult(messages, False, {'extension_classes': extensions})
 
 
-def validate_extension_class(config, project_dir, context):
+def validate_extension_class(config, project_dir, context):  # noqa: CCR001
     messages = []
+    class_mapping = {
+        'extension': 'connect.eaas.core.extension.[Events]Extension',
+        'webapp': 'connect.eaas.core.extension.WebAppExtension',
+        'anvil': 'connect.eaas.core.extension.AnvilExtension',
+    }
+    ext_class = None
+    extension_json_file = None
 
-    extension_class = context['extension_class']
-    extension_class_file = inspect.getsourcefile(extension_class)
-    extension_json_file = os.path.join(os.path.dirname(extension_class_file), 'extension.json')
+    for extension_type, extension_class in context['extension_classes'].items():
+        extension_class_file = inspect.getsourcefile(extension_class)
 
-    if not issubclass(extension_class, Extension):
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                f'The extension class *{extension_class.__name__}* '
-                'is not a subclass of *connect.eaas.core.extension.Extension*.',
-                extension_class_file,
-            ),
-        )
-        return ValidationResult(messages, True)
+        if (
+            extension_type == 'extension'
+            and not issubclass(extension_class, (Extension, EventsExtension))
+            or extension_type == 'webapp' and not issubclass(extension_class, WebAppExtension)
+            or extension_type == 'anvil' and not issubclass(extension_class, AnvilExtension)
+        ):
+            messages.append(
+                ValidationItem(
+                    'ERROR',
+                    f'The extension class *{extension_class.__name__}* '
+                    f'is not a subclass of *{class_mapping[extension_type]}*.',
+                    extension_class_file,
+                ),
+            )
+            return ValidationResult(messages, True)
+
+        if not extension_json_file:
+            extension_json_file = os.path.join(os.path.dirname(extension_class_file), 'extension.json')
+            ext_class = extension_class
 
     try:
-        descriptor = extension_class.get_descriptor()
+        descriptor = ext_class.get_descriptor()
     except FileNotFoundError:
         messages.append(
             ValidationItem(
@@ -155,31 +175,18 @@ def validate_extension_class(config, project_dir, context):
         )
         return ValidationResult(messages, True)
 
-    if 'capabilities' in descriptor:
-        messages.append(
-            ValidationItem(
-                'WARNING',
-                'Extension capabilities must be declared using the *connect.eaas.core.decorators.event* decorator.',
-                extension_json_file,
-            ),
-        )
-    if 'variables' in descriptor:
-        messages.append(
-            ValidationItem(
-                'WARNING',
-                'Extension variables must be declared using the *connect.eaas.core.decorators.variables* decorator.',
-                extension_json_file,
-            ),
-        )
-    if 'schedulables' in descriptor:
-        messages.append(
-            ValidationItem(
-                'WARNING',
-                'Extension schedulables must be declared using the '
-                '*connect.eaas.core.decorators.schedulable* decorator.',
-                extension_json_file,
-            ),
-        )
+    for description in ['variables', 'capabilities', 'schedulables']:
+        if description in descriptor:
+            messages.append(
+                ValidationItem(
+                    'WARNING',
+                    f'Extension {description} must be declared using the '
+                    f'*connect.eaas.core.decorators.'
+                    f'{description if description != "schedulables" else "event"}* decorator.',
+                    extension_json_file,
+                ),
+            )
+
     return ValidationResult(messages, False)
 
 
@@ -356,11 +363,10 @@ def validate_docker_compose_yml(config, project_dir, context):
 
 
 validators = [
-    # modify to check toml extension class depending on existing files
     validate_pyproject_toml,
     validate_docker_compose_yml,
     validate_extension_class,
-    validate_events,
-    validate_variables,
-    validate_schedulables,
+    # validate_events,
+    # validate_variables,
+    # validate_schedulables,
 ]
