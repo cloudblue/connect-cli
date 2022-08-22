@@ -6,7 +6,12 @@ import sys
 
 import yaml
 
-from connect.cli.plugins.project.validators import get_code_context, ValidationItem, ValidationResult
+from connect.cli.plugins.project.validators import (
+    get_code_context,
+    load_project_toml_file,
+    ValidationItem,
+    ValidationResult,
+)
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
 from connect.eaas.core.extension import Extension
 from connect.eaas.core.responses import (
@@ -15,10 +20,9 @@ from connect.eaas.core.responses import (
     ProductActionResponse,
     ValidationResponse,
 )
-from connect.cli.plugins.project.validators import load_project_toml_file
 
 
-def validate_pyproject_toml(config, project_dir, context):
+def validate_pyproject_toml(config, project_dir, context):  # noqa: CCR001
     messages = []
 
     data = load_project_toml_file(project_dir)
@@ -58,54 +62,67 @@ def validate_pyproject_toml(config, project_dir, context):
             ),
         )
         return ValidationResult(messages, True)
-    if 'extension' not in extension_dict.keys():
+
+    sys.path.append(os.path.join(os.getcwd(), project_dir))
+    possible_extensions = ['extension', 'webapp', 'anvil']
+    extensions = {}
+    for extension_type in possible_extensions:
+        if extension_type in extension_dict.keys():
+            package, class_name = extension_dict[extension_type].rsplit(':', 1)
+            try:
+                extension_module = importlib.import_module(package)
+            except ImportError as err:
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        f'The extension class *{extension_dict[extension_type]}* '
+                        f'cannot be loaded: {err}.',
+                        descriptor_file,
+                    ),
+                )
+                return ValidationResult(messages, True)
+
+            defined_classes = [
+                member[1]
+                for member in inspect.getmembers(extension_module, predicate=inspect.isclass)
+            ]
+
+            for deprecated_cls, cls_name in (
+                (CustomEventResponse, 'InteractiveResponse'),
+                (ProcessingResponse, 'BackgroundResponse'),
+                (ProductActionResponse, 'InteractiveResponse'),
+                (ValidationResponse, 'InteractiveResponse'),
+            ):
+                if deprecated_cls in defined_classes:
+                    messages.append(
+                        ValidationItem(
+                            'WARNING',
+                            f'The response class *{deprecated_cls.__name__}* '
+                            f'has been deprecated in favor of *{cls_name}*.',
+                            **get_code_context(extension_module, deprecated_cls.__name__),
+                        ),
+                    )
+
+            extensions[f'{extension_type}_class'] = getattr(extension_module, class_name)
+
+    if not extensions:
         messages.append(
             ValidationItem(
                 'ERROR',
                 (
                     'Invalid extension declaration in *[tool.poetry.plugins."connect.eaas.ext"]*: '
-                    'The extension must be declared as: *"extension" = "your_package.extension:YourExtension"*.'
+                    'The extension must be declared as: *"extension" = "your_package.extension:YourExtension"* '
+                    'for Fulfillment automation or Hub integration. For Multi account installation must be '
+                    'declared at least one the following: *"extension" = "your_package.events:YourEventsExtension"*, '
+                    '*"webapp" = "your_package.webapp:YourWebAppExtension"*, '
+                    '*"anvil" = "your_package.anvil:YourAnvilExtension"*.'
                 ),
                 descriptor_file,
             ),
         )
         return ValidationResult(messages, True)
 
-    sys.path.append(os.path.join(os.getcwd(), project_dir))
-    package, class_name = extension_dict['extension'].rsplit(':', 1)
-    try:
-        extension_module = importlib.import_module(package)
-    except ImportError as err:
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                f'The extension class *{extension_dict["extension"]}* cannot be loaded: {err}.',
-                descriptor_file,
-            ),
-        )
-        return ValidationResult(messages, True)
-
-    defined_classes = [
-        member[1]
-        for member in inspect.getmembers(extension_module, predicate=inspect.isclass)
-    ]
-
-    for deprecated_cls, cls_name in (
-        (CustomEventResponse, 'InteractiveResponse'),
-        (ProcessingResponse, 'BackgroundResponse'),
-        (ProductActionResponse, 'InteractiveResponse'),
-        (ValidationResponse, 'InteractiveResponse'),
-    ):
-        if deprecated_cls in defined_classes:
-            messages.append(
-                ValidationItem(
-                    'WARNING',
-                    f'The response class *{deprecated_cls.__name__}* has been deprecated in favor of *{cls_name}*.',
-                    **get_code_context(extension_module, deprecated_cls.__name__),
-                ),
-            )
-
-    return ValidationResult(messages, False, {'extension_class': getattr(extension_module, class_name)})
+    return ValidationResult(messages, False, extensions)
 
 
 def validate_extension_class(config, project_dir, context):
@@ -339,6 +356,7 @@ def validate_docker_compose_yml(config, project_dir, context):
 
 
 validators = [
+    # modify to check toml extension class depending on existing files
     validate_pyproject_toml,
     validate_docker_compose_yml,
     validate_extension_class,
