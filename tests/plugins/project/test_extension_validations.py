@@ -383,7 +383,7 @@ def test_validate_events_invalid_event(mocker):
         'method': 'event_handler',
     }]
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -435,7 +435,7 @@ def test_validate_events_invalid_status(mocker, object_statuses, event_statuses)
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -485,7 +485,7 @@ def test_validate_events_invalid_signature(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -533,7 +533,7 @@ def test_validate_schedulables_invalid_signature(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -564,7 +564,7 @@ def test_validate_schedulables_no_schedulables(mocker):
     extension_class = mocker.MagicMock()
     extension_class.get_schedulables.return_value = []
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     result = validate_schedulables(mocker.MagicMock(), 'project_dir', context)
 
@@ -584,7 +584,7 @@ def test_validate_schedulables(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     result = validate_schedulables(mocker.MagicMock(), 'project_dir', context)
 
@@ -598,7 +598,7 @@ def test_validate_variables_no_name(mocker):
     extension_class.get_variables.return_value = [{
         'initial_value': 'value',
     }]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -631,7 +631,7 @@ def test_validate_variables_non_unique(mocker):
         {'name': 'VAR1'},
         {'name': 'VAR1'},
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -666,7 +666,7 @@ def test_validate_variables_invalid_name(mocker):
     extension_class.get_variables.return_value = [
         {'name': '1VAR'},
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -701,7 +701,7 @@ def test_validate_variables_invalid_initial_value(mocker):
             'initial_value': mocker.MagicMock(),
         },
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -736,7 +736,7 @@ def test_validate_variables_invalid_secure(mocker):
             'secure': mocker.MagicMock(),
         },
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',

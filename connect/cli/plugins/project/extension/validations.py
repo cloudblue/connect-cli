@@ -3,6 +3,7 @@ import inspect
 import os
 import re
 import sys
+from collections import deque
 
 import yaml
 
@@ -187,12 +188,17 @@ def validate_extension_class(config, project_dir, context):  # noqa: CCR001
                 ),
             )
 
-    return ValidationResult(messages, False)
+    return ValidationResult(messages, False, {'descriptor': descriptor})
 
 
 def validate_events(config, project_dir, context):
     messages = []
-    extension_class = context['extension_class']
+
+    extension_class = context['extension_classes'].get('extension')
+
+    if not extension_class:
+        return ValidationResult(messages, False, context)
+
     definitions = {definition['type']: definition for definition in get_event_definitions(config)}
     events = extension_class.get_events()
     for event in events:
@@ -237,7 +243,12 @@ def validate_events(config, project_dir, context):
 
 def validate_schedulables(config, project_dir, context):
     messages = []
-    extension_class = context['extension_class']
+
+    extension_class = context['extension_classes'].get('extension')
+
+    if not extension_class:
+        return ValidationResult(messages, False, context)
+
     schedulables = extension_class.get_schedulables()
     for schedulable in schedulables:
         method = getattr(extension_class, schedulable['method'])
@@ -258,64 +269,173 @@ def validate_schedulables(config, project_dir, context):
 def validate_variables(config, project_dir, context):  # noqa: CCR001
 
     messages = []
-    extension_class = context['extension_class']
-    variables = extension_class.get_variables()
-    variable_name_pattern = r'^[A-Za-z](?:[A-Za-z0-9_\-.]+)*$'
-    variable_name_regex = re.compile(variable_name_pattern)
 
-    names = []
+    for _, extension_class in context['extension_classes'].items():
 
-    for variable in variables:
-        if 'name' not in variable:
+        variables = extension_class.get_variables()
+        variable_name_pattern = r'^[A-Za-z](?:[A-Za-z0-9_\-.]+)*$'
+        variable_name_regex = re.compile(variable_name_pattern)
+
+        names = []
+
+        for variable in variables:
+            if 'name' not in variable:
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        'Invalid variable declaration: the *name* attribute is mandatory.',
+                        **get_code_context(extension_class, '@variables'),
+                    ),
+                )
+                continue
+
+            if variable["name"] in names:
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        f'Duplicate variable name: the variable with name *{variable["name"]}* '
+                        'has already been declared.',
+                        **get_code_context(extension_class, '@variables'),
+                    ),
+                )
+
+            names.append(variable["name"])
+
+            if not variable_name_regex.match(variable['name']):
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        f'Invalid variable name: the value *{variable["name"]}* '
+                        f'does not match the pattern *{variable_name_pattern}*.',
+                        **get_code_context(extension_class, '@variables'),
+                    ),
+                )
+            if 'initial_value' in variable and not isinstance(variable['initial_value'], str):
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        f'Invalid *initial_value* attribute for variable *{variable["name"]}*: '
+                        f'must be a non-null string not *{type(variable["initial_value"])}*.',
+                        **get_code_context(extension_class, '@variables'),
+                    ),
+                )
+
+            if 'secure' in variable and not isinstance(variable['secure'], bool):
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        f'Invalid *secure* attribute for variable *{variable["name"]}*: '
+                        f'must be a boolean not *{type(variable["secure"])}*.',
+                        **get_code_context(extension_class, '@variables'),
+                    ),
+                )
+
+    return ValidationResult(messages, False, context)
+
+
+def validate_webapp_extension(config, project_dir, context):  # noqa: CCR001
+
+    messages = []
+
+    if 'webapp' not in context['extension_classes']:
+        return ValidationResult(messages, False, context)
+
+    extension_class = context['extension_classes']['webapp']
+    extension_class_file = inspect.getsourcefile(extension_class)
+
+    if not inspect.getsource(extension_class).strip().startswith('@web_app(router)'):
+        messages.append(
+            ValidationItem(
+                'ERROR',
+                'The Web app extension class must be wrapped in *@web_app(router)*.',
+                extension_class_file,
+            ),
+        )
+        return ValidationResult(messages, True)
+
+    has_router_function = False
+    for _, value in inspect.getmembers(extension_class):
+        if (
+                inspect.isfunction(value)
+                and inspect.getsource(value).strip().startswith('@router.')
+        ):
+            has_router_function = True
+            break
+
+    if not has_router_function:
+        messages.append(
+            ValidationItem(
+                'ERROR',
+                'The Web app extension class must contain at least one router '
+                'implementation function wrapped in *@router.your_method("/your_path")*.',
+                extension_class_file,
+            ),
+        )
+        return ValidationResult(messages, True)
+
+    if 'ui' not in context['descriptor']:
+        messages.append(
+            ValidationItem(
+                'ERROR',
+                'The extension descriptor *extension.json* must contain information '
+                'about static files. Please use *ui* keyword, to define an item '
+                'use *label* for name and *url* to specify absolute path to file within '
+                'static root folder. For more information, look at example: '
+                'https://github.com/cloudblue/eaas-e2e-ma-mock/blob/master/e2e/extension.json.',
+                extension_class_file,
+            ),
+        )
+        return ValidationResult(messages, True)
+
+    ui_items = deque()
+    missed_files = []
+    for _, value in context['descriptor']['ui'].items():
+        ui_items.append(value)
+
+    while ui_items:
+        ui_item = ui_items.pop()
+        try:
+            url = ui_item['url']
+        except KeyError:
             messages.append(
                 ValidationItem(
                     'ERROR',
-                    'Invalid variable declaration: the *name* attribute is mandatory.',
-                    **get_code_context(extension_class, '@variables'),
+                    'The extension descriptor *extension.json* contains incorrect '
+                    f'ui item *{ui_item.get("label")}*, url is not presented.',
+                    extension_class_file,
                 ),
             )
-            continue
+            return ValidationResult(messages, True)
 
-        if variable["name"] in names:
-            messages.append(
-                ValidationItem(
-                    'ERROR',
-                    f'Duplicate variable name: the variable with name *{variable["name"]}* '
-                    'has already been declared.',
-                    **get_code_context(extension_class, '@variables'),
-                ),
-            )
+        path = os.path.join(os.path.dirname(extension_class_file), url.strip('/'))
+        if not os.path.exists(path):
+            missed_files.append(url)
 
-        names.append(variable["name"])
+        for child in ui_item.get('children', []):
+            ui_items.append(child)
 
-        if not variable_name_regex.match(variable['name']):
-            messages.append(
-                ValidationItem(
-                    'ERROR',
-                    f'Invalid variable name: the value *{variable["name"]}* '
-                    f'does not match the pattern *{variable_name_pattern}*.',
-                    **get_code_context(extension_class, '@variables'),
-                ),
-            )
-        if 'initial_value' in variable and not isinstance(variable['initial_value'], str):
-            messages.append(
-                ValidationItem(
-                    'ERROR',
-                    f'Invalid *initial_value* attribute for variable *{variable["name"]}*: '
-                    f'must be a non-null string not *{type(variable["initial_value"])}*.',
-                    **get_code_context(extension_class, '@variables'),
-                ),
-            )
+    if missed_files:
+        messages.append(
+            ValidationItem(
+                'ERROR',
+                'The extension descriptor *extension.json* contains missing '
+                f'static files: {missed_files}.',
+                extension_class_file,
+            ),
+        )
+        return ValidationResult(messages, True)
 
-        if 'secure' in variable and not isinstance(variable['secure'], bool):
-            messages.append(
-                ValidationItem(
-                    'ERROR',
-                    f'Invalid *secure* attribute for variable *{variable["name"]}*: '
-                    f'must be a boolean not *{type(variable["secure"])}*.',
-                    **get_code_context(extension_class, '@variables'),
-                ),
-            )
+    return ValidationResult(messages, False, context)
+
+
+def validate_anvil_extension(config, project_dir, context):
+
+    messages = []
+
+    if 'anvil' not in context['extension_classes']:
+        return ValidationResult(messages, False, context)
+
+    # check that anvil variables are correctly specified ?
 
     return ValidationResult(messages, False, context)
 
@@ -366,7 +486,9 @@ validators = [
     validate_pyproject_toml,
     validate_docker_compose_yml,
     validate_extension_class,
-    # validate_events,
-    # validate_variables,
-    # validate_schedulables,
+    validate_events,
+    validate_variables,
+    validate_schedulables,
+    validate_webapp_extension,
+    validate_anvil_extension,
 ]
