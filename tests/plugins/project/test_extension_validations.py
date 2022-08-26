@@ -914,7 +914,6 @@ def test_validate_webapp_extension_no_class_wrapper(mocker):
         return_value='/dir/file.py',
     )
 
-
     context = {'extension_classes': {'webapp': mocker.MagicMock()}}
     result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
@@ -1038,11 +1037,11 @@ def test_validate_webapp_extension_missing_static_files(mocker):
             'ui': {
                 'settings': {
                     'label': 'My Settings',
-                    'url': 'static/settings.html'
+                    'url': 'static/settings.html',
                 },
                 'customer': {
                     'label': 'My Customer Portal UI',
-                    'url': 'static/customer.html'
+                    'url': 'static/customer.html',
                 },
             },
         },
@@ -1090,7 +1089,7 @@ def test_validate_webapp_extension_wrong_ui_setting(mocker):
             'ui': {
                 'settings': {
                     'label': 'My Settings',
-                    'path': 'static/settings.html'
+                    'path': 'static/settings.html',
                 },
             },
         },
@@ -1155,11 +1154,11 @@ def test_validate_webapp_extension(mocker):
                     'children': [
                         {
                             'label': 'Page 1',
-                            'url': '/static/page1.html'
+                            'url': '/static/page1.html',
                         },
                         {
                             'label': 'Page 2',
-                            'url': '/static/page2.html'
+                            'url': '/static/page2.html',
                         },
                     ],
                 },
