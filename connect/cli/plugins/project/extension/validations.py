@@ -160,7 +160,7 @@ def validate_extension_class(config, project_dir, context):  # noqa: CCR001
             )
             return ValidationResult(messages, True)
 
-        if not extension_json_file:
+        if not extension_json_file:  # pragma: no branch
             extension_json_file = os.path.join(os.path.dirname(extension_class_file), 'extension.json')
             ext_class = extension_class
 
@@ -419,7 +419,7 @@ def validate_webapp_extension(config, project_dir, context):  # noqa: CCR001
             ValidationItem(
                 'ERROR',
                 'The extension descriptor *extension.json* contains missing '
-                f'static files: {missed_files}.',
+                f'static files: {", ".join(missed_files)}.',
                 extension_class_file,
             ),
         )
