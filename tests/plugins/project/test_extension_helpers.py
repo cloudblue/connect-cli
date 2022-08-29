@@ -403,7 +403,10 @@ def test_bootstrap_extension_project_multiaccount(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        assert ext_entrypoint == {
+            'anvil': f"{data['package_name']}.anvil:{classname_prefix}AnvilExtension",
+            'extension': f"{data['package_name']}.events:{classname_prefix}Extension",
+        }
 
         parser = configparser.ConfigParser()
         parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
@@ -535,7 +538,9 @@ def test_bootstrap_extension_project_webapp(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        assert ext_entrypoint == {
+            'webapp': f"{data['package_name']}.webapp:{classname_prefix}WebAppExtension",
+        }
 
         parser = configparser.ConfigParser()
         parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
@@ -571,6 +576,9 @@ def test_bootstrap_extension_project_webapp(
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static_root'),
         ) is True
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+        ) is False
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
         ) is False

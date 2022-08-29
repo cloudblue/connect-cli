@@ -33,7 +33,7 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         get_questions(config, grouped_definitions),
         'Extension project bootstrap',
         intro=EXTENSION_BOOTSTRAP_WIZARD_INTRO,
-        summary=get_summary(config, grouped_definitions),
+        summary=get_summary,
         finish_text='Create',
         previous_text='Back',
     )

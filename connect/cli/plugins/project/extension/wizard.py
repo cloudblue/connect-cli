@@ -23,32 +23,48 @@ EXTENSION_BOOTSTRAP_WIZARD_INTRO = (
 )
 
 
-def get_summary(config, definitions):
-    common = """<b><blue>Project</blue></b>
-    <b>Project Name:</b> ${project_name} - <b>Package Name:</b> ${package_name}
-    <b>Description:</b> ${description}
-    <b>Author:</b> ${author}
-    <b>Version:</b> ${version} - <b>License:</b> ${license}
-    <b>Use Github Actions:</b> ${use_github_actions} - <b>Use Asyncio:</b> ${use_asyncio}
+def get_summary(data):  # pragma: no cover
+    def value(variable_name, formatted=False):
+        if not data.get(variable_name):
+            return ''
+
+        data_value = data[variable_name]['formatted_value' if formatted else 'value']
+
+        return data_value or '-'
+
+    common = f"""<b><blue>Project</blue></b>
+    <b>Project Name:</b> {value('project_name')} - <b>Package Name:</b> {value('package_name')}
+    <b>Description:</b> {value('description')}
+    <b>Author:</b> {value('author')}
+    <b>Version:</b> {value('version')} - <b>License:</b> {value('license')}
+    <b>Use Github Actions:</b> {value('use_github_actions', formatted=True)} - """
+
+    common += f"""<b>Use Asyncio:</b> {value('use_asyncio', formatted=True)}
 <b><blue>Config</blue></b>
-    <b>API Key:</b> ${api_key}
-    <b>Environment ID:</b> ${environment_id}
-    <b>Server Address:</b> ${server_address}
+    <b>API Key:</b> {value('api_key')}
+    <b>Environment ID:</b> {value('environment_id')}
+    <b>Server Address:</b> {value('server_address')}
 """
 
-    event_answers = '\n'.join(
-        (
-            f'<b><blue>{extension_type_name} {category} events:</blue></b>\n'
-            '    ${' + f'{extension_type}_{category}_' + 'events}'
-        )
-        for extension_type, extension_type_name in get_extension_types(config)
-        for category in ['background', 'interactive']
-    ) + '\n'
-
-    examples = """<b><blue>Examples</blue></b>
-    <b>Schedulables:</b> ${include_schedules_example} - <b>Variables:</b> ${include_variables_example}
+    extension = f"""<b><blue>Extension</blue></b>
+    <b>Type:</b> {value('extension_type', formatted=True)}
 """
-    return common + event_answers + examples
+    if value('extension_type') == 'multiaccount':
+        extension += f"""    <b>Applications:</b> {value('application_types', formatted=True)}
+"""
+
+    event_answers = ''
+    for category in ['background', 'interactive']:
+        events_type = f"{value('extension_type')}_{category}_events"
+        event_answers += f"""<b><blue>{value('extension_type', formatted=True)} {category} events:</blue></b>
+    {value(events_type, formatted=True)}
+"""
+
+    examples = f"""<b><blue>Examples</blue></b>
+    <b>Schedulables:</b> {value('include_schedules_example', formatted=True)} - """
+    examples += f"""<b>Variables:</b> {value('include_variables_example', formatted=True)}"""
+
+    return common + extension + event_answers + examples
 
 
 def get_questions(config, definitions):
@@ -208,7 +224,7 @@ def get_questions(config, definitions):
         event_questions = [
             {
                 'name': f'hub_{category}_events',
-                'label': f'Hub integration: {category} events',
+                'label': f'HI: {category} events',
                 'type': 'selectmany',
                 'description': (
                     f'What types of {category}'
@@ -229,7 +245,7 @@ def get_questions(config, definitions):
         event_questions = [
             {
                 'name': f'products_{category}_events',
-                'label': f'Fulfillment Automation: {category} events',
+                'label': f'FF: {category} events',
                 'type': 'selectmany',
                 'description': (
                     f'What types of {category}'
@@ -250,7 +266,7 @@ def get_questions(config, definitions):
     event_questions.extend([
         {
             'name': f'multiaccount_{category}_events',
-            'label': f'Multi-Account installation: {category} events',
+            'label': f'MA: {category} events',
             'type': 'selectmany',
             'description': (
                 f'What types of {category}'
