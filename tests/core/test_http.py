@@ -8,6 +8,7 @@ from connect.cli.core.http import (
     format_http_status,
     get_user_agent,
     handle_http_error,
+    RequestLogger,
 )
 from connect.client import ClientError
 
@@ -60,3 +61,18 @@ def test_get_user_agent():
     assert cli == f'connect-cli/{get_version()}'
     assert python == f'{platform.python_implementation()}/{platform.python_version()}'
     assert system == f'{platform.system()}/{platform.release()}'
+
+
+def test_request_logger_creation(mocker):
+    mocker.patch('connect.cli.core.http.console')
+    req_logger = RequestLogger()
+    assert req_logger._file is not None
+
+
+def test_request_logger_creation_empty(mocker):
+    mocked_console = mocker.MagicMock()
+    mocked_console.verbose = True
+    mocked_console.silent = False
+    mocker.patch('connect.cli.core.http.console', mocked_console)
+    req_logger = RequestLogger()
+    assert req_logger._file is None

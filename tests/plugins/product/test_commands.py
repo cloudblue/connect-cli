@@ -11,7 +11,7 @@ from responses import matchers
 
 from connect.client import ConnectClient
 from connect.cli.core.config import Config
-from connect.cli.plugins.product.export import dump_product
+from connect.cli.plugins.product.export import _calculate_commitment, _dump_image, dump_product
 from connect.cli.plugins.product.sync import GeneralSynchronizer
 
 
@@ -447,6 +447,47 @@ def test_export_product(
                 cell = f'{col}{row}'
                 if cell not in ignore_sheet_cells.get(sheet, []):
                     assert product_sheet[cell].value == sample_sheet[cell].value
+
+
+def test_dump_image(mocker):
+    mocked_image_request = mocker.MagicMock()
+    mocked_image_request.status_code = 404
+    mocker.patch(
+        'connect.cli.plugins.product.export.requests.get',
+        return_value=mocked_image_request,
+    )
+    with pytest.raises(ClickException) as err:
+        _dump_image('path', None, None)
+    assert str(err.value) == 'Error obtaining image from path'
+
+
+def test_calculate_commitment_with_none():
+    assert _calculate_commitment({'period': None}) == '-'
+    assert _calculate_commitment({'period': 'x', 'commitment': None}) == '-'
+
+
+def test_calculate_commitment_multiplier_other():
+    mocked_item = {
+        'period': 'monthly',
+        'commitment': {'count': 12, 'multiplier': 'other'},
+    }
+    assert _calculate_commitment(mocked_item) == '-'
+
+
+def test_calculate_commitment_multiplier_period_monthly():
+    mocked_item = {
+        'period': 'monthly',
+        'commitment': {'count': 12, 'multiplier': 'billing_period'},
+    }
+    assert _calculate_commitment(mocked_item) == '1 year'
+
+
+def test_calculate_commitment_multiplier_other_period():
+    mocked_item = {
+        'period': 'yearly',
+        'commitment': {'count': 12, 'multiplier': 'billing_period'},
+    }
+    assert _calculate_commitment(mocked_item) == '12 years'
 
 
 def _get_col_limit_by_type(ws_type):
