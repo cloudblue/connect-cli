@@ -6,7 +6,6 @@ from shutil import copy2
 import pytest
 import responses
 from responses.registries import OrderedRegistry
-import toml
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
 from tests.data import (
@@ -55,14 +54,6 @@ def config_provider():
     from connect.cli.core.config import Config
     config = Config()
     config.add_account('PA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
-    return config
-
-
-@pytest.fixture(scope='function')
-def config_unknown():
-    from connect.cli.core.config import Config
-    config = Config()
-    config.add_account('XA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
 
 
@@ -337,17 +328,6 @@ def customers_workbook(fs):
 
 
 @pytest.fixture(scope='function')
-def mocked_extension_project_descriptor(fs):
-    return toml.load('./tests/fixtures/extensions/basic_ext/pyproject.toml')
-
-
-@pytest.fixture(scope='function')
-def mocked_extension_descriptor(fs):
-    with open('./tests/fixtures/extensions/basic_ext/connect_ext/extension.json') as response:
-        return json.load(response)
-
-
-@pytest.fixture(scope='function')
 def sample_translation_workbook(fs):
     return load_workbook('./tests/fixtures/translation.xlsx')
 
@@ -356,15 +336,6 @@ def sample_translation_workbook(fs):
 def mocked_translation_response():
     with open('./tests/fixtures/translation_response.json') as response:
         return json.load(response)
-
-
-@pytest.fixture(scope='function')
-def mocked_resource_list_table():
-    return [
-        '|ID|\n|:----:|\n',
-        '| ZH-HANS |\n',
-        '| ZH-HANS |\n',
-    ]
 
 
 @pytest.fixture(scope='function')
@@ -490,14 +461,6 @@ def console_80_columns(mocker):
 
 
 @pytest.fixture
-def mute_console():
-    from connect.cli.core.terminal import console
-    console.silent = True
-    yield
-    console.silent = False
-
-
-@pytest.fixture
 def always_yes_console():
     from connect.cli.core.terminal import console
     console.skip_confirm = True
@@ -506,8 +469,10 @@ def always_yes_console():
 
 
 @pytest.fixture
-def verbose_console():
-    from connect.cli.core.terminal import console
-    console.verbose = True
-    yield
-    console.verbose = False
+def client():
+    from connect.client import ConnectClient
+    return ConnectClient(
+        api_key='ApiKey',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
