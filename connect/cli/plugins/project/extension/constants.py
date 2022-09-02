@@ -67,6 +67,7 @@ USAGE_FILE_STATUSES = [
     'uploading',
     'uploaded',
     'invalid',
+    'processing',
     'ready',
     'rejected',
     'pending',
