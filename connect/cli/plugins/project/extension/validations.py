@@ -373,57 +373,50 @@ def validate_webapp_extension(config, project_dir, context):  # noqa: CCR001
         )
         return ValidationResult(messages, True)
 
-    if 'ui' not in context['descriptor']:
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                'The extension descriptor *extension.json* must contain information '
-                'about static files. Please use *ui* keyword, to define an item '
-                'use *label* for name and *url* to specify absolute path to file within '
-                'static root folder. For more information, look at example: '
-                'https://github.com/cloudblue/eaas-e2e-ma-mock/blob/master/e2e/extension.json.',
-                extension_class_file,
-            ),
-        )
-        return ValidationResult(messages, True)
+    if 'ui' in context['descriptor']:
+        extension_json_file = os.path.join(os.path.dirname(extension_class_file), 'extension.json')
 
-    ui_items = deque()
-    missed_files = []
-    for _, value in context['descriptor']['ui'].items():
-        ui_items.append(value)
+        ui_items = deque()
+        missed_files = []
+        for _, value in context['descriptor']['ui'].items():
+            ui_items.append(value)
 
-    while ui_items:
-        ui_item = ui_items.pop()
-        try:
-            url = ui_item['url']
-        except KeyError:
+        while ui_items:
+            ui_item = ui_items.pop()
+            try:
+                url = ui_item['url']
+            except KeyError:
+                messages.append(
+                    ValidationItem(
+                        'ERROR',
+                        'The extension descriptor contains incorrect ui item'
+                        f'*{ui_item.get("label")}*, url is not presented.',
+                        extension_json_file,
+                    ),
+                )
+                return ValidationResult(messages, True)
+
+            path = os.path.join(
+                os.path.dirname(extension_class_file),
+                'static_root',
+                url.split('/')[-1],
+            )
+            if not os.path.exists(path):
+                missed_files.append(url)
+
+            for child in ui_item.get('children', []):
+                ui_items.append(child)
+
+        if missed_files:
             messages.append(
                 ValidationItem(
                     'ERROR',
-                    'The extension descriptor *extension.json* contains incorrect '
-                    f'ui item *{ui_item.get("label")}*, url is not presented.',
-                    extension_class_file,
+                    'The extension descriptor contains missing static files: '
+                    f'{", ".join(missed_files)}.',
+                    extension_json_file,
                 ),
             )
             return ValidationResult(messages, True)
-
-        path = os.path.join(os.path.dirname(extension_class_file), url.strip('/'))
-        if not os.path.exists(path):
-            missed_files.append(url)
-
-        for child in ui_item.get('children', []):
-            ui_items.append(child)
-
-    if missed_files:
-        messages.append(
-            ValidationItem(
-                'ERROR',
-                'The extension descriptor *extension.json* contains missing '
-                f'static files: {", ".join(missed_files)}.',
-                extension_class_file,
-            ),
-        )
-        return ValidationResult(messages, True)
 
     return ValidationResult(messages, False, context)
 
@@ -435,7 +428,22 @@ def validate_anvil_extension(config, project_dir, context):
     if 'anvil' not in context['extension_classes']:
         return ValidationResult(messages, False, context)
 
-    # check that anvil variables are correctly specified ?
+    extension_class = context['extension_classes']['anvil']
+    anvil_key_var = extension_class.get_anvil_key_variable()
+
+    if anvil_key_var:
+        variable_name_pattern = r'^[A-Za-z](?:[A-Za-z0-9_\-.]+)*$'
+        variable_name_regex = re.compile(variable_name_pattern)
+
+        if not variable_name_regex.match(anvil_key_var):
+            messages.append(
+                ValidationItem(
+                    'ERROR',
+                    f'Invalid Anvil key variable name: the value *{anvil_key_var}* '
+                    f'does not match the pattern *{variable_name_pattern}*.',
+                    extension_class,
+                ),
+            )
 
     return ValidationResult(messages, False, context)
 

@@ -958,48 +958,6 @@ def test_validate_webapp_extension_no_router_methods(mocker):
     assert 'function wrapped in *@router.your_method("/your_path")*.' in item.message
 
 
-def test_validate_webapp_extension_no_ui_in_descriptor(mocker):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsource',
-        side_effect=[
-            '@web_app(router)...\nclass E2EWebAppExtension(WebAppExtension):...',
-            '@router.get("/settings")\ndef retrieve_settings(self):...',
-        ],
-    )
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
-        return_value='/dir/file.py',
-    )
-
-    def f():
-        pass
-
-    mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getmembers',
-        return_value=[('some_func', f)],
-    )
-
-    context = {
-        'extension_classes': {'webapp': mocker.MagicMock()},
-        'descriptor': {
-            'name': 'My Awesome Project',
-            'description': 'Project description',
-            'version': '0.1.0',
-            'readme_url': 'https://example.com/README.md',
-            'changelog_url': 'https://example.com/CHANGELOG.md',
-        },
-    }
-    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
-    assert isinstance(result, ValidationResult)
-    assert result.must_exit is True
-    assert len(result.items) == 1
-    item = result.items[0]
-    assert isinstance(item, ValidationItem)
-    assert item.level == 'ERROR'
-    assert 'The extension descriptor *extension.json* must contain information' in item.message
-    assert 'about static files. Please use *ui* keyword' in item.message
-
-
 def test_validate_webapp_extension_missing_static_files(mocker):
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.inspect.getsource',
@@ -1053,8 +1011,8 @@ def test_validate_webapp_extension_missing_static_files(mocker):
     item = result.items[0]
     assert isinstance(item, ValidationItem)
     assert item.level == 'ERROR'
-    assert 'The extension descriptor *extension.json* contains missing' in item.message
-    assert 'static files: static/customer.html, static/settings.html.' in item.message
+    assert 'The extension descriptor contains missing static files' in item.message
+    assert 'static/customer.html, static/settings.html.' in item.message
 
 
 def test_validate_webapp_extension_wrong_ui_setting(mocker):
@@ -1101,8 +1059,8 @@ def test_validate_webapp_extension_wrong_ui_setting(mocker):
     item = result.items[0]
     assert isinstance(item, ValidationItem)
     assert item.level == 'ERROR'
-    assert 'The extension descriptor *extension.json* contains incorrect' in item.message
-    assert 'ui item *My Settings*, url is not presented.' in item.message
+    assert 'The extension descriptor contains incorrect ui item' in item.message
+    assert '*My Settings*, url is not presented.' in item.message
 
 
 def test_validate_webapp_extension(mocker):
@@ -1182,10 +1140,28 @@ def test_validate_anvil_extension_no_such_extension(mocker):
 
 
 def test_validate_anvil_extension(mocker):
-    context = {
-        'extension_classes': {'anvil': mocker.MagicMock()},
-    }
+    anvil_extension_class = mocker.MagicMock()
+    anvil_extension_class.get_anvil_key_variable.return_value = 'ANVIL_API_KEY'
+    context = {'extension_classes': {'anvil': anvil_extension_class}}
+
     result = validate_anvil_extension(mocker.MagicMock(), 'fake_dir', context)
+
     assert isinstance(result, ValidationResult)
     assert result.must_exit is False
     assert len(result.items) == 0
+
+
+def test_validate_anvil_extension_invalid_anvil_api_key(mocker):
+    anvil_extension_class = mocker.MagicMock()
+    anvil_extension_class.get_anvil_key_variable.return_value = '1ANVIL1'
+    context = {'extension_classes': {'anvil': anvil_extension_class}}
+
+    result = validate_anvil_extension(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'Invalid Anvil key variable name: the value *1ANVIL1* does not match' in item.message
