@@ -345,7 +345,7 @@ def test_execute_report_v2_async(mocker, entrypoint, check_is):
     mocked_get_report_entrypoint.assert_called_with(mocked_report)
 
     assert mocked_get_report_inputs.mock_calls[0].args[0] == config
-    assert isinstance(mocked_get_report_inputs.mock_calls[0].args[1], AsyncConnectClient)
+    assert isinstance(mocked_get_report_inputs.mock_calls[0].args[1], ConnectClient)
     assert mocked_get_report_inputs.mock_calls[0].args[2] == mocked_report
     assert mocked_get_report_inputs.mock_calls[0].args[3] == 'pdf'
 
