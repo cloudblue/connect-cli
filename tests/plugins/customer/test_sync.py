@@ -7,20 +7,10 @@ from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.plugins.customer.sync import CustomerSynchronizer
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
-from connect.client import ConnectClient
 
 
-def get_client():
-    return ConnectClient(
-        api_key='ApiKey',
-        endpoint='https://localhost/public/v1',
-        use_specs=False,
-    )
-
-
-def test_sync_all_skip(fs, customers_workbook):
+def test_sync_all_skip(fs, customers_workbook, client):
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -34,10 +24,9 @@ def test_sync_all_skip(fs, customers_workbook):
     }
 
 
-def test_bad_action(fs, customers_workbook):
+def test_bad_action(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'wrong'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -48,11 +37,10 @@ def test_bad_action(fs, customers_workbook):
     assert synchronizer.stats._row_errors == {2: ['Action wrong is not supported']}
 
 
-def test_bad_account(fs, customers_workbook):
+def test_bad_account(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook['Customers']['H2'] = 'robot'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -63,11 +51,10 @@ def test_bad_account(fs, customers_workbook):
     assert synchronizer.stats._row_errors == {2: ['Customer type must be customer or reseller, not robot']}
 
 
-def test_empty_address(fs, customers_workbook):
+def test_empty_address(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook['Customers']['K2'] = ''
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -78,10 +65,9 @@ def test_empty_address(fs, customers_workbook):
     assert synchronizer.stats._row_errors == {2: ['Address line 1, city, state and zip are mandatory']}
 
 
-def test_create_existing(fs, customers_workbook):
+def test_create_existing(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -94,12 +80,11 @@ def test_create_existing(fs, customers_workbook):
     }
 
 
-def test_create_customer_no_parent(fs, customers_workbook):
+def test_create_customer_no_parent(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook['Customers']['H2'] = 'customer'
     customers_workbook['Customers']['A2'] = None
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -110,11 +95,10 @@ def test_create_customer_no_parent(fs, customers_workbook):
     assert synchronizer.stats._row_errors == {2: ['Customers requires a parent account']}
 
 
-def test_update_customer_no_id(fs, customers_workbook):
+def test_update_customer_no_id(fs, customers_workbook, client):
     customers_workbook['Customers']['D2'] = 'update'
     customers_workbook['Customers']['A2'] = 'KA-'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     synchronizer = CustomerSynchronizer(
         account_id='VA-123',
@@ -125,10 +109,9 @@ def test_update_customer_no_id(fs, customers_workbook):
     assert synchronizer.stats._row_errors == {2: ['Update operation requires account ID to be set']}
 
 
-def test_update_customer_no_account_connect(fs, customers_workbook, mocked_responses):
+def test_update_customer_no_account_connect(fs, customers_workbook, mocked_responses, client):
     customers_workbook['Customers']['D2'] = 'update'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -144,11 +127,10 @@ def test_update_customer_no_account_connect(fs, customers_workbook, mocked_respo
     assert synchronizer.stats._row_errors == {2: ['Account with id TA-7374-0753-1907 does not exist']}
 
 
-def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked_reseller):
+def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked_reseller, client):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook['Customers']['A2'] = None
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='POST',
@@ -165,16 +147,16 @@ def test_create_account_connect(fs, customers_workbook, mocked_responses, mocked
 
 
 def test_create_account_connect_uuid(
-        fs,
-        customers_workbook,
-        mocked_responses,
-        mocked_reseller,
+    fs,
+    customers_workbook,
+    mocked_responses,
+    mocked_reseller,
+    client,
 ):
     customers_workbook['Customers']['D2'] = 'create'
     customers_workbook['Customers']['A2'] = None
     customers_workbook['Customers']['C2'] = None
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='POST',
@@ -191,16 +173,16 @@ def test_create_account_connect_uuid(
 
 
 def test_create_account_connect_parent_id(
-        fs,
-        customers_workbook,
-        mocked_responses,
-        mocked_reseller,
+    fs,
+    customers_workbook,
+    mocked_responses,
+    mocked_reseller,
+    client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='POST',
@@ -222,16 +204,16 @@ def test_create_account_connect_parent_id(
 
 
 def test_create_account_connect_parent_id_not_found(
-        fs,
-        customers_workbook,
-        mocked_responses,
-        mocked_reseller,
+    fs,
+    customers_workbook,
+    mocked_responses,
+    mocked_reseller,
+    client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -248,17 +230,17 @@ def test_create_account_connect_parent_id_not_found(
 
 
 def test_create_account_connect_parent_external_id(
-        fs,
-        customers_workbook,
-        mocked_responses,
-        mocked_reseller,
+    fs,
+    customers_workbook,
+    mocked_responses,
+    mocked_reseller,
+    client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_id'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -291,17 +273,17 @@ def test_create_account_connect_parent_external_id(
 
 
 def test_create_account_connect_parent_external_id_not_found(
-        fs,
-        customers_workbook,
-        mocked_responses,
-        mocked_reseller,
+    fs,
+    customers_workbook,
+    mocked_responses,
+    mocked_reseller,
+    client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_id'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -325,13 +307,13 @@ def test_create_account_connect_parent_external_id_more_than_one(
         customers_workbook,
         mocked_responses,
         mocked_reseller,
+        client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_id'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -355,13 +337,13 @@ def test_create_account_connect_parent_external_uid(
         customers_workbook,
         mocked_responses,
         mocked_reseller,
+        client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_uid'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -398,13 +380,13 @@ def test_create_account_connect_parent_external_uid_not_found(
         customers_workbook,
         mocked_responses,
         mocked_reseller,
+        client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_uid'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -428,13 +410,13 @@ def test_create_account_connect_parent_external_uid_more_than_one(
         customers_workbook,
         mocked_responses,
         mocked_reseller,
+        client,
 ):
     customers_workbook['Customers']['D3'] = 'create'
     customers_workbook['Customers']['A3'] = None
     customers_workbook['Customers']['C3'] = None
     customers_workbook['Customers']['F3'] = 'external_uid'
     customers_workbook.save(f'{fs.root_path}/test.xlsx')
-    client = get_client()
 
     mocked_responses.add(
         method='GET',
@@ -451,6 +433,55 @@ def test_create_account_connect_parent_external_uid_more_than_one(
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
     synchronizer.sync()
     assert synchronizer.stats._row_errors == {3: ['More than one Parent with external_uid TA-7374-0753-1907']}
+
+
+def test_parent_search_criteria(
+        fs,
+        mocker,
+        client,
+        customers_workbook,
+):
+    mocked_data = mocker.MagicMock()
+    mocked_data.parent_search_criteria = 'criteria'
+    mocked_data.parent_search_value = None
+    mocker.patch('connect.cli.plugins.customer.sync._RowData', return_value=mocked_data)
+    customers_workbook.save(f'{fs.root_path}/test.xlsx')
+
+    CustomerSynchronizer._validate_row = lambda _, x: None
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=client,
+    )
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {
+        2: ['Parent search value is needed if criteria is set'],
+        3: ['Parent search value is needed if criteria is set'],
+    }
+
+
+def test_account_hub_cannot_be_modified(
+        fs,
+        mocker,
+        client,
+        customers_workbook,
+):
+    mocked_data = mocker.MagicMock()
+    mocked_data.hub_id = 'HUB'
+    mocker.patch('connect.cli.plugins.customer.sync._RowData', return_value=mocked_data)
+    customers_workbook.save(f'{fs.root_path}/test.xlsx')
+
+    CustomerSynchronizer._validate_row = lambda _, x: None
+    synchronizer = CustomerSynchronizer(
+        account_id='VA-123',
+        client=client,
+    )
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Customers')
+    synchronizer.sync()
+    assert synchronizer.stats._row_errors == {
+        2: ['Accounts on hub HUB can not be modified'],
+        3: ['Accounts on hub HUB can not be modified'],
+    }
 
 
 def test_open_invalid_file(mocker):
@@ -524,7 +555,7 @@ def test_open_invalid_columns(mocker):
     assert str(cv.value) == 'Column `A1` must be `ID` and is `Invalid column`.'
 
 
-def test_populate_hubs(mocker, mocked_responses):
+def test_populate_hubs(mocker, mocked_responses, client):
     mocker.patch(
         'connect.cli.plugins.customer.sync.load_workbook',
         return_value=Workbook(),
@@ -549,7 +580,7 @@ def test_populate_hubs(mocker, mocked_responses):
 
     synchronizer = CustomerSynchronizer(
         account_id='PA-123',
-        client=get_client(),
+        client=client,
     )
     synchronizer.populate_hubs()
 
