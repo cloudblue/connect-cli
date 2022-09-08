@@ -43,18 +43,12 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
 
     ctx = {
         'statuses_by_event': statuses_by_event[answers['extension_type']],
-        'background': [],
         'interactive': [],
         'runner_version': get_pypi_runner_version(),
     }
 
     for var, answer in answers.items():
-        if 'background_events' in var:
-            ctx['background'] = answer
-        elif 'interactive_events' in var:
-            ctx['interactive'] = answer
-        else:
-            ctx.update({var: answer})
+        ctx.update({var: answer})
 
     project_dir = os.path.join(output_dir, ctx['project_slug'])
     if not overwrite and os.path.exists(project_dir):
@@ -82,79 +76,47 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         ]
 
     if 'webapp' not in answers.get('application_types', []):
-        exclude.extend([
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-                'customer.html.j2',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-                'index.html.j2',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-                'page1.html.j2',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-                'settings.html.j2',
-            ),
-        ])
-
-    if answers['extension_type'] != 'multiaccount':
-        exclude.extend([
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'events.py.j2',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'anvil.py.j2',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'webapp.py.j2',
-            ),
-        ])
-    else:
         exclude.append(
             os.path.join(
                 answers['project_slug'],
                 answers['package_name'],
-                'extension.py.j2',
+                'static_root',
             ),
         )
-        if 'events' not in answers['application_types']:
+
+        exclude.extend([
+            os.path.join(
+                answers['project_slug'],
+                answers['package_name'],
+                'static_root',
+                static_file,
+            ) for static_file in [
+                'customer.html.j2',
+                'index.html.j2',
+                'page1.html.j2',
+                'settings.html.j2',
+            ]
+        ])
+
+    application_types = answers.get('application_types', [])
+    if answers['extension_type'] != 'multiaccount':
+        application_types.append('events')
+
+    for app_type in ['anvil', 'events', 'webapp']:
+        if app_type not in application_types:
             exclude.append(
                 os.path.join(
                     answers['project_slug'],
-                    'tests',
-                    f'test_{answers["project_slug"]}.py.j2',
+                    answers['package_name'],
+                    f'{app_type}.py.j2',
                 ),
             )
-        for app_type in ['anvil', 'events', 'webapp']:
-            if app_type not in answers['application_types']:
+            if app_type == 'events':
                 exclude.append(
                     os.path.join(
                         answers['project_slug'],
-                        answers['package_name'],
-                        f'{app_type}.py.j2',
+                        'tests',
+                        f'test_{answers["project_slug"]}.py.j2',
                     ),
                 )
 

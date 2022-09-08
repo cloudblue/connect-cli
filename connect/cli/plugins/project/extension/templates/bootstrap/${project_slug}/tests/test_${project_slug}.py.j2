@@ -6,13 +6,7 @@
 {% if use_asyncio == 'y' -%}
 import pytest
 {% endif -%}
-{% if extension_type != 'multiaccount' -%}
-from {{ package_name }}.extension import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension
-
-{% else -%}
 from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension
-
-{% endif -%}
 
 {% for bg_event in background -%}
 {% if use_asyncio == 'y' %}

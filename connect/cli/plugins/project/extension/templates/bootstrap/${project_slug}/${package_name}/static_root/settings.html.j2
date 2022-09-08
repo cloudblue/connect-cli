@@ -2,7 +2,23 @@
     <head>
         <title>EaaS MA Extension Settings Page</title>
     </head>
-    <body>
-        <h1>This is an example</h1>
+    <body onload="fillDiv()">
+        <h1>Account data</h1>
+        <div id="account-data">
+
+        </div>
     </body>
+    <script>
+        function fillDiv() {
+            fetch('/whoami')
+            .then(response => response.json())
+            .then(
+                (data) => {
+                    console.log(data);
+                    let element = document.getElementById('account-data');
+                    element.innerHTML = `${data.user.name} (${data.user.id})<br>${data.account.name} (${data.account.id})`;
+                }
+            )
+        }
+    </script>
 </html>

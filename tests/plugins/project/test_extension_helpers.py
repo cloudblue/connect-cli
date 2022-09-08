@@ -81,7 +81,7 @@ def test_bootstrap_extension_project_background(
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'products_background_events': ['sample_background_event'],
+            'background': ['sample_background_event'],
         }
 
         mocker.patch(
@@ -113,7 +113,7 @@ def test_bootstrap_extension_project_background(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        assert ext_entrypoint == {'extension': f"{data['package_name']}.events:{classname_prefix}Extension"}
 
         if with_github_actions:
             assert os.path.exists(
@@ -136,13 +136,13 @@ def test_bootstrap_extension_project_background(
         )
 
         report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
             os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
         ])
         assert report.total_errors == 0
 
         extension_py = open(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
         ).read()
 
         expected_imports = extension_imports(
@@ -232,7 +232,7 @@ def test_bootstrap_extension_project_interactive(
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'products_interactive_events': ['sample_interactive_event'],
+            'interactive': ['sample_interactive_event'],
         }
 
         mocker.patch(
@@ -264,7 +264,7 @@ def test_bootstrap_extension_project_interactive(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.extension:{classname_prefix}Extension"}
+        assert ext_entrypoint == {'extension': f"{data['package_name']}.events:{classname_prefix}Extension"}
 
         if with_github_actions:
             assert os.path.exists(
@@ -287,13 +287,13 @@ def test_bootstrap_extension_project_interactive(
         )
 
         report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
             os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
         ])
         assert report.total_errors == 0
 
         extension_py = open(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
         ).read()
 
         expected_imports = extension_imports(
@@ -371,7 +371,7 @@ def test_bootstrap_extension_project_multiaccount(
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'multiaccount_background_events': ['sample_background_event'],
+            'background': ['sample_background_event'],
         }
 
         mocker.patch(
@@ -437,7 +437,7 @@ def test_bootstrap_extension_project_multiaccount(
         ).read()
 
         assert 'from connect.eaas.core.extension import EventsExtension' in events_py
-        assert f'class {classname_prefix}Extension(EventsExtension):' in events_py
+        assert f'class {classname_prefix}Extension(BaseExtension):' in events_py
         assert f'class {classname_prefix}AnvilExtension(AnvilExtension):' in anvil_py
 
         assert extension_bg_event(async_impl=False) in events_py
@@ -452,8 +452,8 @@ def test_bootstrap_extension_project_multiaccount(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
         ) is False
         assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
-        ) is False
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+        ) is True
 
 
 def test_bootstrap_extension_project_webapp(
@@ -506,7 +506,7 @@ def test_bootstrap_extension_project_webapp(
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'multiaccount_background_events': ['sample_background_event'],
+            'background': ['sample_background_event'],
         }
 
         mocker.patch(
@@ -572,13 +572,11 @@ def test_bootstrap_extension_project_webapp(
         assert f'class {classname_prefix}WebAppExtension(WebAppExtension):' in webapp_py
         assert '@router.get' in webapp_py
         assert '"ui": {' in extension_json
+        assert 'icon' in extension_json
 
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static_root'),
         ) is True
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.py'),
-        ) is False
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
         ) is False
@@ -723,7 +721,7 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'background_group': ['sample_background_event'],
+            'background': ['sample_background_event'],
         }
 
         mocker.patch(
@@ -784,7 +782,7 @@ def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, 
         'api_key': faker.pystr(),
         'environment_id': f'ENV-{faker.random_number()}',
         'server_address': faker.domain_name(2),
-        'background_group': ['sample_background_event'],
+        'background': ['sample_background_event'],
     }
 
     mocker.patch(

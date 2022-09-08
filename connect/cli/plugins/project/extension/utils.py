@@ -37,21 +37,34 @@ def get_extension_types(config):
     return extension_types
 
 
+def get_background_events(definitions, context):
+    return [
+        (event['type'], f'{event["group"]}: {event["name"]}')
+        for event in definitions[context['extension_type']]['background']
+    ]
+
+
+def get_interactive_events(definitions, context):
+    return [
+        (event['type'], f'{event["group"]}: {event["name"]}')
+        for event in definitions[context['extension_type']]['interactive']
+    ]
+
+
 def check_extension_not_multi_account(context):
     return context.get('extension_type') != 'multiaccount'
 
 
-def check_extension_not_hub(context):
-    return context.get('extension_type') != 'hub'
+def check_extension_events_applicable(context):
+    if context.get('extension_type') != 'multiaccount':
+        return False
+
+    return 'events' not in context.get('application_types', [])
 
 
-def check_extension_not_products(context):
-    return context.get('extension_type') != 'products'
+def check_extension_interactive_events_applicable(definitions, context):
+    if context.get('extension_type') == 'multiaccount':
+        if not definitions[context['extension_type']].get('interactive'):
+            return True
 
-
-def check_extension_not_events_application(context):
-    return (
-        context.get('extension_type') == 'multiaccount'
-        and 'events' not in context.get('application_types', [])
-        or context.get('extension_type') != 'multiaccount'
-    )
+    return False

@@ -3,15 +3,40 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
+from fastapi import Depends, Request
+
+from connect.client import ConnectClient
 from connect.eaas.core.decorators import router, web_app
 from connect.eaas.core.extension import WebAppExtension
+from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
 
 
 @web_app(router)
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension(WebAppExtension):
     @router.get('/settings')
-    def retrieve_settings_example(
+    def retrieve_settings(
         self,
-        example_args: dict,
+        installation: dict = Depends(get_installation),     # noqa: B008
     ):
-        pass
+        return installation
+
+    @router.post('/settings')
+    def update_settings(
+        self,
+        request: Request,
+        installation: dict = Depends(get_installation),     # noqa: B008
+        installation_client: ConnectClient = Depends(get_installation_client),     # noqa: B008
+    ):
+        settings = request.json()
+
+        installation_client('devops').installations[installation['id']].update(
+            {'settings': settings},
+        )
+        return installation_client('devops').installations[installation['id']].get()
+
+    @router.get('/whoami')
+    def whoami(
+        self,
+        installation_client: ConnectClient = Depends(get_installation_client),     # noqa: B008
+    ):
+        return installation_client.auth.action('context').get()

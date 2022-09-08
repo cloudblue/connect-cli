@@ -12,7 +12,12 @@ from connect.eaas.core.decorators import (
     variables,
     {%- endif %}
 )
-from connect.eaas.core.extension import EventsExtension
+{%- if extension_type != 'multiaccount' %}
+from connect.eaas.core.extension import Extension as BaseExtension
+{%- endif %}
+{%- if extension_type == 'multiaccount' and 'events' in application_types %}
+from connect.eaas.core.extension import EventsExtension as BaseExtension
+{%- endif %}
 from connect.eaas.core.responses import (
     {%- if background %}
     BackgroundResponse,
@@ -40,8 +45,7 @@ from connect.eaas.core.responses import (
     },
 ])
 {% endif -%}
-class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(EventsExtension):
-
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(BaseExtension):
     {% for bg_event in background -%}
     @event(
         '{{ bg_event }}',

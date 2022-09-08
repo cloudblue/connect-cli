@@ -3,7 +3,7 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
-from connect.eaas.core.decorators import anvil_key_variable, variables
+from connect.eaas.core.decorators import anvil_callable, anvil_key_variable, variables
 from connect.eaas.core.extension import AnvilExtension
 
 
@@ -14,4 +14,6 @@ from connect.eaas.core.extension import AnvilExtension
     'secure': False,
 }])
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension(AnvilExtension):
-    pass
+    @anvil_callable()
+    def hello(self, name):
+        return f'Hello {name}'

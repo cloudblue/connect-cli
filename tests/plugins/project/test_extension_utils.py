@@ -3,11 +3,12 @@ from click import ClickException
 
 from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
 from connect.cli.plugins.project.extension.utils import (
-    check_extension_not_events_application,
-    check_extension_not_hub,
+    check_extension_events_applicable,
+    check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
-    check_extension_not_products,
+    get_background_events,
     get_event_definitions,
+    get_interactive_events,
     get_pypi_runner_version,
 )
 from connect.client import ClientError
@@ -79,43 +80,80 @@ def test_get_event_definitions_client_error(mocker):
     assert str(exc.value) == 'Error getting event definitions: Unexpected error'
 
 
-def test_check_extension_not_events_application():
-    data = {
-        'extension_type': 'products',
-        'application_types': [],
+def test_get_background_events():
+    context = {'extension_type': 'products'}
+    definitions = {
+        'miltiaccount': {},
+        'products': {
+            'background': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+        },
     }
 
-    assert check_extension_not_events_application(data) is True
+    res = get_background_events(definitions, context)
 
-    data['extension_type'] = 'multiaccount'
-    data['application_types'].append('anvil')
-
-    assert check_extension_not_events_application(data) is True
-
-    data['application_types'].append('events')
-
-    assert check_extension_not_events_application(data) is False
+    assert len(res) == 2
+    assert ('Type1', 'Group1: Name1') in res
 
 
-def test_check_extension_not_hub():
-    data = {'extension_type': 'products'}
-    assert check_extension_not_hub(data) is True
+def test_get_interactive_events():
+    context = {'extension_type': 'products'}
+    definitions = {
+        'miltiaccount': {},
+        'products': {
+            'interactive': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+        },
+    }
 
-    data['extension_type'] = 'hub'
-    assert check_extension_not_hub(data) is False
+    res = get_interactive_events(definitions, context)
+
+    assert len(res) == 2
+    assert ('Type1', 'Group1: Name1') in res
 
 
 def test_check_extension_not_multi_account():
     data = {'extension_type': 'multiaccount'}
     assert check_extension_not_multi_account(data) is False
 
-    data['extension_type'] = 'hub'
-    assert check_extension_not_multi_account(data) is True
+
+def test_check_extension_events_applicable_false():
+    context = {'extension_type': 'products'}
+
+    assert check_extension_events_applicable(context) is False
 
 
-def test_check_extension_not_products():
-    data = {'extension_type': 'products'}
-    assert check_extension_not_products(data) is False
+def test_check_extension_events_applicable_true():
+    context = {'extension_type': 'multiaccount', 'application_types': ['anvil']}
 
-    data['extension_type'] = 'multiaccount'
-    assert check_extension_not_products(data) is True
+    assert check_extension_events_applicable(context) is True
+
+
+def test_check_extension_interactive_events_applicable_false():
+    context = {'extension_type': 'products'}
+    definitions = {
+        'multiaccount': {
+            'background': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+        },
+    }
+    assert check_extension_interactive_events_applicable(definitions, context) is False
+
+
+def test_check_extension_interactive_events_applicable_true():
+    context = {'extension_type': 'multiaccount', 'application_types': ['anvil']}
+    definitions = {
+        'multiaccount': {
+            'background': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+        },
+    }
+    assert check_extension_interactive_events_applicable(definitions, context) is True

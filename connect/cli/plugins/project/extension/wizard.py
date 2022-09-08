@@ -1,13 +1,15 @@
+from functools import partial
 from urllib.parse import urlparse
 
 from interrogatio.validators import RequiredValidator
 
 from connect.cli.plugins.project.extension.utils import (
-    check_extension_not_events_application,
-    check_extension_not_hub,
+    check_extension_events_applicable,
+    check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
-    check_extension_not_products,
+    get_background_events,
     get_extension_types,
+    get_interactive_events,
 )
 from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
@@ -217,72 +219,37 @@ def get_questions(config, definitions):
             ],
             'formatting_template': '${label}',
             'disabled': check_extension_not_multi_account,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
         },
     ]
 
-    if config.active.is_provider():
-        event_questions = [
-            {
-                'name': f'hub_{category}_events',
-                'label': f'HI: {category} events',
-                'type': 'selectmany',
-                'description': (
-                    f'What types of {category}'
-                    'events do you want your Extension to process ?'
-                ),
-                'values': [
-                    (event['type'], f'{event["group"]}: {event["name"]}')
-                    for event in definitions['hub'][category]
-                ],
-                'formatting_template': '${label}',
-                'disabled': check_extension_not_hub,
-            }
-            for category in [
-                'background', 'interactive',
-            ] if len(definitions['hub'][category]) > 0
-        ]
-    else:
-        event_questions = [
-            {
-                'name': f'products_{category}_events',
-                'label': f'FF: {category} events',
-                'type': 'selectmany',
-                'description': (
-                    f'What types of {category}'
-                    'events do you want your Extension to process ?'
-                ),
-                'values': [
-                    (event['type'], f'{event["group"]}: {event["name"]}')
-                    for event in definitions['products'][category]
-                ],
-                'formatting_template': '${label}',
-                'disabled': check_extension_not_products,
-            }
-            for category in [
-                'background', 'interactive',
-            ] if len(definitions['products'][category]) > 0
-        ]
-
-    event_questions.extend([
+    event_questions = [
         {
-            'name': f'multiaccount_{category}_events',
-            'label': f'MA: {category} events',
+            'name': 'background',
+            'label': 'Extension: Background events',
             'type': 'selectmany',
             'description': (
-                f'What types of {category}'
-                'events do you want your Extension to process ?'
+                'What types of background'
+                'events do you want your Extension to process?'
             ),
-            'values': [
-                (event['type'], f'{event["group"]}: {event["name"]}')
-                for event in definitions['multiaccount'][category]
-            ],
+            'values': partial(get_background_events, definitions),
             'formatting_template': '${label}',
-            'disabled': check_extension_not_events_application,
-        }
-        for category in [
-            'background', 'interactive',
-        ] if len(definitions['multiaccount'][category]) > 0
-    ])
+            'disabled': check_extension_events_applicable,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+        {
+            'name': 'interactive',
+            'label': 'Extension: Interactive events',
+            'type': 'selectmany',
+            'description': (
+                'What types of interactive'
+                'events do you want your Extension to process?'
+            ),
+            'values': partial(get_interactive_events, definitions),
+            'disabled': partial(check_extension_interactive_events_applicable, definitions),
+            'formatting_template': '${label}',
+        },
+    ]
 
     examples = [
         {

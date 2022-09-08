@@ -16,7 +16,7 @@ CONFIG_DATA = {
     ],
 }
 
-EXTENSION_CLASS_DECLARATION = 'class {extension_name}Extension(Extension):'
+EXTENSION_CLASS_DECLARATION = 'class {extension_name}Extension(BaseExtension):'
 EXTENSION_VARIABLES_DECLARATION = """@variables([
     {
         'name': 'VAR_NAME_1',
@@ -34,7 +34,7 @@ EXTENSION_VARIABLES_DECLARATION = """@variables([
 EXTENSION_IMPORTS = """from connect.eaas.core.decorators import (
     event,{schedulable}{variables}
 )
-from connect.eaas.core.extension import Extension
+from connect.eaas.core.extension import Extension as BaseExtension
 from connect.eaas.core.responses import ({background_response}{interactive_response}{scheduled_response}
 )
 """
