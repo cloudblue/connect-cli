@@ -661,7 +661,7 @@ python-versions = "*"
 
 [[package]]
 name = "interrogatio"
-version = "2.2.1"
+version = "2.2.2"
 description = "Prompting library for terminals."
 category = "main"
 optional = false
@@ -1474,7 +1474,7 @@ test = ["pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4"
-content-hash = "1c7e2e452a7b67e8cee8a2aea9e65a480bb86be4ad34093065b4badc5021e81a"
+content-hash = "7e64a99b2972d57a2bfb2f2a8ef0db232decb70025f28ebbae8f7900749c0fc1"
 
 [metadata.files]
 anvil-uplink = [
@@ -1961,8 +1961,8 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 interrogatio = [
-    {file = "interrogatio-2.2.1-py3-none-any.whl", hash = "sha256:972bb167ac8c8aebb6532ac78de79ce69bb6253d59622373a1604767abd17923"},
-    {file = "interrogatio-2.2.1.tar.gz", hash = "sha256:ae6d2b21178b1f80868eea3fe6d8ef69fe229b508c5b97063d729b017ed89bad"},
+    {file = "interrogatio-2.2.2-py3-none-any.whl", hash = "sha256:abeeec15aabf4ae2b800b73b7a98af4a9d5210829c5fab6fda59184bc22bb0ce"},
+    {file = "interrogatio-2.2.2.tar.gz", hash = "sha256:fcbdd7afa7d1daf632fb242676acc5b9e089dea3617eac758cf7b9f0e1dfd885"},
 ]
 ipython = [
     {file = "ipython-7.34.0-py3-none-any.whl", hash = "sha256:c175d2440a1caff76116eb719d40538fbb316e214eda85c5515c303aacbfb23e"},

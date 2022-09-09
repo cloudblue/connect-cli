@@ -57,9 +57,8 @@ def get_summary(data):  # pragma: no cover
 
     event_answers = ''
     for category in ['background', 'interactive']:
-        events_type = f"{value('extension_type')}_{category}_events"
         event_answers += f"""<b><blue>{value('extension_type', formatted=True)} {category} events:</blue></b>
-    {value(events_type, formatted=True)}
+    {value(category, formatted=True)}
 """
 
     examples = f"""<b><blue>Examples</blue></b>
