@@ -264,7 +264,14 @@ def test_hub_list(mocked_responses):
     assert result['values'][0] == ('hub1', 'my_hub (hub1)')
 
 
-def test_product(mocked_responses, mocked_product_response):
+@pytest.mark.parametrize(
+    'account_type',
+    (
+        'VA-000',
+        'PA-000',
+    ),
+)
+def test_product(mocked_responses, mocked_product_response, account_type):
     param = {
         "id": "product",
         "type": "product",
@@ -274,7 +281,7 @@ def test_product(mocked_responses, mocked_product_response):
 
     config = Config()
     config.load('/tmp')
-    config.add_account('VA-000', 'Account 0', 'Api 0', 'https://localhost/public/v1')
+    config.add_account(account_type, 'Account 0', 'Api 0', 'https://localhost/public/v1')
 
     client = ConnectClient(
         api_key='ApiKey X',
@@ -287,37 +294,6 @@ def test_product(mocked_responses, mocked_product_response):
         method='GET',
         json=[mocked_product_response],
     )
-
-    result = product_list(config.active, client, param)
-    assert result['type'] == 'selectmany'
-    assert len(result['values']) == 1
-    assert result['values'][0] == ('PRD-276-377-545', 'My Product (PRD-276-377-545)')
-
-
-def test_product_2(mocked_responses, mocked_product_response):
-    param = {
-        "id": "product",
-        "type": "product",
-        "name": "Product list",
-        "description": "Select the products you want to include in report",
-    }
-
-    config = Config()
-    config.load('/tmp')
-    config.add_account('PA-000', 'Account 0', 'Api 0', 'https://localhost/public/v1')
-
-    client = ConnectClient(
-        api_key='ApiKey X',
-        endpoint='https://localhost/public/v1',
-        use_specs=False,
-    )
-
-    mocked_responses.add(
-        url='https://localhost/public/v1/products',
-        method='GET',
-        json=[mocked_product_response],
-    )
-
     result = product_list(config.active, client, param)
     assert result['type'] == 'selectmany'
     assert len(result['values']) == 1

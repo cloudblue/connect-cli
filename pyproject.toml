@@ -70,6 +70,7 @@ jinja2-time = "^0.2.0"
 connect-eaas-core = ">=3.2.1,<4"
 rich = "^12.4.1"
 poetry-core = "^1.0.8"
+uvloop = "^0.16.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

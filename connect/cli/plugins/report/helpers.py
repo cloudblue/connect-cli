@@ -146,8 +146,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
 
     is_async = inspect.isasyncgenfunction(entrypoint) or inspect.iscoroutinefunction(entrypoint)
 
-    client_class = AsyncConnectClient if is_async else ConnectClient
-    client = client_class(
+    sync_client = ConnectClient(
         config.active.api_key,
         endpoint=config.active.endpoint,
         use_specs=False,
@@ -157,10 +156,21 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
         logger=RequestLogger(),
         resourceset_append=False,
     )
+    if is_async:
+        async_client = AsyncConnectClient(
+            config.active.api_key,
+            endpoint=config.active.endpoint,
+            use_specs=False,
+            default_limit=500,
+            max_retries=5,
+            default_headers=get_user_agent(),
+            logger=RequestLogger(),
+            resourceset_append=False,
+        )
 
     output_format = output_format or report.default_renderer
 
-    inputs = get_report_inputs(config, client, report, output_format)
+    inputs = get_report_inputs(config, sync_client, report, output_format)
 
     console.echo(f'Preparing to run report {report_id}. Please wait...\n')
 
@@ -179,7 +189,7 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
     )
 
     try:
-        args = [client, inputs, progress]
+        args = [async_client if is_async else sync_client, inputs, progress]
         if report.report_spec == '2':
             args.extend(
                 [
