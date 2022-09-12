@@ -25,3 +25,46 @@ def get_pypi_runner_version():
     if tags:
         return tags.popitem()[0]
     return content['info']['version']
+
+
+def get_extension_types(config):
+    if config.active.is_provider():
+        extension_types = [('hub', 'Hub integration')]
+    else:
+        extension_types = [('products', 'Fulfillment Automation')]
+
+    extension_types.append(('multiaccount', 'Multi-Account installation'))
+    return extension_types
+
+
+def get_background_events(definitions, context):
+    return [
+        (event['type'], f'{event["group"]}: {event["name"]}')
+        for event in definitions[context['extension_type']]['background']
+    ]
+
+
+def get_interactive_events(definitions, context):
+    return [
+        (event['type'], f'{event["group"]}: {event["name"]}')
+        for event in definitions[context['extension_type']]['interactive']
+    ]
+
+
+def check_extension_not_multi_account(context):
+    return context.get('extension_type') != 'multiaccount'
+
+
+def check_extension_events_applicable(context):
+    if context.get('extension_type') != 'multiaccount':
+        return False
+
+    return 'events' not in context.get('application_types', [])
+
+
+def check_extension_interactive_events_applicable(definitions, context):
+    if context.get('extension_type') == 'multiaccount':
+        if not definitions[context['extension_type']].get('interactive'):
+            return True
+
+    return False

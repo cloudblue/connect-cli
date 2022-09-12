@@ -12,7 +12,12 @@ from connect.eaas.core.decorators import (
     variables,
     {%- endif %}
 )
-from connect.eaas.core.extension import Extension
+{%- if extension_type != 'multiaccount' %}
+from connect.eaas.core.extension import Extension as BaseExtension
+{%- endif %}
+{%- if extension_type == 'multiaccount' and 'events' in application_types %}
+from connect.eaas.core.extension import EventsExtension as BaseExtension
+{%- endif %}
 from connect.eaas.core.responses import (
     {%- if background %}
     BackgroundResponse,
@@ -40,10 +45,8 @@ from connect.eaas.core.responses import (
     },
 ])
 {% endif -%}
-class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(Extension):
-
-    {% for group, events in background.items() -%}
-    {% for bg_event in events -%}
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(BaseExtension):
+    {% for bg_event in background -%}
     @event(
         '{{ bg_event }}',
         statuses=[
@@ -58,10 +61,8 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(Exten
 
     {% endfor -%}
 
-    {% endfor -%}
 
-    {% for group, events in interactive.items() -%}
-    {% for interactive_event in events -%}
+    {% for interactive_event in interactive -%}
     {% if statuses_by_event[interactive_event] -%}
     @event(
         '{{ interactive_event }}',
@@ -84,7 +85,6 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(Exten
 
     {% endfor -%}
 
-    {% endfor -%}
 
     {% if include_schedules_example == 'y' -%}
     @schedulable('Schedulable method', 'It can be used to test DevOps scheduler.')

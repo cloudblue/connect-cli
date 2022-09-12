@@ -10,11 +10,19 @@ packages = [
 readme = "./README.md"
 
 [tool.poetry.plugins."connect.eaas.ext"]
-"extension" = "{{ package_name }}.extension:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension"
+{%- if extension_type != 'multiaccount' or extension_type == 'multiaccount' and 'events' in application_types %}
+"extension" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension"
+{%- endif %}
+{%- if extension_type == 'multiaccount' and 'webapp' in application_types %}
+"webapp" = "{{ package_name }}.webapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension"
+{%- endif %}
+{%- if extension_type == 'multiaccount' and 'anvil' in application_types %}
+"anvil" = "{{ package_name }}.anvil:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension"
+{%- endif %}
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-connect-eaas-core = ">=2.0.1,<3"
+connect-eaas-core = ">=3.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

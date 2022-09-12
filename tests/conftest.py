@@ -50,6 +50,14 @@ def config_vendor():
 
 
 @pytest.fixture(scope='function')
+def config_provider():
+    from connect.cli.core.config import Config
+    config = Config()
+    config.add_account('PA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
+    return config
+
+
+@pytest.fixture(scope='function')
 def config_mocker(mocker):
     mocker.patch('os.path.isfile', return_value=True)
     return mocker.patch(

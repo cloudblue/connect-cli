@@ -6,10 +6,9 @@
 {% if use_asyncio == 'y' -%}
 import pytest
 {% endif -%}
-from {{ package_name }}.extension import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension
+from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension
 
-{% for group, events in background.items() -%}
-{% for bg_event in events -%}
+{% for bg_event in background -%}
 {% if use_asyncio == 'y' %}
 @pytest.mark.asyncio
 {%- endif %}
@@ -31,9 +30,7 @@ from {{ package_name }}.extension import {{ project_slug|replace("_", " ")|title
 
 {% endfor -%}
 
-{% endfor -%}
-{% for group, events in interactive.items() -%}
-{% for interactive_event in events -%}
+{% for interactive_event in interactive -%}
 {% if use_asyncio == 'y' %}
 @pytest.mark.asyncio
 {%- endif %}
@@ -56,7 +53,6 @@ from {{ package_name }}.extension import {{ project_slug|replace("_", " ")|title
 
 {% endfor -%}
 
-{% endfor -%}
 {% if include_schedules_example == 'y' -%}
 {% if use_asyncio == 'y' %}
 @pytest.mark.asyncio

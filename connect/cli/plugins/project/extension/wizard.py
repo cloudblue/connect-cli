@@ -1,7 +1,16 @@
+from functools import partial
 from urllib.parse import urlparse
 
 from interrogatio.validators import RequiredValidator
 
+from connect.cli.plugins.project.extension.utils import (
+    check_extension_events_applicable,
+    check_extension_interactive_events_applicable,
+    check_extension_not_multi_account,
+    get_background_events,
+    get_extension_types,
+    get_interactive_events,
+)
 from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
@@ -16,33 +25,47 @@ EXTENSION_BOOTSTRAP_WIZARD_INTRO = (
 )
 
 
-def get_summary(config, definitions):
-    common = """<b><blue>Project</blue></b>
-    <b>Project Name:</b> ${project_name} - <b>Package Name:</b> ${package_name}
-    <b>Description:</b> ${description}
-    <b>Author:</b> ${author}
-    <b>Version:</b> ${version} - <b>License:</b> ${license}
-    <b>Use Github Actions:</b> ${use_github_actions} - <b>Use Asyncio:</b> ${use_asyncio}
+def get_summary(data):  # pragma: no cover
+    def value(variable_name, formatted=False):
+        if not data.get(variable_name):
+            return ''
+
+        data_value = data[variable_name]['formatted_value' if formatted else 'value']
+
+        return data_value or '-'
+
+    common = f"""<b><blue>Project</blue></b>
+    <b>Project Name:</b> {value('project_name')} - <b>Package Name:</b> {value('package_name')}
+    <b>Description:</b> {value('description')}
+    <b>Author:</b> {value('author')}
+    <b>Version:</b> {value('version')} - <b>License:</b> {value('license')}
+    <b>Use Github Actions:</b> {value('use_github_actions', formatted=True)} - """
+
+    common += f"""<b>Use Asyncio:</b> {value('use_asyncio', formatted=True)}
 <b><blue>Config</blue></b>
-    <b>API Key:</b> ${api_key}
-    <b>Environment ID:</b> ${environment_id}
-    <b>Server Address:</b> ${server_address}
+    <b>API Key:</b> {value('api_key')}
+    <b>Environment ID:</b> {value('environment_id')}
+    <b>Server Address:</b> {value('server_address')}
 """
 
-    event_answers = '\n'.join(
-        (
-            f'<b><blue>{group}</blue></b>\n'
-            f'    <b>{group} types:</b> '
-            '${' + f'{category}_' + slugify(group.lower()) + '}'
-        )
-        for category, category_events in definitions.items()
-        for group in category_events.keys()
-    ) + '\n'
-
-    examples = """<b><blue>Examples</blue></b>
-    <b>Schedulables:</b> ${include_schedules_example} - <b>Variables:</b> ${include_variables_example}
+    extension = f"""<b><blue>Extension</blue></b>
+    <b>Type:</b> {value('extension_type', formatted=True)}
 """
-    return common + event_answers + examples
+    if value('extension_type') == 'multiaccount':
+        extension += f"""    <b>Applications:</b> {value('application_types', formatted=True)}
+"""
+
+    event_answers = ''
+    for category in ['background', 'interactive']:
+        event_answers += f"""<b><blue>{value('extension_type', formatted=True)} {category} events:</blue></b>
+    {value(category, formatted=True)}
+"""
+
+    examples = f"""<b><blue>Examples</blue></b>
+    <b>Schedulables:</b> {value('include_schedules_example', formatted=True)} - """
+    examples += f"""<b>Variables:</b> {value('include_variables_example', formatted=True)}"""
+
+    return common + extension + event_answers + examples
 
 
 def get_questions(config, definitions):
@@ -174,26 +197,58 @@ def get_questions(config, definitions):
         },
     ]
 
-    event_questions = []
+    extension_type = [
+        {
+            'name': 'extension_type',
+            'label': 'Extension: Extension type',
+            'type': 'selectone',
+            'description': 'Type of extension: ',
+            'values': get_extension_types(config),
+            'formatting_template': '${label}',
+        },
+        {
+            'name': 'application_types',
+            'label': 'Extension: Application type',
+            'type': 'selectmany',
+            'description': 'Type of application: ',
+            'values': [
+                ('webapp', 'Web app'),
+                ('anvil', 'Anvil app'),
+                ('events', 'Events app'),
+            ],
+            'formatting_template': '${label}',
+            'disabled': check_extension_not_multi_account,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+    ]
 
-    for category, cagegory_events in definitions.items():
-        for group, events in cagegory_events.items():
-            event_questions.append(
-                {
-                    'name': f'{category}_{slugify(group.lower())}',
-                    'label': f'{category.title()}: {group.lower()}',
-                    'type': 'selectmany',
-                    'description': (
-                        f'What types of {group.title()} {category} '
-                        'events do you want your Extension to process ?'
-                    ),
-                    'values': [
-                        (event['type'], event['name'])
-                        for event in events
-                    ],
-                    'formatting_template': '${label}',
-                },
-            )
+    event_questions = [
+        {
+            'name': 'background',
+            'label': 'Extension: Background events',
+            'type': 'selectmany',
+            'description': (
+                'What types of background'
+                'events do you want your Extension to process?'
+            ),
+            'values': partial(get_background_events, definitions),
+            'formatting_template': '${label}',
+            'disabled': check_extension_events_applicable,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+        {
+            'name': 'interactive',
+            'label': 'Extension: Interactive events',
+            'type': 'selectmany',
+            'description': (
+                'What types of interactive'
+                'events do you want your Extension to process?'
+            ),
+            'values': partial(get_interactive_events, definitions),
+            'disabled': partial(check_extension_interactive_events_applicable, definitions),
+            'formatting_template': '${label}',
+        },
+    ]
 
     examples = [
         {
@@ -220,4 +275,4 @@ def get_questions(config, definitions):
         },
     ]
 
-    return project + environment + event_questions + examples
+    return project + environment + extension_type + event_questions + examples

@@ -16,6 +16,7 @@ import pytest
 import requests
 {% endif -%}
 import responses
+
 from connect.client import {% if use_asyncio == 'y' %}AsyncConnectClient{% else %}ConnectClient{% endif %}
 
 
