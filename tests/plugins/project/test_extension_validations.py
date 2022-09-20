@@ -3,16 +3,18 @@ import toml
 import yaml
 
 from connect.cli.plugins.project.extension.validations import (
+    validate_anvil_extension,
     validate_docker_compose_yml,
     validate_events,
     validate_extension_class,
     validate_pyproject_toml,
     validate_schedulables,
     validate_variables,
+    validate_webapp_extension,
     ValidationItem,
     ValidationResult,
 )
-from connect.eaas.core.extension import Extension
+from connect.eaas.core.extension import EventsExtension, Extension
 from connect.eaas.core.responses import (
     CustomEventResponse,
     ProcessingResponse,
@@ -307,7 +309,7 @@ def test_validate_extension_class_invalid_superclass(mocker):
         'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
         return_value='/dir/file.py',
     )
-    context = {'extension_class': KeyError}
+    context = {'extension_classes': {'webapp': KeyError}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is True
@@ -317,7 +319,7 @@ def test_validate_extension_class_invalid_superclass(mocker):
     assert item.level == 'ERROR'
     assert (
         'The extension class *KeyError* '
-        'is not a subclass of *connect.eaas.core.extension.Extension*.'
+        'is not a subclass of *connect.eaas.core.extension.WebAppExtension*.'
     ) in item.message
     assert item.file == '/dir/file.py'
 
@@ -333,7 +335,7 @@ def test_validate_extension_class_descriptor_not_found(mocker):
     class MyExt(Extension):
         pass
 
-    context = {'extension_class': MyExt}
+    context = {'extension_classes': {'extension': MyExt}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is True
@@ -359,12 +361,12 @@ def test_validate_extension_class_descriptor_with_declarations(mocker, descripto
         return_value='/dir/file.py',
     )
 
-    mocker.patch.object(Extension, 'get_descriptor', return_value=descriptor)
+    mocker.patch.object(EventsExtension, 'get_descriptor', return_value=descriptor)
 
-    class MyExt(Extension):
+    class MyExt(EventsExtension):
         pass
 
-    context = {'extension_class': MyExt}
+    context = {'extension_classes': {'extension': MyExt}}
     result = validate_extension_class(mocker.MagicMock(), 'fake_dir', context)
     assert isinstance(result, ValidationResult)
     assert result.must_exit is False
@@ -376,6 +378,17 @@ def test_validate_extension_class_descriptor_with_declarations(mocker, descripto
     assert item.file == '/dir/extension.json'
 
 
+def test_validate_events_no_such_extension(mocker):
+    extension_class = mocker.MagicMock()
+    context = {'extension_classes': {'webapp': extension_class}}
+
+    result = validate_events(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
 def test_validate_events_invalid_event(mocker):
     extension_class = mocker.MagicMock()
     extension_class.get_events.return_value = [{
@@ -383,7 +396,7 @@ def test_validate_events_invalid_event(mocker):
         'method': 'event_handler',
     }]
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -435,7 +448,7 @@ def test_validate_events_invalid_status(mocker, object_statuses, event_statuses)
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -485,7 +498,7 @@ def test_validate_events_invalid_signature(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_event_definitions',
@@ -522,6 +535,17 @@ def test_validate_events_invalid_signature(mocker):
     assert item.code == 'code'
 
 
+def test_validate_schedulables_no_such_extension(mocker):
+    extension_class = mocker.MagicMock()
+    context = {'extension_classes': {'webapp': extension_class}}
+
+    result = validate_schedulables(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
 def test_validate_schedulables_invalid_signature(mocker):
     extension_class = mocker.MagicMock()
     extension_class.get_schedulables.return_value = [{
@@ -533,7 +557,7 @@ def test_validate_schedulables_invalid_signature(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -564,7 +588,7 @@ def test_validate_schedulables_no_schedulables(mocker):
     extension_class = mocker.MagicMock()
     extension_class.get_schedulables.return_value = []
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     result = validate_schedulables(mocker.MagicMock(), 'project_dir', context)
 
@@ -584,7 +608,7 @@ def test_validate_schedulables(mocker):
 
     extension_class.event_handler = event_handler
 
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     result = validate_schedulables(mocker.MagicMock(), 'project_dir', context)
 
@@ -598,7 +622,7 @@ def test_validate_variables_no_name(mocker):
     extension_class.get_variables.return_value = [{
         'initial_value': 'value',
     }]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -631,7 +655,7 @@ def test_validate_variables_non_unique(mocker):
         {'name': 'VAR1'},
         {'name': 'VAR1'},
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -666,7 +690,7 @@ def test_validate_variables_invalid_name(mocker):
     extension_class.get_variables.return_value = [
         {'name': '1VAR'},
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -701,7 +725,7 @@ def test_validate_variables_invalid_initial_value(mocker):
             'initial_value': mocker.MagicMock(),
         },
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -736,7 +760,7 @@ def test_validate_variables_invalid_secure(mocker):
             'secure': mocker.MagicMock(),
         },
     ]
-    context = {'extension_class': extension_class}
+    context = {'extension_classes': {'extension': extension_class}}
 
     mocker.patch(
         'connect.cli.plugins.project.extension.validations.get_code_context',
@@ -867,3 +891,277 @@ def test_validate_docker_compose_yml(mocker):
     assert isinstance(result, ValidationResult)
     assert result.must_exit is False
     assert len(result.items) == 0
+
+
+def test_validate_webapp_extension_no_such_extension(mocker):
+    extension_class = mocker.MagicMock()
+    context = {'extension_classes': {'events': extension_class}}
+
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
+def test_validate_webapp_extension_no_class_wrapper(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsource',
+        return_value='class E2EWebAppExtension(WebAppExtension):....',
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        return_value='/dir/file.py',
+    )
+
+    context = {'extension_classes': {'webapp': mocker.MagicMock()}}
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is True
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'The Web app extension class must be wrapped in *@web_app(router)*.' in item.message
+
+
+def test_validate_webapp_extension_no_router_methods(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsource',
+        side_effect=[
+            '@web_app(router)\nclass E2EWebAppExtension(WebAppExtension):...',
+            'def retrieve_settings(self):...',
+        ],
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        return_value='/dir/file.py',
+    )
+
+    def f():
+        pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getmembers',
+        return_value=[('some_func', f)],
+    )
+
+    context = {'extension_classes': {'webapp': mocker.MagicMock()}}
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is True
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'The Web app extension class must contain at least one router' in item.message
+    assert 'function wrapped in *@router.your_method("/your_path")*.' in item.message
+
+
+def test_validate_webapp_extension_missing_static_files(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsource',
+        side_effect=[
+            '@web_app(router)...\nclass E2EWebAppExtension(WebAppExtension):...',
+            '@router.get("/settings")\ndef retrieve_settings(self):...',
+        ],
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        return_value='/dir/file.py',
+    )
+
+    def f():
+        pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getmembers',
+        return_value=[('some_func', f)],
+    )
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.os.path.exists',
+        return_value=False,
+    )
+
+    context = {
+        'extension_classes': {'webapp': mocker.MagicMock()},
+        'descriptor': {
+            'name': 'My Awesome Project',
+            'description': 'Project description',
+            'version': '0.1.0',
+            'readme_url': 'https://example.com/README.md',
+            'changelog_url': 'https://example.com/CHANGELOG.md',
+            'ui': {
+                'settings': {
+                    'label': 'My Settings',
+                    'url': 'static/settings.html',
+                },
+                'customer': {
+                    'label': 'My Customer Portal UI',
+                    'url': 'static/customer.html',
+                },
+            },
+        },
+    }
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is True
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'The extension descriptor contains missing static files' in item.message
+    assert 'static/customer.html, static/settings.html.' in item.message
+
+
+def test_validate_webapp_extension_wrong_ui_setting(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsource',
+        side_effect=[
+            '@web_app(router)...\nclass E2EWebAppExtension(WebAppExtension):...',
+            '@router.get("/settings")\ndef retrieve_settings(self):...',
+        ],
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        return_value='/dir/file.py',
+    )
+
+    def f():
+        pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getmembers',
+        return_value=[('some_func', f)],
+    )
+
+    context = {
+        'extension_classes': {'webapp': mocker.MagicMock()},
+        'descriptor': {
+            'name': 'My Awesome Project',
+            'description': 'Project description',
+            'version': '0.1.0',
+            'readme_url': 'https://example.com/README.md',
+            'changelog_url': 'https://example.com/CHANGELOG.md',
+            'ui': {
+                'settings': {
+                    'label': 'My Settings',
+                    'path': 'static/settings.html',
+                },
+            },
+        },
+    }
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is True
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'The extension descriptor contains incorrect ui item' in item.message
+    assert '*My Settings*, url is not presented.' in item.message
+
+
+def test_validate_webapp_extension(mocker):
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsource',
+        side_effect=[
+            '@web_app(router)...\nclass E2EWebAppExtension(WebAppExtension):...',
+            '@router.get("/settings")\ndef retrieve_settings(self):...',
+        ],
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        return_value='/dir/file.py',
+    )
+
+    def f():
+        pass
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.inspect.getmembers',
+        return_value=[('some_func', f)],
+    )
+
+    mocker.patch(
+        'connect.cli.plugins.project.extension.validations.os.path.exists',
+        return_value=True,
+    )
+
+    context = {
+        'extension_classes': {'webapp': mocker.MagicMock()},
+        'descriptor': {
+            'name': 'My Awesome Project',
+            'description': 'Project description',
+            'version': '0.1.0',
+            'readme_url': 'https://example.com/README.md',
+            'changelog_url': 'https://example.com/CHANGELOG.md',
+            'ui': {
+                'settings': {
+                    'label': 'My Settings',
+                    'url': 'static/settings.html',
+                },
+                'customer': {
+                    'label': 'My Customer Portal UI',
+                    'url': 'static/customer.html',
+                },
+                'modules': {
+                    'label': 'My Main Page',
+                    'url': '/static/index.html',
+                    'children': [
+                        {
+                            'label': 'Page 1',
+                            'url': '/static/page1.html',
+                        },
+                        {
+                            'label': 'Page 2',
+                            'url': '/static/page2.html',
+                        },
+                    ],
+                },
+            },
+        },
+    }
+    result = validate_webapp_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
+def test_validate_anvil_extension_no_such_extension(mocker):
+    context = {
+        'extension_classes': {'webapp': mocker.MagicMock()},
+    }
+    result = validate_anvil_extension(mocker.MagicMock(), 'fake_dir', context)
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
+def test_validate_anvil_extension(mocker):
+    anvil_extension_class = mocker.MagicMock()
+    anvil_extension_class.get_anvil_key_variable.return_value = 'ANVIL_API_KEY'
+    context = {'extension_classes': {'anvil': anvil_extension_class}}
+
+    result = validate_anvil_extension(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 0
+
+
+def test_validate_anvil_extension_invalid_anvil_api_key(mocker):
+    anvil_extension_class = mocker.MagicMock()
+    anvil_extension_class.get_anvil_key_variable.return_value = '1ANVIL1'
+    context = {'extension_classes': {'anvil': anvil_extension_class}}
+
+    result = validate_anvil_extension(mocker.MagicMock(), 'fake_dir', context)
+
+    assert isinstance(result, ValidationResult)
+    assert result.must_exit is False
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert isinstance(item, ValidationItem)
+    assert item.level == 'ERROR'
+    assert 'Invalid Anvil key variable name: the value *1ANVIL1* does not match' in item.message
