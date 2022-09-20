@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from types import MethodType
 from urllib.parse import parse_qs
 
+from connect.client import {% if use_asyncio == 'y' %}AsyncConnectClient{% else %}ConnectClient{% endif %}
 {% if use_asyncio == 'y' -%}
 import httpx
 {% endif -%}
@@ -16,8 +17,6 @@ import pytest
 import requests
 {% endif -%}
 import responses
-
-from connect.client import {% if use_asyncio == 'y' %}AsyncConnectClient{% else %}ConnectClient{% endif %}
 
 
 ConnectResponse = namedtuple(
@@ -103,7 +102,6 @@ def _value_arg_validation(res):
 def response():
     with responses.RequestsMock() as rsps:
         yield rsps
-
 
 @pytest.fixture
 def logger(mocker):

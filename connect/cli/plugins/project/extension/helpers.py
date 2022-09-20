@@ -91,7 +91,6 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
                 'static_root',
                 static_file,
             ) for static_file in [
-                'customer.html.j2',
                 'index.html.j2',
                 'page1.html.j2',
                 'settings.html.j2',
@@ -111,14 +110,13 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
                     f'{app_type}.py.j2',
                 ),
             )
-            if app_type == 'events':
-                exclude.append(
-                    os.path.join(
-                        answers['project_slug'],
-                        'tests',
-                        f'test_{answers["project_slug"]}.py.j2',
-                    ),
-                )
+            exclude.append(
+                os.path.join(
+                    answers['project_slug'],
+                    'tests',
+                    f'test_{app_type}.py.j2',
+                ),
+            )
 
     renderer = BoilerplateRenderer(
         context=ctx,

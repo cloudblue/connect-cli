@@ -6,7 +6,7 @@
 {% if use_asyncio == 'y' -%}
 import pytest
 {% endif -%}
-from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension
+from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension
 
 {% for bg_event in background -%}
 {% if use_asyncio == 'y' %}
@@ -24,7 +24,7 @@ from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|re
         response_factory(value=[{'id': 'item-1', 'value': 'value1'}]),
     ]
     client = {% if use_asyncio == 'y' %}await async_client_factory{% else %}sync_client_factory{% endif %}(responses)
-    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(client, logger, config)
+    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension(client, logger, config)
     result = {% if use_asyncio == 'y' %}await {% endif %}ext.handle_{{ bg_event }}(request)
     assert result.status == 'success'
 
@@ -46,7 +46,7 @@ from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|re
         response_factory(value=[{'id': 'item-1', 'value': 'value1'}]),
     ]
     client = {% if use_asyncio == 'y' %}await async_client_factory{% else %}sync_client_factory{% endif %}(responses)
-    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(client, logger, config)
+    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension(client, logger, config)
     result = {% if use_asyncio == 'y' %}await {% endif %}ext.handle_{{ interactive_event }}(request)
     assert result.status == 'success'
     assert result.body == request
@@ -69,7 +69,7 @@ from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|re
         response_factory(value=[{'id': 'item-1', 'value': 'value1'}]),
     ]
     client = {% if use_asyncio == 'y' %}await async_client_factory{% else %}sync_client_factory{% endif %}(responses)
-    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(client, logger, config)
+    ext = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension(client, logger, config)
     result = {% if use_asyncio == 'y' %}await {% endif %}ext.execute_scheduled_processing(request)
     assert result.status == 'success'
 {% endif -%}
