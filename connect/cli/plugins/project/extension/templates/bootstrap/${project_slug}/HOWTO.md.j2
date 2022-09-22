@@ -2,7 +2,7 @@
 
 ## Next steps
 
-You may open your favorite IDE and start working with your project, please note that this project runs using docker.
+You may open your favourite IDE and start working with your project, please note that this project runs using docker.
 You may modify at any time the credentials used to authenticate to connect modifying the file *{{ project_slug }}/.{{ project_slug }}_dev.env*.
 
 
@@ -28,6 +28,85 @@ Additionally, a basic boilerplate for writing unit tests has been created, you c
 $ docker compose up {{ project_slug }}_test
 ```
 
+## Types of extensions
+
+You can choose between two types of extension - regular (single tenant) extension or multi tenant one.
+Based on current active account you will be suggested a Fulfillment Automation or Hub Integration extension and MultiAccount one.
+
+## MultiAccount extensions
+
+If you have chosen MultiAccount type, then you to select what types of applications will be included in it. At least one application must be selected.
+
+### Events
+
+Events application is a regular extension in which you need to specify event handlers (described lower).
+
+### Web app
+
+Web application is a simple API based on FastAPI that can be provided with some interface.
+
+If you decided to use UI, you need to place all static files inside `static_root` directory.
+
+In `extension.json` you may specify icon to display in menu and settings for static files. Icon must be taken from [CloudBlue Connect material-svg library](https://github.com/cloudblue/material-svg), by default will be set puzzle icon.
+
+```json
+
+{
+  'icon': 'googleExtensionBaseline',
+  'ui': {
+    'settings': {
+      'label': 'Settings',
+      'url': '/static/settings.html'
+    },
+    'modules': {
+      'label': 'Main Page',
+      'url': '/static/index.html',
+      'children': [
+        {
+          'label': 'Page 1',
+          'url': '/static/page1.html'
+        }
+      ]
+    }
+  }
+}
+```
+
+To use Web application make sure, that Extension class is wrapped in `@web_app(router)` and define all desired endpoints based on `fastapi_utils` Class Based View approach.
+
+```python
+
+@web_app(router)
+class MyAwesomeProjectWebAppExtension(WebAppExtension):
+    @router.get('/settings')
+    def retrieve_settings(
+        self,
+        installation: dict = Depends(get_installation),
+    ):
+        return installation
+```
+
+### Anvil
+
+Here you may declare `@anvil_key_variable` - name of the variable containing API key for Anvil application.
+
+```python
+
+@anvil_key_variable('ANVIL_API_KEY')
+class MyAnvilExtension(AnvilExtension):
+    pass
+```
+
+And a set of `@anvil_callable` to interact with application.
+
+```python
+
+class MyAnvilExtension(AnvilExtension):
+
+    @anvil_callable()
+    def my_anvil_callable(self, arg1):
+        pass
+```
 
 ## Environment variables
 

@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022, Globex Corporation
+# All rights reserved.
+#
+from {{ package_name }}.anvil import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension as AnvilExtension
+
+
+def test_get_anvil_key_variable():
+    assert AnvilExtension.get_anvil_key_variable() == 'ANVIL_API_KEY'
+
+    vars_dict = {v['name']: v for v in AnvilExtension.get_variables()}
+
+    assert vars_dict['ANVIL_API_KEY'] == {
+        'name': 'ANVIL_API_KEY',
+        'initial_value': 'changeme!',
+        'secure': True,
+    }
+
+    assert vars_dict['VAR_NAME_1'] == {
+        'name': 'VAR_NAME_1',
+        'initial_value': 'VAR_VALUE_1',
+        'secure': False,
+    }
+
+
+def test_setup_anvil_callables(mocker):
+
+    mocked_callable = mocker.patch(
+        'connect.eaas.core.extension.anvil.server.callable',
+    )
+
+    ext = AnvilExtension(None, None, None)
+
+    ext.setup_anvil_callables()
+
+    assert callable(mocked_callable.mock_calls[0].args[0])
+    assert mocked_callable.mock_calls[0].args[0].__name__ == 'hello'

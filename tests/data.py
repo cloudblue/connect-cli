@@ -16,7 +16,7 @@ CONFIG_DATA = {
     ],
 }
 
-EXTENSION_CLASS_DECLARATION = 'class {extension_name}Extension(BaseExtension):'
+EXTENSION_CLASS_DECLARATION = 'class {extension_name}EventsExtension(BaseExtension):'
 EXTENSION_VARIABLES_DECLARATION = """@variables([
     {
         'name': 'VAR_NAME_1',
@@ -68,7 +68,7 @@ TEST_BG_EVENT = """{pytest_asyncio}{async_def}def test_handle_sample_background_
         response_factory(value=[{{'id': 'item-1', 'value': 'value1'}}]),
     ]
     client = {await_keyword}{client_factory_prefix}client_factory(responses)
-    ext = {extension_name}Extension(client, logger, config)
+    ext = {extension_name}EventsExtension(client, logger, config)
     result = {await_keyword}ext.handle_sample_background_event(request)
     assert result.status == 'success'"""
 
@@ -108,7 +108,7 @@ TEST_INTERACTIVE_EVENT = """{pytest_asyncio}{async_def}def test_handle_sample_in
         response_factory(value=[{{'id': 'item-1', 'value': 'value1'}}]),
     ]
     client = {await_keyword}{client_factory_prefix}client_factory(responses)
-    ext = {extension_name}Extension(client, logger, config)
+    ext = {extension_name}EventsExtension(client, logger, config)
     result = {await_keyword}ext.handle_sample_interactive_event(request)
     assert result.status == 'success'
     assert result.body == request"""
@@ -126,6 +126,6 @@ TEST_SCHEDULABLE_EVENT = """{pytest_asyncio}{async_def}def test_execute_schedule
         response_factory(value=[{{'id': 'item-1', 'value': 'value1'}}]),
     ]
     client = {await_keyword}{client_factory_prefix}client_factory(responses)
-    ext = {extension_name}Extension(client, logger, config)
+    ext = {extension_name}EventsExtension(client, logger, config)
     result = {await_keyword}ext.execute_scheduled_processing(request)
     assert result.status == 'success'"""

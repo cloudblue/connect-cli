@@ -45,7 +45,7 @@ from connect.eaas.core.responses import (
     },
 ])
 {% endif -%}
-class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension(BaseExtension):
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension(BaseExtension):
     {% for bg_event in background -%}
     @event(
         '{{ bg_event }}',

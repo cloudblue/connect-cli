@@ -113,7 +113,9 @@ def test_bootstrap_extension_project_background(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.events:{classname_prefix}Extension"}
+        assert ext_entrypoint == {
+            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
+        }
 
         if with_github_actions:
             assert os.path.exists(
@@ -137,7 +139,7 @@ def test_bootstrap_extension_project_background(
 
         report = flake8_style_guide.check_files([
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ])
         assert report.total_errors == 0
 
@@ -159,7 +161,7 @@ def test_bootstrap_extension_project_background(
         assert extension_bg_event(async_impl=async_impl) in extension_py
 
         test_py = open(
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ).read()
 
         assert test_bg_event(classname_prefix, async_impl=async_impl) in test_py
@@ -264,7 +266,9 @@ def test_bootstrap_extension_project_interactive(
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
-        assert ext_entrypoint == {'extension': f"{data['package_name']}.events:{classname_prefix}Extension"}
+        assert ext_entrypoint == {
+            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
+        }
 
         if with_github_actions:
             assert os.path.exists(
@@ -288,7 +292,7 @@ def test_bootstrap_extension_project_interactive(
 
         report = flake8_style_guide.check_files([
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ])
         assert report.total_errors == 0
 
@@ -309,7 +313,7 @@ def test_bootstrap_extension_project_interactive(
         assert extension_interactive_event(async_impl=async_impl) in extension_py
 
         test_py = open(
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ).read()
 
         assert test_interactive_event(classname_prefix, async_impl=async_impl) in test_py
@@ -405,7 +409,7 @@ def test_bootstrap_extension_project_multiaccount(
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
             'anvil': f"{data['package_name']}.anvil:{classname_prefix}AnvilExtension",
-            'extension': f"{data['package_name']}.events:{classname_prefix}Extension",
+            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
         }
 
         parser = configparser.ConfigParser()
@@ -425,7 +429,8 @@ def test_bootstrap_extension_project_multiaccount(
 
         report = flake8_style_guide.check_files([
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_anvil.py'),
         ])
         assert report.total_errors == 0
 
@@ -437,13 +442,13 @@ def test_bootstrap_extension_project_multiaccount(
         ).read()
 
         assert 'from connect.eaas.core.extension import EventsExtension' in events_py
-        assert f'class {classname_prefix}Extension(BaseExtension):' in events_py
+        assert f'class {classname_prefix}EventsExtension(BaseExtension):' in events_py
         assert f'class {classname_prefix}AnvilExtension(AnvilExtension):' in anvil_py
 
         assert extension_bg_event(async_impl=False) in events_py
 
         test_py = open(
-            os.path.join(tmpdir, data['project_slug'], 'tests', f'test_{data["project_slug"]}.py'),
+            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ).read()
 
         assert test_bg_event(classname_prefix, async_impl=False) in test_py

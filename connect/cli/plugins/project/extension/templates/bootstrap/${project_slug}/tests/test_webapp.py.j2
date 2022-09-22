@@ -1,0 +1,99 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+# All rights reserved.
+#
+import json
+
+from fastapi import Depends, Request
+
+from connect.client import ConnectClient
+from connect.eaas.core.testing import WebAppTestClient
+from connect.eaas.core.decorators import router, web_app
+from connect.eaas.core.extension import WebAppExtension
+from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
+
+from {{ package_name }}.webapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension
+
+
+def test_get_settings(response, mocker):
+    mocker.patch(
+        'connect.eaas.core.extension.WebAppExtension.get_static_root',
+        return_value='./',
+    )
+    mocker.patch(
+        'connect.eaas.core.testing.FastAPI.mount',
+    )
+
+    response.add(
+        'GET',
+        'https://localhost/public/v1/devops/installations/installation_id',
+        json={'id': 'EIN-000-000'},
+        status=200,
+    )
+
+    client = WebAppTestClient(
+        {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension,
+        default_headers={
+            'X-Connect-Api-Gateway-Url': 'https://localhost/public/v1',
+            'X-Connect-User-Agent': 'user-agent',
+        },
+    )
+
+    res = client.get(
+        '/settings',
+        headers={
+            'X-Connect-Installation-Api-Key': 'installation_api_key',
+            'X-Connect-Installation-Id': 'installation_id',
+        },
+    )
+    data = res.json()
+
+    assert res.status_code == 200
+    assert data == {'id': 'EIN-000-000'}
+
+
+def test_update_settings(response):
+    response.add(
+        'GET',
+        'https://localhost/public/v1/devops/installations/installation_id',
+        json={'id': 'EIN-000-000'},
+        status=200,
+    )
+    response.add(
+        'PUT',
+        'https://localhost/public/v1/devops/installations/EIN-000-000',
+        json={'id': 'EIN-000-000'},
+        status=200,
+    )
+    response.add(
+        'GET',
+        'https://localhost/public/v1/devops/installations/EIN-000-000',
+        json={'id': 'EIN-000-000', 'settings': {'attr': 'new_value'}},
+        status=200,
+    )
+
+    client = WebAppTestClient(
+        {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension,
+        default_headers={
+            'X-Connect-Api-Gateway-Url': 'https://localhost/public/v1',
+            'X-Connect-User-Agent': 'user-agent',
+        },
+    )
+    res = client.post(
+        '/settings',
+        headers={
+            'X-Connect-Installation-Api-Key': 'installation_api_key',
+            'X-Connect-Installation-Id': 'installation_id',
+        },
+        data=json.dumps({'attr': 'new_value'}).encode('utf-8'),
+    )
+    data = res.json()
+
+    assert res.status_code == 200
+    assert data == {'id': 'EIN-000-000', 'settings': {'attr': 'new_value'}}
+
+    assert len(response.calls) == 3
+
+    payload = json.loads(response.calls[1].request.body)
+    assert payload == {'settings': {'attr': 'new_value'}}

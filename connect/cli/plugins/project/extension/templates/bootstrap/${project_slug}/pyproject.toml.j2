@@ -11,7 +11,7 @@ readme = "./README.md"
 
 [tool.poetry.plugins."connect.eaas.ext"]
 {%- if extension_type != 'multiaccount' or extension_type == 'multiaccount' and 'events' in application_types %}
-"extension" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}Extension"
+"extension" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension"
 {%- endif %}
 {%- if extension_type == 'multiaccount' and 'webapp' in application_types %}
 "webapp" = "{{ package_name }}.webapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension"
@@ -22,7 +22,8 @@ readme = "./README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-connect-eaas-core = ">=3.4.0"
+connect-eaas-core = ">=3.8.0"
+fastapi = "^0.78.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
