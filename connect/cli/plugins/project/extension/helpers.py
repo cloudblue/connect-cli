@@ -9,12 +9,12 @@ from connect.cli.core.terminal import console
 from connect.cli.plugins.project.utils import show_validation_result_table
 from connect.cli.plugins.project.renderer import BoilerplateRenderer
 from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
-from connect.cli.plugins.project.extension.validations import validators
 from connect.cli.plugins.project.extension.wizard import (
     EXTENSION_BOOTSTRAP_WIZARD_INTRO,
     get_questions,
     get_summary,
 )
+from connect.eaas.core.validation.validators import get_validators
 
 
 def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
@@ -137,12 +137,21 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
 def validate_extension_project(config, project_dir):  # noqa: CCR001
     console.secho(f'Validating project {project_dir}...\n', fg='blue')
 
-    context = {}
+    event_definitions = {
+        definition['type']: definition
+        for definition in config.active.client('devops').event_definitions.all()
+    }
+
+    context = {
+        'runner_version': get_pypi_runner_version(),
+        'project_dir': project_dir,
+        'event_definitions': event_definitions,
+    }
 
     validation_items = []
 
-    for validator in validators:
-        result = validator(config, project_dir, context)
+    for validator in get_validators():
+        result = validator(context)
         validation_items.extend(result.items)
         if result.must_exit:
             break

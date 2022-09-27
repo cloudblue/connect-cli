@@ -38,7 +38,7 @@ def test_python_identifier_validator_invalid(identifier):
 
 def test_get_code_context_module(mocker, faker):
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        'connect.cli.plugins.project.validators.inspect.getsourcefile',
         return_value='path/file.py',
     )
 
@@ -47,14 +47,14 @@ def test_get_code_context_module(mocker, faker):
     code = ''.join(code_lines)
 
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcelines',
+        'connect.cli.plugins.project.validators.inspect.getsourcelines',
         return_value=(
             code_lines,
             1,
         ),
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.ismodule',
+        'connect.cli.plugins.project.validators.inspect.ismodule',
         return_value=True,
     )
 
@@ -68,7 +68,7 @@ def test_get_code_context_module(mocker, faker):
 
 def test_get_code_context_function(mocker, faker):
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcefile',
+        'connect.cli.plugins.project.validators.inspect.getsourcefile',
         return_value='path/file.py',
     )
 
@@ -77,14 +77,14 @@ def test_get_code_context_function(mocker, faker):
     code = ''.join(code_lines)
 
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.getsourcelines',
+        'connect.cli.plugins.project.validators.inspect.getsourcelines',
         return_value=(
             code_lines,
             1,
         ),
     )
     mocker.patch(
-        'connect.cli.plugins.project.extension.validations.inspect.ismodule',
+        'connect.cli.plugins.project.validators.inspect.ismodule',
         return_value=False,
     )
 
