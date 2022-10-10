@@ -684,11 +684,7 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
         mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
-            side_effect=runner_version,
-        )
-        mocker.patch(
-            'connect.cli.plugins.project.extension.validations.get_pypi_runner_version',
-            side_effect=runner_version,
+            return_value=runner_version,
         )
         config_vendor.load(config_dir='/tmp')
 

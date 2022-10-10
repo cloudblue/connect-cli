@@ -2,12 +2,12 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
-from pkg_resources import DistributionNotFound, get_distribution
+from importlib.metadata import version
 
 
 try:
-    __version__ = get_distribution('connect-cli').version
-except DistributionNotFound:  # pragma: no cover
+    __version__ = version('connect-cli')
+except Exception:  # pragma: no cover
     __version__ = '0.0.0'
 
 

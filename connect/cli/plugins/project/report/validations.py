@@ -7,6 +7,8 @@ import sys
 import inspect
 import importlib
 
+from poetry.core.constraints.version import parse_constraint, Version
+
 from connect.reports.parser import parse
 from connect.reports.validator import (
     validate,
@@ -19,8 +21,6 @@ from connect.cli.plugins.project.validators import (
     ValidationResult,
 )
 from connect.cli.core.utils import get_last_cli_version
-
-from poetry.core.semver import parse_constraint, Version
 
 
 def validate_pyproject_toml(project_dir, context):
@@ -53,7 +53,8 @@ def validate_pyproject_toml(project_dir, context):
                 ),
             )
         else:
-            last_version_obj = Version(*last_version.split('.'))
+            major, minor = last_version.split('.')
+            last_version_obj = Version.from_parts(int(major), int(minor))
             if not project_version.allows(last_version_obj):
                 messages.append(
                     ValidationItem(
