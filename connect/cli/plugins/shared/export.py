@@ -22,7 +22,7 @@ def _get_translation_workbook(api_url, api_key, translation_id, verbose=False):
         attributes_path = client.ns('localization').translations[translation_id].attributes.path
         url = f'{api_url}/{attributes_path}'
         response = logged_request('GET', url, verbose, headers={
-            'Content-type': EXCEL_CONTENT_TYPE, **get_headers(api_key),
+            'accept': EXCEL_CONTENT_TYPE, **get_headers(api_key),
         })
         if response.status_code != 200:
             raise ClientError(status_code=response.status_code)
