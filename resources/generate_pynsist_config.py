@@ -25,7 +25,9 @@ def build_dir(dir):
 def get_package_info(pkg_name):
     url = f'https://pypi.org/pypi/{pkg_name}/json'
     res = requests.get(url)
-    return res.json()
+    if res.status_code == 200:
+        return res.json()
+    res.raise_for_status()
 
 
 def get_wheels_and_sdists():  # noqa: CCR001
@@ -39,6 +41,8 @@ def get_wheels_and_sdists():  # noqa: CCR001
             else:
                 package_with_ver = line.replace('\n', '')
             package, version = package_with_ver.split('==')
+            if '[' in package and package.endswith(']'):
+                package = package[0:package.index('[')]
             pkg_info = get_package_info(package)
             required_version = pkg_info['releases'][version]
             sdist_url = None
