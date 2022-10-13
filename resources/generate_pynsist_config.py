@@ -40,7 +40,7 @@ def get_wheels_and_sdists():  # noqa: CCR001
                 package_with_ver = line.replace('\n', '')
             package, version = package_with_ver.split('==')
             pkg_info = get_package_info(package)
-            required_version = pkg_info['releases'][version]
+            required_version = pkg_info['releases'][version.strip()]
             sdist_url = None
             for pkg_file_info in required_version:
                 if (
