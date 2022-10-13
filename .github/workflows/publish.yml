@@ -100,7 +100,7 @@ jobs:
         cp dist/*.whl resources/.
     - name: Generate pynsist config file
       run: |
-        poetry export --format requirements.txt --without-hashes --output resources/requirements.txt
+        poetry export --format constraints.txt --without-hashes --output resources/requirements.txt
         poetry run python resources/generate_pynsist_config.py
         cat resources/ccli.cfg
     - name: Build windows installer
