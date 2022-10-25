@@ -8,6 +8,7 @@ from requests import RequestException
 from connect.cli.core import utils
 from connect.cli.core.constants import PYPI_JSON_API_URL
 from connect.cli.core.utils import (
+    iter_entry_points,
     sort_and_filter_tags,
 )
 
@@ -220,3 +221,18 @@ def test_field_to_check_mark_with_false_value():
 def test_sort_and_filter_tags(tags, expected):
     sorted_tags = sort_and_filter_tags(tags, '21')
     assert sorted_tags == expected
+
+
+def test_iter_entry_points(mocker):
+    ep1 = mocker.MagicMock()
+    ep1.name = 'ep1'
+    ep2 = mocker.MagicMock()
+    ep2.name = 'ep2'
+    mocker.patch(
+        'connect.cli.core.utils.entry_points',
+        return_value={'ep.group': [ep1, ep2]},
+    )
+
+    assert list(iter_entry_points('ep.group', name='ep1')) == [ep1]
+    assert list(iter_entry_points('ep.group')) == [ep1, ep2]
+    assert list(iter_entry_points('ep.other_group')) == []

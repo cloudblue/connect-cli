@@ -1,9 +1,13 @@
+import os
+import subprocess
+from pathlib import Path
+
 import requests
 from click import ClickException
 
 from connect.cli import get_version
 from connect.cli.core.utils import sort_and_filter_tags
-from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
+from connect.cli.plugins.project.extension.constants import PRE_COMMIT_HOOK, PYPI_EXTENSION_RUNNER_URL
 from connect.client import ClientError
 
 
@@ -68,3 +72,27 @@ def check_extension_interactive_events_applicable(definitions, context):
             return True
 
     return False
+
+
+def check_webapp_feature_not_selected(context):
+    return 'webapp' not in context.get('application_types', [])
+
+
+def initialize_git_repository(tmp_dir, context):
+    project_dir = os.path.join(tmp_dir, context['project_slug'])
+    hooks_dir = os.path.join(project_dir, '.git', 'hooks')
+    subprocess.run(
+        ['git', 'init', project_dir],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    for sample in Path(hooks_dir).glob('*.sample'):
+        sample.unlink()
+
+    if context.get('webapp_supports_ui') == 'y':
+        pre_commit_file = Path(os.path.join(hooks_dir, 'pre-commit'))
+        with open(pre_commit_file, 'w') as f:
+            f.write(PRE_COMMIT_HOOK.format(package_name=context['package_name']))
+
+        pre_commit_file.chmod(0o755)

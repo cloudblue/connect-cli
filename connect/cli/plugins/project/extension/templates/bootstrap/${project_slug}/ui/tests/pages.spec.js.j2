@@ -1,0 +1,173 @@
+/*
+Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+All rights reserved.
+*/
+import {
+  index,
+  saveSettingsData,
+  settings,
+} from '@/pages';
+import {
+  getChart,
+  getMarketplaces,
+  getSettings,
+  processCheckboxes,
+  processMarketplaces,
+  processSelectedMarketplaces,
+  updateSettings,
+} from '@/utils';
+import {
+  addEventListener,
+  disableButton,
+  enableButton,
+  hideLoader,
+  prepareChart,
+  prepareMarketplaces,
+  prepareMarketplacesWithSwitch,
+  renderChart,
+  renderMarketplaces,
+  showLoader,
+} from '@/components';
+
+
+jest.mock('@/utils', () => ({
+  getSettings: jest.fn(() => Promise.resolve({ })),
+  getChart: jest.fn(() => Promise.resolve({})),
+  getMarketplaces: jest.fn(() => Promise.resolve({ })),
+  processMarketplaces: jest.fn(),
+  updateSettings: jest.fn(() => Promise.resolve({ })),
+  processSelectedMarketplaces: jest.fn(),
+  processCheckboxes: jest.fn(),
+}));
+
+jest.mock('@/components', () => ({
+  prepareChart: jest.fn(() => 'chart'),
+  prepareMarketplaces: jest.fn(() => 'marketplaces'),
+  renderChart: jest.fn(),
+  renderMarketplaces: jest.fn(),
+  showLoader: jest.fn(),
+  hideLoader: jest.fn(),
+  prepareMarketplacesWithSwitch: jest.fn(() => 'marketplaces'),
+  enableButton: jest.fn(),
+  addEventListener: jest.fn(),
+  disableButton: jest.fn(),
+}));
+
+describe('pages.js', () => {
+  describe('index', () => {
+    beforeAll(() => {
+      document.body.innerHTML = `<div id="app">
+        <main-card title="Distribution of active subscriptions per marketplace">
+            <div class="main-container">
+                <div id="chart">
+                </div>
+                <div>
+                    <div class="list-wrapper">
+                        <ul id="marketplaces" class="list">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main-card>
+    </div>`;
+    });
+    beforeEach(async () => {
+      await index();
+    });
+
+    test('calls showLoader', () => {
+      expect(showLoader).toHaveBeenCalled();
+    });
+
+    test('calls getSettings', () => {
+      expect(getSettings).toHaveBeenCalled();
+    });
+    test('calls getChart', () => {
+      expect(getChart).toHaveBeenCalled();
+    });
+    test('calls prepareChart', () => {
+      expect(prepareChart).toHaveBeenCalled();
+    });
+    test('calls prepareMarketplaces', () => {
+      expect(prepareMarketplaces).toHaveBeenCalled();
+    });
+    test('calls hideLoader', () => {
+      expect(hideLoader).toHaveBeenCalled();
+    });
+    test('calls renderChart', () => {
+      expect(renderChart).toHaveBeenCalled();
+    });
+    test('calls renderMarketplaces', () => {
+      expect(renderMarketplaces).toHaveBeenCalled();
+    });
+  });
+
+  describe('settings', () => {
+    beforeAll(() => {
+      document.body.innerHTML = `<div id="app">
+        <main-card title="Settings">
+            <div class="main-container">
+                <div id="settings">
+                </div>
+            </div>
+            <button id="save" class="btn btn-primary">Save</button>
+        </main-card>
+    </div>`;
+    });
+    beforeEach(async () => {
+      await settings();
+    });
+    test('calls showLoader', () => {
+      expect(showLoader).toHaveBeenCalled();
+    });
+    test('calls getMarketplaces', () => {
+      expect(getMarketplaces).toHaveBeenCalled();
+    });
+    test('calls getSettings', () => {
+      expect(getSettings).toHaveBeenCalled();
+    });
+    test('calls processMarketplaces', () => {
+      expect(processMarketplaces).toHaveBeenCalled();
+    });
+    test('calls prepareMarketplacesWithSwitch', () => {
+      expect(prepareMarketplacesWithSwitch).toHaveBeenCalled();
+    });
+    test('calls hideLoader', () => {
+      expect(hideLoader).toHaveBeenCalled();
+    });
+    test('calls renderMarketplaces', () => {
+      expect(renderMarketplaces).toHaveBeenCalled();
+    });
+    test('calls enableButton', () => {
+      expect(enableButton).toHaveBeenCalled();
+    });
+    test('calls addEventListener', () => {
+      expect(addEventListener).toHaveBeenCalled();
+    });
+  });
+
+  describe('saveSettingsData', () => {
+    beforeEach(async () => {
+      await saveSettingsData();
+    });
+
+    test('calls disableButton', () => {
+      expect(disableButton).toHaveBeenCalled();
+    });
+    test('calls getMarketplaces', () => {
+      expect(getMarketplaces).toHaveBeenCalled();
+    });
+    test('calls processCheckboxes', () => {
+      expect(processCheckboxes).toHaveBeenCalled();
+    });
+    test('calls processSelectedMarketplaces', () => {
+      expect(processSelectedMarketplaces).toHaveBeenCalled();
+    });
+    test('calls updateSettings', () => {
+      expect(updateSettings).toHaveBeenCalled();
+    });
+    test('calls enableButton', () => {
+      expect(enableButton).toHaveBeenCalled();
+    });
+  });
+});

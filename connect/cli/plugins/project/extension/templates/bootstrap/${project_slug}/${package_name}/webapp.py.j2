@@ -3,32 +3,123 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
-from fastapi import Depends, Request
-from connect.client import ConnectClient
-from connect.eaas.core.decorators import router, web_app
-from connect.eaas.core.extension import WebAppExtension
+from typing import List
+
+from connect.client import {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient, R
+from connect.eaas.core.decorators import (
+    account_settings_page,
+    module_pages,
+    router,
+    {%- if include_variables_example == 'y' %}
+    variables,
+    {%- endif %}
+    web_app,
+)
+from connect.eaas.core.extension import WebApplicationBase
+{%- if use_asyncio == 'y' %}
+from connect.eaas.core.inject.asynchronous import get_installation, get_installation_client
+{%- endif %}
+from connect.eaas.core.inject.common import get_call_context
+from connect.eaas.core.inject.models import Context
+{%- if use_asyncio != 'y' %}
 from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
+{%- endif %}
+from fastapi import Depends
+
+from {{ package_name }}.schemas import Marketplace, Settings
 
 
+{% if include_variables_example == 'y' -%}
+@variables([
+    {
+        'name': 'VAR_NAME_1',
+        'initial_value': 'VAR_VALUE_1',
+        'secure': False,
+    },
+    {
+        'name': 'VAR_NAME_N',
+        'initial_value': 'VAR_VALUE_N',
+        'secure': True,
+    },
+])
+{% endif -%}
 @web_app(router)
-class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension(WebAppExtension):
-    installation: dict = Depends(get_installation)
+{% if webapp_supports_ui == 'y' -%}
+@account_settings_page('Chart settings', '/static/settings.html')
+@module_pages('Chart', '/static/index.html')
+{% endif -%}
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(WebApplicationBase):
 
-    @router.get('/settings')
-    def retrieve_settings(
+    @router.get(
+        '/settings',
+        summary='Retrive charts settings',
+        response_model=Settings,
+    )
+    {% if use_asyncio == 'y' %}async {% endif %}def retrieve_settings(
         self,
+        installation: dict = Depends(get_installation),
     ):
-        return self.installation
+        return Settings(marketplaces=installation['settings'].get('marketplaces', []))
 
-    @router.post('/settings')
-    async def update_settings(
+    @router.post(
+        '/settings',
+        summary='Save charts settings',
+        response_model=Settings,
+    )
+    {% if use_asyncio == 'y' %}async {% endif %}def save_settings(
         self,
-        request: Request,
-        installation_client: ConnectClient = Depends(get_installation_client),
+        settings: Settings,
+        context: Context = Depends(get_call_context),
+        client: {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient = Depends(get_installation_client),
     ):
-        settings = await request.json()
-
-        installation_client('devops').installations[self.installation['id']].update(
-            {'settings': settings},
+        {% if use_asyncio == 'y' %}await {% endif %}client('devops').installations[context.installation_id].update(
+            payload={
+                'settings': settings.dict(),
+            },
         )
-        return installation_client('devops').installations[self.installation['id']].get()
+        return settings
+
+    @router.get(
+        '/marketplaces',
+        summary='List all available marketplaces',
+        response_model=List[Marketplace],
+    )
+    {% if use_asyncio == 'y' %}async {% endif %}def list_marketplaces(
+        self,
+        client: {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient = Depends(get_installation_client),
+    ):
+        return [
+            Marketplace(**marketplace)
+            {% if use_asyncio == 'y' %}async {% endif %}for marketplace in client.marketplaces.all().values_list(
+                'id', 'name', 'description', 'icon',
+            )
+        ]
+
+    @router.get(
+        '/chart',
+        summary='Generate chart data',
+    )
+    {% if use_asyncio == 'y' %}async {% endif %}def generate_chart_data(
+        self,
+        installation: dict = Depends(get_installation),
+        client: {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient = Depends(get_installation_client),
+    ):
+        data = {}
+        for mp in installation['settings'].get('marketplaces', []):
+            active_assets = {% if use_asyncio == 'y' %}await {% endif %}client('subscriptions').assets.filter(
+                R().marketplace.id.eq(mp['id']) & R().status.eq('active'),
+            ).count()
+            data[mp['id']] = active_assets
+
+        return {
+            'type': 'bar',
+            'data': {
+                'labels': list(data.keys()),
+                'datasets': [
+                    {
+                        'label': 'Subscriptions',
+                        'data': list(data.values()),
+                    },
+                ],
+            },
+        }

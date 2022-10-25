@@ -7,6 +7,7 @@ from connect.cli.plugins.project.extension.utils import (
     check_extension_events_applicable,
     check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
+    check_webapp_feature_not_selected,
     get_background_events,
     get_extension_types,
     get_interactive_events,
@@ -52,7 +53,12 @@ def get_summary(data):  # pragma: no cover
     <b>Type:</b> {value('extension_type', formatted=True)}
 """
     if value('extension_type') == 'multiaccount':
-        extension += f"""    <b>Applications:</b> {value('application_types', formatted=True)}
+        extension += f"""    <b>Audience:</b> {value('extension_audience', formatted=True)}
+"""
+        extension += f"""    <b>Features:</b> {value('application_types', formatted=True)}
+"""
+    if 'webapp' in value('application_types'):
+        extension += f"""    <b>UI support:</b> {value('webapp_supports_ui', formatted=True)}
 """
 
     event_answers = ''
@@ -207,18 +213,44 @@ def get_questions(config, definitions):
             'formatting_template': '${label}',
         },
         {
-            'name': 'application_types',
-            'label': 'Extension: Application type',
+            'name': 'extension_audience',
+            'label': 'Extension: Audience',
             'type': 'selectmany',
-            'description': 'Type of application: ',
+            'description': 'Which type of actors this extension targets: ',
             'values': [
-                ('webapp', 'Web app'),
-                ('anvil', 'Anvil app'),
-                ('events', 'Events app'),
+                ('vendor', 'Vendors'),
+                ('distributor', 'Distributors'),
+                ('reseller', 'Resellers'),
             ],
             'formatting_template': '${label}',
             'disabled': check_extension_not_multi_account,
             'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+        {
+            'name': 'application_types',
+            'label': 'Extension: Features',
+            'type': 'selectmany',
+            'description': 'Which features do you want to support in your extension: ',
+            'values': [
+                ('events', 'Events Processing'),
+                ('webapp', 'Web Application'),
+                ('anvil', 'Anvil Application'),
+            ],
+            'formatting_template': '${label}',
+            'disabled': check_extension_not_multi_account,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+        {
+            'name': 'webapp_supports_ui',
+            'label': 'Extension: WebApp',
+            'type': 'selectone',
+            'description': 'Does your web application plug into the Connect UI ? ',
+            'values': [
+                ('n', 'No'),
+                ('y', 'Yes'),
+            ],
+            'formatting_template': '${label}',
+            'disabled': check_webapp_feature_not_selected,
         },
     ]
 

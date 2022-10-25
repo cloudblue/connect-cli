@@ -1,0 +1,326 @@
+/*
+Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+All rights reserved.
+*/
+body {
+    font-family: "Roboto", sans-serif;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid white;
+    border-bottom-color: #1565c0;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+h1 {
+    font-weight: 500;
+    font-size: 20px;
+}
+
+
+.switch {
+    z-index: 0;
+    position: relative;
+    display: inline-block;
+    color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.87);
+    font-family: var(--pure-material-font, "Roboto", "Segoe UI", BlinkMacSystemFont, system-ui, -apple-system);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Input */
+.switch>input {
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    z-index: -1;
+    position: absolute;
+    right: 6px;
+    top: -8px;
+    display: block;
+    margin: 0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+    outline: none;
+    opacity: 0;
+    transform: scale(1);
+    pointer-events: none;
+    transition: opacity 0.3s 0.1s, transform 0.2s 0.1s;
+}
+
+/* Span */
+.switch>span {
+    display: inline-block;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Track */
+.switch>span::before {
+    content: "";
+    float: right;
+    display: inline-block;
+    margin: 5px 0 5px 10px;
+    border-radius: 7px;
+    width: 36px;
+    height: 14px;
+    background-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+    vertical-align: top;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+/* Thumb */
+.switch>span::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 16px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: rgb(var(--pure-material-onprimary-rgb, 255, 255, 255));
+    box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+/* Checked */
+.switch>input:checked {
+    right: -10px;
+    background-color: rgb(var(--pure-material-primary-rgb, 33, 150, 243));
+}
+
+.switch>input:checked+span::before {
+    background-color: rgba(var(--pure-material-primary-rgb, 33, 150, 243), 0.6);
+}
+
+.switch>input:checked+span::after {
+    background-color: rgb(var(--pure-material-primary-rgb, 33, 150, 243));
+    transform: translateX(16px);
+}
+
+/* Hover, Focus */
+.switch:hover>input {
+    opacity: 0.04;
+}
+
+.switch>input:focus {
+    opacity: 0.12;
+}
+
+.switch:hover>input:focus {
+    opacity: 0.16;
+}
+
+/* Active */
+.switch>input:active {
+    opacity: 1;
+    transform: scale(0);
+    transition: transform 0s, opacity 0s;
+}
+
+.switch>input:active+span::before {
+    background-color: rgba(var(--pure-material-primary-rgb, 33, 150, 243), 0.6);
+}
+
+.switch>input:checked:active+span::before {
+    background-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+}
+
+/* Disabled */
+.switch>input:disabled {
+    opacity: 0;
+}
+
+.switch>input:disabled+span {
+    color: rgb(var(--pure-material-onsurface-rgb, 0, 0, 0));
+    opacity: 0.38;
+    cursor: default;
+}
+
+.switch>input:disabled+span::before {
+    background-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+}
+
+.switch>input:checked:disabled+span::before {
+    background-color: rgba(var(--pure-material-primary-rgb, 33, 150, 243), 0.6);
+}
+
+.button-container {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    margin-right: 15px;
+}
+
+.button {
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    padding: 0 8px;
+    min-width: 64px;
+    height: 36px;
+    vertical-align: middle;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    color: rgb(var(--pure-material-primary-rgb, 33, 150, 243));
+    background-color: transparent;
+    font-family: var(--pure-material-font, "Roboto", "Segoe UI", BlinkMacSystemFont, system-ui, -apple-system);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+    overflow: hidden;
+    outline: none;
+    cursor: pointer;
+}
+
+.button::-moz-focus-inner {
+    border: none;
+}
+
+/* Overlay */
+.button::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* Ripple */
+.button::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    padding: 50%;
+    width: 32px;
+    height: 32px;
+    background-color: currentColor;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 1s, transform 0.5s;
+}
+
+/* Hover, Focus */
+.button:hover::before {
+    opacity: 0.04;
+}
+
+.button:focus::before {
+    opacity: 0.12;
+}
+
+.button:hover:focus::before {
+    opacity: 0.16;
+}
+
+/* Active */
+.button:active::after {
+    opacity: 0.16;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0s;
+}
+
+/* Disabled */
+.button:disabled {
+    color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+    background-color: transparent;
+    cursor: initial;
+}
+
+.button:disabled::before {
+    opacity: 0;
+}
+
+.button:disabled::after {
+    opacity: 0;
+}
+
+.list-wrapper {
+    margin: 30px auto;
+}
+
+.list {
+    background-color: #FFF;
+    margin: 0;
+    padding: 15px;
+    border-radius: 2px;
+}
+
+.list .list-item {
+    display: flex;
+    padding: 10px 5px;
+}
+
+.list .list-item .switch {
+    display: flex;
+    align-items: center;
+}
+
+.list .list-item:not(:last-child) {
+    border-bottom: 1px solid #EEE;
+}
+
+.list .image {
+    flex-shrink: 0;
+    height: 80px;
+}
+
+.list .list-item-image img {
+    width: 70px;
+    height: 70px;
+}
+
+.list .list-item-content {
+    width: 90%;
+    padding: 0 20px;
+}
+
+.list .list-item-content h4 {
+    margin: 0;
+    font-size: 18px;
+    margin-top: 15px;
+}
+
+.list .list-item-content p {
+    margin-top: 5px;
+    color: #AAA;
+    margin-bottom: 0;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+}

@@ -11,39 +11,37 @@ readme = "./README.md"
 
 [tool.poetry.plugins."connect.eaas.ext"]
 {%- if extension_type != 'multiaccount' or extension_type == 'multiaccount' and 'events' in application_types %}
-"extension" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsExtension"
+"eventsapp" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsApplication"
 {%- endif %}
 {%- if extension_type == 'multiaccount' and 'webapp' in application_types %}
-"webapp" = "{{ package_name }}.webapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension"
+"webapp" = "{{ package_name }}.webapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication"
 {%- endif %}
 {%- if extension_type == 'multiaccount' and 'anvil' in application_types %}
-"anvil" = "{{ package_name }}.anvil:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension"
+"anvilapp" = "{{ package_name }}.anvil:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilApplication"
 {%- endif %}
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-connect-eaas-core = ">=3.8.0"
-fastapi = "^0.78.0"
+connect-eaas-core = ">=26.10,<27"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.1.2"
-pytest-cov = "^2.10.1"
+pytest = ">=6.1.2,<8"
+pytest-cov = ">=2.10.1,<5"
 pytest-mock = "^3.3.1"
-pytest-asyncio = "^0.15.1"
-pytest-httpx = ">=0.20"
-coverage = { extras = ["toml"], version = "^5.3" }
-responses = "^0.12.0"
-flake8 = "~3.8"
-flake8-bugbear = "~20"
+mock = { version = "^4.0.3", markers = "python_version < '3.8'" }
+coverage = {extras = ["toml"], version = ">=5.3,<7"}
+flake8 = ">=3.8,<6"
+flake8-bugbear = ">=20,<23"
 flake8-cognitive-complexity = "^0.1"
 flake8-commas = "~2.0"
 flake8-future-import = "~0.4"
 flake8-import-order = "~0.18"
-flake8-broken-line = "~0.3"
+flake8-broken-line = ">=0.3,<0.7"
 flake8-comprehensions = "^3.3.1"
 flake8-debugger = "^4.0.0"
 flake8-eradicate = "^1.0.0"
 flake8-string-format = "^0.3.0"
+pytest-asyncio = "^0.15.1"
 connect-devops-testing-library = "24.*"
 
 [build-system]
@@ -52,7 +50,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-addopts = "--cov={{ package_name }} --cov-report=term-missing:skip-covered --cov-report=html --cov-report=xml"
+addopts = "--cov={{ package_name }} --cov-report=term-missing --cov-report=html --cov-report=xml"
 
 [tool.coverage.run]
 relative_files = true

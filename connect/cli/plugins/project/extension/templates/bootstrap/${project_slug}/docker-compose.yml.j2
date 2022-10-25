@@ -3,7 +3,9 @@ version: '3'
 services:
   {{project_slug}}_dev:
     container_name: {{project_slug}}_dev
-    image: cloudblueconnect/connect-extension-runner:{{runner_version}}
+    build:
+      context: .
+    working_dir: /extension
     command: cextrun -d
     volumes: 
       - .:/extension
@@ -12,7 +14,8 @@ services:
 
   {{project_slug}}_bash:
     container_name: {{project_slug}}_bash
-    image: cloudblueconnect/connect-extension-runner:{{runner_version}}
+    build:
+      context: .
     working_dir: /extension
     command: /bin/bash
     stdin_open: true
@@ -24,9 +27,10 @@ services:
 
   {{project_slug}}_test:
     container_name: {{project_slug}}_test
-    image: cloudblueconnect/connect-extension-runner:{{runner_version}}
+    build:
+      context: .
     working_dir: /extension
-    command: /bin/bash -c "poetry install && poetry run flake8 && poetry run pytest"
+    command: extension-test
     volumes:
       - .:/extension
     env_file:

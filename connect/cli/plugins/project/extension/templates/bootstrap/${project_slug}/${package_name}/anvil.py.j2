@@ -3,17 +3,22 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
-from connect.eaas.core.decorators import anvil_callable, anvil_key_variable, variables
-from connect.eaas.core.extension import AnvilExtension
+from connect.eaas.core.decorators import anvil_callable, anvil_key_variable{% if include_variables_example == 'y' -%}, variables{% endif %}
+from connect.eaas.core.extension import AnvilApplicationBase
 
 
 @anvil_key_variable('ANVIL_API_KEY')
+{% if include_variables_example == 'y' -%}
 @variables([{
     'name': 'VAR_NAME_1',
     'initial_value': 'VAR_VALUE_1',
     'secure': False,
 }])
-class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilExtension(AnvilExtension):
-    @anvil_callable()
-    def hello(self, name):
-        return f'Hello {name}'
+{% endif -%}
+class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilApplication(AnvilApplicationBase):
+    @anvil_callable(
+        summary='This is an example method',
+        description='This method is just an example.',
+    )
+    def example_method(self, example_argument):
+        return f'Example method invoked, argument = {example_argument}'

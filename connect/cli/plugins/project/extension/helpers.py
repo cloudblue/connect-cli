@@ -5,10 +5,15 @@ import yaml
 from click.exceptions import ClickException
 from interrogatio.core.dialog import dialogus
 
+from connect.cli import get_version
 from connect.cli.core.terminal import console
 from connect.cli.plugins.project.utils import show_validation_result_table
 from connect.cli.plugins.project.renderer import BoilerplateRenderer
-from connect.cli.plugins.project.extension.utils import get_event_definitions, get_pypi_runner_version
+from connect.cli.plugins.project.extension.utils import (
+    get_event_definitions,
+    get_pypi_runner_version,
+    initialize_git_repository,
+)
 from connect.cli.plugins.project.extension.wizard import (
     EXTENSION_BOOTSTRAP_WIZARD_INTRO,
     get_questions,
@@ -44,6 +49,7 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
     ctx = {
         'statuses_by_event': statuses_by_event[answers['extension_type']],
         'interactive': [],
+        'current_major_version': get_version().split('.')[0],
         'runner_version': get_pypi_runner_version(),
     }
 
@@ -57,44 +63,20 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
     exclude = []
 
     if answers['use_github_actions'] == 'n':
-        exclude = [
-            os.path.join(
-                answers['project_slug'],
-                '.github',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                '.github',
-                'workflows',
-            ),
-            os.path.join(
-                answers['project_slug'],
-                '.github',
-                'workflows',
-                'build.yml.j2',
-            ),
-        ]
+        exclude.extend(['.github', '.github/**/*'])
 
-    if 'webapp' not in answers.get('application_types', []):
-        exclude.append(
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-            ),
-        )
-
+    if answers.get('webapp_supports_ui') != 'y':
         exclude.extend([
-            os.path.join(
-                answers['project_slug'],
-                answers['package_name'],
-                'static_root',
-                static_file,
-            ) for static_file in [
-                'index.html.j2',
-                'page1.html.j2',
-                'settings.html.j2',
-            ]
+            os.path.join('${package_name}', 'static', '.gitkeep'),
+            'ui',
+            'ui/**/*',
+            'package.json.j2',
+            'webpack.config.js.j2',
+            '__mocks__',
+            '__mocks__/*',
+            '.eslintrc.yaml.j2',
+            'babel.config.json.j2',
+            'jest.config.js.j2',
         ])
 
     application_types = answers.get('application_types', [])
@@ -105,18 +87,18 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         if app_type not in application_types:
             exclude.append(
                 os.path.join(
-                    answers['project_slug'],
-                    answers['package_name'],
+                    '${package_name}',
                     f'{app_type}.py.j2',
                 ),
             )
             exclude.append(
                 os.path.join(
-                    answers['project_slug'],
                     'tests',
                     f'test_{app_type}.py.j2',
                 ),
             )
+    if 'webapp' not in application_types:
+        exclude.append('${package_name}/schemas.py.j2')
 
     renderer = BoilerplateRenderer(
         context=ctx,
@@ -128,6 +110,7 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         output_dir=output_dir,
         overwrite=overwrite,
         exclude=exclude,
+        post_render=initialize_git_repository,
     )
     renderer.render()
 

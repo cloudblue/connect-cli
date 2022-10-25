@@ -1,0 +1,42 @@
+{
+  "name": "{{ project_slug|replace("_", "-") }}",
+  "version": "{{ version }}",
+  "description": "{{ description }}",
+  "main": "index.js",
+  "directories": {
+    "test": "ui/tests"
+  },
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack watch",
+    "lint": "eslint ui/src --ext .js",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "NODE_ENV=test jest --no-cache"
+  },
+  "author": "{{ author }}",
+  "license": "{{ license }}",
+  "dependencies": {
+    "@cloudblueconnect/connect-ui-toolkit": "^26",
+    "@fontsource/roboto": "^4.5.8",
+    "css-minimizer-webpack-plugin": "^4.2.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.0",
+    "@babel/preset-env": "^7.18.0",
+    "css-loader": "^6.7.1",
+    "eslint": "8.17.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-import-resolver-webpack": "0.13.2",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-webpack-plugin": "^3.1.1",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^28.1.0",
+    "jest-environment-jsdom": "28.1.0",
+    "jest-transform-stub": "^2.0.0",
+    "mini-css-extract-plugin": "^2.6.1",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  }
+}

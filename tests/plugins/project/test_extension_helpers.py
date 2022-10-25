@@ -107,19 +107,21 @@ def test_bootstrap_extension_project_background(
         for service_suffix in ('dev', 'bash', 'test'):
             service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
             assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
             assert service['env_file'] == [env_file_name]
+
+        docker_file = open(os.path.join(tmpdir, data['project_slug'], 'Dockerfile')).read()
+        assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
 
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
-            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
+            'eventsapp': f"{data['package_name']}.events:{classname_prefix}EventsApplication",
         }
 
         if with_github_actions:
             assert os.path.exists(
-                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'build.yml'),
+                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
             ) is True
 
         parser = configparser.ConfigParser()
@@ -164,6 +166,9 @@ def test_bootstrap_extension_project_background(
             os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
         ).read()
 
+        expected_test = test_bg_event(classname_prefix, async_impl=async_impl)
+        print(expected_test)
+        print(test_py)
         assert test_bg_event(classname_prefix, async_impl=async_impl) in test_py
 
         if with_schedulable:
@@ -258,8 +263,10 @@ def test_bootstrap_extension_project_interactive(
         for service_suffix in ('dev', 'bash', 'test'):
             service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
             assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
             assert service['env_file'] == [env_file_name]
+
+        docker_file = open(os.path.join(tmpdir, data['project_slug'], 'Dockerfile')).read()
+        assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
 
         classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
@@ -267,12 +274,12 @@ def test_bootstrap_extension_project_interactive(
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
-            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
+            'eventsapp': f"{data['package_name']}.events:{classname_prefix}EventsApplication",
         }
 
         if with_github_actions:
             assert os.path.exists(
-                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'build.yml'),
+                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
             ) is True
 
         parser = configparser.ConfigParser()
@@ -362,6 +369,7 @@ def test_bootstrap_extension_project_multiaccount(
             'project_name': faker.name(),
             'project_slug': slugify(faker.name()),
             'extension_type': 'multiaccount',
+            'extension_audience': ['vendor', 'distributor'],
             'application_types': ['anvil', 'events'],
             'description': 'desc',
             'package_name': slugify(faker.name()),
@@ -401,15 +409,17 @@ def test_bootstrap_extension_project_multiaccount(
         for service_suffix in ('dev', 'bash', 'test'):
             service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
             assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
             assert service['env_file'] == [env_file_name]
+
+        docker_file = open(os.path.join(tmpdir, data['project_slug'], 'Dockerfile')).read()
+        assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
 
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
-            'anvil': f"{data['package_name']}.anvil:{classname_prefix}AnvilExtension",
-            'extension': f"{data['package_name']}.events:{classname_prefix}EventsExtension",
+            'anvilapp': f"{data['package_name']}.anvil:{classname_prefix}AnvilApplication",
+            'eventsapp': f"{data['package_name']}.events:{classname_prefix}EventsApplication",
         }
 
         parser = configparser.ConfigParser()
@@ -441,9 +451,9 @@ def test_bootstrap_extension_project_multiaccount(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
         ).read()
 
-        assert 'from connect.eaas.core.extension import EventsExtension' in events_py
-        assert f'class {classname_prefix}EventsExtension(BaseExtension):' in events_py
-        assert f'class {classname_prefix}AnvilExtension(AnvilExtension):' in anvil_py
+        assert 'from connect.eaas.core.extension import EventsApplicationBase' in events_py
+        assert f'class {classname_prefix}EventsApplication(EventsApplicationBase):' in events_py
+        assert f'class {classname_prefix}AnvilApplication(AnvilApplicationBase):' in anvil_py
 
         assert extension_bg_event(async_impl=False) in events_py
 
@@ -456,9 +466,6 @@ def test_bootstrap_extension_project_multiaccount(
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
         ) is False
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-        ) is True
 
 
 def test_bootstrap_extension_project_webapp(
@@ -498,7 +505,9 @@ def test_bootstrap_extension_project_webapp(
             'project_name': faker.name(),
             'project_slug': slugify(faker.name()),
             'extension_type': 'multiaccount',
+            'extension_audience': ['vendor', 'distributor'],
             'application_types': ['webapp'],
+            'webapp_supports_ui': 'y',
             'description': 'desc',
             'package_name': slugify(faker.name()),
             'author': 'connect',
@@ -537,14 +546,16 @@ def test_bootstrap_extension_project_webapp(
         for service_suffix in ('dev', 'bash', 'test'):
             service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
             assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
-            assert service['image'] == f'cloudblueconnect/connect-extension-runner:{runner_version}'
             assert service['env_file'] == [env_file_name]
+
+        docker_file = open(os.path.join(tmpdir, data['project_slug'], 'Dockerfile')).read()
+        assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
 
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
-            'webapp': f"{data['package_name']}.webapp:{classname_prefix}WebAppExtension",
+            'webapp': f"{data['package_name']}.webapp:{classname_prefix}WebApplication",
         }
 
         parser = configparser.ConfigParser()
@@ -573,14 +584,15 @@ def test_bootstrap_extension_project_webapp(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.json'),
         ).read()
 
-        assert 'from connect.eaas.core.extension import WebAppExtension' in webapp_py
-        assert f'class {classname_prefix}WebAppExtension(WebAppExtension):' in webapp_py
-        assert '@router.get' in webapp_py
-        assert '"ui": {' in extension_json
+        assert 'from connect.eaas.core.extension import WebApplicationBase' in webapp_py
+        assert f'class {classname_prefix}WebApplication(WebApplicationBase):' in webapp_py
         assert 'icon' in extension_json
 
         assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static_root'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static', '.gitkeep'),
+        ) is True
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
         ) is True
         assert os.path.exists(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
@@ -737,6 +749,7 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
         validate_extension_project(config_vendor, project_dir)
 
         captured = capsys.readouterr()
+        print(captured)
         assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
 
 

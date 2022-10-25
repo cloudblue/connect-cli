@@ -3,7 +3,8 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 import click
-import pkg_resources
+
+from connect.cli.core.utils import iter_entry_points
 
 
 def load_plugins(cli):
@@ -13,8 +14,8 @@ def load_plugins(cli):
 
     has_3rd_party_plugins = False
 
-    for entrypoint in pkg_resources.iter_entry_points('connect.cli.plugins'):
-        if entrypoint.module_name.startswith('connect.cli.plugins.'):
+    for entrypoint in iter_entry_points('connect.cli.plugins'):
+        if entrypoint.value.startswith('connect.cli.plugins.'):
             command_fn = entrypoint.load()
             cli.add_command(command_fn())
         else:

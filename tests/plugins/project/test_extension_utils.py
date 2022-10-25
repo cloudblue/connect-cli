@@ -6,6 +6,7 @@ from connect.cli.plugins.project.extension.utils import (
     check_extension_events_applicable,
     check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
+    check_webapp_feature_not_selected,
     get_background_events,
     get_event_definitions,
     get_interactive_events,
@@ -157,3 +158,14 @@ def test_check_extension_interactive_events_applicable_true():
         },
     }
     assert check_extension_interactive_events_applicable(definitions, context) is True
+
+
+@pytest.mark.parametrize(
+    ('app_types', 'expected'),
+    (
+        (['webapp'], False),
+        ([], True),
+    ),
+)
+def test_check_webapp_feature_not_selected(app_types, expected):
+    assert check_webapp_feature_not_selected({'application_types': app_types}) is expected
