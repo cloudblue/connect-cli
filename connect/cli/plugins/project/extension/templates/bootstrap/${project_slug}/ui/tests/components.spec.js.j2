@@ -6,13 +6,13 @@ import {
   addEventListener,
   disableButton,
   enableButton,
-  hideLoader,
+  hideComponent,
   prepareChart,
   prepareMarketplaces,
   prepareMarketplacesWithSwitch,
   renderChart,
   renderMarketplaces,
-  showLoader,
+  showComponent,
 } from '@/components';
 
 
@@ -157,55 +157,41 @@ describe('components.js', () => {
 
   describe('showLoader', () => {
     beforeEach(() => {
-      document.body.innerHTML = '<div id="loader"></div><div id="content"></div>';
-      showLoader('loader', 'content');
+      document.body.innerHTML = '<div id="loader" class="hidden"></div>';
+      showComponent('loader');
     });
     it('shows a loader', () => {
       expect(document.getElementById('loader').classList.contains('hidden')).toBe(false);
-    });
-
-    it('hides content', () => {
-      expect(document.getElementById('content').classList.contains('hidden')).toBe(true);
     });
   });
 
-  describe('showLoader with default values', () => {
+  describe('showComponent without passing id', () => {
     beforeEach(() => {
-      document.body.innerHTML = '<div id="loader"></div><div id="app"></div>';
-      showLoader();
+      document.body.innerHTML = '<div id="component" class="hidden"></div>';
+      showComponent();
     });
-    it('shows a loader', () => {
-      expect(document.getElementById('loader').classList.contains('hidden')).toBe(false);
-    });
-    it('hides app', () => {
-      expect(document.getElementById('app').classList.contains('hidden')).toBe(true);
+    it('does not show a component', () => {
+      expect(document.getElementById('component').classList.contains('hidden')).toBe(true);
     });
   });
 
   describe('hideLoader', () => {
     beforeEach(() => {
-      document.body.innerHTML = '<div id="loader"></div><div id="content"></div>';
-      hideLoader('loader', 'content');
+      document.body.innerHTML = '<div id="loader"></div>';
+      hideComponent('loader');
     });
     it('hides a loader', () => {
       expect(document.getElementById('loader').classList.contains('hidden')).toBe(true);
-    });
-
-    it('shows content', () => {
-      expect(document.getElementById('content').classList.contains('hidden')).toBe(false);
     });
   });
 
-  describe('hideLoader with default values', () => {
+  describe('hideComponent without passing id', () => {
     beforeEach(() => {
-      document.body.innerHTML = '<div id="loader"></div><div id="app"></div>';
-      hideLoader();
+      document.body.innerHTML = '<div id="component"></div>';
+      hideComponent();
     });
-    it('hides a loader', () => {
-      expect(document.getElementById('loader').classList.contains('hidden')).toBe(true);
-    });
-    it('shows app', () => {
-      expect(document.getElementById('app').classList.contains('hidden')).toBe(false);
+    it('does not hide a component', () => {
+      expect(document.getElementById('component').classList.contains('hidden')).toBe(false);
     });
   });
 });

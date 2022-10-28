@@ -11,6 +11,7 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    name: Backend tests
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
@@ -36,10 +37,10 @@ jobs:
           pytest
 {% endraw %}
 {%- if webapp_supports_ui == 'y' -%}
-{%- raw -%}
+{%- raw %}
   frontend:
     runs-on: ubuntu-latest
-    name: Node 18 LTS
+    name: Frontend tests
     steps:
       - uses: actions/checkout@v3
       - name: Setup node
