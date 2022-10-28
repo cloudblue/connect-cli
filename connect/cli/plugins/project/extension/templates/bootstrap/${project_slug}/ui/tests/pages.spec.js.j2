@@ -20,13 +20,13 @@ import {
   addEventListener,
   disableButton,
   enableButton,
-  hideLoader,
+  hideComponent,
   prepareChart,
   prepareMarketplaces,
   prepareMarketplacesWithSwitch,
   renderChart,
   renderMarketplaces,
-  showLoader,
+  showComponent,
 } from '@/components';
 
 
@@ -45,13 +45,17 @@ jest.mock('@/components', () => ({
   prepareMarketplaces: jest.fn(() => 'marketplaces'),
   renderChart: jest.fn(),
   renderMarketplaces: jest.fn(),
-  showLoader: jest.fn(),
-  hideLoader: jest.fn(),
+  showComponent: jest.fn(),
+  hideComponent: jest.fn(),
   prepareMarketplacesWithSwitch: jest.fn(() => 'marketplaces'),
   enableButton: jest.fn(),
   addEventListener: jest.fn(),
   disableButton: jest.fn(),
 }));
+
+const app = {
+  emit: jest.fn(),
+};
 
 describe('pages.js', () => {
   describe('index', () => {
@@ -72,13 +76,15 @@ describe('pages.js', () => {
     </div>`;
     });
     beforeEach(async () => {
-      await index();
+      await index(app);
     });
 
+    test('calls hide app', () => {
+      expect(hideComponent).toHaveBeenCalledWith('app');
+    });
     test('calls showLoader', () => {
-      expect(showLoader).toHaveBeenCalled();
+      expect(showComponent).toHaveBeenCalledWith('loader');
     });
-
     test('calls getSettings', () => {
       expect(getSettings).toHaveBeenCalled();
     });
@@ -92,7 +98,10 @@ describe('pages.js', () => {
       expect(prepareMarketplaces).toHaveBeenCalled();
     });
     test('calls hideLoader', () => {
-      expect(hideLoader).toHaveBeenCalled();
+      expect(hideComponent).toHaveBeenCalledWith('loader');
+    });
+    test('calls showApp', () => {
+      expect(showComponent).toHaveBeenCalledWith('app');
     });
     test('calls renderChart', () => {
       expect(renderChart).toHaveBeenCalled();
@@ -114,60 +123,171 @@ describe('pages.js', () => {
         </main-card>
     </div>`;
     });
-    beforeEach(async () => {
-      await settings();
+    describe('app is not passed', () => {
+      beforeEach(async () => {
+        await settings();
+      });
+      test('does not execute', () => {
+        expect(showComponent).not.toHaveBeenCalled();
+      });
     });
-    test('calls showLoader', () => {
-      expect(showLoader).toHaveBeenCalled();
+    describe('on success', () => {
+      beforeEach(async () => {
+        await settings(app);
+      });
+      test('calls showLoader', () => {
+        expect(showComponent).toHaveBeenCalledWith('loader');
+      });
+      test('calls hideApp', () => {
+        expect(hideComponent).toHaveBeenCalledWith('app');
+      });
+      test('calls hideError', () => {
+        expect(hideComponent).toHaveBeenCalledWith('error');
+      });
+      test('calls getMarketplaces', () => {
+        expect(getMarketplaces).toHaveBeenCalled();
+      });
+      test('calls getSettings', () => {
+        expect(getSettings).toHaveBeenCalled();
+      });
+      test('calls processMarketplaces', () => {
+        expect(processMarketplaces).toHaveBeenCalled();
+      });
+      test('calls prepareMarketplacesWithSwitch', () => {
+        expect(prepareMarketplacesWithSwitch).toHaveBeenCalled();
+      });
+      test('calls renderMarketplaces', () => {
+        expect(renderMarketplaces).toHaveBeenCalled();
+      });
+      test('calls enableButton', () => {
+        expect(enableButton).toHaveBeenCalledWith('save', 'Save');
+      });
+      test('calls addEventListener', () => {
+        expect(addEventListener).toHaveBeenCalledWith('save', 'click', expect.any(Function));
+      });
+      test('calls showApp', () => {
+        expect(showComponent).toHaveBeenCalledWith('app');
+      });
+      test('does not call app.emit error ', () => {
+        expect(app.emit).not.toHaveBeenCalled();
+      });
+      test('does not call showError', () => {
+        expect(showComponent).not.toHaveBeenCalledWith('error');
+      });
+      test('calls hideLoader', () => {
+        expect(hideComponent).toHaveBeenCalledWith('loader');
+      });
     });
-    test('calls getMarketplaces', () => {
-      expect(getMarketplaces).toHaveBeenCalled();
-    });
-    test('calls getSettings', () => {
-      expect(getSettings).toHaveBeenCalled();
-    });
-    test('calls processMarketplaces', () => {
-      expect(processMarketplaces).toHaveBeenCalled();
-    });
-    test('calls prepareMarketplacesWithSwitch', () => {
-      expect(prepareMarketplacesWithSwitch).toHaveBeenCalled();
-    });
-    test('calls hideLoader', () => {
-      expect(hideLoader).toHaveBeenCalled();
-    });
-    test('calls renderMarketplaces', () => {
-      expect(renderMarketplaces).toHaveBeenCalled();
-    });
-    test('calls enableButton', () => {
-      expect(enableButton).toHaveBeenCalled();
-    });
-    test('calls addEventListener', () => {
-      expect(addEventListener).toHaveBeenCalled();
+    describe('on error', () => {
+      beforeEach(async () => {
+        getMarketplaces.mockImplementationOnce(() => Promise.reject());
+        await settings(app);
+      });
+      test('calls showLoader', () => {
+        expect(showComponent).toHaveBeenCalledWith('loader');
+      });
+      test('calls hideApp', () => {
+        expect(hideComponent).toHaveBeenCalledWith('app');
+      });
+      test('calls hideError', () => {
+        expect(hideComponent).toHaveBeenCalledWith('error');
+      });
+      test('calls getMarketplaces', () => {
+        expect(getMarketplaces).toHaveBeenCalled();
+      });
+      test('does not call getSettings', () => {
+        expect(getSettings).not.toHaveBeenCalled();
+      });
+      test('does not call processMarketplaces', () => {
+        expect(processMarketplaces).not.toHaveBeenCalled();
+      });
+      test('does not call prepareMarketplacesWithSwitch', () => {
+        expect(prepareMarketplacesWithSwitch).not.toHaveBeenCalled();
+      });
+      test('does not call renderMarketplaces', () => {
+        expect(renderMarketplaces).not.toHaveBeenCalled();
+      });
+      test('does not call enableButton', () => {
+        expect(enableButton).not.toHaveBeenCalled();
+      });
+      test('does not call addEventListener', () => {
+        expect(addEventListener).not.toHaveBeenCalled();
+      });
+      test('doe not call showApp', () => {
+        expect(showComponent).not.toHaveBeenCalledWith('app');
+      });
+      test('calls app.emit error', () => {
+        expect(app.emit).toHaveBeenCalledWith('snackbar:error', undefined);
+      });
+      test('calls showError', () => {
+        expect(showComponent).toHaveBeenCalledWith('error');
+      });
     });
   });
 
   describe('saveSettingsData', () => {
-    beforeEach(async () => {
-      await saveSettingsData();
+    describe('app is not passed', () => {
+      beforeEach(async () => {
+        await saveSettingsData();
+      });
+      test('does not execute', () => {
+        expect(disableButton).not.toHaveBeenCalled();
+      });
     });
+    describe('on success', () => {
+      beforeEach(async () => {
+        await saveSettingsData(app);
+      });
 
-    test('calls disableButton', () => {
-      expect(disableButton).toHaveBeenCalled();
+      test('calls disableButton', () => {
+        expect(disableButton).toHaveBeenCalled();
+      });
+      test('calls getMarketplaces', () => {
+        expect(getMarketplaces).toHaveBeenCalled();
+      });
+      test('calls processCheckboxes', () => {
+        expect(processCheckboxes).toHaveBeenCalled();
+      });
+      test('calls processSelectedMarketplaces', () => {
+        expect(processSelectedMarketplaces).toHaveBeenCalled();
+      });
+      test('calls updateSettings', () => {
+        expect(updateSettings).toHaveBeenCalled();
+      });
+      test('calls app.emit message', () => {
+        expect(app.emit).toHaveBeenCalledWith('snackbar:message', 'Settings saved');
+      });
+      test('calls enableButton', () => {
+        expect(enableButton).toHaveBeenCalled();
+      });
     });
-    test('calls getMarketplaces', () => {
-      expect(getMarketplaces).toHaveBeenCalled();
-    });
-    test('calls processCheckboxes', () => {
-      expect(processCheckboxes).toHaveBeenCalled();
-    });
-    test('calls processSelectedMarketplaces', () => {
-      expect(processSelectedMarketplaces).toHaveBeenCalled();
-    });
-    test('calls updateSettings', () => {
-      expect(updateSettings).toHaveBeenCalled();
-    });
-    test('calls enableButton', () => {
-      expect(enableButton).toHaveBeenCalled();
+    describe('on error', () => {
+      beforeEach(async () => {
+        getMarketplaces.mockImplementationOnce(() => Promise.reject());
+        await saveSettingsData(app);
+      });
+
+      test('calls disableButton', () => {
+        expect(disableButton).toHaveBeenCalled();
+      });
+      test('calls getMarketplaces', () => {
+        expect(getMarketplaces).toHaveBeenCalled();
+      });
+      test('does not call processCheckboxes', () => {
+        expect(processCheckboxes).not.toHaveBeenCalled();
+      });
+      test('does not call processSelectedMarketplaces', () => {
+        expect(processSelectedMarketplaces).not.toHaveBeenCalled();
+      });
+      test('does not call updateSettings', () => {
+        expect(updateSettings).not.toHaveBeenCalled();
+      });
+      test('calls app.emit error', () => {
+        expect(app.emit).toHaveBeenCalledWith('snackbar:error', undefined);
+      });
+      test('calls enableButton', () => {
+        expect(enableButton).toHaveBeenCalled();
+      });
     });
   });
 });

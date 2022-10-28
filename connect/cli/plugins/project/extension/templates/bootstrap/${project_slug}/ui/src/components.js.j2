@@ -68,17 +68,15 @@ export const addEventListener = (id, event, callback) => {
   element.addEventListener(event, callback);
 };
 
-// render UI components - loader
-export const showLoader = (id = 'loader', appId = 'app') => {
+// render UI components - show/hide
+export const showComponent = (id) => {
+  if (!id) return;
   const element = document.getElementById(id);
-  const appElement = document.getElementById(appId);
   element.classList.remove('hidden');
-  appElement.classList.add('hidden');
 };
 
-export const hideLoader = (id = 'loader', appId = 'app') => {
+export const hideComponent = (id) => {
+  if (!id) return;
   const element = document.getElementById(id);
-  const appElement = document.getElementById(appId);
   element.classList.add('hidden');
-  appElement.classList.remove('hidden');
 };
