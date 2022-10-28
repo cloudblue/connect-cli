@@ -410,18 +410,21 @@ def _test_handler(event_template, extension_name, async_impl=False):
     async_def = ''
     pytest_asyncio = ''
     await_keyword = ''
-    client_factory_prefix = 'sync_'
+    client_mocker_prefix = ''
+    connect_client_prefix = ''
     if async_impl:
         async_def = 'async '
         pytest_asyncio = '@pytest.mark.asyncio\n'
         await_keyword = 'await '
-        client_factory_prefix = 'async_'
+        client_mocker_prefix = 'async_'
+        connect_client_prefix = 'async_'
     return event_template.format(
         extension_name=extension_name,
         async_def=async_def,
         pytest_asyncio=pytest_asyncio,
         await_keyword=await_keyword,
-        client_factory_prefix=client_factory_prefix,
+        client_mocker_prefix=client_mocker_prefix,
+        connect_client_prefix=connect_client_prefix,
     )
 
 

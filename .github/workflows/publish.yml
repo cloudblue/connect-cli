@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         submodules: true
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Install dependencies
@@ -33,7 +33,7 @@ jobs:
       run: |
         poetry run python resources/get_latest_reports.py
     - name: Extract tag name
-      uses: actions/github-script@v3
+      uses: actions/github-script@v6
       id: tag
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -69,12 +69,12 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         submodules: true
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Install dependencies
@@ -100,7 +100,7 @@ jobs:
         cp dist/*.whl resources/.
     - name: Generate pynsist config file
       run: |
-        poetry export --format requirements.txt --without-hashes --output resources/requirements.txt
+        poetry export --format constraints.txt --without-hashes --output resources/requirements.txt
         poetry run python resources/generate_pynsist_config.py
         cat resources/ccli.cfg
     - name: Build windows installer
@@ -115,7 +115,7 @@ jobs:
       run: |
         & { compress-archive -path '.\resources\build\nsis\connect-cli_${{ steps.tag.outputs.result }}_setup.exe' -destinationpath '.\connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip' }
     - name: Upload distro package to artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: windows_distro
         path: connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
@@ -130,7 +130,7 @@ jobs:
         fetch-depth: 0
         submodules: true
     - name: Extract tag name
-      uses: actions/github-script@v3
+      uses: actions/github-script@v6
       id: tag
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -149,7 +149,7 @@ jobs:
         draft: false
         prerelease: false
     - name: Download windows artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: windows_distro
         path: ./

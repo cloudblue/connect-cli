@@ -2,24 +2,8 @@
   "name": "{{ project_name }}",
   "description": "{{ description }}",
   "version": "{{ version }}",
+  "audience": {% if extension_type == 'products' %}["vendor"]{% elif extension_type == 'hub' %}["distributor", "reseller"]{% else %}{{ extension_audience|tojson }}{% endif %},
   "readme_url": "https://example.com/README.md",
-  "changelog_url": "https://example.com/CHANGELOG.md"{%- if extension_type == 'multiaccount' and 'webapp' in application_types%},
-  "icon": "googleExtensionBaseline",
-  "ui": {
-    "settings": {
-      "label": "Settings",
-      "url": "/static/settings.html"
-    },
-    "modules": {
-      "label": "Main Page",
-      "url": "/static/index.html",
-      "children": [
-        {
-          "label": "Page 1",
-          "url": "/static/page1.html"
-        }
-      ]
-    }
-  }
-  {%- endif %}
+  "changelog_url": "https://example.com/CHANGELOG.md"{% if webapp_supports_ui == 'y' %},
+  "icon": "googleExtensionBaseline"{% endif %}
 }

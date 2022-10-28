@@ -1,5 +1,6 @@
+from importlib.metadata import EntryPoint
+
 import click
-from pkg_resources import EntryPoint
 
 from connect.cli.core.plugins import load_plugins
 
@@ -20,10 +21,10 @@ def test_load_plugins(mocker):
         ],
     )
     mocker.patch(
-        'connect.cli.core.plugins.pkg_resources.iter_entry_points',
+        'connect.cli.core.plugins.iter_entry_points',
         return_value=iter([
-            EntryPoint('internal', 'connect.cli.plugins.internal'),
-            EntryPoint('external', 'external.cli.plugin'),
+            EntryPoint('internal', 'connect.cli.plugins.internal', None),
+            EntryPoint('external', 'external.cli.plugin', None),
         ]),
     )
 
@@ -46,9 +47,9 @@ def test_load_no_external(mocker):
         ],
     )
     mocker.patch(
-        'connect.cli.core.plugins.pkg_resources.iter_entry_points',
+        'connect.cli.core.plugins.iter_entry_points',
         return_value=iter([
-            EntryPoint('internal', 'connect.cli.plugins.internal'),
+            EntryPoint('internal', 'connect.cli.plugins.internal', None),
         ]),
     )
 

@@ -42,23 +42,11 @@ def bootstrap_report_project(output_dir, overwrite):
     if not overwrite and os.path.exists(project_dir):
         raise ClickException(f'The destination directory {project_dir} already exists.')
 
-    exclude = [
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-        ),
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-            'workflows',
-        ),
-        os.path.join(
-            answers['project_slug'],
-            '.github',
-            'workflows',
-            'build.yml.j2',
-        ),
-    ] if answers['use_github_actions'] == 'n' else None
+    exclude = []
+
+    if answers['use_github_actions'] == 'n':
+        exclude.extend(['.github', '.github/**/*'])
+
     answers['cli_version'] = get_version()
     renderer = BoilerplateRenderer(
         context=answers,

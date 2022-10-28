@@ -4,6 +4,7 @@
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 import os
 from collections import OrderedDict
+from importlib.metadata import entry_points
 
 from packaging.version import InvalidVersion, Version
 import click
@@ -93,3 +94,15 @@ def field_to_check_mark(predicate, false_value=''):
     return (
         '\u2713' if predicate else false_value
     )
+
+
+def iter_entry_points(group, name=None):
+    group_entrypoints = entry_points().get(group)
+    if not group_entrypoints:
+        return
+    for ep in group_entrypoints:
+        if name:
+            if ep.name == name:
+                yield ep
+        else:
+            yield ep

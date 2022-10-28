@@ -3,97 +3,172 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
-import json
+from connect.client import R
 
-from fastapi import Depends, Request
-
-from connect.client import ConnectClient
-from connect.eaas.core.testing import WebAppTestClient
-from connect.eaas.core.decorators import router, web_app
-from connect.eaas.core.extension import WebAppExtension
-from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
-
-from {{ package_name }}.webapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension
+from {{ package_name }}.schemas import Marketplace, Settings
+from {{ package_name }}.webapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication
 
 
-def test_get_settings(response, mocker):
-    mocker.patch(
-        'connect.eaas.core.extension.WebAppExtension.get_static_root',
-        return_value='./',
+def test_retrieve_settings_empty(test_client_factory):
+    installation = {
+        'id': 'EIN-000',
+        'settings': {},
+    }
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+
+    response = client.get('/api/settings', installation=installation)
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data['marketplaces'] == []
+
+
+def test_retrieve_settings(test_client_factory):
+    marketplaces = [
+        {
+            'id': 'MP-000',
+            'name': 'MP 000',
+            'description': 'MP 000 description',
+            'icon': 'mp_000.png',
+        },
+    ]
+
+    installation = {
+        'id': 'EIN-000',
+        'settings': {
+            'marketplaces': marketplaces,
+        },
+    }
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+
+    response = client.get('/api/settings', installation=installation)
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data['marketplaces'] == marketplaces
+
+
+def test_save_settings(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    settings = Settings(
+        marketplaces=[
+            Marketplace(id='MP-000', name='My MP', description='My MP description', icon='/mp.png'),
+        ],
     )
-    mocker.patch(
-        'connect.eaas.core.testing.FastAPI.mount',
-    )
 
-    response.add(
-        'GET',
-        'https://localhost/public/v1/devops/installations/installation_id',
-        json={'id': 'EIN-000-000'},
-        status=200,
-    )
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
 
-    client = WebAppTestClient(
-        {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension,
-        default_headers={
-            'X-Connect-Api-Gateway-Url': 'https://localhost/public/v1',
-            'X-Connect-User-Agent': 'user-agent',
+    client_mocker('devops').installations['EIN-000'].update(
+        return_value={},
+        match_body={
+            'settings': settings.dict(),
         },
     )
 
-    res = client.get(
-        '/settings',
-        headers={
-            'X-Connect-Installation-Api-Key': 'installation_api_key',
-            'X-Connect-Installation-Id': 'installation_id',
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+
+    response = client.post('/api/settings', json=settings.dict())
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data == settings.dict()
+
+
+def test_list_marketplaces(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    marketplaces = [
+        {
+            'id': 'MP-000',
+            'name': 'MP 000',
+            'description': 'MP 000 description',
+            'icon': 'mp_000.png',
         },
-    )
-    data = res.json()
-
-    assert res.status_code == 200
-    assert data == {'id': 'EIN-000-000'}
-
-
-def test_update_settings(response):
-    response.add(
-        'GET',
-        'https://localhost/public/v1/devops/installations/installation_id',
-        json={'id': 'EIN-000-000'},
-        status=200,
-    )
-    response.add(
-        'PUT',
-        'https://localhost/public/v1/devops/installations/EIN-000-000',
-        json={'id': 'EIN-000-000'},
-        status=200,
-    )
-    response.add(
-        'GET',
-        'https://localhost/public/v1/devops/installations/EIN-000-000',
-        json={'id': 'EIN-000-000', 'settings': {'attr': 'new_value'}},
-        status=200,
-    )
-
-    client = WebAppTestClient(
-        {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebAppExtension,
-        default_headers={
-            'X-Connect-Api-Gateway-Url': 'https://localhost/public/v1',
-            'X-Connect-User-Agent': 'user-agent',
+        {
+            'id': 'MP-001',
+            'name': 'MP 001',
+            'description': 'MP 001 description',
+            'icon': 'mp_001.png',
         },
+    ]
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
+
+    client_mocker.marketplaces.all().mock(return_value=marketplaces)
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+    response = client.get('/api/marketplaces')
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data == marketplaces
+
+
+def test_list_marketplaces_api_error(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
+
+    error_data = {
+        'error_code': 'AUTH_001',
+        'errors': [
+            'API request is unauthorized.',
+        ],
+    }
+
+    client_mocker.marketplaces.all().mock(
+        status_code=401,
+        return_value=error_data,
     )
-    res = client.post(
-        '/settings',
-        headers={
-            'X-Connect-Installation-Api-Key': 'installation_api_key',
-            'X-Connect-Installation-Id': 'installation_id',
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+    response = client.get('/api/marketplaces')
+
+    assert response.status_code == 401
+    assert response.json() == error_data
+
+
+def test_generate_chart_data(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    marketplaces = [
+        {
+            'id': 'MP-000',
+            'name': 'MP 000',
+            'description': 'MP 000 description',
+            'icon': 'mp_000.png',
         },
-        data=json.dumps({'attr': 'new_value'}).encode('utf-8'),
-    )
-    data = res.json()
+        {
+            'id': 'MP-001',
+            'name': 'MP 001',
+            'description': 'MP 001 description',
+            'icon': 'mp_001.png',
+        },
+    ]
 
-    assert res.status_code == 200
-    assert data == {'id': 'EIN-000-000', 'settings': {'attr': 'new_value'}}
+    installation = {
+        'id': 'EIN-000',
+        'settings': {
+            'marketplaces': marketplaces,
+        },
+    }
 
-    assert len(response.calls) == 3
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
+    for idx, mp in enumerate(marketplaces):
+        client_mocker('subscriptions').assets.filter(
+            R().marketplace.id.eq(mp['id']) & R().status.eq('active'),
+        ).count(return_value=idx)
 
-    payload = json.loads(response.calls[1].request.body)
-    assert payload == {'settings': {'attr': 'new_value'}}
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+    response = client.get('/api/chart', installation=installation)
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        'type': 'bar',
+        'data': {
+            'labels': ['MP-000', 'MP-001'],
+            'datasets': [
+                {
+                    'label': 'Subscriptions',
+                    'data': [0, 1],
+                },
+            ],
+        },
+    }

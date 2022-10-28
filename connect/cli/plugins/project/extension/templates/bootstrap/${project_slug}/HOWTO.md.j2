@@ -6,7 +6,14 @@ You may open your favourite IDE and start working with your project, please note
 You may modify at any time the credentials used to authenticate to connect modifying the file *{{ project_slug }}/.{{ project_slug }}_dev.env*.
 
 
-In order to start your extension as a standalone docker container you can access the project folder and run:
+
+In order to start your extension as a standalone docker container first of all you need to build the docker image for your project. To do that run:
+
+```sh
+$ docker compose build
+```
+
+Once your container is built, you can access the project folder and run:
 
 ```sh
 $ docker compose up {{ project_slug }}_dev
@@ -14,184 +21,21 @@ $ docker compose up {{ project_slug }}_dev
 
 > please note that in this way you will run the docker container and if you do changes on the code you will need to stop it and start it again.
 
+
 If you would like to develop and test at the same time, we recommend you run your project using the command:
 
 ```sh
 $ docker compose up {{ project_slug }}_bash
 ```
 
-Once you get the interactive shell, you can run your extension using the command `cextrun`, stopping the process (using ctrl+c) and start it back will reload the changes.
+Once you get the interactive shell an help banner will be displayed to inform you about the included tools that can help you with the development of your extension.
+
 
 Additionally, a basic boilerplate for writing unit tests has been created, you can run the tests using:
 
 ```sh
 $ docker compose up {{ project_slug }}_test
 ```
-
-## Types of extensions
-
-You can choose between two types of extension - regular (single tenant) extension or multi tenant one.
-Based on current active account you will be suggested a Fulfillment Automation or Hub Integration extension and MultiAccount one.
-
-## MultiAccount extensions
-
-If you have chosen MultiAccount type, then you to select what types of applications will be included in it. At least one application must be selected.
-
-### Events
-
-Events application is a regular extension in which you need to specify event handlers (described lower).
-
-### Web app
-
-Web application is a simple API based on FastAPI that can be provided with some interface.
-
-If you decided to use UI, you need to place all static files inside `static_root` directory.
-
-In `extension.json` you may specify icon to display in menu and settings for static files. Icon must be taken from [CloudBlue Connect material-svg library](https://github.com/cloudblue/material-svg), by default will be set puzzle icon.
-
-```json
-
-{
-  'icon': 'googleExtensionBaseline',
-  'ui': {
-    'settings': {
-      'label': 'Settings',
-      'url': '/static/settings.html'
-    },
-    'modules': {
-      'label': 'Main Page',
-      'url': '/static/index.html',
-      'children': [
-        {
-          'label': 'Page 1',
-          'url': '/static/page1.html'
-        }
-      ]
-    }
-  }
-}
-```
-
-To use Web application make sure, that Extension class is wrapped in `@web_app(router)` and define all desired endpoints based on `fastapi_utils` Class Based View approach.
-
-```python
-
-@web_app(router)
-class MyAwesomeProjectWebAppExtension(WebAppExtension):
-    @router.get('/settings')
-    def retrieve_settings(
-        self,
-        installation: dict = Depends(get_installation),
-    ):
-        return installation
-```
-
-### Anvil
-
-Here you may declare `@anvil_key_variable` - name of the variable containing API key for Anvil application.
-
-```python
-
-@anvil_key_variable('ANVIL_API_KEY')
-class MyAnvilExtension(AnvilExtension):
-    pass
-```
-
-And a set of `@anvil_callable` to interact with application.
-
-```python
-
-class MyAnvilExtension(AnvilExtension):
-
-    @anvil_callable()
-    def my_anvil_callable(self, arg1):
-        pass
-```
-
-## Environment variables
-
-You may declare environment variables used by the extension in the `events.py` like in the following example:
-
-```python
-
-@variables([
-    {
-        'name': 'VAR_NAME_1',
-        'initial_value': 'VAR_VALUE_1',
-        'secure': False,
-    },
-    {
-        'name': 'VAR_NAME_N',
-        'initial_value': 'VAR_VALUE_N',
-        'secure': True,
-    },
-])
-class MyAwesomeProjectExtension(Extension):
-	pass
-```
-
-
-* *Secure variables*:
-You can add secure variables just by setting the attribute `secure` to **true**. These sorts of variables are secret, then the value is stored encrypted and never displayed.
-* *Standard variables*:
-They are standard ones, not storing sensible data.
-
-
-## Event handlers
-
-Event handlers are methods of the extension class decorated with the `event`
-decorator with the following signature:
-
-```python
-@event(
-    'usage_file_request_processing',
-    statuses=[
-        'draft', 'uploading', 'uploaded',
-        'invalid', 'processing', 'processed',
-        'ready', 'rejected', 'pending',
-        'accepted', 'closed', 'deleted',
-    ],
-)
-def handle_usage_event(self, request):
-	pass
-
-```
-
-The first parameter of the `event` decorator is the unique event identifier (sometimes referred to as event type).
-
-The statuses keyword argument accepts a list of statuses of the object that generates the event in which the extension is interested.
-
-The argument of the handler method will receive the object that triggered the event.
-
-You can get a list of all available events through the [CloudBlue Connect public API](https://connect.cloudblue.com/community/developers/api/openapi/#operations-tag-DevOps). 
-
-Events are grouped into two categories: *background* and *interactive*.
-
-Interactive events are those events that are triggered by an HTTP call for example the Draft Purchase Request validation.
-
-Background events are triggered when a domain object is modified.
-
-Interactive event handlers must return an `InteractiveResponse` object while
-background event handlers must return a `BackgroundResponse`.
-
-
-## Schedulables
-
-Schedulables are methods of the extension class whose invocation can be scheduled. 
-
-A schedulable method will have the following signature:
-
-```python
-
-@schedulable('Schedulable method', 'It can be used to test DevOps scheduler.')
-def execute_scheduled_processing(self, schedule):
-	pass
-```
-
-The first parameter of the `schedulable` decorator is the descriptive name of such method, the second is a detailed description.
-
-The argument of the schedulable method will receive the schedule object that triggered its execution. 
-
 
 
 ## Community Resources
@@ -202,3 +46,4 @@ Please take note of these links in order to get additional information:
 * https://connect.cloudblue.com/community/modules/devops/
 * https://connect.cloudblue.com/community/sdk/python-openapi-client/
 * https://connect-openapi-client.readthedocs.io/en/latest/
+* https://connect-eaas-core.readthedocs.io/en/latest/
