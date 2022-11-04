@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from interrogatio.validators import RequiredValidator
 
 from connect.cli.plugins.project.extension.utils import (
+    check_eventsapp_feature_not_selected,
     check_extension_events_applicable,
     check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
@@ -292,6 +293,7 @@ def get_questions(config, definitions):
                 ('n', 'No'),
                 ('y', 'Yes'),
             ],
+            'disabled': check_eventsapp_feature_not_selected,
             'formatting_template': '${label}',
         },
         {

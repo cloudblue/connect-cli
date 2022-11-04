@@ -78,6 +78,10 @@ def check_webapp_feature_not_selected(context):
     return 'webapp' not in context.get('application_types', [])
 
 
+def check_eventsapp_feature_not_selected(context):
+    return 'events' not in context.get('application_types', [])
+
+
 def initialize_git_repository(tmp_dir, context):
     project_dir = os.path.join(tmp_dir, context['project_slug'])
     hooks_dir = os.path.join(project_dir, '.git', 'hooks')
@@ -93,6 +97,11 @@ def initialize_git_repository(tmp_dir, context):
     if context.get('webapp_supports_ui') == 'y':
         pre_commit_file = Path(os.path.join(hooks_dir, 'pre-commit'))
         with open(pre_commit_file, 'w') as f:
-            f.write(PRE_COMMIT_HOOK.format(package_name=context['package_name']))
+            f.write(
+                PRE_COMMIT_HOOK.format(
+                    project_slug=context['project_slug'],
+                    package_name=context['package_name'],
+                ),
+            )
 
         pre_commit_file.chmod(0o755)

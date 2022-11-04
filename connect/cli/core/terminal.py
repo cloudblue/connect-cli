@@ -185,7 +185,9 @@ class Console(_Console):
         self.print()
 
     def markdown(self, md):
-        self.print(render(md), soft_wrap=True)
+        rendered = render(md)
+        for line in rendered.splitlines():
+            self.print(line, soft_wrap=True)
 
     def header(
         self,

@@ -88,56 +88,13 @@ VALIDATION_RESULTS_HEADER = """
 """
 
 
-PRE_COMMIT_HOOK = """#!/usr/bin/env python
-import subprocess
-import sys
+PRE_COMMIT_HOOK = """#! /bin/sh
 
+set -e
 
-print('\\n\\033[0;34m\\u2022 Building static assets [ ]\\033[0m', end='')
-
-result = subprocess.run(
-    'npm run build',
-    shell=True,
-    capture_output=True,
-)
-
-if result.returncode != 0:
-    print('\\r\\033[0;34m\\u2022 Building static assets [\\033[0;31m\\u2717\\033[0;34m]\\033[0m\\n')
-    if result.stdout:
-        print(result.stdout.decode())
-    if result.stderr:
-        print(result.stderr.decode())
-    sys.exit(1)
-
-
-print('\\r\\033[0;34m\\u2022 Building static assets [\\033[0;32m\\u2713\\033[0;34m]\\033[0m')
-
-print('\\033[0;34m\\u2022 Check untracked static assets [ ]\\033[0m', end='')
-
-result = subprocess.run(
-    'git status --porcelain {package_name}/static',
-    capture_output=True,
-    shell=True,
-)
-
-if result.returncode != 0:
-    print('\\r\\033[0;34m\\u2022 Check untracked static assets [\\033[0;31m\\u2717\\033[0;34m]\\033[0m\\n')
-    if result.stdout:
-        print(result.stdout.decode())
-    if result.stderr:
-        print(result.stderr.decode())
-    sys.exit(1)
-
-out = result.stdout.decode()
-untracked = [line[3:] for line in out.splitlines() if line.startswith('??')]
-
-if untracked:
-    print('\\r\\033[0;34m\\u2022 Check untracked static assets [\\033[0;31m\\u2717\\033[0;34m]\\033[0m\\n')
-    print('\\033[0;31mUntracked static assets:\\033[0m')
-    for line in untracked:
-        print('\\t' + line)
-    print('')
-    sys.exit(1)
-
-print('\\r\\033[0;34m\\u2022 Check untracked static assets [\\033[0;32m\\u2713\\033[0;34m]\\033[0m\\n')
+if [ -f /usr/local/bin/extension-check-static ]; then
+    exec /usr/local/bin/extension-check-static {package_name}
+else
+    exec docker-compose run -T {project_slug}_bash /usr/local/bin/extension-check-static {package_name}
+fi
 """

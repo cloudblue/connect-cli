@@ -113,7 +113,6 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         post_render=initialize_git_repository,
     )
     renderer.render()
-
     console.markdown(open(f'{project_dir}/HOWTO.md', 'r').read())
 
 
