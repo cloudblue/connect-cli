@@ -3,6 +3,7 @@ from click import ClickException
 
 from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
 from connect.cli.plugins.project.extension.utils import (
+    check_eventsapp_feature_not_selected,
     check_extension_events_applicable,
     check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
@@ -169,3 +170,14 @@ def test_check_extension_interactive_events_applicable_true():
 )
 def test_check_webapp_feature_not_selected(app_types, expected):
     assert check_webapp_feature_not_selected({'application_types': app_types}) is expected
+
+
+@pytest.mark.parametrize(
+    ('app_types', 'expected'),
+    (
+        (['events'], False),
+        ([], True),
+    ),
+)
+def test_check_eventsapp_feature_not_selected(app_types, expected):
+    assert check_eventsapp_feature_not_selected({'application_types': app_types}) is expected
