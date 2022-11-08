@@ -1543,7 +1543,7 @@ test = ["pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4"
-content-hash = "f11c6b73bc28fd1743a76f6e1f6ea8b754a81e50f73b1876806a751d6f87694c"
+content-hash = "30f27957c77ad755e0a8e056a862144f4e36bacae876c6914e455f1436eaf8e2"
 
 [metadata.files]
 anvil-uplink = [
