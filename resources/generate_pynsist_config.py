@@ -111,7 +111,7 @@ def write_conf(wheels):
         'icon': 'connect.ico',
     }
     config['Python'] = {
-        'version': '3.8.10',
+        'version': '3.10.7',
         'bitness': '64',
     }
     config['Include'] = {
