@@ -13,6 +13,8 @@ import toml
 
 RES_DIR = os.path.abspath(os.path.dirname(__file__))
 
+EXCLUDED_PACKAGES = ['uvloop']
+
 
 @contextlib.contextmanager
 def build_dir(dir):
@@ -41,6 +43,8 @@ def get_wheels_and_sdists():  # noqa: CCR001
             else:
                 package_with_ver = line.replace('\n', '')
             package, version = package_with_ver.split('==')
+            if package in EXCLUDED_PACKAGES:
+                continue
             pkg_info = get_package_info(package)
             required_version = pkg_info['releases'][version.strip()]
             sdist_url = None
