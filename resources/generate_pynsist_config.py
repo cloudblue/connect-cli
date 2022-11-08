@@ -13,7 +13,7 @@ import toml
 
 RES_DIR = os.path.abspath(os.path.dirname(__file__))
 
-EXCLUDED_PACKAGES = ['uvloop', 'backports.zoneinfo']
+EXCLUDED_PACKAGES = ['uvloop', 'backports-zoneinfo']
 
 
 @contextlib.contextmanager
