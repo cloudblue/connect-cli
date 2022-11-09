@@ -208,7 +208,7 @@ test = ["flake8 (==3.7.8)", "hypothesis (==3.55.3)"]
 
 [[package]]
 name = "connect-eaas-core"
-version = "26.11"
+version = "26.12"
 description = "Connect Eaas Core"
 category = "main"
 optional = false
@@ -1543,7 +1543,7 @@ test = ["pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4"
-content-hash = "30f27957c77ad755e0a8e056a862144f4e36bacae876c6914e455f1436eaf8e2"
+content-hash = "a35c932234349255f9d048ca3cfdf58fd2bfc9aadaed88b6f575a13c0bcff226"
 
 [metadata.files]
 anvil-uplink = [
@@ -1789,8 +1789,8 @@ commonmark = [
     {file = "commonmark-0.9.1.tar.gz", hash = "sha256:452f9dc859be7f06631ddcb328b6919c67984aca654e5fefb3914d54691aed60"},
 ]
 connect-eaas-core = [
-    {file = "connect_eaas_core-26.11-py3-none-any.whl", hash = "sha256:cb0e7ae1633c93b5e94a6ba9c30bc0626b0a61518e38947167d01cd3f91c56b3"},
-    {file = "connect_eaas_core-26.11.tar.gz", hash = "sha256:8707139c21d3b8963d742cb5bd7f955cc5050cf266e9346f14ab52dd50b20383"},
+    {file = "connect_eaas_core-26.12-py3-none-any.whl", hash = "sha256:2aefec1c04a2b9f355949735b41c77c1234a25e59221078be78ce34001f9a3cc"},
+    {file = "connect_eaas_core-26.12.tar.gz", hash = "sha256:c7fdd5db900fca3aa2f224a91184264ed0b6d8c3436cbcd09693b4d0dd61103f"},
 ]
 connect-markdown-renderer = [
     {file = "connect-markdown-renderer-2.0.1.tar.gz", hash = "sha256:fbaefff195a6c347a7f89e75a09e78f6be35c903d72a2766c8f263ca75758757"},
