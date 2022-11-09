@@ -33,7 +33,7 @@ trio = ["trio (>=0.16,<0.22)"]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -543,7 +543,7 @@ python-dateutil = ">=2.7"
 name = "fs"
 version = "2.4.16"
 description = "Python's filesystem abstraction layer"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1543,7 +1543,7 @@ test = ["pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4"
-content-hash = "a35c932234349255f9d048ca3cfdf58fd2bfc9aadaed88b6f575a13c0bcff226"
+content-hash = "2ae8f5294cc4942e454b84a5d349c8cd070f17c3a31af35a0c37f7b1815001e0"
 
 [metadata.files]
 anvil-uplink = [
