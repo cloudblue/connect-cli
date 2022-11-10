@@ -7,7 +7,10 @@ class Marketplace(BaseModel):
     id: str
     name: str
     description: str
-    icon: str
+    icon: str = (
+        'https://unpkg.com/@cloudblueconnect'
+        '/material-svg@latest/icons/google/language/baseline.svg'
+    )
 
 
 class Settings(BaseModel):
