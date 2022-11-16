@@ -41,6 +41,18 @@ def get_extension_types(config):
     return extension_types
 
 
+def get_application_types(context):
+    application_types = [
+        ('events', 'Events Processing'),
+        ('anvil', 'Anvil Application'),
+    ]
+    if context['extension_type'] == 'multiaccount':
+        application_types.append(
+            ('webapp', 'Web Application'),
+        )
+    return application_types
+
+
 def get_background_events(definitions, context):
     return [
         (event['type'], f'{event["group"]}: {event["name"]}')
@@ -55,23 +67,41 @@ def get_interactive_events(definitions, context):
     ]
 
 
+def get_available_event_types(definitions, context):
+    event_types = [
+        ('background', 'Background Events'),
+    ]
+
+    if check_extension_interactive_events_applicable(definitions, context):
+        event_types.append(
+            ('interactive', 'Interactive Events'),
+        )
+
+    event_types.append(
+        ('scheduled', 'Scheduled Event Example'),
+    )
+
+    return event_types
+
+
 def check_extension_not_multi_account(context):
     return context.get('extension_type') != 'multiaccount'
 
 
 def check_extension_events_applicable(context):
-    if context.get('extension_type') != 'multiaccount':
-        return False
-
     return 'events' not in context.get('application_types', [])
+
+
+def check_event_type_applicable(event_type, context):
+    return event_type not in context.get('event_types', [])
 
 
 def check_extension_interactive_events_applicable(definitions, context):
     if context.get('extension_type') == 'multiaccount':
-        if not definitions[context['extension_type']].get('interactive'):
+        if definitions[context['extension_type']].get('interactive'):
             return True
-
-    return False
+    else:
+        return 'events' in context.get('application_types', [])
 
 
 def check_webapp_feature_not_selected(context):

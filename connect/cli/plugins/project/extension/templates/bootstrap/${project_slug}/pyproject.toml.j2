@@ -10,13 +10,13 @@ packages = [
 readme = "./README.md"
 
 [tool.poetry.plugins."connect.eaas.ext"]
-{%- if extension_type != 'multiaccount' or extension_type == 'multiaccount' and 'events' in application_types %}
+{%- if 'events' in application_types %}
 "eventsapp" = "{{ package_name }}.events:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}EventsApplication"
 {%- endif %}
-{%- if extension_type == 'multiaccount' and 'webapp' in application_types %}
+{%- if 'webapp' in application_types %}
 "webapp" = "{{ package_name }}.webapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication"
 {%- endif %}
-{%- if extension_type == 'multiaccount' and 'anvil' in application_types %}
+{%- if 'anvil' in application_types %}
 "anvilapp" = "{{ package_name }}.anvil:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilApplication"
 {%- endif %}
 
