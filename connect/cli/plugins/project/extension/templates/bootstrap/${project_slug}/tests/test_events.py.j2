@@ -44,7 +44,7 @@ from {{ package_name }}.events import {{ project_slug|replace("_", " ")|title|re
 
 {% endfor -%}
 
-{% if include_schedules_example == 'y' -%}
+{% if 'scheduled' in event_types -%}
 {% if use_asyncio == 'y' %}
 @pytest.mark.asyncio
 {%- endif %}

@@ -8,6 +8,8 @@ from connect.cli.plugins.project.extension.utils import (
     check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
     check_webapp_feature_not_selected,
+    get_application_types,
+    get_available_event_types,
     get_background_events,
     get_event_definitions,
     get_interactive_events,
@@ -124,7 +126,7 @@ def test_check_extension_not_multi_account():
 
 
 def test_check_extension_events_applicable_false():
-    context = {'extension_type': 'products'}
+    context = {'extension_type': 'products', 'application_types': ['events']}
 
     assert check_extension_events_applicable(context) is False
 
@@ -135,21 +137,12 @@ def test_check_extension_events_applicable_true():
     assert check_extension_events_applicable(context) is True
 
 
-def test_check_extension_interactive_events_applicable_false():
-    context = {'extension_type': 'products'}
-    definitions = {
-        'multiaccount': {
-            'background': [
-                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
-                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
-            ],
-        },
+def test_check_extension_interactive_events_applicable_products():
+    context = {
+        'extension_type': 'products',
+        'event_types': ['background', 'interactive'],
+        'application_types': ['events'],
     }
-    assert check_extension_interactive_events_applicable(definitions, context) is False
-
-
-def test_check_extension_interactive_events_applicable_true():
-    context = {'extension_type': 'multiaccount', 'application_types': ['anvil']}
     definitions = {
         'multiaccount': {
             'background': [
@@ -159,6 +152,53 @@ def test_check_extension_interactive_events_applicable_true():
         },
     }
     assert check_extension_interactive_events_applicable(definitions, context) is True
+
+
+def test_get_available_event_types_full():
+    context = {
+        'extension_type': 'multiaccount',
+        'event_types': ['interactive'],
+        'application_types': ['anvil'],
+    }
+    definitions = {
+        'multiaccount': {
+            'background': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+            'interactive': [
+                {'type': 'Type3', 'group': 'Group3', 'name': 'Name3'},
+            ],
+        },
+    }
+
+    event_types = get_available_event_types(definitions, context)
+    assert len(event_types) == 3
+    assert ('background', 'Background Events') in event_types
+    assert ('interactive', 'Interactive Events') in event_types
+    assert ('scheduled', 'Scheduled Event Example') in event_types
+
+
+def test_get_available_event_types_full_no_interactive():
+    context = {
+        'extension_type': 'multiaccount',
+        'event_types': ['background', 'interactive'],
+        'application_types': ['anvil'],
+    }
+    definitions = {
+        'multiaccount': {
+            'background': [
+                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
+                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
+            ],
+        },
+    }
+
+    res = get_available_event_types(definitions, context)
+    assert len(res) == 2
+
+    assert ('background', 'Background Events') in res
+    assert ('scheduled', 'Scheduled Event Example') in res
 
 
 @pytest.mark.parametrize(
@@ -181,3 +221,17 @@ def test_check_webapp_feature_not_selected(app_types, expected):
 )
 def test_check_eventsapp_feature_not_selected(app_types, expected):
     assert check_eventsapp_feature_not_selected({'application_types': app_types}) is expected
+
+
+def test_get_application_types():
+    context = {'extension_type': 'products'}
+    single_tenant = get_application_types(context)
+
+    context['extension_type'] = 'multiaccount'
+    multi_tenant = get_application_types(context)
+
+    assert len(single_tenant) == 2
+    assert ('webapp', 'Web Application') not in single_tenant
+
+    assert len(multi_tenant) == 3
+    assert ('webapp', 'Web Application') in multi_tenant

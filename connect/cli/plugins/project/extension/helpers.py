@@ -80,8 +80,6 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         ])
 
     application_types = answers.get('application_types', [])
-    if answers['extension_type'] != 'multiaccount':
-        application_types.append('events')
 
     for app_type in ['anvil', 'events', 'webapp']:
         if app_type not in application_types:

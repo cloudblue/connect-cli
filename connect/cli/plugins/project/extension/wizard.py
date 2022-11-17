@@ -4,11 +4,12 @@ from urllib.parse import urlparse
 from interrogatio.validators import RequiredValidator
 
 from connect.cli.plugins.project.extension.utils import (
+    check_event_type_applicable,
     check_eventsapp_feature_not_selected,
-    check_extension_events_applicable,
-    check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
     check_webapp_feature_not_selected,
+    get_application_types,
+    get_available_event_types,
     get_background_events,
     get_extension_types,
     get_interactive_events,
@@ -58,19 +59,16 @@ def get_summary(data):  # pragma: no cover
 """
         extension += f"""    <b>Features:</b> {value('application_types', formatted=True)}
 """
+
+    event_answers = f"""    <b>Events:</b> {value('event_types', formatted=True)}
+"""
+
     if 'webapp' in value('application_types'):
         extension += f"""    <b>UI support:</b> {value('webapp_supports_ui', formatted=True)}
 """
 
-    event_answers = ''
-    for category in ['background', 'interactive']:
-        event_answers += f"""<b><blue>{value('extension_type', formatted=True)} {category} events:</blue></b>
-    {value(category, formatted=True)}
-"""
-
     examples = f"""<b><blue>Examples</blue></b>
-    <b>Schedulables:</b> {value('include_schedules_example', formatted=True)} - """
-    examples += f"""<b>Variables:</b> {value('include_variables_example', formatted=True)}"""
+    <b>Variables:</b> {value('include_variables_example', formatted=True)}"""
 
     return common + extension + event_answers + examples
 
@@ -102,6 +100,34 @@ def get_questions(config, definitions):
             'validators': (RequiredValidator(message='Please, provide a description.'),),
         },
         {
+            'name': 'version',
+            'label': 'Project: version',
+            'type': 'input',
+            'description': 'Introduce a version identifier for your Extension:',
+            'default': '0.1.0',
+            'validators': (RequiredValidator(message='Please, provide a version.'),),
+        },
+        {
+            'name': 'author',
+            'label': 'Project: author',
+            'type': 'input',
+            'description': 'Enter the name of the Extension author:',
+            'default': 'Globex Corporation',
+            'validators': (RequiredValidator(message='Please, provide an author name.'),),
+        },
+        {
+            'name': 'license',
+            'label': 'Project: license',
+            'type': 'selectone',
+            'description': 'Choose an Open Source license for your Extension:',
+            'values': [
+                ('Apache Software License 2.0', 'Apache Software License 2.0'),
+                ('MIT', 'MIT'),
+                ('BSD', 'BSD'),
+            ],
+            'formatting_template': '${label}',
+        },
+        {
             'name': 'package_name',
             'label': 'Project: package',
             'type': 'input',
@@ -127,34 +153,6 @@ def get_questions(config, definitions):
             'formatting_template': '${label}',
         },
         {
-            'name': 'author',
-            'label': 'Project: author',
-            'type': 'input',
-            'description': 'Enter the name of the Extension author:',
-            'default': 'Globex Corporation',
-            'validators': (RequiredValidator(message='Please, provide an author name.'),),
-        },
-        {
-            'name': 'version',
-            'label': 'Project: version',
-            'type': 'input',
-            'description': 'Introduce a version identifier for your Extension:',
-            'default': '0.1.0',
-            'validators': (RequiredValidator(message='Please, provide a version.'),),
-        },
-        {
-            'name': 'license',
-            'label': 'Project: license',
-            'type': 'selectone',
-            'description': 'Choose an Open Source license for your Extension:',
-            'values': [
-                ('Apache Software License 2.0', 'Apache Software License 2.0'),
-                ('MIT', 'MIT'),
-                ('BSD', 'BSD'),
-            ],
-            'formatting_template': '${label}',
-        },
-        {
             'name': 'use_github_actions',
             'label': 'Project: CI',
             'type': 'selectone',
@@ -171,6 +169,14 @@ def get_questions(config, definitions):
     ]
 
     environment = [
+        {
+            'name': 'server_address',
+            'label': 'Config: API hostname',
+            'type': 'input',
+            'description': 'Connect API hostname: ',
+            'default': urlparse(config.active.endpoint).netloc,
+            'validators': (RequiredValidator(message='Please, provide the API hostname.'),),
+        },
         {
             'name': 'api_key',
             'label': 'Config: API key',
@@ -193,14 +199,6 @@ def get_questions(config, definitions):
                 'See: https://connect.cloudblue.com/community/modules/devops/user-interface/#Service_Details'
             ),
             'validators': (RequiredValidator(message='Please, provide a DevOps environment ID.'),),
-        },
-        {
-            'name': 'server_address',
-            'label': 'Config: API hostname',
-            'type': 'input',
-            'description': 'Connect API hostname: ',
-            'default': urlparse(config.active.endpoint).netloc,
-            'validators': (RequiredValidator(message='Please, provide the API hostname.'),),
         },
     ]
 
@@ -232,13 +230,18 @@ def get_questions(config, definitions):
             'label': 'Extension: Features',
             'type': 'selectmany',
             'description': 'Which features do you want to support in your extension: ',
-            'values': [
-                ('events', 'Events Processing'),
-                ('webapp', 'Web Application'),
-                ('anvil', 'Anvil Application'),
-            ],
+            'values': get_application_types,
             'formatting_template': '${label}',
-            'disabled': check_extension_not_multi_account,
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+        },
+        {
+            'name': 'event_types',
+            'label': 'Extension: Events type',
+            'type': 'selectmany',
+            'description': 'Which types of event do you want to support in your extension: ',
+            'values': partial(get_available_event_types, definitions),
+            'formatting_template': '${label}',
+            'disabled': check_eventsapp_feature_not_selected,
             'validators': (RequiredValidator(message='Please, select at least one option.'),),
         },
         {
@@ -266,7 +269,7 @@ def get_questions(config, definitions):
             ),
             'values': partial(get_background_events, definitions),
             'formatting_template': '${label}',
-            'disabled': check_extension_events_applicable,
+            'disabled': partial(check_event_type_applicable, 'background'),
             'validators': (RequiredValidator(message='Please, select at least one option.'),),
         },
         {
@@ -278,24 +281,13 @@ def get_questions(config, definitions):
                 'events do you want your Extension to process?'
             ),
             'values': partial(get_interactive_events, definitions),
-            'disabled': partial(check_extension_interactive_events_applicable, definitions),
+            'disabled': partial(check_event_type_applicable, 'interactive'),
             'formatting_template': '${label}',
+            'validators': (RequiredValidator(message='Please, select at least one option.'),),
         },
     ]
 
     examples = [
-        {
-            'name': 'include_schedules_example',
-            'label': 'Examples: schedulables',
-            'type': 'selectone',
-            'description': 'Do you want to include an example of schedulable method ? ',
-            'values': [
-                ('n', 'No'),
-                ('y', 'Yes'),
-            ],
-            'disabled': check_eventsapp_feature_not_selected,
-            'formatting_template': '${label}',
-        },
         {
             'name': 'include_variables_example',
             'label': 'Examples: variables',

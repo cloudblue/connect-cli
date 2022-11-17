@@ -69,6 +69,8 @@ def test_bootstrap_extension_project_background(
             'project_name': faker.name(),
             'project_slug': slugify(faker.name()),
             'extension_type': 'products',
+            'application_types': ['events'],
+            'event_types': ['background'],
             'description': 'desc',
             'package_name': slugify(faker.name()),
             'author': 'connect',
@@ -76,13 +78,14 @@ def test_bootstrap_extension_project_background(
             'license': 'Apache',
             'use_github_actions': 'y' if with_github_actions else 'n',
             'use_asyncio': 'y' if async_impl else 'n',
-            'include_schedules_example': 'y' if with_schedulable else 'n',
             'include_variables_example': 'y' if with_variables else 'n',
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
             'background': ['sample_background_event'],
         }
+        if with_schedulable:
+            data['event_types'].append('scheduled')
 
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.dialogus',
@@ -227,6 +230,8 @@ def test_bootstrap_extension_project_interactive(
             'project_name': faker.name(),
             'project_slug': slugify(faker.name()),
             'extension_type': 'products',
+            'application_types': ['events'],
+            'event_types': ['interactive'],
             'description': 'desc',
             'package_name': slugify(faker.name()),
             'author': 'connect',
@@ -234,13 +239,14 @@ def test_bootstrap_extension_project_interactive(
             'license': 'Apache',
             'use_github_actions': 'y' if with_github_actions else 'n',
             'use_asyncio': 'y' if async_impl else 'n',
-            'include_schedules_example': 'y' if with_schedulable else 'n',
             'include_variables_example': 'y' if with_variables else 'n',
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
             'interactive': ['sample_interactive_event'],
         }
+        if with_schedulable:
+            data['event_types'].append('scheduled')
 
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.dialogus',
@@ -371,6 +377,7 @@ def test_bootstrap_extension_project_multiaccount(
             'extension_type': 'multiaccount',
             'extension_audience': ['vendor', 'distributor'],
             'application_types': ['anvil', 'events'],
+            'event_types': ['background', 'scheduled'],
             'description': 'desc',
             'package_name': slugify(faker.name()),
             'author': 'connect',
@@ -378,7 +385,6 @@ def test_bootstrap_extension_project_multiaccount(
             'license': 'Apache',
             'use_github_actions': 'n',
             'use_asyncio': 'n',
-            'include_schedules_example': 'n',
             'include_variables_example': 'n',
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
@@ -515,12 +521,10 @@ def test_bootstrap_extension_project_webapp(
             'license': 'Apache',
             'use_github_actions': 'n',
             'use_asyncio': 'n',
-            'include_schedules_example': 'n',
             'include_variables_example': 'n',
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
             'server_address': faker.domain_name(2),
-            'background': ['sample_background_event'],
         }
 
         mocker.patch(
@@ -722,6 +726,8 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
             'project_name': faker.name(),
             'project_slug': slugify(faker.name()),
             'extension_type': 'products',
+            'application_types': ['events'],
+            'event_type': ['background', 'scheduled'],
             'description': 'desc',
             'package_name': slugify(faker.name()),
             'author': 'connect',
@@ -729,7 +735,6 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
             'license': 'Apache',
             'use_github_actions': 'n',
             'use_asyncio': 'n',
-            'include_schedules_example': 'y',
             'include_variables_example': 'y',
             'api_key': faker.pystr(),
             'environment_id': f'ENV-{faker.random_number()}',
@@ -784,6 +789,7 @@ def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, 
         'project_name': faker.name(),
         'project_slug': slugify(faker.name()),
         'extension_type': 'products',
+        'event_types': ['background', 'scheduled'],
         'description': 'desc',
         'package_name': slugify(faker.name()),
         'author': 'connect',
@@ -791,7 +797,6 @@ def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, 
         'license': 'Apache',
         'use_github_actions': 'n',
         'use_asyncio': 'n',
-        'include_schedules_example': 'y',
         'include_variables_example': 'y',
         'api_key': faker.pystr(),
         'environment_id': f'ENV-{faker.random_number()}',
