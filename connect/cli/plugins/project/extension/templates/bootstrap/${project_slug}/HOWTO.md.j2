@@ -25,7 +25,7 @@ $ docker compose up {{ project_slug }}_dev
 If you would like to develop and test at the same time, we recommend you run your project using the command:
 
 ```sh
-$ docker compose up {{ project_slug }}_bash
+$ docker compose run {{ project_slug }}_bash
 ```
 
 Once you get the interactive shell an help banner will be displayed to inform you about the included tools that can help you with the development of your extension.
@@ -34,7 +34,7 @@ Once you get the interactive shell an help banner will be displayed to inform yo
 Additionally, a basic boilerplate for writing unit tests has been created, you can run the tests using:
 
 ```sh
-$ docker compose up {{ project_slug }}_test
+$ docker compose run {{ project_slug }}_test
 ```
 
 
