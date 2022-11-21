@@ -1,4 +1,5 @@
 import collections
+import json
 import os
 
 import yaml
@@ -22,8 +23,13 @@ from connect.cli.plugins.project.extension.wizard import (
 from connect.eaas.core.validation.validators import get_validators
 
 
-def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
+def bootstrap_extension_project(  # noqa: CCR001
+        config, output_dir, overwrite, save_answers, load_answers,
+):
     console.secho('Bootstraping extension project...\n', fg='blue')
+
+    if save_answers and os.path.exists(save_answers):
+        raise ClickException(f'Answers can not be saved, because {save_answers} already exists.')
 
     statuses_by_event = collections.defaultdict(lambda: collections.defaultdict())
 
@@ -34,11 +40,25 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
         statuses_by_event[elem['extension_type']][elem['type']] = elem['object_statuses']
         grouped_definitions[elem['extension_type']][elem['category']].append(elem)
 
+    questions = get_questions(config, grouped_definitions)
+
+    if load_answers:
+        try:
+            with open(load_answers) as fp:
+                loaded_answers = json.load(fp)
+
+            for question in questions:
+                if question['name'] in loaded_answers:
+                    question['default'] = loaded_answers[question['name']]
+        except Exception as e:
+            raise ClickException(f'Can not load or parse answers from {load_answers}: {e}')
+
     answers = dialogus(
-        get_questions(config, grouped_definitions),
+        questions,
         'Extension project bootstrap',
         intro=EXTENSION_BOOTSTRAP_WIZARD_INTRO,
         summary=get_summary,
+        fast_forward=load_answers is not None,
         finish_text='Create',
         previous_text='Back',
     )
@@ -59,6 +79,11 @@ def bootstrap_extension_project(config, output_dir, overwrite):  # noqa: CCR001
     project_dir = os.path.join(output_dir, ctx['project_slug'])
     if not overwrite and os.path.exists(project_dir):
         raise ClickException(f'The destination directory {project_dir} already exists.')
+
+    if save_answers:
+        with open(save_answers, 'w') as fp:
+            json.dump(answers, fp)
+        console.secho(f'Answers saved to {save_answers}', fg='green')
 
     exclude = []
 

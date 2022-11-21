@@ -1,6 +1,7 @@
 #  Copyright © 2022 CloudBlue. All rights reserved.
 
 import configparser
+import json
 import os
 import tempfile
 
@@ -92,7 +93,13 @@ def test_bootstrap_extension_project_background(
             return_value=data,
         )
 
-        bootstrap_extension_project(config=config_vendor, output_dir=tmpdir, overwrite=False)
+        bootstrap_extension_project(
+            config=config_vendor,
+            output_dir=tmpdir,
+            overwrite=False,
+            load_answers=None,
+            save_answers=None,
+        )
 
         classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
@@ -253,7 +260,7 @@ def test_bootstrap_extension_project_interactive(
             return_value=data,
         )
 
-        bootstrap_extension_project(config_vendor, tmpdir, False)
+        bootstrap_extension_project(config_vendor, tmpdir, False, None, None)
 
         env_file_name = f".{data['project_slug']}_dev.env"
 
@@ -397,7 +404,13 @@ def test_bootstrap_extension_project_multiaccount(
             return_value=data,
         )
 
-        bootstrap_extension_project(config=config_vendor, output_dir=tmpdir, overwrite=False)
+        bootstrap_extension_project(
+            config=config_vendor,
+            output_dir=tmpdir,
+            overwrite=False,
+            load_answers=None,
+            save_answers=f'{tmpdir}/sample.json',
+        )
 
         classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
@@ -473,6 +486,9 @@ def test_bootstrap_extension_project_multiaccount(
             os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
         ) is False
 
+        saved_answers = json.load(open(os.path.join(tmpdir, 'sample.json')))
+        assert saved_answers == data
+
 
 def test_bootstrap_extension_project_webapp(
     faker,
@@ -532,7 +548,16 @@ def test_bootstrap_extension_project_webapp(
             return_value=data,
         )
 
-        bootstrap_extension_project(config=config_provider, output_dir=tmpdir, overwrite=False)
+        with open(f'{tmpdir}/sample.json', 'w') as fp:
+            json.dump({'project_name': 'Saved name', 'fake': 'fake'}, fp)
+
+        bootstrap_extension_project(
+            config=config_provider,
+            output_dir=tmpdir,
+            overwrite=False,
+            load_answers=f'{tmpdir}/sample.json',
+            save_answers=None,
+        )
 
         classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
@@ -613,7 +638,7 @@ def test_bootstrap_extension_project_wizard_cancel(mocker):
     mocker.patch('connect.cli.plugins.project.extension.helpers.dialogus', return_value=None)
 
     with pytest.raises(ClickException) as cv:
-        bootstrap_extension_project(None, 'dir', False)
+        bootstrap_extension_project(None, 'dir', False, None, None)
 
     assert str(cv.value) == 'Aborted by user input'
 
@@ -636,14 +661,23 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
         dst_dir = os.path.join(tmpdir, project_folder)
         os.makedirs(dst_dir)
 
-        with pytest.raises(ClickException) as cv:
-            bootstrap_extension_project(config=None, output_dir=tmpdir, overwrite=False)
+        with open(f'{tmpdir}/sample.json', 'w') as fp:
+            json.dump({'project_name': 'Saved'}, fp)
 
-        d = os.path.join(
+        with pytest.raises(ClickException) as cv:
+            bootstrap_extension_project(
+                config=None,
+                output_dir=tmpdir,
+                overwrite=False,
+                load_answers=f'{tmpdir}/sample.json',
+                save_answers=f'{tmpdir}/sample.json',
+            )
+
+        os.path.join(
             tmpdir,
             project_folder,
         )
-        assert str(cv.value) == f'The destination directory {d} already exists.'
+        assert 'Answers can not be saved' in str(cv.value)
 
 
 def test_bump_runner_version(mocker, capsys):
@@ -747,7 +781,7 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
             return_value=data,
         )
 
-        bootstrap_extension_project(config_vendor, tmpdir, False)
+        bootstrap_extension_project(config_vendor, tmpdir, False, None, None)
 
         project_dir = os.path.join(tmpdir, data['project_slug'])
 
@@ -811,7 +845,7 @@ def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, 
     with tempfile.TemporaryDirectory() as tmpdir:
         project_dir = os.path.join(tmpdir, data['project_slug'])
 
-        bootstrap_extension_project(config_vendor, tmpdir, False)
+        bootstrap_extension_project(config_vendor, tmpdir, False, None, None)
 
         os.unlink(os.path.join(project_dir, 'pyproject.toml'))
 
@@ -820,3 +854,76 @@ def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, 
         captured = capsys.readouterr()
 
         assert 'Warning/errors have been found' in captured.out
+
+
+def test_bootstrap_extension_project_corrupted_load_answers(
+    faker,
+    mocker,
+    mocked_responses,
+    config_provider,
+):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner_version = f'{faker.random_number()}.{faker.random_number()}'
+        mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+            return_value=runner_version,
+        )
+        config_provider.load(config_dir='/tmp')
+
+        mocked_responses.add(
+            method='GET',
+            url=f'{config_provider.active.endpoint}/devops/event-definitions',
+            headers={
+                'Content-Range': 'items 0-0/1',
+            },
+            json=[
+                {
+                    'type': 'sample_background_event',
+                    'group': 'Group',
+                    'name': 'Sample Event',
+                    'extension_type': 'multiaccount',
+                    'category': 'background',
+                    'object_statuses': ['status1', 'status2'],
+                },
+            ],
+        )
+
+        data = {
+            'project_name': faker.name(),
+            'project_slug': slugify(faker.name()),
+            'extension_type': 'multiaccount',
+            'extension_audience': ['vendor', 'distributor'],
+            'application_types': ['webapp'],
+            'webapp_supports_ui': 'y',
+            'description': 'desc',
+            'package_name': slugify(faker.name()),
+            'author': 'connect',
+            'version': '1.0',
+            'license': 'Apache',
+            'use_github_actions': 'n',
+            'use_asyncio': 'n',
+            'include_variables_example': 'n',
+            'api_key': faker.pystr(),
+            'environment_id': f'ENV-{faker.random_number()}',
+            'server_address': faker.domain_name(2),
+        }
+
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.dialogus',
+            return_value=data,
+        )
+
+        with open(f'{tmpdir}/sample.json', 'w') as fp:
+            fp.write('{"project_name": "Saved name", "fake": "fake"}, "error"')
+
+        with pytest.raises(ClickException) as e:
+            bootstrap_extension_project(
+                config=config_provider,
+                output_dir=tmpdir,
+                overwrite=False,
+                load_answers=f'{tmpdir}/sample.json',
+                save_answers=None,
+            )
+
+        assert 'Can not load or parse answers' in str(e.value)

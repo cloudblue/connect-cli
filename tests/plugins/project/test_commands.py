@@ -98,6 +98,8 @@ def test_bootstrap_extension_command(ccli, mocker, capsys, config_mocker):
                 'bootstrap',
                 '--output-dir',
                 f'{tmpdir}/projects',
+                '--save-answers',
+                f'{tmpdir}/answers.txt',
             ],
         )
 
@@ -105,6 +107,32 @@ def test_bootstrap_extension_command(ccli, mocker, capsys, config_mocker):
         captured = capsys.readouterr()
         assert 'project_dir' in captured.out
         assert result.exit_code == 0
+
+
+def test_bootstrap_extension_command_mutex_options(ccli, mocker, config_mocker):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        mocked_bootstrap = mocker.patch(
+            'connect.cli.plugins.project.commands.bootstrap_extension_project',
+        )
+        os.mkdir(f'{tmpdir}/projects')
+        runner = CliRunner()
+        result = runner.invoke(
+            ccli,
+            [
+                'project',
+                'extension',
+                'bootstrap',
+                '--save-answers',
+                f'{tmpdir}/answers.txt',
+                '--load-answers',
+                f'{tmpdir}/sample.txt',
+            ],
+        )
+
+        mocked_bootstrap.assert_not_called()
+        assert result.exit_code != 0
+        assert 'Illegal usage' in result.stdout
+        assert 'save_answers is mutually exclusive with load_answers' in result.stdout
 
 
 def test_validate_extension_command(ccli, mocker, config_mocker):
