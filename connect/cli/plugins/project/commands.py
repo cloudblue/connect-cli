@@ -18,6 +18,30 @@ from connect.cli.plugins.project.report.helpers import (
 )
 
 
+class Mutex(click.Option):
+    def __init__(self, *args, **kwargs):
+        self.conflict_with: list = kwargs.pop("conflict_with")
+
+        assert self.conflict_with, "'conflict_with' parameter required"
+
+        help_str = kwargs.get("help", "")
+        help_str += f' Option is mutually exclusive with {", ".join(self.conflict_with)}.'
+        kwargs["help"] = help_str.strip()
+        super(Mutex, self).__init__(*args, **kwargs)
+
+    def handle_parse_result(self, ctx, opts, args):
+        current_opt: bool = self.name in opts
+        for mutex_opt in self.conflict_with:
+            if mutex_opt in opts:
+                if current_opt:
+                    raise click.UsageError(
+                        f'Illegal usage: {self.name} is mutually exclusive with {mutex_opt}.',
+                    )
+                else:
+                    self.prompt = None
+        return super(Mutex, self).handle_parse_result(ctx, opts, args)
+
+
 @group(name='project', short_help='Manage project definitions.')
 def grp_project():
     pass  # pragma: no cover
@@ -112,9 +136,35 @@ def grp_project_extension():
     help='Overwrite the destination project directory if exists.',
     default=False,
 )
+@click.option(
+    '--save-answers', '-s',
+    default=None,
+    type=click.Path(exists=False, file_okay=True, dir_okay=False),
+    required=False,
+    help='Directory or file where to entered save answers as json file.',
+    cls=Mutex,
+    conflict_with=['load_answers'],
+)
+@click.option(
+    '--load-answers', '-l',
+    default=None,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    required=False,
+    help='Json file to load answers from.',
+    cls=Mutex,
+    conflict_with=['save_answers'],
+)
 @pass_config
-def cmd_bootstrap_extension_project(config, output_dir, force_overwrite):
-    bootstrap_extension_project(config, output_dir, force_overwrite)
+def cmd_bootstrap_extension_project(
+        config, output_dir, force_overwrite, save_answers, load_answers,
+):
+    bootstrap_extension_project(
+        config,
+        output_dir,
+        force_overwrite,
+        save_answers,
+        load_answers,
+    )
 
 
 @grp_project_extension.command(
