@@ -97,7 +97,7 @@ def test_renderer_functions_executed(mocker):
             context={},
             template_folder=os.path.join(tmpdir, 'template_folder'),
             output_dir='output_dir',
-            overwrite=True,
+            overwrite=False,
             pre_render=pre_mock,
             post_render=post_mock,
         )

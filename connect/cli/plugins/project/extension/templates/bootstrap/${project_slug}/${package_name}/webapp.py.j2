@@ -5,10 +5,12 @@
 #
 from typing import List
 
-from connect.client import {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient, R
+from connect.client import {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient{% if extension_type == 'multiaccount' %}, R{% endif %}
 from connect.eaas.core.decorators import (
+    {%- if webapp_supports_ui == 'y' %}
     account_settings_page,
     module_pages,
+    {%- endif %}
     router,
     {%- if include_variables_example == 'y' %}
     variables,
@@ -16,17 +18,23 @@ from connect.eaas.core.decorators import (
     web_app,
 )
 from connect.eaas.core.extension import WebApplicationBase
-{%- if use_asyncio == 'y' %}
+{%- if use_asyncio == 'y' and extension_type == 'multiaccount' %}
 from connect.eaas.core.inject.asynchronous import get_installation, get_installation_client
+{%- elif use_asyncio == 'y' and extension_type != 'multiaccount' %}
+from connect.eaas.core.inject.asynchronous import get_extension_client
 {%- endif %}
+{%- if extension_type == 'multiaccount' %}
 from connect.eaas.core.inject.common import get_call_context
 from connect.eaas.core.inject.models import Context
-{%- if use_asyncio != 'y' %}
+{%- endif %}
+{%- if use_asyncio != 'y' and extension_type == 'multiaccount' %}
 from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
+{%- elif  use_asyncio != 'y' and extension_type != 'multiaccount' %}
+from connect.eaas.core.inject.synchronous import get_extension_client
 {%- endif %}
 from fastapi import Depends
 
-from {{ package_name }}.schemas import Marketplace, Settings
+from {{ package_name }}.schemas import Marketplace{% if extension_type == 'multiaccount' %}, Settings{% endif %}
 
 
 {% if include_variables_example == 'y' -%}
@@ -50,6 +58,23 @@ from {{ package_name }}.schemas import Marketplace, Settings
 {% endif -%}
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(WebApplicationBase):
 
+    @router.get(
+        '/marketplaces',
+        summary='List all available marketplaces',
+        response_model=List[Marketplace],
+    )
+    {% if use_asyncio == 'y' %}async {% endif %}def list_marketplaces(
+        self,
+        client: {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient = Depends(get_{% if extension_type == 'multiaccount' %}installation{% else %}extension{% endif %}_client),
+    ):
+        return [
+            Marketplace(**marketplace)
+            {% if use_asyncio == 'y' %}async {% endif %}for marketplace in client.marketplaces.all().values_list(
+                'id', 'name', 'description', 'icon',
+            )
+        ]
+
+    {% if extension_type == 'multiaccount' -%}
     @router.get(
         '/settings',
         summary='Retrive charts settings',
@@ -80,22 +105,6 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
         return settings
 
     @router.get(
-        '/marketplaces',
-        summary='List all available marketplaces',
-        response_model=List[Marketplace],
-    )
-    {% if use_asyncio == 'y' %}async {% endif %}def list_marketplaces(
-        self,
-        client: {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient = Depends(get_installation_client),
-    ):
-        return [
-            Marketplace(**marketplace)
-            {% if use_asyncio == 'y' %}async {% endif %}for marketplace in client.marketplaces.all().values_list(
-                'id', 'name', 'description', 'icon',
-            )
-        ]
-
-    @router.get(
         '/chart',
         summary='Generate chart data',
     )
@@ -123,3 +132,4 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
                 ],
             },
         }
+    {% endif %}

@@ -7,6 +7,7 @@ const htmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const ESLintPlugin = require('eslint-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const generateHtmlPlugin = (title) => {
   const moduleName = title.toLowerCase();
@@ -56,6 +57,11 @@ module.exports = {
   },
   plugins: [
     ...pages,
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: __dirname + "/ui/images", to: "images" },
+      ],
+    }),
     new MiniCssExtractPlugin({
       filename: "index.css",
       chunkFilename: "[id].css",

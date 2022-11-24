@@ -3,12 +3,66 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
+{% if extension_type == 'multiaccount' -%}
 from connect.client import R
 
 from {{ package_name }}.schemas import Marketplace, Settings
+{% endif -%}
 from {{ package_name }}.webapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication
 
 
+def test_list_marketplaces(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    marketplaces = [
+        {
+            'id': 'MP-000',
+            'name': 'MP 000',
+            'description': 'MP 000 description',
+            'icon': 'mp_000.png',
+        },
+        {
+            'id': 'MP-001',
+            'name': 'MP 001',
+            'description': 'MP 001 description',
+            'icon': 'mp_001.png',
+        },
+    ]
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
+
+    client_mocker.marketplaces.all().mock(return_value=marketplaces)
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+    response = client.get('/api/marketplaces')
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data == marketplaces
+
+
+def test_list_marketplaces_api_error(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
+    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
+
+    error_data = {
+        'error_code': 'AUTH_001',
+        'errors': [
+            'API request is unauthorized.',
+        ],
+    }
+
+    client_mocker.marketplaces.all().mock(
+        status_code=401,
+        return_value=error_data,
+    )
+
+    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
+    response = client.get('/api/marketplaces')
+
+    assert response.status_code == 401
+    assert response.json() == error_data
+
+
+{% if extension_type == 'multiaccount' -%}
 def test_retrieve_settings_empty(test_client_factory):
     installation = {
         'id': 'EIN-000',
@@ -68,62 +122,15 @@ def test_save_settings(test_client_factory, {% if use_asyncio == 'y' %}async_{% 
 
     client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
 
-    response = client.post('/api/settings', json=settings.dict())
+    response = client.post(
+        '/api/settings',
+        json=settings.dict(),
+        context={'installation_id': 'EIN-000'},
+    )
     assert response.status_code == 200
 
     data = response.json()
     assert data == settings.dict()
-
-
-def test_list_marketplaces(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
-    marketplaces = [
-        {
-            'id': 'MP-000',
-            'name': 'MP 000',
-            'description': 'MP 000 description',
-            'icon': 'mp_000.png',
-        },
-        {
-            'id': 'MP-001',
-            'name': 'MP 001',
-            'description': 'MP 001 description',
-            'icon': 'mp_001.png',
-        },
-    ]
-    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
-
-    client_mocker.marketplaces.all().mock(return_value=marketplaces)
-
-    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
-    response = client.get('/api/marketplaces')
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data == marketplaces
-
-
-def test_list_marketplaces_api_error(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
-    client_mocker = {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory()
-
-    error_data = {
-        'error_code': 'AUTH_001',
-        'errors': [
-            'API request is unauthorized.',
-        ],
-    }
-
-    client_mocker.marketplaces.all().mock(
-        status_code=401,
-        return_value=error_data,
-    )
-
-    client = test_client_factory({{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication)
-    response = client.get('/api/marketplaces')
-
-    assert response.status_code == 401
-    assert response.json() == error_data
 
 
 def test_generate_chart_data(test_client_factory, {% if use_asyncio == 'y' %}async_{% endif %}client_mocker_factory):
@@ -172,3 +179,4 @@ def test_generate_chart_data(test_client_factory, {% if use_asyncio == 'y' %}asy
             ],
         },
     }
+{% endif %}

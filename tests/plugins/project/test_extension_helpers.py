@@ -677,7 +677,7 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
             tmpdir,
             project_folder,
         )
-        assert 'Answers can not be saved' in str(cv.value)
+        assert 'Answers cannot be saved' in str(cv.value)
 
 
 def test_bump_runner_version(mocker, capsys):
