@@ -25,7 +25,7 @@ class Mutex(click.Option):
         assert self.conflict_with, "'conflict_with' parameter required"
 
         help_str = kwargs.get("help", "")
-        help_str += f' Option is mutually exclusive with {", ".join(self.conflict_with)}.'
+        help_str += f' This option is mutually exclusive with {", ".join(self.conflict_with)}.'
         kwargs["help"] = help_str.strip()
         super(Mutex, self).__init__(*args, **kwargs)
 
@@ -35,7 +35,7 @@ class Mutex(click.Option):
             if mutex_opt in opts:
                 if current_opt:
                     raise click.UsageError(
-                        f'Illegal usage: {self.name} is mutually exclusive with {mutex_opt}.',
+                        f'Illegal usage: options {self.name} and {mutex_opt} are mutually exclusive.',
                     )
                 else:
                     self.prompt = None
@@ -141,7 +141,7 @@ def grp_project_extension():
     default=None,
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
     required=False,
-    help='Directory or file where to entered save answers as json file.',
+    help='Path to JSON file where to save wizard answers.',
     cls=Mutex,
     conflict_with=['load_answers'],
 )
@@ -150,7 +150,7 @@ def grp_project_extension():
     default=None,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     required=False,
-    help='Json file to load answers from.',
+    help='Path to JSON file from where load wizard answers.',
     cls=Mutex,
     conflict_with=['save_answers'],
 )

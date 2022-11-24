@@ -132,7 +132,7 @@ def test_bootstrap_extension_command_mutex_options(ccli, mocker, config_mocker):
         mocked_bootstrap.assert_not_called()
         assert result.exit_code != 0
         assert 'Illegal usage' in result.stdout
-        assert 'save_answers is mutually exclusive with load_answers' in result.stdout
+        assert 'save_answers and load_answers are mutually exclusive' in result.stdout
 
 
 def test_validate_extension_command(ccli, mocker, config_mocker):

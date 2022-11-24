@@ -29,7 +29,7 @@ def bootstrap_extension_project(  # noqa: CCR001
     console.secho('Bootstraping extension project...\n', fg='blue')
 
     if save_answers and os.path.exists(save_answers):
-        raise ClickException(f'Answers can not be saved, because {save_answers} already exists.')
+        raise ClickException(f'Answers cannot be saved, because {save_answers} already exists.')
 
     statuses_by_event = collections.defaultdict(lambda: collections.defaultdict())
 
@@ -82,8 +82,10 @@ def bootstrap_extension_project(  # noqa: CCR001
 
     if save_answers:
         with open(save_answers, 'w') as fp:
-            json.dump(answers, fp)
+            json.dump(answers, fp, indent=2)
+        console.echo()
         console.secho(f'Answers saved to {save_answers}', fg='green')
+        console.echo()
 
     exclude = []
 

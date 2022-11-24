@@ -93,8 +93,9 @@ class BoilerplateRenderer:
 
     def render(self):
         if self.overwrite:
-            purge_dir(self.output_dir)
-            console.print(f'Directory {self.output_dir} deleted.')
+            prj_dir = os.path.join(self.output_dir, self.context['project_slug'])
+            purge_dir(prj_dir)
+            console.print(f'Directory {prj_dir} deleted.')
 
         with tempfile.TemporaryDirectory() as tmpdir:
             self._create_directories(output_dir=tmpdir)

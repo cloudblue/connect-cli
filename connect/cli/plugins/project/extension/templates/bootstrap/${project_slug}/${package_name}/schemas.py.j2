@@ -1,4 +1,9 @@
-from typing import List, Optional
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
+# All rights reserved.
+#
+from typing import {% if extension_type == 'multiaccount' %}List, {% endif %}Optional
 
 from pydantic import BaseModel, validator
 
@@ -11,11 +16,9 @@ class Marketplace(BaseModel):
 
     @validator('icon')
     def set_icon(cls, icon):
-        return icon or (
-            'https://unpkg.com/@cloudblueconnect'
-            '/material-svg@latest/icons/google/language/baseline.svg'
-        )
+        return icon or '/static/images/mkp.svg'
 
-
+{% if extension_type == 'multiaccount' %}
 class Settings(BaseModel):
     marketplaces: List[Marketplace] = []
+{% endif -%}

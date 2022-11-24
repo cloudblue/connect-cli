@@ -5,7 +5,6 @@ from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNE
 from connect.cli.plugins.project.extension.utils import (
     check_eventsapp_feature_not_selected,
     check_extension_events_applicable,
-    check_extension_interactive_events_applicable,
     check_extension_not_multi_account,
     check_webapp_feature_not_selected,
     get_application_types,
@@ -137,23 +136,6 @@ def test_check_extension_events_applicable_true():
     assert check_extension_events_applicable(context) is True
 
 
-def test_check_extension_interactive_events_applicable_products():
-    context = {
-        'extension_type': 'products',
-        'event_types': ['background', 'interactive'],
-        'application_types': ['events'],
-    }
-    definitions = {
-        'multiaccount': {
-            'background': [
-                {'type': 'Type1', 'group': 'Group1', 'name': 'Name1'},
-                {'type': 'Type2', 'group': 'Group2', 'name': 'Name2'},
-            ],
-        },
-    }
-    assert check_extension_interactive_events_applicable(definitions, context) is True
-
-
 def test_get_available_event_types_full():
     context = {
         'extension_type': 'multiaccount',
@@ -175,6 +157,26 @@ def test_get_available_event_types_full():
     event_types = get_available_event_types(definitions, context)
     assert len(event_types) == 3
     assert ('background', 'Background Events') in event_types
+    assert ('interactive', 'Interactive Events') in event_types
+    assert ('scheduled', 'Scheduled Event Example') in event_types
+
+
+def test_get_available_event_types_full_no_background():
+    context = {
+        'extension_type': 'multiaccount',
+        'event_types': ['interactive'],
+        'application_types': ['anvil'],
+    }
+    definitions = {
+        'multiaccount': {
+            'interactive': [
+                {'type': 'Type3', 'group': 'Group3', 'name': 'Name3'},
+            ],
+        },
+    }
+
+    event_types = get_available_event_types(definitions, context)
+    assert len(event_types) == 2
     assert ('interactive', 'Interactive Events') in event_types
     assert ('scheduled', 'Scheduled Event Example') in event_types
 
@@ -202,14 +204,21 @@ def test_get_available_event_types_full_no_interactive():
 
 
 @pytest.mark.parametrize(
-    ('app_types', 'expected'),
+    ('app_types', 'extension_type', 'expected'),
     (
-        (['webapp'], False),
-        ([], True),
+        (['webapp'], 'multiaccount', False),
+        (['webapp'], 'products', True),
+        (['webapp'], 'hub', True),
+        ([], 'multiaccount', True),
+        ([], 'products', True),
+        ([], 'hub', True),
     ),
 )
-def test_check_webapp_feature_not_selected(app_types, expected):
-    assert check_webapp_feature_not_selected({'application_types': app_types}) is expected
+def test_check_webapp_feature_not_selected(app_types, extension_type, expected):
+    assert check_webapp_feature_not_selected({
+        'application_types': app_types,
+        'extension_type': extension_type,
+    }) is expected
 
 
 @pytest.mark.parametrize(
