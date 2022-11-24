@@ -63,14 +63,13 @@ def load_project_toml_file(path):
         return ValidationResult(
             items=[
                 ValidationItem(
-                    'ERROR',
+                    'WARNING',
                     (
-                        f'The mandatory *pyproject.toml* project descriptor file is not present in the folder {path}.'
+                        f'The *pyproject.toml* project descriptor file is not present in the folder {path}.'
                     ),
                     descriptor_file,
                 ),
             ],
-            must_exit=True,
         )
     try:
         return toml.load(descriptor_file)
