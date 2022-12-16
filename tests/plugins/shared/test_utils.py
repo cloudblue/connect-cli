@@ -1,13 +1,15 @@
 import click
 import pytest
-
 from connect.client import ConnectClient
-from connect.cli.plugins.shared.utils import _calculate_translation_completion, wait_for_autotranslation
+
 from connect.cli.plugins.shared.utils import (
+    _calculate_translation_completion,
     get_col_limit_by_ws_type,
     get_translation_attributes_sheets,
     get_ws_type_by_worksheet_name,
+    wait_for_autotranslation,
 )
+
 
 # This tests exists just to have them on code coverage, real test depends on sync action
 

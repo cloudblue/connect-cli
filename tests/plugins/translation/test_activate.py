@@ -1,7 +1,7 @@
 import click
 import pytest
-
 from connect.client import ConnectClient
+
 from connect.cli.plugins.translation.activate import activate_translation
 
 

@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.progress import Progress
 from rich.status import Status as _Status
 
-from connect.cli.core.terminal import Console, get_style, Status
+from connect.cli.core.terminal import Console, Status, get_style
 
 
 def test_get_style(mocker):

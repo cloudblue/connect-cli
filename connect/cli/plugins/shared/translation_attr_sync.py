@@ -4,19 +4,16 @@
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 import math
 from collections import namedtuple
-
-import click
-
-from connect.client import ClientError
-
 from zipfile import BadZipFile
 
+import click
+from connect.client import ClientError
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.shared.constants import ATTRIBUTES_SHEET_COLUMNS
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 class TranslationAttributesSynchronizer:

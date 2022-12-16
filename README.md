@@ -70,6 +70,11 @@ You can download its zip file from the [Github Releases](https://github.com/clou
 * [Projects](docs/project_usage.md)
 
 
+## Development
+We use `isort` library to order and format our imports, and we check it using `flake8-isort` library (automatically on `flake8` run).  
+For convenience you may run `poetry run isort .` to order imports.
+
+
 ## Run tests
 
 `connect-cli` uses [poetry](https://python-poetry.org/) for dependencies management and packaging.

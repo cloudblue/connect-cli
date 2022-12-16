@@ -2,12 +2,12 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
-import os
 import fnmatch
-from string import Template
-from pathlib import Path
+import os
 import shutil
 import tempfile
+from pathlib import Path
+from string import Template
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 

@@ -3,9 +3,7 @@
 # Copyright (c) 2021, Enterprise
 # All rights reserved.
 #
-from connect.eaas.extension import (
-    Extension,
-)
+from connect.eaas.extension import Extension
 
 
 class BasicExtension(Extension):

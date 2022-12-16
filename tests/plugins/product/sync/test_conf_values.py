@@ -1,6 +1,7 @@
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.configuration_values import ConfigurationValuesSynchronizer
 from connect.client import ConnectClient
+
+from connect.cli.plugins.product.sync.configuration_values import ConfigurationValuesSynchronizer
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_skipped(mocker, get_sync_config_env):

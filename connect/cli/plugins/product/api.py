@@ -3,8 +3,9 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
-from connect.cli.core.http import handle_http_error
 from connect.client import ClientError, R
+
+from connect.cli.core.http import handle_http_error
 
 
 def create_unit(client, data):

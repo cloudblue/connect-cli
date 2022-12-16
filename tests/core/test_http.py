@@ -2,15 +2,15 @@ import platform
 
 import pytest
 from click import ClickException
+from connect.client import ClientError
 
 from connect.cli import get_version
 from connect.cli.core.http import (
+    RequestLogger,
     format_http_status,
     get_user_agent,
     handle_http_error,
-    RequestLogger,
 )
-from connect.client import ClientError
 
 
 def test_format_http_status():

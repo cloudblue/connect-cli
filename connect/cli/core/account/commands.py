@@ -6,11 +6,7 @@
 import click
 from click import ClickException
 
-from connect.cli.core.account.helpers import (
-    activate_account,
-    add_account,
-    remove_account,
-)
+from connect.cli.core.account.helpers import activate_account, add_account, remove_account
 from connect.cli.core.config import pass_config
 from connect.cli.core.constants import DEFAULT_ENDPOINT
 from connect.cli.core.terminal import console

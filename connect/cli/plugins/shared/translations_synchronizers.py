@@ -1,12 +1,12 @@
 from click import ClickException
 
-from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
+from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
 from connect.cli.plugins.shared.utils import (
     get_translation_attributes_sheets,
     wait_for_autotranslation,
 )
-from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 
 
 def translations_sync(client, progress, input_file, stats, save):

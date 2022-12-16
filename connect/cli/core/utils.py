@@ -6,9 +6,9 @@ import os
 from collections import OrderedDict
 from importlib.metadata import entry_points
 
-from packaging.version import InvalidVersion, Version
 import click
 import requests
+from packaging.version import InvalidVersion, Version
 
 from connect.cli import get_version
 from connect.cli.core.constants import PYPI_JSON_API_URL

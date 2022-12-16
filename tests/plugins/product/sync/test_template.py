@@ -1,8 +1,8 @@
+from connect.client import ConnectClient
 from responses import matchers
 
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.product.sync.templates import TemplatesSynchronizer
-from connect.client import ConnectClient
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_no_action(mocker, get_sync_templates_env):

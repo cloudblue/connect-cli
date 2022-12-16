@@ -7,13 +7,13 @@ import re
 from collections import namedtuple
 from json.decoder import JSONDecodeError
 
+from connect.client import ClientError
 from openpyxl.styles import Alignment
 
 from connect.cli.plugins.product.constants import PARAM_TYPES
+from connect.cli.plugins.product.utils import ParamSwitchNotSupported, get_json_object_for_param
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import PARAMS_COLS_HEADERS
-from connect.cli.plugins.product.utils import get_json_object_for_param, ParamSwitchNotSupported
-from connect.client import ClientError
 
 
 fields = (v.replace(' ', '_').lower() for v in PARAMS_COLS_HEADERS.values())

@@ -1,11 +1,7 @@
 import click
-
 from connect.client import ClientError, ConnectClient
-from connect.cli.core.http import (
-    format_http_status,
-    handle_http_error,
-    RequestLogger,
-)
+
+from connect.cli.core.http import RequestLogger, format_http_status, handle_http_error
 
 
 def primarize_translation(

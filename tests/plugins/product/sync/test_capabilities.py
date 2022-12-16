@@ -1,10 +1,10 @@
 from copy import deepcopy
 
 import pytest
-
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.capabilities import CapabilitiesSynchronizer
 from connect.client import ConnectClient
+
+from connect.cli.plugins.product.sync.capabilities import CapabilitiesSynchronizer
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_no_action(mocker, get_sync_capabilities_env):

@@ -5,8 +5,9 @@
 import re
 from typing import List
 
-from connect.cli.plugins.play.context import Context
 from connect.client import ConnectClient
+
+from connect.cli.plugins.play.context import Context
 
 
 class OptionWrapper:

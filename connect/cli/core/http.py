@@ -3,10 +3,10 @@ import platform
 from http import HTTPStatus
 
 import click
+from connect.client import ClientError, RequestLogger as _RequestLogger
 
 from connect.cli import get_version
 from connect.cli.core.terminal import console
-from connect.client import ClientError, RequestLogger as _RequestLogger
 
 
 def get_user_agent():

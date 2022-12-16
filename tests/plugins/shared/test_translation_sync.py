@@ -2,11 +2,11 @@ from copy import deepcopy
 
 import pytest
 import responses
+from connect.client import ConnectClient
 from openpyxl import load_workbook
 
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 from connect.cli.plugins.shared.translation_sync import TranslationsSynchronizer
-from connect.client import ConnectClient
 
 
 def test_skipped(mocker, fs, get_sync_translations_env):

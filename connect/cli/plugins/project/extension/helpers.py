@@ -4,12 +4,11 @@ import os
 
 import yaml
 from click.exceptions import ClickException
+from connect.eaas.core.validation.validators import get_validators
 from interrogatio.core.dialog import dialogus
 
 from connect.cli import get_version
 from connect.cli.core.terminal import console
-from connect.cli.plugins.project.utils import show_validation_result_table
-from connect.cli.plugins.project.renderer import BoilerplateRenderer
 from connect.cli.plugins.project.extension.utils import (
     get_event_definitions,
     get_pypi_runner_version,
@@ -20,7 +19,8 @@ from connect.cli.plugins.project.extension.wizard import (
     get_questions,
     get_summary,
 )
-from connect.eaas.core.validation.validators import get_validators
+from connect.cli.plugins.project.renderer import BoilerplateRenderer
+from connect.cli.plugins.project.utils import show_validation_result_table
 
 
 def bootstrap_extension_project(  # noqa: CCR001

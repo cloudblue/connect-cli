@@ -1,9 +1,9 @@
 import warnings
 
 from connect.client import ConnectClient
-from connect.cli.plugins.customer.export import dump_customers
-
 from openpyxl import load_workbook
+
+from connect.cli.plugins.customer.export import dump_customers
 
 
 def test_dump_customers(fs, mocked_responses, mocked_customer, mocked_reseller):

@@ -3,7 +3,6 @@ import tempfile
 
 import pytest
 
-from connect.cli.plugins.project.validators import ValidationItem, ValidationResult
 from connect.cli.plugins.project.report.validations import (
     _load_reports_json,
     _validate_entrypoint,
@@ -12,6 +11,7 @@ from connect.cli.plugins.project.report.validations import (
     validate_reports_json,
     validate_repository_definition,
 )
+from connect.cli.plugins.project.validators import ValidationItem, ValidationResult
 
 
 def test_entrypoint_wrong_import(mocker):

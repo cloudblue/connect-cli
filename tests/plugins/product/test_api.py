@@ -1,5 +1,6 @@
 import pytest
 from click.exceptions import ClickException
+from connect.client import ConnectClient
 
 from connect.cli.plugins.product.api import (
     create_item,
@@ -9,7 +10,6 @@ from connect.cli.plugins.product.api import (
     get_item_by_mpn,
     update_item,
 )
-from connect.client import ConnectClient
 
 
 def test_get_item(

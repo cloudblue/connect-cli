@@ -1,8 +1,8 @@
 #  Copyright © 2022 CloudBlue. All rights reserved.
 
+import functools
 import json
 import os
-import functools
 
 from click import ClickException
 from interrogatio.core.dialog import dialogus
@@ -10,6 +10,8 @@ from openpyxl import Workbook
 
 from connect.cli import get_version
 from connect.cli.core.terminal import console
+from connect.cli.plugins.project.renderer import BoilerplateRenderer
+from connect.cli.plugins.project.report.validations import validate_reports_json, validators
 from connect.cli.plugins.project.report.wizard import (
     ADD_REPORT_QUESTIONS,
     BOOTSTRAP_QUESTIONS,
@@ -19,8 +21,6 @@ from connect.cli.plugins.project.report.wizard import (
     REPORT_SUMMARY,
 )
 from connect.cli.plugins.project.utils import show_validation_result_table
-from connect.cli.plugins.project.report.validations import validate_reports_json, validators
-from connect.cli.plugins.project.renderer import BoilerplateRenderer
 
 
 def bootstrap_report_project(output_dir, overwrite):

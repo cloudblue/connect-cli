@@ -1,19 +1,19 @@
-import json
 import datetime
+import json
 import time
 
 from click import ClickException
+from connect.client import R
 from interrogatio import dialogus
+from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import (
     DateTimeRangeValidator,
     DateTimeValidator,
     RequiredValidator,
     Validator,
 )
-from interrogatio.core.exceptions import ValidationError
 
 from connect.cli.plugins.report.utils import convert_to_utc_input
-from connect.client import R
 
 
 class ObjectValidator(Validator):

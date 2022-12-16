@@ -2,15 +2,16 @@ from copy import copy
 from io import BytesIO
 
 from click import ClickException
+from connect.client import ClientError
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment
+from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.filters import AutoFilter
-from openpyxl.utils import get_column_letter
 
-from connect.client import ClientError
 from connect.cli.core.http import format_http_status, handle_http_error
 from connect.cli.plugins.translation.utils import insert_column_ws
+
 
 EXCEL_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 

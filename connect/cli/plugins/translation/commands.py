@@ -10,8 +10,8 @@ from connect.cli.core.config import pass_config
 from connect.cli.core.terminal import console
 from connect.cli.core.utils import field_to_check_mark
 from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.shared.utils import wait_for_autotranslation
 from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
+from connect.cli.plugins.shared.utils import wait_for_autotranslation
 from connect.cli.plugins.translation.activate import activate_translation
 from connect.cli.plugins.translation.export import dump_translation
 from connect.cli.plugins.translation.primarize import primarize_translation

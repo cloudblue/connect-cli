@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from click import ClickException
+from connect.client import ClientError
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
 
@@ -14,7 +15,6 @@ from connect.cli.plugins.product.sync import (
     ParamsSynchronizer,
     TemplatesSynchronizer,
 )
-from connect.client import ClientError
 from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
 from connect.cli.plugins.shared.utils import get_translation_attributes_sheets
 

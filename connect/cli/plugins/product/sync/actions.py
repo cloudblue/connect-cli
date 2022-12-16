@@ -7,11 +7,11 @@ import re
 from collections import namedtuple
 from functools import partial
 
-from connect.cli.plugins.shared.base import ProductSynchronizer
-from connect.cli.plugins.shared.constants import (
-    ACTIONS_HEADERS,
-)
 from connect.client import ClientError
+
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import ACTIONS_HEADERS
+
 
 fields = (v.replace(' ', '_').lower() for v in ACTIONS_HEADERS.values())
 

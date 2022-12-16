@@ -1,20 +1,18 @@
 import uuid
 from collections import namedtuple
+from zipfile import BadZipFile
 
 import phonenumbers
 from click import ClickException
-
 from connect.client import ClientError, R
-
-from zipfile import BadZipFile
-
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from connect.cli.core.terminal import console
-from connect.cli.plugins.shared.sync_stats import SynchronizerStatsSingleModule
-from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.customer.constants import COL_HEADERS
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.sync_stats import SynchronizerStatsSingleModule
+
 
 fields = (v.replace(' ', '_').lower() for v in COL_HEADERS.values())
 

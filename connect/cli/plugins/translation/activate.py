@@ -1,10 +1,7 @@
 import click
-
 from connect.client import ClientError
-from connect.cli.core.http import (
-    format_http_status,
-    handle_http_error,
-)
+
+from connect.cli.core.http import format_http_status, handle_http_error
 
 
 def activate_translation(client, translation_id):

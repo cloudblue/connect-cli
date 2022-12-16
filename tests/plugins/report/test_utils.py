@@ -9,6 +9,7 @@ from connect.cli.plugins.report.utils import (
     get_report_entrypoint,
 )
 
+
 Repo = namedtuple('Repo', ('reports',))
 Report = namedtuple('Report', ('local_id', 'renderers', 'root_path', 'entrypoint'))
 Renderer = namedtuple('Renderer', ('id',))

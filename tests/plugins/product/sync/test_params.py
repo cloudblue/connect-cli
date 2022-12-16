@@ -1,6 +1,7 @@
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.params import ParamsSynchronizer
 from connect.client import ConnectClient
+
+from connect.cli.plugins.product.sync.params import ParamsSynchronizer
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_skipped(mocker, get_sync_params_env):

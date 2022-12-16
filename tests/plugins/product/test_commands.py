@@ -1,15 +1,15 @@
 import json
+import os
 import re
 import string
-import os
 
 import pytest
 from click import ClickException
 from click.testing import CliRunner
+from connect.client import ConnectClient
 from openpyxl import load_workbook
 from responses import matchers
 
-from connect.client import ConnectClient
 from connect.cli.core.config import Config
 from connect.cli.plugins.product.export import _calculate_commitment, _dump_image, dump_product
 from connect.cli.plugins.product.sync import GeneralSynchronizer

@@ -1,26 +1,23 @@
 
 #  Copyright © 2022 CloudBlue. All rights reserved.
 
+import importlib
+import inspect
 import json
 import os
 import sys
-import inspect
-import importlib
-
-from poetry.core.constraints.version import parse_constraint, Version
 
 from connect.reports.parser import parse
-from connect.reports.validator import (
-    validate,
-    validate_with_schema,
-)
+from connect.reports.validator import validate, validate_with_schema
+from poetry.core.constraints.version import Version, parse_constraint
+
+from connect.cli.core.utils import get_last_cli_version
 from connect.cli.plugins.project.validators import (
-    get_code_context,
-    load_project_toml_file,
     ValidationItem,
     ValidationResult,
+    get_code_context,
+    load_project_toml_file,
 )
-from connect.cli.core.utils import get_last_cli_version
 
 
 def validate_pyproject_toml(project_dir, context):

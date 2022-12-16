@@ -5,9 +5,10 @@ from shutil import copy2
 
 import pytest
 import responses
-from responses.registries import OrderedRegistry
 from fs.tempfs import TempFS
 from openpyxl import load_workbook
+from responses.registries import OrderedRegistry
+
 from tests.data import (
     CONFIG_DATA,
     EXTENSION_BG_EVENT,
