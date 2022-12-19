@@ -1,12 +1,12 @@
-import os
 import json
+import os
 from mimetypes import guess_type
 
 from click import ClickException
-
-from connect.cli.plugins.shared.base import ProductSynchronizer
-from connect.cli.plugins.product.utils import cleanup_product_for_update
 from connect.client import ClientError
+
+from connect.cli.plugins.product.utils import cleanup_product_for_update
+from connect.cli.plugins.shared.base import ProductSynchronizer
 
 
 class GeneralSynchronizer(ProductSynchronizer):

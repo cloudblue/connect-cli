@@ -1,7 +1,7 @@
 import click
 import pytest
-
 from connect.client import ConnectClient
+
 from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.shared.translation_attr_sync import TranslationAttributesSynchronizer
 

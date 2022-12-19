@@ -1,3 +1,4 @@
+from connect.client import ClientError
 from iso3166 import countries
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
@@ -8,7 +9,6 @@ from connect.cli.core.http import handle_http_error
 from connect.cli.core.terminal import console
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.customer.constants import COL_HEADERS
-from connect.client import ClientError
 
 
 def dump_customers(client, account_id, output_file, output_path=None):  # noqa: CCR001

@@ -1,11 +1,11 @@
 import dataclasses
-import os
 import inspect
+import os
 from typing import List, Literal, Optional
 
+import toml
 from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import Validator
-import toml
 
 
 class PythonIdentifierValidator(Validator):

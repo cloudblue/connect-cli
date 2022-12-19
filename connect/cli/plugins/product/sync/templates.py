@@ -5,9 +5,11 @@
 
 from collections import namedtuple
 
-from connect.cli.plugins.shared.constants import TEMPLATES_HEADERS
-from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.client import ClientError
+
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import TEMPLATES_HEADERS
+
 
 fields = (v.replace(' ', '_').lower() for v in TEMPLATES_HEADERS.values())
 

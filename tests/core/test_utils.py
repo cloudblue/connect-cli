@@ -7,10 +7,7 @@ from requests import RequestException
 
 from connect.cli.core import utils
 from connect.cli.core.constants import PYPI_JSON_API_URL
-from connect.cli.core.utils import (
-    iter_entry_points,
-    sort_and_filter_tags,
-)
+from connect.cli.core.utils import iter_entry_points, sort_and_filter_tags
 
 
 def test_check_for_updates_ok(mocker, capsys, mocked_responses):

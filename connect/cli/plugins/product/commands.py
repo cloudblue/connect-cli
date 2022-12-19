@@ -7,13 +7,11 @@ from functools import partial
 
 import click
 from click.exceptions import ClickException
+from connect.client import ClientError, R
 
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.core.terminal import console
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.shared.exceptions import SheetNotFoundError
-from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
 from connect.cli.plugins.product.clone import ProductCloner
 from connect.cli.plugins.product.export import dump_product
 from connect.cli.plugins.product.sync import (
@@ -27,7 +25,9 @@ from connect.cli.plugins.product.sync import (
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
 )
-from connect.client import ClientError, R
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
+from connect.cli.plugins.shared.translations_synchronizers import sync_product_translations
 
 
 @group(name='product', short_help='Manage product definitions.')

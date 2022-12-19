@@ -4,8 +4,8 @@
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
 
 import click
-
 from connect.client import ClientError, ConnectClient
+
 from connect.cli.core.http import RequestLogger
 
 

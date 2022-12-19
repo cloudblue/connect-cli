@@ -6,10 +6,7 @@
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from connect.cli.core.utils import validate_output_options
-from connect.cli.plugins.shared.export import (
-    alter_attributes_sheet,
-    get_translation_workbook,
-)
+from connect.cli.plugins.shared.export import alter_attributes_sheet, get_translation_workbook
 
 
 def dump_translation(

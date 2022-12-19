@@ -6,12 +6,12 @@ import re
 from time import sleep
 
 import click
+from connect.client import ClientError
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from connect.client import ClientError
 from connect.cli.core.http import handle_http_error
 from connect.cli.plugins.shared.constants import (
     ACTIONS_HEADERS,

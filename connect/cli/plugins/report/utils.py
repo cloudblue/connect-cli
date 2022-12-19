@@ -5,9 +5,9 @@ from datetime import timezone
 from importlib import import_module
 
 from click import ClickException
+from connect.client import ClientError
 
 from connect.cli.core.terminal import console
-from connect.client import ClientError
 
 
 def convert_to_utc_input(date):

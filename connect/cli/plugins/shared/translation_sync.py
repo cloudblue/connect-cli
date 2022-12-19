@@ -6,10 +6,12 @@
 from collections import defaultdict, namedtuple
 from functools import partial
 
-from connect.cli.plugins.shared.constants import TRANSLATION_HEADERS
-from connect.cli.plugins.shared.base import ProductSynchronizer
-from connect.cli.plugins.shared.utils import fill_translation_row, setup_locale_data_validation
 from connect.client import ClientError
+
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import TRANSLATION_HEADERS
+from connect.cli.plugins.shared.utils import fill_translation_row, setup_locale_data_validation
+
 
 fields = (v.replace(' ', '_').lower() for v in TRANSLATION_HEADERS.values())
 

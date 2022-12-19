@@ -1,7 +1,7 @@
 import pytest
 from interrogatio.core.exceptions import ValidationError
 
-from connect.cli.plugins.project.validators import get_code_context, PythonIdentifierValidator
+from connect.cli.plugins.project.validators import PythonIdentifierValidator, get_code_context
 
 
 @pytest.mark.parametrize(

@@ -2,9 +2,10 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2021 Ingram Micro. All Rights Reserved.
-from connect.cli.plugins.play.script import OptionWrapper, Script
-from connect.cli.plugins.play.context import Context
 from connect.client import ConnectClient
+
+from connect.cli.plugins.play.context import Context
+from connect.cli.plugins.play.script import OptionWrapper, Script
 
 
 def test_script():

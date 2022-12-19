@@ -8,8 +8,8 @@ import os
 from dataclasses import dataclass
 
 from click import ClickException, make_pass_decorator
-
 from connect.client import ConnectClient
+
 from connect.cli.core.constants import DEFAULT_ENDPOINT
 from connect.cli.core.http import RequestLogger
 

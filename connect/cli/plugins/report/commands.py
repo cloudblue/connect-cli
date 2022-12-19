@@ -5,11 +5,7 @@ import click
 
 from connect.cli.core import group
 from connect.cli.core.config import pass_config
-from connect.cli.plugins.report.helpers import (
-    execute_report,
-    list_reports,
-    show_report_info,
-)
+from connect.cli.plugins.report.helpers import execute_report, list_reports, show_report_info
 
 
 DEFAULT_REPORT_DIR = os.path.normpath(

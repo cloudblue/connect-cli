@@ -1,8 +1,8 @@
 import pytest
-
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.items import ItemSynchronizer
 from connect.client import ConnectClient
+
+from connect.cli.plugins.product.sync.items import ItemSynchronizer
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_init(mocker, get_sync_items_env):

@@ -2,9 +2,9 @@ import string
 
 import pytest
 from click import ClickException
+from connect.client import ConnectClient
 from openpyxl import load_workbook
 
-from connect.client import ConnectClient
 from connect.cli.plugins.translation.export import dump_translation
 
 

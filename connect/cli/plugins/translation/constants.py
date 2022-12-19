@@ -5,6 +5,7 @@
 
 from collections import namedtuple
 
+
 TRANSLATION_TABLE_HEADER = """
 
 

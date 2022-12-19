@@ -4,11 +4,14 @@ from pathlib import Path
 
 import requests
 from click import ClickException
+from connect.client import ClientError
 
 from connect.cli import get_version
 from connect.cli.core.utils import sort_and_filter_tags
-from connect.cli.plugins.project.extension.constants import PRE_COMMIT_HOOK, PYPI_EXTENSION_RUNNER_URL
-from connect.client import ClientError
+from connect.cli.plugins.project.extension.constants import (
+    PRE_COMMIT_HOOK,
+    PYPI_EXTENSION_RUNNER_URL,
+)
 
 
 def get_event_definitions(config):

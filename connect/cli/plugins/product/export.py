@@ -3,38 +3,32 @@
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
 
-import os
 import copy
 import json
+import os
 from datetime import datetime
 from urllib import parse
 
 import requests
 from click import ClickException
+from connect.client import ClientError, R
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.styles.colors import Color, WHITE
+from openpyxl.styles.colors import WHITE, Color
 from openpyxl.utils import quote_sheetname
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from connect.cli.core.http import (
-    format_http_status,
-    handle_http_error,
-)
+from connect.cli.core.http import format_http_status, handle_http_error
 from connect.cli.core.utils import validate_output_options
 from connect.cli.plugins.product.constants import PARAM_TYPES
 from connect.cli.plugins.product.utils import get_json_object_for_param
-from connect.cli.plugins.shared.export import (
-    alter_attributes_sheet,
-    get_translation_workbook,
-)
+from connect.cli.plugins.shared.export import alter_attributes_sheet, get_translation_workbook
 from connect.cli.plugins.shared.utils import (
     fill_translation_row,
     get_col_headers_by_ws_type,
     get_col_limit_by_ws_type,
     setup_locale_data_validation,
 )
-from connect.client import ClientError, R
 
 
 def _setup_locales_list(ws, client):

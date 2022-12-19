@@ -5,13 +5,8 @@
 
 from collections import namedtuple
 
-from connect.cli.plugins.product.constants import (
-    BILLING_PERIOD,
-    COMMITMENT,
-    PRECISIONS,
-)
-from connect.cli.plugins.shared.base import ProductSynchronizer
-from connect.cli.plugins.shared.constants import ITEMS_COLS_HEADERS
+from connect.client.rql import R
+
 from connect.cli.plugins.product.api import (
     create_item,
     create_unit,
@@ -20,7 +15,10 @@ from connect.cli.plugins.product.api import (
     get_item_by_mpn,
     update_item,
 )
-from connect.client.rql import R
+from connect.cli.plugins.product.constants import BILLING_PERIOD, COMMITMENT, PRECISIONS
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import ITEMS_COLS_HEADERS
+
 
 fields = (v.replace(' ', '_').lower() for v in ITEMS_COLS_HEADERS.values())
 

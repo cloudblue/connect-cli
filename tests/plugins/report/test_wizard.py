@@ -1,10 +1,12 @@
 import pytest
 from click import ClickException
+from connect.client import ConnectClient
 from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import DateTimeRangeValidator, DateTimeValidator, RequiredValidator
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.report.wizard import (
+    ObjectValidator,
     checkbox,
     date,
     date_range,
@@ -14,12 +16,10 @@ from connect.cli.plugins.report.wizard import (
     hub_list,
     marketplace_list,
     object_param,
-    ObjectValidator,
     product_list,
     required_validator,
     single_line,
 )
-from connect.client import ConnectClient
 
 
 def test_validator():

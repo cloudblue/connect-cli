@@ -1,9 +1,6 @@
 import stat
 
-from connect.cli.plugins.project.utils import (
-    force_delete,
-    purge_dir,
-)
+from connect.cli.plugins.project.utils import force_delete, purge_dir
 
 
 def test_force_delete(mocker):

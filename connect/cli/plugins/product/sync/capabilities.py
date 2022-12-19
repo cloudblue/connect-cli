@@ -1,9 +1,9 @@
 from collections import namedtuple
 
 from connect.cli.plugins.product.constants import CAPABILITIES
+from connect.cli.plugins.product.utils import cleanup_product_for_update
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import CAPABILITIES_COLS_HEADERS
-from connect.cli.plugins.product.utils import cleanup_product_for_update
 
 
 fields = (v.replace(' ', '_').lower() for v in CAPABILITIES_COLS_HEADERS.values())

@@ -1,9 +1,9 @@
 from collections import namedtuple
 from urllib.parse import urlparse
 
-from connect.cli.plugins.shared.constants import STATIC_LINK_HEADERS
-from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.product.utils import cleanup_product_for_update
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import STATIC_LINK_HEADERS
 
 
 fields = (v.replace(' ', '_').lower() for v in STATIC_LINK_HEADERS.values())

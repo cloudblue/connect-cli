@@ -1,22 +1,26 @@
-import os
 import contextlib
+import os
 
 from click.exceptions import Abort
+from connect.utils.terminal.markdown import render
 from rich import box
 from rich.console import Console as _Console, Group
 from rich.live import Live
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.prompt import Confirm
 from rich.status import Status as _Status
 from rich.style import Style
-from rich.panel import Panel
-from rich.prompt import Confirm
-from rich.progress import (
-    BarColumn, MofNCompleteColumn, Progress, SpinnerColumn,
-    TaskProgressColumn, TextColumn, TimeElapsedColumn,
-)
 from rich.table import Table
 from rich.text import Text
-
-from connect.utils.terminal.markdown import render
 
 
 def get_style(

@@ -2,15 +2,16 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+import json
 import os
 from collections import namedtuple
-from urllib.parse import urlparse
-import json
 from mimetypes import guess_type
+from urllib.parse import urlparse
 
-from connect.cli.plugins.shared.constants import MEDIA_COLS_HEADERS
-from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.client import ClientError
+
+from connect.cli.plugins.shared.base import ProductSynchronizer
+from connect.cli.plugins.shared.constants import MEDIA_COLS_HEADERS
 
 
 fields = (v.replace(' ', '_').lower() for v in MEDIA_COLS_HEADERS.values())

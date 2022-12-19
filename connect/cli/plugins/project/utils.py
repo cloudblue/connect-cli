@@ -4,8 +4,8 @@ import stat
 
 from rich import box
 from rich.markdown import Markdown
-from rich.table import Table
 from rich.syntax import Syntax
+from rich.table import Table
 
 from connect.cli.core.terminal import console
 

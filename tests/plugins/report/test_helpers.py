@@ -3,6 +3,14 @@ import json
 
 import pytest
 from click import ClickException
+from connect.client import AsyncConnectClient, ConnectClient
+from connect.reports.constants import CLI_ENV
+from connect.reports.datamodels import (
+    Account,
+    RendererDefinition,
+    Report,
+    ReportDefinition,
+)
 
 from connect.cli.core.config import Config
 from connect.cli.plugins.report.helpers import (
@@ -12,9 +20,6 @@ from connect.cli.plugins.report.helpers import (
     show_report_info,
 )
 from connect.cli.plugins.report.utils import Progress
-from connect.client import AsyncConnectClient, ConnectClient
-from connect.reports.datamodels import Account, RendererDefinition, Report, ReportDefinition
-from connect.reports.constants import CLI_ENV
 
 
 def test_load_repo_ok():

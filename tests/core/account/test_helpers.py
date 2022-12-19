@@ -1,11 +1,7 @@
 import click
 import pytest
 
-from connect.cli.core.account.helpers import (
-    activate_account,
-    add_account,
-    remove_account,
-)
+from connect.cli.core.account.helpers import activate_account, add_account, remove_account
 from connect.cli.core.config import Config
 
 

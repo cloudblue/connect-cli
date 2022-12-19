@@ -2,10 +2,10 @@ import json
 
 import pytest
 from click import ClickException
+from connect.client import ConnectClient
 from openpyxl import load_workbook
 
 from connect.cli.plugins.product.sync.general import GeneralSynchronizer
-from connect.client import ConnectClient
 
 
 GENERAL_ERROR = "Errors has been detected on General Information tab:"

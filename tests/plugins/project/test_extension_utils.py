@@ -1,5 +1,6 @@
 import pytest
 from click import ClickException
+from connect.client import ClientError
 
 from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
 from connect.cli.plugins.project.extension.utils import (
@@ -14,7 +15,6 @@ from connect.cli.plugins.project.extension.utils import (
     get_interactive_events,
     get_pypi_runner_version,
 )
-from connect.client import ClientError
 
 
 def test_get_pypi_runner_version(mocker, mocked_responses):

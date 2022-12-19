@@ -1,8 +1,8 @@
 import pytest
-
-from connect.cli.plugins.shared.sync_stats import SynchronizerStats
-from connect.cli.plugins.product.sync.media import MediaSynchronizer
 from connect.client import ConnectClient
+
+from connect.cli.plugins.product.sync.media import MediaSynchronizer
+from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_no_action(mocker, get_sync_media_env):

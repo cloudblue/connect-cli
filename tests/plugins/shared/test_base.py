@@ -3,11 +3,11 @@ from shutil import copy2
 
 import pytest
 from click import ClickException
+from connect.client import ConnectClient
 from openpyxl import load_workbook
 
-from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.shared.base import ProductSynchronizer
-from connect.client import ConnectClient
+from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 
 
 def test_open(fs, mocked_responses, mocked_product_response):

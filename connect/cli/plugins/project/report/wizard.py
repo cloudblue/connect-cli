@@ -3,6 +3,7 @@ from interrogatio.validators import RequiredValidator
 from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
+
 REPORT_BOOTSTRAP_WIZARD_INTRO = (
     'Welcome to the Connect Reports Project Bootstrap utility.\n'
     'Using this utility multiple data will be collected in order to create a project\n'

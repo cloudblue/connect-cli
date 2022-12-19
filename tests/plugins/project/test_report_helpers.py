@@ -1,8 +1,8 @@
 #  Copyright © 2022 CloudBlue. All rights reserved.
 
 import configparser
-import os
 import json
+import os
 import tempfile
 
 import pytest
