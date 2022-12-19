@@ -22,7 +22,7 @@ $ pacman -S mingw-w64-x86_64-gtk3
 $ pacman -S git
 ```
 
-Finally add:
+Finally add following folders to your PATH environment variable:
 * `C:\msys64\mingw64\bin` and `C:\msys64\usr\bin` in case of 64 bit architecture
 * `C:\msys32\mingw32\bin` and `C:\msys32\usr\bin` in case of 32 bit architecture
-folders to your PATH environment variable.
+
