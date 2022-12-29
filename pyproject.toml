@@ -73,7 +73,7 @@ poetry-core = "^1.3.0"
 uvloop = { version = "^0.16.0", markers = "sys_platform == \"linux\" or sys_platform == \"darwin\"" }
 fs = "^2.4.12"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.test.dependencies]
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
@@ -91,6 +91,7 @@ flake8-comprehensions = "^3.10"
 flake8-debugger = "^4.0.0"
 flake8-eradicate = "^1.3.0"
 flake8-string-format = "^0.3.0"
+flake8-pyproject = "^1.2.2"
 ipython = "^7.21.0"
 isort = "5.*"
 wheel = "^0.37.0"
@@ -132,3 +133,33 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+
+[tool.flake8]
+exclude = [
+    ".idea",
+    ".vscode",
+    ".git",
+    "resources",
+    "*.eggs",
+    "tests/fixtures",
+    "connect/.data"
+]
+
+show_source = true
+max_line_length = 120
+max_cognitive_complexity = 15
+ignore = ["FI1", "I100", "W503"]
+
+
+[tool.isort]
+src_paths = "*"
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+group_by_package = true
+multi_line_output = 3
+force_grid_wrap = 4
+combine_as_imports = true
+use_parentheses = true
+include_trailing_comma = true
+line_length = 100
+lines_after_imports = 2
