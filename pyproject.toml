@@ -143,13 +143,14 @@ exclude = [
     "resources",
     "*.eggs",
     "tests/fixtures",
-    "connect/.data"
+    "connect/.data",
+    "venv"
 ]
 
 show_source = true
 max_line_length = 120
 max_cognitive_complexity = 15
-ignore = ["FI1", "I100", "W503"]
+ignore = ["FI1", "W503"]
 
 
 [tool.isort]
