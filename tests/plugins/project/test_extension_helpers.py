@@ -682,20 +682,79 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
 
 def test_bump_runner_version(mocker, capsys):
     _mock_pypi_version(mocker)
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        docker_compose = {
+            'services': {
+                'dev': {'container_name': 'ext_dev', 'image': 'cloudblueconnect/connect-extension-runner:0.5'},
+                'test': {'container_name': 'ext_test', 'image': 'cloudblueconnect/connect-extension-runner:0.5'},
+                'si': {'container_name': 'ext_si', 'build': {'dockerfile': f'{project_dir}/OtherDockerfile'}},
+                'prod': {'container_name': 'ext_prod', 'build': {'context': '.'}},
+            },
+        }
+        with open(f'{project_dir}/docker-compose.yml', 'w') as fp:
+            yaml.dump(docker_compose, fp)
+        with open(f'{project_dir}/Dockerfile', 'w') as fp:
+            fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
+        with open(f'{project_dir}/OtherDockerfile', 'w') as fp:
+            fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
+        bump_runner_extension_project(project_dir)
+        captured = capsys.readouterr()
+        assert 'Runner version has been successfully updated to 1.0' in captured.out
+        assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured.out
+        assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured.out
+        assert f'{os.path.join(project_dir, "Dockerfile")}' in captured.out
+
+
+def test_bump_runner_version_no_update_required(mocker, capsys):
+    _mock_pypi_version(mocker)
+    with tempfile.TemporaryDirectory() as tmp_data:
+        project_dir = f'{tmp_data}/project'
+        os.mkdir(project_dir)
+        docker_compose = {
+            'services': {
+                'dev': {'container_name': 'ext_dev', 'image': 'cloudblueconnect/connect-extension-runner:1.0'},
+                'test': {'container_name': 'ext_test', 'image': 'cloudblueconnect/connect-extension-runner:1.0'},
+                'si': {'container_name': 'ext_si', 'build': {'dockerfile': f'{project_dir}/OtherDockerfile'}},
+                'prod': {'container_name': 'ext_prod', 'build': {}},
+            },
+        }
+        with open(f'{project_dir}/docker-compose.yml', 'w') as dc:
+            yaml.dump(docker_compose, dc)
+        with open(f'{project_dir}/Dockerfile', 'w') as df:
+            df.write('FROM cloudblueconnect/connect-extension-runner:1.0')
+            df.write('\n')
+        with open(f'{project_dir}/OtherDockerfile', 'w') as df2:
+            df2.write('FROM cloudblueconnect/connect-extension-runner:1.0')
+            df2.write('\n')
+        bump_runner_extension_project(project_dir)
+        captured = capsys.readouterr()
+        assert 'Nothing to update to 1.0' in captured.out
+
+
+def test_bump_runner_version_invalid_dockerfile(mocker):
+    _mock_pypi_version(mocker)
     docker_compose = {
         'services': {
-            'dev': {'container_name': 'ext_dev', 'image': 'runner:0.5'},
-            'test': {'container_name': 'ext_test', 'image': 'runner:0.5'},
+            'dev': {
+                'container_name': 'ext_dev',
+                'build': {'dockerfile': 'invalidfile'},
+            },
         },
     }
     with tempfile.TemporaryDirectory() as tmp_data:
         project_dir = f'{tmp_data}/project'
         os.mkdir(project_dir)
-        with open(f'{project_dir}/docker-compose.yml', 'w') as fp:
+        dc = f'{project_dir}/docker-compose.yml'
+        with open(dc, 'w') as fp:
             yaml.dump(docker_compose, fp)
-        bump_runner_extension_project(project_dir)
-        captured = capsys.readouterr()
-        assert 'Runner version has been successfully updated' in captured.out
+        with pytest.raises(ClickException) as exc:
+            bump_runner_extension_project(project_dir)
+        assert (
+            f'The expected dockerfile `{project_dir}/invalidfile` specified in '
+            f'{dc} is missing.'
+        ) in str(exc)
 
 
 def test_bump_runner_docker_compose_not_found(mocker):
