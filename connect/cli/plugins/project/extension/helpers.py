@@ -176,10 +176,36 @@ def validate_extension_project(config, project_dir):  # noqa: CCR001
         console.secho(f'Extension Project {project_dir} has been successfully validated.', fg='green')
 
 
-def bump_runner_extension_project(project_dir: str):
+def _update_docker_file_runner_from(dockerfile: str, latest_version: str):
+    to_be_replaced = False
+    last_runner = f'cloudblueconnect/connect-extension-runner:{latest_version}'
+    lines = []
+    with open(dockerfile, 'r') as f:
+        for line in f.readlines():
+            content = line.split()
+            if (
+                content[0] == 'FROM'
+                and content[1].startswith(
+                    'cloudblueconnect/connect-extension-runner:',
+                )
+                and content[1].strip() != last_runner
+            ):
+                lines.append(line.replace(content[1], last_runner))
+                to_be_replaced = True
+            else:
+                lines.append(line)
+    if to_be_replaced:
+        with open(dockerfile, 'w') as f:
+            f.writelines(lines)
+    return to_be_replaced
+
+
+def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
     console.secho(f'Bumping runner version on project {project_dir}...\n', fg='blue')
 
+    updated_files = set()
     latest_version = get_pypi_runner_version()
+    latest_runner_version = f'cloudblueconnect/connect-extension-runner:{latest_version}'
     docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
     if not os.path.isfile(docker_compose_file):
         raise ClickException(f'Mandatory `docker-compose.yml` file on directory `{project_dir}` is missing.')
@@ -187,11 +213,31 @@ def bump_runner_extension_project(project_dir: str):
         with open(docker_compose_file, 'r') as file_reader:
             data = yaml.load(file_reader, Loader=yaml.FullLoader)
             for service in data['services']:
-                if 'image' in data['services'][service]:
+                if (
+                    'image' in data['services'][service]
+                    and data['services'][service]['image'].startswith(
+                        'cloudblueconnect/connect-extension-runner:',
+                    )
+                    and data['services'][service]['image'] != latest_runner_version
+                ):
                     runner_image = data['services'][service]['image']
                     runner_version = runner_image.split(':')[-1]
                     updated_image = runner_image.replace(runner_version, latest_version)
                     data['services'][service]['image'] = updated_image
+                    updated_files.add(docker_compose_file)
+                elif 'build' in data['services'][service]:
+                    dockerfile = data['services'][service]['build'].get('dockerfile', 'Dockerfile')
+                    dockerfile_path = os.path.join(project_dir, dockerfile)
+                    if not os.path.isfile(dockerfile_path):
+                        raise ClickException(
+                            f'The expected dockerfile `{dockerfile_path}` specified in '
+                            f'{docker_compose_file} is missing.',
+                        )
+                    if (
+                        dockerfile_path not in updated_files
+                        and _update_docker_file_runner_from(dockerfile_path, latest_version)
+                    ):
+                        updated_files.add(dockerfile_path)
         with open(docker_compose_file, 'w') as file_writer:
             yaml.dump(data, file_writer, sort_keys=False)
     except yaml.YAMLError as error:
@@ -200,4 +246,11 @@ def bump_runner_extension_project(project_dir: str):
             f'Error: {error}',
         )
 
-    console.secho(f'Runner version has been successfully updated to {latest_version}', fg='green')
+    if updated_files:
+        console.secho(
+            f'Runner version has been successfully updated to {latest_version}. The following '
+            f'files have been updated:\n{",".join(updated_files)}',
+            fg='green',
+        )
+    else:
+        console.secho(f'Nothing to update to {latest_version}', fg='yellow')
