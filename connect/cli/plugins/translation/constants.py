@@ -6,14 +6,6 @@
 from collections import namedtuple
 
 
-TRANSLATION_TABLE_HEADER = """
-
-
-
-| ID | Context_ID | Context_Type | Context_Name |Locale  | Auto | Status | Primary | Owner |
-|:--------|:-----------|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|:-----------:|
-"""
-
 FieldSettings = namedtuple('FieldSettings', ['row_idx', 'title'])
 
 GENERAL_SHEET_FIELDS = {

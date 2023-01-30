@@ -20,11 +20,3 @@ COL_HEADERS = {
     'S': 'Technical Contact Email',
     'T': 'Technical Contact Phone',
 }
-
-SYNC_RESULT_OUTPUT = """
-# Results of synchronization
-
-
-| Module | Processed | Created | Updated | Deleted | Skipped | Errors |
-|:--------|--------:| --------:|--------:|----------:|----------:|----------:|
-"""
