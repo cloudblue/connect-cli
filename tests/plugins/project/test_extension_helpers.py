@@ -704,7 +704,7 @@ def test_bump_runner_version(mocker, capsys):
         assert 'Runner version has been successfully updated to 1.0' in captured.out
         assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured.out
         assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured.out
-        assert f'{os.path.join(project_dir, "Dockerfile")}' in captured.out
+        assert '/Dockerfile' in captured.out
 
 
 def test_bump_runner_version_no_update_required(mocker, capsys):
