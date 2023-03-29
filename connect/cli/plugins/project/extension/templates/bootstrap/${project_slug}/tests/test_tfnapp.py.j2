@@ -1,0 +1,24 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022, Globex Corporation
+# All rights reserved.
+#
+from {{ package_name }}.tfnapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}TransformationsApplication
+
+
+def test_example_transformation(
+    connect_client,
+    logger,
+    mocker,
+):
+    config = {}
+    tfn_app = {{ project_slug|replace("_", " ")|title|replace(" ", "") }}TransformationsApplication(
+        connect_client,
+        logger,
+        config,
+        installation_client=connect_client,
+        installation={'id': 'EIN-0000'},
+        context=mocker.MagicMock(),
+        transformation_request={'id': 'TRQ-0000'},
+    )
+    assert tfn_app.example_transformation(('col1', 'col2', 'col3')) == ('col1', 'col2', 'col3')

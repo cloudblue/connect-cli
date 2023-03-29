@@ -108,7 +108,7 @@ def bootstrap_extension_project(  # noqa: CCR001
 
     application_types = answers.get('application_types', [])
 
-    for app_type in ['anvil', 'events', 'webapp']:
+    for app_type in ['anvil', 'events', 'webapp', 'tfnapp']:
         if app_type not in application_types:
             exclude.append(
                 os.path.join(

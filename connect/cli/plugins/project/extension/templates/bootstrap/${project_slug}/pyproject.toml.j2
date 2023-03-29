@@ -19,6 +19,9 @@ readme = "./README.md"
 {%- if 'anvil' in application_types %}
 "anvilapp" = "{{ package_name }}.anvil:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}AnvilApplication"
 {%- endif %}
+{%- if 'tfnapp' in application_types %}
+"tfnapp" = "{{ package_name }}.tfnapp:{{ project_slug|replace("_", " ")|title|replace(" ", "") }}TransformationsApplication"
+{%- endif %}
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
