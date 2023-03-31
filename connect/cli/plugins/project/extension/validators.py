@@ -2,7 +2,6 @@ from interrogatio.core.exceptions import ValidationError
 from interrogatio.validators import Validator
 
 
-
 class AppTypesValidator(Validator):
     def validate(self, value, context=None):
         if (
@@ -14,7 +13,7 @@ class AppTypesValidator(Validator):
         ):
             raise ValidationError(
                 'Web Application and Transformations Application '
-                'are mandatory for Commerce type extensions.'
+                'are mandatory for Commerce type extensions.',
             )
 
 
@@ -26,5 +25,5 @@ class UISupportValidator(Validator):
         ):
             raise ValidationError(
                 'Web Application UI support '
-                'is mandatory for Commerce type extensions.'
+                'is mandatory for Commerce type extensions.',
             )

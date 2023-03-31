@@ -1,0 +1,56 @@
+<!--
+Copyright (c) 2023, CloudBlue LLC
+All rights reserved.
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>
+        <%= htmlWebpackPlugin.options.title %>
+    </title>
+</head>
+
+<body>
+    <div id="loader"></div>
+    <div id="app" class="hidden">
+        <div class="main-container" id="content">
+            <div id='description'>
+                <h5>Description:</h5>
+                <textarea id='description-text' placeholder='Description text' rows="6"></textarea>
+            </div>
+            <div id="edit-input">
+                <h5>Input columns:</h5>
+                <table id="edit-input-columns-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NAME</th>
+                            <th>TYPE</th>
+                            <th>DESCRIPTION</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="edit-input-columns">
+
+                    </tbody>
+                </table>
+            </div>
+            <div id="settings">
+                <h5>Settings:</h5>
+                <textarea id="settings-text" rows="6">{}</textarea>
+            </div>
+            <div id="output">
+                <h5>Output columns:</h5>
+                <div id="output-columns">
+                </div>
+                <div class="button-container">
+                    <button id="add" class="button">ADD COLUMN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

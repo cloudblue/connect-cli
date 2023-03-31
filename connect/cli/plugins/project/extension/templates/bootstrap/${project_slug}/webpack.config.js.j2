@@ -28,13 +28,22 @@ const populateHtmlPlugins = (pagesArray) => {
   return res;
 }
 
-const pages = populateHtmlPlugins(["Index", "Settings"]);
+const pages = populateHtmlPlugins([
+  "Index",
+  "Settings",{%- if 'tfnapp' in application_types %}
+  "Transformations/Copy",
+  "Transformations/Manual",
+{%- endif %}
+ ]);
 
 module.exports = {
   mode: 'production',
   entry: {
     index: __dirname + "/ui/src/pages/index.js",
-    settings: __dirname + "/ui/src/pages/settings.js"
+    settings: __dirname + "/ui/src/pages/settings.js",{%- if 'tfnapp' in application_types %}
+    ['transformations/copy']: __dirname + "/ui/src/pages/transformations/copy.js",
+    ['transformations/manual']: __dirname + "/ui/src/pages/transformations/manual.js",
+{%- endif %}
   },
   output: {
     filename: '[name].[contenthash].js',
@@ -63,7 +72,7 @@ module.exports = {
       ],
     }),
     new MiniCssExtractPlugin({
-      filename: "index.css",
+      filename: "[name].[contenthash].css",
       chunkFilename: "[id].css",
     }),
     new ESLintPlugin(),

@@ -3,7 +3,7 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
-from connect.eaas.core.decorators import transformation{% if include_variables_example == 'y' -%}, variables{% endif %}
+from connect.eaas.core.decorators import manual_transformation, transformation{% if include_variables_example == 'y' -%}, variables{% endif %}
 from connect.eaas.core.extension import TransformationsApplicationBase
 
 
@@ -16,9 +16,34 @@ from connect.eaas.core.extension import TransformationsApplicationBase
 {% endif -%}
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}TransformationsApplication(TransformationsApplicationBase):
     @transformation(
-        'Identity transformation',
-        'This transformation returns the input row without any transformation',
-        '/static/configure_identity_transformation.html',
+        name='Manual transformation',
+        description=(
+            'This transformation function allows to describe a manual '
+            'procedure to be done.'
+        ),
+        edit_dialog_ui='/static/transformations/manual.html',
     )
-    {% if use_asyncio == 'y' %}async {% endif %}def example_transformation(self, row):
-        return row
+    @manual_transformation()
+    {% if use_asyncio == 'y' %}async {% endif %}def manual_transformation(self, row: dict):
+        pass
+
+    @transformation(
+        name='Copy Column(s)',
+        description=(
+            'This transformation function allows copy values from Input to Output columns, '
+            'which can be used in case of change column name in the output data or '
+            'create a copy of values in table.'
+        ),
+        edit_dialog_ui='/static/transformations/copy.html',
+    )
+    def copy_columns(self, row: dict):
+        tfn_settings = (
+            self.transformation_request['transformation']['settings']
+        )
+        result = {}
+
+        for setting in tfn_settings:
+            result[setting['to']] = row[setting['from']]
+
+        return result
+

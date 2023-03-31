@@ -38,3 +38,15 @@ export const processSelectedMarketplaces = (
 export const processCheckboxes = (
   checkboxes,
 ) => Array.from(checkboxes).filter(checkbox => checkbox.checked);
+
+{%- if 'tfnapp' in application_types %}
+
+export const validate = (functionName, data) => fetch(`/api/validate/${functionName}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(data),
+}).then((response) => response.json());
+
+{%- endif %}

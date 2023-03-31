@@ -701,10 +701,11 @@ def test_bump_runner_version(mocker, capsys):
             fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
         bump_runner_extension_project(project_dir)
         captured = capsys.readouterr()
-        assert 'Runner version has been successfully updated to 1.0' in captured.out
-        assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured.out
-        assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured.out
-        assert f'{os.path.join(project_dir, "Dockerfile")}' in captured.out
+        captured_out = ''.join(captured.out.split('\n'))
+        assert 'Runner version has been successfully updated to 1.0' in captured_out
+        assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured_out
+        assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured_out
+        assert f'{os.path.join(project_dir, "Dockerfile")}' in captured_out
 
 
 def test_bump_runner_version_no_update_required(mocker, capsys):

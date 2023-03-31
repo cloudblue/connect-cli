@@ -57,7 +57,7 @@ def get_application_types(context):
     if context['extension_type'] == 'transformations':
         application_types.append(
             ('tfnapp', 'Transformations Application'),
-        )        
+        )
     return application_types
 
 
