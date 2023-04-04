@@ -116,6 +116,15 @@ def bootstrap_extension_project(  # noqa: CCR001
             'ui/src/pages/transformations/*',
             'ui/styles/manual.css.j2',
         ])
+    else:
+        exclude.extend([
+            'ui/pages/index.html.j2',
+            'ui/pages/settings.html.j2',
+            'ui/src/pages/index.js.j2',
+            'ui/src/pages/settings.js.j2',
+            'ui/tests/pages.spec.js.j2',
+            'ui/tests/utils.spec.js.j2',
+        ])
 
     for app_type in ['anvil', 'events', 'webapp', 'tfnapp']:
         if app_type not in application_types:

@@ -3,11 +3,19 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
+{%- if extension_type == 'transformations' %}
+from connect.eaas.core.decorators import (
+    router,
+    web_app,
+)
+from connect.eaas.core.extension import WebApplicationBase
+from fastapi.responses import JSONResponse
+{%- else %}
 from typing import List
 
 from connect.client import {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient{% if extension_type == 'multiaccount' %}, R{% endif %}
 from connect.eaas.core.decorators import (
-    {%- if webapp_supports_ui == 'y' %}
+    {%- if webapp_supports_ui == 'y'%}
     account_settings_page,
     module_pages,
     {%- endif %}
@@ -32,11 +40,10 @@ from connect.eaas.core.inject.synchronous import get_installation, get_installat
 {%- elif  use_asyncio != 'y' and extension_type != 'multiaccount' %}
 from connect.eaas.core.inject.synchronous import get_extension_client
 {%- endif %}
-from fastapi import Depends{%- if 'tfnapp' in application_types %}
-from fastapi.responses import JSONResponse
-{%- endif %}
+from fastapi import Depends
 
 from {{ package_name }}.schemas import Marketplace{% if extension_type == 'multiaccount' %}, Settings{% endif %}
+{%- endif %}
 
 
 {% if include_variables_example == 'y' -%}
@@ -54,13 +61,13 @@ from {{ package_name }}.schemas import Marketplace{% if extension_type == 'multi
 ])
 {% endif -%}
 @web_app(router)
-{% if webapp_supports_ui == 'y' -%}
+{% if webapp_supports_ui == 'y' and extension_type != 'transformations' -%}
 @account_settings_page('Chart settings', '/static/settings.html')
 @module_pages('Chart', '/static/index.html')
 {% endif -%}
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(WebApplicationBase):
 
-    @router.get(
+    {% if extension_type != 'transformations' -%}@router.get(
         '/marketplaces',
         summary='List all available marketplaces',
         response_model=List[Marketplace],
@@ -134,7 +141,9 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
                 ],
             },
         }
-    {%- elif extension_type == 'transformations' %}def validate_copy_columns(self, data):
+    {%- endif %}
+
+    {%- else %}def validate_copy_columns(self, data):
         if (
             'settings' not in data
             or not isinstance(data['settings'], list)
@@ -196,4 +205,4 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
                 },
             )
 
-    {%- endif %}
+{%- endif %}

@@ -29,21 +29,25 @@ const populateHtmlPlugins = (pagesArray) => {
 }
 
 const pages = populateHtmlPlugins([
-  "Index",
-  "Settings",{%- if 'tfnapp' in application_types %}
+  {%- if 'tfnapp' in application_types %}
   "Transformations/Copy",
   "Transformations/Manual",
-{%- endif %}
+  {%- else %}
+  "Index",
+  "Settings",
+  {%- endif %}
  ]);
 
 module.exports = {
   mode: 'production',
   entry: {
-    index: __dirname + "/ui/src/pages/index.js",
-    settings: __dirname + "/ui/src/pages/settings.js",{%- if 'tfnapp' in application_types %}
+    {%- if 'tfnapp' in application_types %}
     ['transformations/copy']: __dirname + "/ui/src/pages/transformations/copy.js",
     ['transformations/manual']: __dirname + "/ui/src/pages/transformations/manual.js",
-{%- endif %}
+    {%- else %}
+    index: __dirname + "/ui/src/pages/index.js",
+    settings: __dirname + "/ui/src/pages/settings.js",
+    {%- endif %}
   },
   output: {
     filename: '[name].[contenthash].js',

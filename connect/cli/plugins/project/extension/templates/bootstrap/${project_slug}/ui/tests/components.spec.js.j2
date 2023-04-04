@@ -2,7 +2,11 @@
 Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
-import {
+{%- if 'tfnapp' in application_types %}import {
+  hideComponent,
+  showComponent,
+} from '@/components';
+{%- else %}import {
   addEventListener,
   disableButton,
   enableButton,
@@ -14,10 +18,11 @@ import {
   renderMarketplaces,
   showComponent,
 } from '@/components';
+{%- endif %}
 
 
 describe('components.js', () => {
-  describe('prepareMarketplaces', () => {
+  {% if extension_type != 'transformations' -%}describe('prepareMarketplaces', () => {
     test('returns "" if marketplaces is empty', () => {
       const result = prepareMarketplaces([]);
       expect(result).toBe('');
@@ -154,6 +159,7 @@ describe('components.js', () => {
       expect(callback).toBeCalled();
     });
   });
+  {% endif -%}
 
   describe('showLoader', () => {
     beforeEach(() => {

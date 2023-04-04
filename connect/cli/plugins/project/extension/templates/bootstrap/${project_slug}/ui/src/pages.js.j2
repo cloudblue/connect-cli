@@ -3,17 +3,26 @@ Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
 import {
+  {%- if 'tfnapp' in application_types %}
+  validate,
+  {%- else %}
   getChart,
   getMarketplaces,
   getSettings,
   processCheckboxes,
   processMarketplaces,
   processSelectedMarketplaces,
-  updateSettings,{%- if 'tfnapp' in application_types %}
-  validate,
+  updateSettings,
   {%- endif %}
 } from './utils';
 
+{%- if 'tfnapp' in application_types %}
+import {
+  hideComponent,
+  showComponent,
+} from './components';
+
+{%- else %}
 import {
   addEventListener,
   disableButton,
@@ -26,6 +35,11 @@ import {
   renderMarketplaces,
   showComponent,
 } from './components';
+
+{%- endif %}
+
+
+{%- if extension_type != 'transformations' %}
 
 
 export const saveSettingsData = async (app) => {
@@ -77,7 +91,8 @@ export const settings = async (app) => {
   hideComponent('loader');
 };
 
-{%- if 'tfnapp' in application_types %}
+{%- else %}
+
 
 export const createCopyRow = (parent, indx, options, input, output) => {
   const item = document.createElement('div');
