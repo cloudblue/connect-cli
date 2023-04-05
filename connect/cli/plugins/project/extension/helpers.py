@@ -202,7 +202,8 @@ def _update_docker_file_runner_from(dockerfile: str, latest_version: str):
         for line in f.readlines():
             content = line.split()
             if (
-                content[0] == 'FROM'
+                content
+                and content[0] == 'FROM'
                 and content[1].startswith(
                     'cloudblueconnect/connect-extension-runner:',
                 )
