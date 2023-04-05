@@ -92,6 +92,8 @@ def bootstrap_extension_project(  # noqa: CCR001
     if answers['use_github_actions'] == 'n':
         exclude.extend(['.github', '.github/**/*'])
 
+    application_types = answers.get('application_types', [])
+
     if answers.get('webapp_supports_ui') != 'y':
         exclude.extend([
             os.path.join('${package_name}', 'static', '.gitkeep'),
@@ -106,9 +108,25 @@ def bootstrap_extension_project(  # noqa: CCR001
             'jest.config.js.j2',
         ])
 
-    application_types = answers.get('application_types', [])
+    elif 'tfnapp' not in application_types:
+        exclude.extend([
+            'ui/pages/transformations',
+            'ui/pages/transformations/*',
+            'ui/src/pages/transformations',
+            'ui/src/pages/transformations/*',
+            'ui/styles/manual.css.j2',
+        ])
+    else:
+        exclude.extend([
+            'ui/pages/index.html.j2',
+            'ui/pages/settings.html.j2',
+            'ui/src/pages/index.js.j2',
+            'ui/src/pages/settings.js.j2',
+            'ui/tests/pages.spec.js.j2',
+            'ui/tests/utils.spec.js.j2',
+        ])
 
-    for app_type in ['anvil', 'events', 'webapp']:
+    for app_type in ['anvil', 'events', 'webapp', 'tfnapp']:
         if app_type not in application_types:
             exclude.append(
                 os.path.join(

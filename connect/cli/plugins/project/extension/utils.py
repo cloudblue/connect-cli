@@ -41,6 +41,7 @@ def get_extension_types(config):
         extension_types = [('products', 'Fulfillment Automation')]
 
     extension_types.append(('multiaccount', 'Multi-Account installation'))
+    extension_types.append(('transformations', 'Commerce transformations'))
     return extension_types
 
 
@@ -49,9 +50,13 @@ def get_application_types(context):
         ('events', 'Events Processing'),
         ('anvil', 'Anvil Application'),
     ]
-    if context['extension_type'] in ('multiaccount', 'hub'):
+    if context['extension_type'] in ('multiaccount', 'hub', 'transformations'):
         application_types.append(
             ('webapp', 'Web Application'),
+        )
+    if context['extension_type'] == 'transformations':
+        application_types.append(
+            ('tfnapp', 'Transformations Application'),
         )
     return application_types
 
@@ -90,7 +95,7 @@ def get_available_event_types(definitions, context):
 
 
 def check_extension_not_multi_account(context):
-    return context.get('extension_type') != 'multiaccount'
+    return context.get('extension_type') not in ('multiaccount', 'transformations')
 
 
 def check_extension_events_applicable(context):
@@ -104,7 +109,7 @@ def check_event_type_applicable(event_type, context):
 def check_webapp_feature_not_selected(context):
     return (
         'webapp' not in context.get('application_types', [])
-        or context.get('extension_type') != 'multiaccount'
+        or context.get('extension_type') not in ('multiaccount', 'transformations')
     )
 
 
@@ -135,3 +140,10 @@ def initialize_git_repository(tmp_dir, context):
             )
 
         pre_commit_file.chmod(0o755)
+
+
+def get_default_application_types(context):
+    if context.get('extension_type') == 'transformations':
+        return ['webapp', 'tfnapp']
+
+    return []

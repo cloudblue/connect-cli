@@ -11,9 +11,11 @@ from connect.cli.plugins.project.extension.utils import (
     get_application_types,
     get_available_event_types,
     get_background_events,
+    get_default_application_types,
     get_extension_types,
     get_interactive_events,
 )
+from connect.cli.plugins.project.extension.validators import AppTypesValidator, UISupportValidator
 from connect.cli.plugins.project.utils import slugify
 from connect.cli.plugins.project.validators import PythonIdentifierValidator
 
@@ -29,6 +31,7 @@ EXTENSION_BOOTSTRAP_WIZARD_INTRO = (
 
 
 def get_summary(data):  # pragma: no cover
+
     def value(variable_name, formatted=False):
         if not data.get(variable_name):
             return ''
@@ -54,7 +57,7 @@ def get_summary(data):  # pragma: no cover
     extension = f"""<b><blue>Extension</blue></b>
     <b>Type:</b> {value('extension_type', formatted=True)}
 """
-    if value('extension_type') == 'multiaccount':
+    if value('extension_type') in ('multiaccount', 'transformations'):
         extension += f"""    <b>Audience:</b> {value('extension_audience', formatted=True)}
 """
         extension += f"""    <b>Features:</b> {value('application_types', formatted=True)}
@@ -231,8 +234,12 @@ def get_questions(config, definitions):
             'type': 'selectmany',
             'description': 'Which features do you want to support in your extension: ',
             'values': get_application_types,
+            'default': get_default_application_types,
             'formatting_template': '${label}',
-            'validators': (RequiredValidator(message='Please, select at least one option.'),),
+            'validators': (
+                RequiredValidator(message='Please, select at least one option.'),
+                AppTypesValidator(),
+            ),
         },
         {
             'name': 'event_types',
@@ -253,8 +260,10 @@ def get_questions(config, definitions):
                 ('n', 'No'),
                 ('y', 'Yes'),
             ],
+            'default': 'y',
             'formatting_template': '${label}',
             'disabled': check_webapp_feature_not_selected,
+            'validators': (UISupportValidator(),),
         },
     ]
 

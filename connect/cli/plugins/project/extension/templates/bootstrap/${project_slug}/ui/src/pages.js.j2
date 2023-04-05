@@ -3,6 +3,9 @@ Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
 import {
+  {%- if 'tfnapp' in application_types %}
+  validate,
+  {%- else %}
   getChart,
   getMarketplaces,
   getSettings,
@@ -10,8 +13,16 @@ import {
   processMarketplaces,
   processSelectedMarketplaces,
   updateSettings,
+  {%- endif %}
 } from './utils';
 
+{%- if 'tfnapp' in application_types %}
+import {
+  hideComponent,
+  showComponent,
+} from './components';
+
+{%- else %}
 import {
   addEventListener,
   disableButton,
@@ -24,6 +35,11 @@ import {
   renderMarketplaces,
   showComponent,
 } from './components';
+
+{%- endif %}
+
+
+{%- if extension_type != 'transformations' %}
 
 
 export const saveSettingsData = async (app) => {
@@ -74,3 +90,253 @@ export const settings = async (app) => {
   }
   hideComponent('loader');
 };
+
+{%- else %}
+
+
+export const createCopyRow = (parent, indx, options, input, output) => {
+  const item = document.createElement('div');
+  item.classList.add('list-wrapper');
+  item.id = `wrapper-${indx}`;
+  item.style.width = '100%';
+  item.innerHTML = `
+      <select class="list" style="width: 35%;" ${input ? `value="${input.id}"` : ''}>
+        ${options.map((column) => `
+          <option value="${column.id}" ${input && input.id === column.id ? 'selected' : ''}>
+            ${column.name}
+          </option>`).join(' ')}
+      </select>
+      <input type="text" placeholder="Copy column name" style="width: 35%;" ${output ? `value="${output.name}"` : ''} />
+      <button id="delete-${indx}" class="button delete-button">DELETE</button>
+    `;
+  parent.appendChild(item);
+  document.getElementById(`delete-${indx}`).addEventListener('click', () => {
+    if (document.getElementsByClassName('list-wrapper').length === 1) {
+      window.alert('You need to have at least one row');
+    } else {
+      document.getElementById(`wrapper-${indx}`).remove();
+      const buttons = document.getElementsByClassName('delete-button');
+      if (buttons.length === 1) {
+        buttons[0].disabled = true;
+      }
+    }
+  });
+  const buttons = document.getElementsByClassName('delete-button');
+  for (let i = 0; i < buttons.length; i += 1) {
+    if (buttons.length === 1) {
+      buttons[i].disabled = true;
+    } else {
+      buttons[i].disabled = false;
+    }
+  }
+};
+
+export const createManualOutputRow = (parent, indx, output) => {
+  const item = document.createElement('div');
+  item.classList.add('list-wrapper');
+  item.id = `wrapper-${indx}`;
+  item.style.width = '450px';
+  item.innerHTML = `
+      <input type="text" class="output-column-name" placeholder="Output column name" style="width: 75%;" ${output ? `value="${output.name}"` : ''} />
+      <button id="delete-${indx}" class="button delete-button">DELETE</button>
+    `;
+  parent.appendChild(item);
+  document.getElementById(`delete-${indx}`).addEventListener('click', () => {
+    if (document.getElementsByClassName('list-wrapper').length === 1) {
+      window.alert('You need to have at least one row');
+    } else {
+      document.getElementById(`wrapper-${indx}`).remove();
+      const buttons = document.getElementsByClassName('delete-button');
+      if (buttons.length === 1) {
+        buttons[0].disabled = true;
+      }
+    }
+  });
+  const buttons = document.getElementsByClassName('delete-button');
+  for (let i = 0; i < buttons.length; i += 1) {
+    if (buttons.length === 1) {
+      buttons[i].disabled = true;
+    } else {
+      buttons[i].disabled = false;
+    }
+  }
+};
+
+export const copy = (app) => {
+  if (!app) return;
+
+  hideComponent('loader');
+  showComponent('app');
+
+  let rowIndex = 0;
+  let columns = [];
+
+  app.listen('config', (config) => {
+    const {
+      context: { available_columns: availableColumns },
+      columns: { input: inputColumns, output: outputColumns },
+      csettings,
+    } = config;
+
+    columns = availableColumns;
+
+    const content = document.getElementById('content');
+    if (!csettings) {
+      createCopyRow(content, rowIndex, columns);
+    } else {
+      csettings.forEach((setting, i) => {
+        const inputColumn = inputColumns.find((column) => column.name === setting.from);
+        const outputColumn = outputColumns.find((column) => column.name === setting.to);
+        rowIndex = i;
+        createCopyRow(content, rowIndex, columns, inputColumn, outputColumn);
+      });
+    }
+    document.getElementById('add').addEventListener('click', () => {
+      rowIndex += 1;
+      createCopyRow(content, rowIndex, columns);
+    });
+  });
+
+  app.listen('save', async () => {
+    const data = {
+      csettings: [],
+      columns: {
+        input: [],
+        output: [],
+      },
+    };
+    const form = document.getElementsByClassName('list-wrapper');
+    // eslint-disable-next-line no-restricted-syntax
+    for (const line of form) {
+      const inputId = line.getElementsByTagName('select')[0].value;
+      const outputName = line.getElementsByTagName('input')[0].value;
+
+      const inputColumn = columns.find((column) => column.id === inputId);
+      const outputColumn = {
+        name: outputName,
+        type: inputColumn.type,
+        description: '',
+      };
+      const setting = {
+        from: inputColumn.name,
+        to: outputName,
+      };
+      data.csettings.push(setting);
+      data.columns.input.push(inputColumn);
+      data.columns.output.push(outputColumn);
+    }
+
+    try {
+      const overview = await validate('copy_columns', data);
+      if (overview.error) {
+        throw new Error(overview.error);
+      }
+      app.emit('save', { data: { ...data, ...overview }, status: 'ok' });
+    } catch (e) {
+      window.alert(e);
+    }
+  });
+};
+
+export const manual = (app) => {
+  if (!app) {
+    return;
+  }
+
+  hideComponent('app');
+  hideComponent('loader');
+
+  let availableColumns;
+  let rowIndex = 0;
+
+  const descriptionElement = document.getElementById('description-text');
+  const settingsElement = document.getElementById('settings-text');
+
+  app.listen('config', (config) => {
+    const {
+      columns: { input: inputColumns, output: outputColumns },
+      context: { available_columns }, // eslint-disable-line camelcase
+      overview,
+      msettings,
+    } = config;
+
+    availableColumns = available_columns; // eslint-disable-line camelcase
+
+    descriptionElement.value = overview || '';
+    settingsElement.value = msettings ? JSON.stringify(msettings) : '{}';
+
+    const inputColumnsEditElement = document.getElementById('edit-input-columns');
+    availableColumns.forEach((column) => {
+      const checked = inputColumns.some((inputColumn) => inputColumn.id === column.id);
+      const inputColumnRow = document.createElement('tr');
+      inputColumnRow.innerHTML = `
+        <td>${column.id.slice(-3)}</td>
+        <td>${column.name}</td>
+        <td>${column.type}</td>
+        <td>${column.description ? column.description : '-'}</td>
+        <td><input id="${column.id}" type="checkbox" ${checked ? 'checked' : ''} /></td>
+      `;
+      inputColumnsEditElement.appendChild(inputColumnRow);
+    });
+
+    const outputColumnsElement = document.getElementById('output-columns');
+
+    if (outputColumns.length > 0) {
+      outputColumns.forEach((outputColumn, indx) => {
+        rowIndex = indx;
+        createManualOutputRow(outputColumnsElement, rowIndex, outputColumn);
+      });
+    } else {
+      createManualOutputRow(outputColumnsElement, rowIndex);
+    }
+
+    document.getElementById('add').addEventListener('click', () => {
+      rowIndex += 1;
+      createManualOutputRow(outputColumnsElement, rowIndex);
+    });
+
+    hideComponent('loader');
+    showComponent('app');
+  });
+
+  app.listen('save', () => {
+    const data = {
+      msettings: {},
+      columns: {
+        input: [],
+        output: [],
+      },
+      overview: '',
+    };
+
+    try {
+      data.overview = descriptionElement.value;
+      data.msettings = JSON.parse(settingsElement.value);
+      const inputColumns = document.querySelectorAll('#edit-input-columns-table input[type="checkbox"]:checked');
+      inputColumns.forEach((inputColumn) => {
+        const availableColumn = availableColumns.find((column) => column.id === inputColumn.id);
+        data.columns.input.push(availableColumn);
+      });
+
+      const outputColumnsElements = document.getElementsByClassName('output-column-name');
+      // eslint-disable-next-line no-restricted-syntax
+      for (const outputColumnElement of outputColumnsElements) {
+        const outputColumn = {
+          name: outputColumnElement.value,
+          type: 'string',
+          description: '',
+        };
+        data.columns.output.push(outputColumn);
+      }
+
+      app.emit('save', {
+        data,
+        status: 'ok',
+      });
+    } catch (e) {
+      window.alert(e);
+    }
+  });
+};
+
+{%- endif %}

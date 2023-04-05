@@ -4,6 +4,7 @@ Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
 // API calls to the backend
+{%- if extension_type != 'transformations' %}
 export const getSettings = () => fetch('/api/settings').then((response) => response.json());
 
 export const getChart = () => fetch('/api/chart').then((response) => response.json());
@@ -38,3 +39,15 @@ export const processSelectedMarketplaces = (
 export const processCheckboxes = (
   checkboxes,
 ) => Array.from(checkboxes).filter(checkbox => checkbox.checked);
+
+{%- else %}
+/* eslint-disable import/prefer-default-export */
+export const validate = (functionName, data) => fetch(`/api/validate/${functionName}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(data),
+}).then((response) => response.json());
+
+{%- endif %}

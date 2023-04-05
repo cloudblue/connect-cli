@@ -11,6 +11,7 @@ from connect.cli.plugins.project.extension.utils import (
     get_application_types,
     get_available_event_types,
     get_background_events,
+    get_default_application_types,
     get_event_definitions,
     get_interactive_events,
     get_pypi_runner_version,
@@ -239,8 +240,26 @@ def test_get_application_types():
     context['extension_type'] = 'multiaccount'
     multi_tenant = get_application_types(context)
 
+    context['extension_type'] = 'transformations'
+    transformations = get_application_types(context)
+
     assert len(single_tenant) == 2
     assert ('webapp', 'Web Application') not in single_tenant
 
     assert len(multi_tenant) == 3
     assert ('webapp', 'Web Application') in multi_tenant
+
+    assert len(multi_tenant) == 3
+    assert ('webapp', 'Web Application') in transformations
+    assert ('tfnapp', 'Transformations Application') in transformations
+
+
+def test_get_default_application_types():
+    context = {'extension_type': 'transformations'}
+    tfnapp = get_default_application_types(context)
+
+    context['extension_type'] = 'multiaccount'
+    multi_tenant = get_default_application_types(context)
+
+    assert tfnapp == ['webapp', 'tfnapp']
+    assert multi_tenant == []

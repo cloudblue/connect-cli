@@ -3,11 +3,19 @@
 # Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 # All rights reserved.
 #
+{%- if extension_type == 'transformations' %}
+from connect.eaas.core.decorators import (
+    router,
+    web_app,
+)
+from connect.eaas.core.extension import WebApplicationBase
+from fastapi.responses import JSONResponse
+{%- else %}
 from typing import List
 
 from connect.client import {% if use_asyncio == 'y' %}Async{% endif %}ConnectClient{% if extension_type == 'multiaccount' %}, R{% endif %}
 from connect.eaas.core.decorators import (
-    {%- if webapp_supports_ui == 'y' %}
+    {%- if webapp_supports_ui == 'y'%}
     account_settings_page,
     module_pages,
     {%- endif %}
@@ -35,6 +43,7 @@ from connect.eaas.core.inject.synchronous import get_extension_client
 from fastapi import Depends
 
 from {{ package_name }}.schemas import Marketplace{% if extension_type == 'multiaccount' %}, Settings{% endif %}
+{%- endif %}
 
 
 {% if include_variables_example == 'y' -%}
@@ -52,13 +61,13 @@ from {{ package_name }}.schemas import Marketplace{% if extension_type == 'multi
 ])
 {% endif -%}
 @web_app(router)
-{% if webapp_supports_ui == 'y' -%}
+{% if webapp_supports_ui == 'y' and extension_type != 'transformations' -%}
 @account_settings_page('Chart settings', '/static/settings.html')
 @module_pages('Chart', '/static/index.html')
 {% endif -%}
 class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(WebApplicationBase):
 
-    @router.get(
+    {% if extension_type != 'transformations' -%}@router.get(
         '/marketplaces',
         summary='List all available marketplaces',
         response_model=List[Marketplace],
@@ -77,7 +86,7 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
     {% if extension_type == 'multiaccount' -%}
     @router.get(
         '/settings',
-        summary='Retrive charts settings',
+        summary='Retrieve charts settings',
         response_model=Settings,
     )
     {% if use_asyncio == 'y' %}async {% endif %}def retrieve_settings(
@@ -132,4 +141,68 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}WebApplication(
                 ],
             },
         }
-    {% endif %}
+    {%- endif %}
+
+    {%- else %}def validate_copy_columns(self, data):
+        if (
+            'settings' not in data
+            or not isinstance(data['settings'], list)
+            or 'columns' not in data
+            or 'input' not in data['columns']
+        ):
+            return JSONResponse(status_code=400, content={'error': 'Invalid input data'})
+
+        settings = data['settings']
+        input_columns = data['columns']['input']
+        available_input_columns = [c['name'] for c in input_columns]
+        unique_names = [c['name'] for c in input_columns]
+        overview = []
+
+        for s in settings:
+            if 'from' not in s or 'to' not in s:
+                return JSONResponse(
+                    status_code=400,
+                    content={'error': 'Invalid settings format'},
+                )
+            if s['from'] not in available_input_columns:
+                return JSONResponse(
+                    status_code=400,
+                    content={'error': f'The input column {s["from"]} does not exists'},
+                )
+            if s['to'] in unique_names:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        'error': f'Invalid column name {s["to"]}. The to field should be unique',
+                    },
+                )
+            unique_names.append(s['to'])
+            overview.append(f'{s["from"]}  -->  {s["to"]}')
+
+        overview = ''.join([row + '\n' for row in overview])
+
+        return {
+            'overview': overview,
+        }
+
+    @router.post(
+        '/validate/{transformation_function}',
+        summary='Validate settings',
+    )
+    def validate_tfn_settings(
+            self,
+            transformation_function: str,
+            data: dict,
+    ):
+        try:
+            method = getattr(self, f'validate_{transformation_function}')
+            return method(data)
+        except AttributeError:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    'error': f'The validation method {transformation_function} does not exist',
+                },
+            )
+
+{%- endif %}

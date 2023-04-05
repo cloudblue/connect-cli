@@ -3,6 +3,7 @@ Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
 // prepare UI components
+{% if extension_type != 'transformations' -%}
 export const prepareMarketplaces = (marketplaces) => {
   try {
     return marketplaces.reduce((list, marketplace) => `${list}<li class="list-item">
@@ -68,6 +69,7 @@ export const addEventListener = (id, event, callback) => {
   element.addEventListener(event, callback);
 };
 
+{% endif -%}
 // render UI components - show/hide
 export const showComponent = (id) => {
   if (!id) return;

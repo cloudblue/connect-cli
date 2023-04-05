@@ -631,6 +631,152 @@ def test_bootstrap_extension_project_webapp(
         ) is False
 
 
+def test_bootstrap_extension_project_tfnapp(
+    faker,
+    mocker,
+    mocked_responses,
+    config_provider,
+):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner_version = f'{faker.random_number()}.{faker.random_number()}'
+        mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+            return_value=runner_version,
+        )
+        config_provider.load(config_dir='/tmp')
+
+        mocked_responses.add(
+            method='GET',
+            url=f'{config_provider.active.endpoint}/devops/event-definitions',
+            headers={
+                'Content-Range': 'items 0-0/1',
+            },
+            json=[
+                {
+                    'type': 'sample_background_event',
+                    'group': 'Group',
+                    'name': 'Sample Event',
+                    'extension_type': 'multiaccount',
+                    'category': 'background',
+                    'object_statuses': ['status1', 'status2'],
+                },
+            ],
+        )
+
+        data = {
+            'project_name': faker.name(),
+            'project_slug': slugify(faker.name()),
+            'extension_type': 'transformations',
+            'extension_audience': ['vendor', 'distributor'],
+            'application_types': ['webapp', 'tfnapp'],
+            'webapp_supports_ui': 'y',
+            'description': 'desc',
+            'package_name': slugify(faker.name()),
+            'author': 'connect',
+            'version': '1.0',
+            'license': 'Apache',
+            'use_github_actions': 'n',
+            'use_asyncio': 'n',
+            'include_variables_example': 'n',
+            'api_key': faker.pystr(),
+            'environment_id': f'ENV-{faker.random_number()}',
+            'server_address': faker.domain_name(2),
+        }
+
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.dialogus',
+            return_value=data,
+        )
+
+        with open(f'{tmpdir}/sample.json', 'w') as fp:
+            json.dump({'project_name': 'Saved name', 'fake': 'fake'}, fp)
+
+        bootstrap_extension_project(
+            config=config_provider,
+            output_dir=tmpdir,
+            overwrite=False,
+            load_answers=f'{tmpdir}/sample.json',
+            save_answers=None,
+        )
+
+        classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
+
+        env_file_name = f".{data['project_slug']}_dev.env"
+
+        env_file = open(os.path.join(tmpdir, data['project_slug'], env_file_name)).read()
+        assert f'export API_KEY="{data["api_key"]}"' in env_file
+        assert f'export ENVIRONMENT_ID="{data["environment_id"]}"' in env_file
+        assert f'export SERVER_ADDRESS="{data["server_address"]}"' in env_file
+
+        docker_compose_yml = yaml.safe_load(
+            open(os.path.join(tmpdir, data['project_slug'], 'docker-compose.yml')),
+        )
+
+        for service_suffix in ('dev', 'bash', 'test'):
+            service = docker_compose_yml['services'][f"{data['project_slug']}_{service_suffix}"]
+            assert service['container_name'] == f"{data['project_slug']}_{service_suffix}"
+            assert service['env_file'] == [env_file_name]
+
+        docker_file = open(os.path.join(tmpdir, data['project_slug'], 'Dockerfile')).read()
+        assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
+
+        pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
+
+        ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
+        assert ext_entrypoint == {
+            'webapp': f"{data['package_name']}.webapp:{classname_prefix}WebApplication",
+            'tfnapp': (
+                f"{data['package_name']}.tfnapp:{classname_prefix}"
+                "TransformationsApplication"
+            ),
+        }
+
+        parser = configparser.ConfigParser()
+        parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
+
+        assert parser['flake8']['application-import-names'] == data['package_name']
+
+        flake8_style_guide = flake8.get_style_guide(
+            show_source=parser['flake8']['show-source'],
+            max_line_length=int(parser['flake8']['max-line-length']),
+            application_import_names=parser['flake8']['application-import-names'],
+            import_order_style=parser['flake8']['import-order-style'],
+            max_cognitive_complexity=parser['flake8']['max-cognitive-complexity'],
+            ignore=parser['flake8']['ignore'],
+            exclude=parser['flake8']['exclude'],
+        )
+        report = flake8_style_guide.check_files([
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'tfnapp.py'),
+        ])
+        assert report.total_errors == 0
+
+        tfnapp_py = open(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'tfnapp.py'),
+        ).read()
+        extension_json = open(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'extension.json'),
+        ).read()
+
+        assert 'import TransformationsApplicationBase' in tfnapp_py
+        assert 'Application(TransformationsApplicationBase):' in tfnapp_py
+        assert 'icon' in extension_json
+
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static', '.gitkeep'),
+        ) is True
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
+        ) is True
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+        ) is False
+        assert os.path.exists(
+            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
+        ) is False
+
+
 def test_bootstrap_extension_project_wizard_cancel(mocker):
     mocker.patch('connect.cli.plugins.project.extension.helpers.get_event_definitions')
     mocker.patch('connect.cli.plugins.project.extension.helpers.get_questions')
@@ -701,10 +847,11 @@ def test_bump_runner_version(mocker, capsys):
             fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
         bump_runner_extension_project(project_dir)
         captured = capsys.readouterr()
-        assert 'Runner version has been successfully updated to 1.0' in captured.out
-        assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured.out
-        assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured.out
-        assert '/Dockerfile' in captured.out
+        captured_out = ''.join(captured.out.split('\n'))
+        assert 'Runner version has been successfully updated to 1.0' in captured_out
+        assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured_out
+        assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured_out
+        assert f'{os.path.join(project_dir, "Dockerfile")}' in captured_out
 
 
 def test_bump_runner_version_no_update_required(mocker, capsys):
