@@ -6,7 +6,7 @@ services:
     build:
       context: .
     working_dir: /extension
-    command: cextrun -d
+    command: cextrun -d --no-rich-logging
     volumes: 
       - .:/extension
     env_file:
