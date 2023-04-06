@@ -198,8 +198,8 @@ def get_questions(config, definitions):
             'type': 'input',
             'description': (
                 'Enter the DevOps environment identifier to which your Extension will connect:\n'
-                'It can be found in the DevOps module of Connect within the Local Access widget.\n'
-                'See: https://connect.cloudblue.com/community/modules/devops/user-interface/#Service_Details'
+                'It can be found in the DevOps module of Connect within the Local Access widget.\nSee: '
+                'https://connect.cloudblue.com/community/modules/devops/user-interface/#Environment_ID_Specification'
             ),
             'validators': (RequiredValidator(message='Please, provide a DevOps environment ID.'),),
         },
