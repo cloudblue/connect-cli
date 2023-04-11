@@ -534,6 +534,6 @@ def test_locales_validation_still_present_after_update(mocker, fs, get_sync_tran
     assert any(
         (
             data_validation.formula1 == "'General Information'!$AB$2:$AB$98"
-            and data_validation.sqref.ranges[0].coord == 'G2:G3'
+            and list(data_validation.sqref.ranges)[0].coord == 'G2:G3'
         ) for data_validation in wb['Translations'].data_validations.dataValidation
     )

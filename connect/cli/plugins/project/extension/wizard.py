@@ -92,7 +92,7 @@ def get_questions(config, definitions):
             'type': 'input',
             'description': 'Choose a name for the root folder of your Extension module.',
             'default': lambda ctx: slugify(ctx['project_name']),
-            'validators': (RequiredValidator(message='Please, provide a project root folder.'),),
+            'validators': [RequiredValidator(message='Please, provide a project root folder.')],
         },
         {
             'name': 'description',

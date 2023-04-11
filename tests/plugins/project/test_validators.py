@@ -1,7 +1,11 @@
 import pytest
 from interrogatio.core.exceptions import ValidationError
 
-from connect.cli.plugins.project.validators import PythonIdentifierValidator, get_code_context
+from connect.cli.plugins.project.validators import (
+    ProjectDirValidator,
+    PythonIdentifierValidator,
+    get_code_context,
+)
 
 
 @pytest.mark.parametrize(
@@ -94,3 +98,21 @@ def test_get_code_context_function(mocker, faker):
     assert result['start_line'] == 1
     assert result['lineno'] == 7
     assert result['code'] == ''.join(code.splitlines(keepends=True))
+
+
+def test_project_dir_validator(mocker):
+    mocked_exists = mocker.patch(
+        'connect.cli.plugins.project.validators.inspect.os.path.exists',
+        side_effect=[False, True],
+    )
+
+    validator = ProjectDirValidator('/base_dir')
+
+    assert validator.validate('') is None
+
+    validator.validate('my_dir')
+
+    mocked_exists.assert_called_once_with('/base_dir/my_dir')
+
+    with pytest.raises(ValidationError):
+        validator.validate('another_dir')

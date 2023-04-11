@@ -21,6 +21,7 @@ from connect.cli.plugins.project.extension.wizard import (
 )
 from connect.cli.plugins.project.renderer import BoilerplateRenderer
 from connect.cli.plugins.project.utils import show_validation_result_table
+from connect.cli.plugins.project.validators import ProjectDirValidator
 
 
 def bootstrap_extension_project(  # noqa: CCR001
@@ -52,6 +53,12 @@ def bootstrap_extension_project(  # noqa: CCR001
                     question['default'] = loaded_answers[question['name']]
         except Exception as e:
             raise ClickException(f'Can not load or parse answers from {load_answers}: {e}')
+
+    if not overwrite:
+        for q in questions:
+            if q['name'] == 'project_slug':
+                q['validators'].append(ProjectDirValidator(output_dir))
+                break
 
     answers = dialogus(
         questions,
