@@ -17,6 +17,24 @@ class PythonIdentifierValidator(Validator):
             raise ValidationError('Introduced data is not a valid Python identifier')
 
 
+class ProjectDirValidator(Validator):
+
+    def __init__(
+        self,
+        output_dir,
+        message='The root folder for your project already exist.',
+    ):
+        super().__init__(message=message)
+        self.output_dir = output_dir
+
+    def validate(self, value, context=None):
+        if not value:
+            return
+        project_dir = os.path.join(self.output_dir, value)
+        if os.path.exists(project_dir):
+            raise ValidationError(self.message)
+
+
 @dataclasses.dataclass
 class ValidationItem:
     level: Literal['WARNING', 'ERROR']
