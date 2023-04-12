@@ -2,6 +2,9 @@
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
 # Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+import io
+import sys
+
 import click
 
 from connect.cli.core.base import cli
@@ -10,6 +13,7 @@ from connect.cli.core.plugins import load_plugins
 
 
 def main():
+    _set_stdout_unbuffered()
     _ignore_openpyxl_warnings()
     try:
         import uvloop
@@ -42,6 +46,11 @@ def _ignore_openpyxl_warnings():
     """
     import warnings
     warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl.worksheet._reader')
+
+
+def _set_stdout_unbuffered():  # pragma: no cover
+    if 'pytest' not in sys.modules:
+        sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
 
 
 if __name__ == '__main__':
