@@ -5,6 +5,7 @@
 #
 from connect.eaas.core.decorators import manual_transformation, transformation{% if include_variables_example == 'y' -%}, variables{% endif %}
 from connect.eaas.core.extension import TransformationsApplicationBase
+from connect.eaas.core.responses import RowTransformationResponse
 
 
 {% if include_variables_example == 'y' -%}
@@ -45,5 +46,5 @@ class {{ project_slug|replace("_", " ")|title|replace(" ", "") }}Transformations
         for setting in tfn_settings:
             result[setting['to']] = row[setting['from']]
 
-        return result
+        return RowTransformationResponse.done(result)
 
