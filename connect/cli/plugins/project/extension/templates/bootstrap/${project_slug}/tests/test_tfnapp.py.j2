@@ -3,6 +3,8 @@
 # Copyright (c) 2022, Globex Corporation
 # All rights reserved.
 #
+from connect.eaas.core.enums import ResultType
+
 from {{ package_name }}.tfnapp import {{ project_slug|replace("_", " ")|title|replace(" ", "") }}TransformationsApplication
 
 
@@ -24,12 +26,14 @@ def test_copy_columns(connect_client, logger, mocker):
         },
     )
 
-    assert app.copy_columns(
+    response = app.copy_columns(
         {
             'ColumnA': 'ContentColumnA',
             'ColumnB': 'ContentColumnB',
         },
-    ) == {
+    )
+    assert response.status == ResultType.SUCCESS
+    assert response.transformed_row == {
         'NewColC': 'ContentColumnA',
         'NewColD': 'ContentColumnB',
     }
