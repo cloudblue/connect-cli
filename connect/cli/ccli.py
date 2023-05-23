@@ -51,6 +51,7 @@ def _ignore_openpyxl_warnings():
 def _set_stdout_unbuffered():  # pragma: no cover
     if 'pytest' not in sys.modules:
         sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+        sys.stdout.reconfigure(encoding='utf-8')
 
 
 if __name__ == '__main__':
