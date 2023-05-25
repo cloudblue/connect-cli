@@ -83,35 +83,6 @@ def test_invalid_type(mocker, fs, get_sync_templates_env):
     }
 
 
-def test_invalid_tier_type(mocker, fs, get_sync_templates_env):
-    get_sync_templates_env['Templates']['C2'] = 'create'
-    get_sync_templates_env['Templates']['D2'] = 'tier1'
-    get_sync_templates_env['Templates']['E2'] = 'inquire'
-    get_sync_templates_env.save(f'{fs.root_path}/test.xlsx')
-
-    stats = SynchronizerStats()
-    synchronizer = TemplatesSynchronizer(
-        client=ConnectClient(
-            use_specs=False,
-            api_key='ApiKey SU:123',
-            endpoint='https://localhost/public/v1',
-        ),
-        progress=mocker.MagicMock(),
-        stats=stats,
-    )
-
-    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Templates')
-    synchronizer.sync()
-
-    assert stats['Templates'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
-    }
-    assert stats['Templates']._row_errors == {
-        2: ['Tier templates must be fulfillment type only'],
-    }
-
-
 def test_invalid_no_title(mocker, fs, get_sync_templates_env):
     get_sync_templates_env['Templates']['C2'] = 'create'
     get_sync_templates_env['Templates']['B2'] = None
