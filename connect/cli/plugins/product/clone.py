@@ -51,6 +51,15 @@ class ProductCloner:
 
             synchronizer.open(input_file, 'General Information')
             synchronizer.sync()
+
+            synchronizer = CapabilitiesSynchronizer(
+                self.config.active.client,
+                self.progress,
+                self.stats,
+            )
+            synchronizer.open(input_file, 'Capabilities')
+            synchronizer.sync()
+
             synchronizer = ItemSynchronizer(
                 self.config.active.client,
                 self.progress,
@@ -60,14 +69,6 @@ class ProductCloner:
             items = self.config.active.client.products[product_id].items.all()
             for item in items:
                 self.config.active.client.products[product_id].items[item['id']].delete()
-            synchronizer.sync()
-
-            synchronizer = CapabilitiesSynchronizer(
-                self.config.active.client,
-                self.progress,
-                self.stats,
-            )
-            synchronizer.open(input_file, 'Capabilities')
             synchronizer.sync()
 
             templates = self.config.active.client.products[product_id].templates.all()

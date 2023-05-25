@@ -128,10 +128,6 @@ class TemplatesSynchronizer(ProductSynchronizer):
                 f'Valid template types are `pending`, `fulfillment` or `inquiring`. Provided '
                 f'{data.type}.',
             )
-        if (data.scope == 'tier1' or data.scope == 'tier2') and data.type != 'fulfillment':
-            errors.append(
-                'Tier templates must be fulfillment type only',
-            )
         if not data.title or not data.content:
             errors.append(
                 'Title and Content are required',
