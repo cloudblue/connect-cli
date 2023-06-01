@@ -356,7 +356,7 @@ def test_validate_wrong_period_reservation(mocker, fs, get_sync_items_env):
     }
     assert stats['Items']._row_errors == {
         2: ['the item `Billing period` must be one between `onetime`, `monthly`, `yearly`, '
-            '`2 years`, `3 years`, `4 years`, `5 years`, not `century`.'],
+            '`2 years`, `3 years`, `4 years`, `5 years`, `6 years`, not `century`.'],
     }
 
 
@@ -662,7 +662,7 @@ def test_create_item_validate_commitment(
     }
     assert stats['Items']._row_errors == {
         2: ['the item `Commitment` must be one between `-`, `1 year`, `2 years`, `3 years`, '
-            '`4 years`, `5 years`, not `commitment`.'],
+            '`4 years`, `5 years`, `6 years`, not `commitment`.'],
     }
 
 
@@ -738,7 +738,7 @@ def test_create_item_validate_commitment_onetime(
         'deleted': 0, 'skipped': 0, 'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['the commitment `1 year` is invalid for `onetime` items.'],
+        2: ['for a `onetime` billing period the commitment must be one of `-`, not `1 year`.'],
     }
 
 
@@ -776,8 +776,8 @@ def test_create_item_validate_commitment_wrong_multiyear(
         'deleted': 0, 'skipped': 0, 'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['for a billing period of `2 years` the commitment must be one between `-`, `4 years`, '
-            ' not 3 years.'],
+        2: ['for a `2 years` billing period the commitment must be one of `-`, `4 years`'
+            ', `6 years`, not `3 years`.'],
     }
 
 
@@ -815,7 +815,7 @@ def test_create_item_validate_commitment_wrong_multiyear_vs_commitment(
         'deleted': 0, 'skipped': 0, 'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['for a billing period of `3 years` the commitment must be `-`, not 5 years.'],
+        2: ['for a `3 years` billing period the commitment must be one of `-`, `6 years`, not `5 years`.'],
     }
 
 

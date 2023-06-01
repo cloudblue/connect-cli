@@ -20,7 +20,7 @@ PARAM_TYPES = [
 
 
 PRECISIONS = ('integer', 'decimal(1)', 'decimal(2)', 'decimal(4)', 'decimal(8)')
-COMMITMENT = ('-', '1 year', '2 years', '3 years', '4 years', '5 years')
+COMMITMENT = ('-', '1 year', '2 years', '3 years', '4 years', '5 years', '6 years')
 BILLING_PERIOD = (
     'onetime',
     'monthly',
@@ -29,7 +29,21 @@ BILLING_PERIOD = (
     '3 years',
     '4 years',
     '5 years',
+    '6 years',
 )
+
+
+ALLOWED_COMMITMENTS = {
+    'monthly': COMMITMENT,
+    'yearly': COMMITMENT,
+    '2 years': ('-', '4 years', '6 years'),
+    '3 years': ('-', '6 years'),
+    '4 years': ('-',),
+    '5 years': ('-',),
+    '6 years': ('-',),
+    'onetime': ('-',),
+}
+
 
 CAPABILITIES = (
     'Pay-as-you-go support and schema',

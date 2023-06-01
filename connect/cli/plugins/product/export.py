@@ -20,7 +20,12 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from connect.cli.core.http import format_http_status, handle_http_error
 from connect.cli.core.utils import validate_output_options
-from connect.cli.plugins.product.constants import PARAM_TYPES
+from connect.cli.plugins.product.constants import (
+    BILLING_PERIOD,
+    COMMITMENT,
+    PARAM_TYPES,
+    PRECISIONS,
+)
 from connect.cli.plugins.product.utils import get_json_object_for_param
 from connect.cli.plugins.shared.export import alter_attributes_sheet, get_translation_workbook
 from connect.cli.plugins.shared.utils import (
@@ -40,6 +45,10 @@ def _setup_locales_list(ws, client):
     ws['AB1'].value = 'Locales'
     for idx, loc in enumerate(locales_list, 2):
         ws[f'AB{idx}'].value = loc
+
+
+def _build_f1_options(option_list):
+    return '"{options}"'.format(options=','.join(option_list))
 
 
 def _setup_cover_sheet(ws, product, location, client, media_path):
@@ -486,9 +495,7 @@ def _dump_parameters(ws, client, product_id, param_type, progress):
     )
     type_validation = DataValidation(
         type='list',
-        formula1='"{params}"'.format(
-            params=','.join(PARAM_TYPES),
-        ),
+        formula1=_build_f1_options(PARAM_TYPES),
         allow_blank=False,
     )
     ordering_fulfillment_scope_validation = DataValidation(
@@ -818,19 +825,19 @@ def _dump_items(ws, client, product_id, progress):
     )
     period_validation = DataValidation(
         type='list',
-        formula1='"onetime,monthly,yearly,2 years,3 years,4 years,5 years"',
+        formula1=_build_f1_options(BILLING_PERIOD),
         allow_blank=False,
     )
 
     precision_validation = DataValidation(
         type='list',
-        formula1='"integer,decimal(1),decimal(2),decimal(4),decimal(8)"',
+        formula1=_build_f1_options(PRECISIONS),
         allow_blank=False,
     )
 
     commitment_validation = DataValidation(
         type='list',
-        formula1='"-,1 year,2 years,3 years,4 years,5 years"',
+        formula1=_build_f1_options(COMMITMENT),
         allow_blank=False,
     )
 

@@ -15,7 +15,12 @@ from connect.cli.plugins.product.api import (
     get_item_by_mpn,
     update_item,
 )
-from connect.cli.plugins.product.constants import BILLING_PERIOD, COMMITMENT, PRECISIONS
+from connect.cli.plugins.product.constants import (
+    ALLOWED_COMMITMENTS,
+    BILLING_PERIOD,
+    COMMITMENT,
+    PRECISIONS,
+)
 from connect.cli.plugins.shared.base import ProductSynchronizer
 from connect.cli.plugins.shared.constants import ITEMS_COLS_HEADERS
 
@@ -163,26 +168,13 @@ class ItemSynchronizer(ProductSynchronizer):
                 'is invalid for `ppu` items.',
             ]
 
-        if row.billing_period == 'onetime' and row.commitment != '-':
-            return [
-                f'the commitment `{row.commitment}` '
-                'is invalid for `onetime` items.',
-            ]
+        allowed_commitments = ALLOWED_COMMITMENTS.get(row.billing_period, [])
 
-        if row.billing_period == '2 years' and row.commitment not in ('-', '4 years'):
+        if allowed_commitments and row.commitment not in allowed_commitments:
+            valid_commitment = ', '.join([f'`{name}`' for name in allowed_commitments])
             return [
-                f'for a billing period of `2 years` the commitment '
-                'must be one between `-`, `4 years`, '
-                f' not {row.commitment}.',
-            ]
-        if row.billing_period in (
-            '3 years',
-            '4 years',
-            '5 years',
-        ) and row.commitment != '-':
-            return [
-                f'for a billing period of `{row.billing_period}` the commitment '
-                f'must be `-`, not {row.commitment}.',
+                f'for a `{row.billing_period}` billing period the commitment '
+                f'must be one of {valid_commitment}, not `{row.commitment}`.',
             ]
 
         return []
