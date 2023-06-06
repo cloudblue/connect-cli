@@ -4,6 +4,7 @@
 # All rights reserved.
 #
 
+
 def generate(client, parameters, progress_callback, extra_context):
     """
     Extracts data from Connect using the ConnectClient instance

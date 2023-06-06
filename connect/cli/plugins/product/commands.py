@@ -74,7 +74,6 @@ def cmd_list_products(config, query):
     name='export',
     short_help='Export a product to an excel file.',
 )
-
 @click.argument('product_id', metavar='product_id', nargs=1, required=True)  # noqa: E304
 @click.option(
     '--out',
@@ -121,8 +120,7 @@ def cmd_sync_products(config, input_file):
     product_id = synchronizer.open(input_file, 'General Information')
 
     console.confirm(
-        'Are you sure you want to synchronize '
-        f'the product {product_id} ?',
+        'Are you sure you want to synchronize ' f'the product {product_id} ?',
         abort=True,
     )
     console.echo('')
@@ -166,7 +164,6 @@ def cmd_sync_products(config, input_file):
     name='clone',
     short_help='Create a clone of a product.',
 )
-
 @click.argument('source_product_id', metavar='product_id', nargs=1, required=True)  # noqa: E304
 @click.option(
     '--source_account',
@@ -209,8 +206,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
         source_account = config.active.id
 
     console.confirm(
-        'Are you sure you want to Clone '
-        f'the product {source_product_id} ?',
+        'Are you sure you want to Clone ' f'the product {source_product_id} ?',
         abort=True,
     )
     console.echo('')
@@ -226,7 +222,6 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
     )
 
     with console.status_progress() as (status, progress):
-
         synchronizer = ProductCloner(
             config=config,
             source_account=source_account,

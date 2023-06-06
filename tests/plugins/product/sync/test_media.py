@@ -21,8 +21,12 @@ def test_no_action(mocker, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 1, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 1,
+        'errors': 0,
     }
 
 
@@ -46,8 +50,12 @@ def test_validate_no_position(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['Position is required and must be an integer between 1 and 8'],
@@ -74,8 +82,12 @@ def test_validate_no_valid_id(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['ID does not seam to be valid.'],
@@ -102,8 +114,12 @@ def test_validate_no_image_file(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {2: ['Image file is required']}
 
@@ -127,8 +143,12 @@ def test_validate_wrong_action(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['Supported actions are `-`, `create`, `update` or `delete`. Provided XYZ'],
@@ -155,8 +175,12 @@ def test_validate_wrong_type(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['Media can be either image or video type, provided wrong'],
@@ -183,8 +207,12 @@ def test_validate_wrong_file(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['Image file is not found, please check that file wrong.png exists in media folder'],
@@ -213,8 +241,12 @@ def test_validate_invalid_no_video_url(mocker, fs, get_sync_media_env):
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
         2: ['Video URL location is required for video type'],
@@ -244,12 +276,18 @@ def test_validate_invalid_video_url(mocker, fs, get_sync_media_env, video_domain
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {
-        2: ['Videos can be hosted on youtube or vimeo, please also ensure to provide https url. '
-            f'Invalid url provided is http://{video_domain}/video.mov'],
+        2: [
+            'Videos can be hosted on youtube or vimeo, please also ensure to provide https url. '
+            f'Invalid url provided is http://{video_domain}/video.mov',
+        ],
     }
 
 
@@ -278,8 +316,12 @@ def test_delete(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_r
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 1, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 1,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -308,8 +350,12 @@ def test_delete_404(mocker, fs, get_sync_media_env, mocked_responses, mocked_med
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 1, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 1,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -338,8 +384,12 @@ def test_delete_500(mocker, fs, get_sync_media_env, mocked_responses, mocked_med
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {2: ['500 Internal Server Error']}
 
@@ -369,8 +419,12 @@ def test_update_image(mocker, fs, get_sync_media_env, mocked_responses, mocked_m
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -399,14 +453,25 @@ def test_update_image_404(mocker, fs, get_sync_media_env, mocked_responses, mock
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Media']._row_errors == {2: ['404 Not Found']}
 
 
 @pytest.mark.parametrize('domain', ('youtu.be', 'vimeo.com', 'youtube.com'))
-def test_create_video(mocker, fs, get_sync_media_env, mocked_responses, mocked_media_response, domain):
+def test_create_video(
+    mocker,
+    fs,
+    get_sync_media_env,
+    mocked_responses,
+    mocked_media_response,
+    domain,
+):
     get_sync_media_env['Media']['C2'] = 'create'
     get_sync_media_env['Media']['D2'] = 'video'
     get_sync_media_env['Media']['E2'] = 'image.png'
@@ -435,6 +500,10 @@ def test_create_video(mocker, fs, get_sync_media_env, mocked_responses, mocked_m
     synchronizer.sync()
 
     assert stats['Media'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }

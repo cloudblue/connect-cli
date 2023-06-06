@@ -4,12 +4,8 @@ from interrogatio.validators import Validator
 
 class AppTypesValidator(Validator):
     def validate(self, value, context=None):
-        if (
-            context.get('extension_type') == 'transformations'
-            and (
-                'webapp' not in value
-                or 'tfnapp' not in value
-            )
+        if context.get('extension_type') == 'transformations' and (
+            'webapp' not in value or 'tfnapp' not in value
         ):
             raise ValidationError(
                 'Web Application and Transformations Application '
@@ -19,11 +15,7 @@ class AppTypesValidator(Validator):
 
 class UISupportValidator(Validator):
     def validate(self, value, context=None):
-        if (
-            context.get('extension_type') == 'transformations'
-            and value != 'y'
-        ):
+        if context.get('extension_type') == 'transformations' and value != 'y':
             raise ValidationError(
-                'Web Application UI support '
-                'is mandatory for Commerce type extensions.',
+                'Web Application UI support is mandatory for Commerce type extensions.',
             )

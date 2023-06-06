@@ -167,7 +167,8 @@ def test_secho(mocker):
 def test_markdown(mocker):
     mocked_print = mocker.patch.object(Console, 'print')
     mocked_render = mocker.patch(
-        'connect.cli.core.terminal.render', return_value='rendered markdown',
+        'connect.cli.core.terminal.render',
+        return_value='rendered markdown',
     )
     c = Console()
     c.markdown('# my markdown')

@@ -6,7 +6,7 @@ from connect.cli.plugins.shared.exceptions import SheetNotFoundError
 from connect.cli.plugins.translation.translation_sync import TranslationSynchronizer
 
 
-localization_base = "https://localhost/public/v1/localization"
+localization_base = 'https://localhost/public/v1/localization'
 
 
 def get_client():
@@ -26,9 +26,7 @@ def test_sheet_not_found(fs, sample_translation_workbook):
     with pytest.raises(SheetNotFoundError) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    assert str(e.value) == (
-        "File does not contain worksheet 'General' to synchronize, skipping"
-    )
+    assert str(e.value) == ("File does not contain worksheet 'General' to synchronize, skipping")
 
 
 def test_invalid_file_open(fs):
@@ -39,7 +37,7 @@ def test_invalid_file_open(fs):
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xlsx')
 
-    assert str(e.value).endswith("is not a valid xlsx file.")
+    assert str(e.value).endswith('is not a valid xlsx file.')
 
 
 def test_invalid_fileformat_open(fs):
@@ -50,7 +48,7 @@ def test_invalid_fileformat_open(fs):
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/fake.xxx')
 
-    assert "openpyxl does not support .xxx file format" in str(e.value)
+    assert 'openpyxl does not support .xxx file format' in str(e.value)
 
 
 @pytest.mark.parametrize('row_to_invalidate', range(1, 10))
@@ -63,12 +61,14 @@ def test_sheet_validation(fs, row_to_invalidate, sample_translation_workbook):
     with pytest.raises(click.ClickException) as e:
         synchronizer.open(f'{fs.root_path}/test.xlsx')
 
-    assert str(e.value).startswith(f"A{row_to_invalidate} must be ")
+    assert str(e.value).startswith(f'A{row_to_invalidate} must be ')
     assert str(e.value).endswith(", but it is 'invalid'")
 
 
 def test_get_translation_error_500(
-    fs, mocked_responses, sample_translation_workbook,
+    fs,
+    mocked_responses,
+    sample_translation_workbook,
 ):
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -83,11 +83,14 @@ def test_get_translation_error_500(
     with pytest.raises(click.ClickException) as e:
         synchronizer.sync()
 
-    assert "500 - Internal Server Error" in str(e.value)
+    assert '500 - Internal Server Error' in str(e.value)
 
 
 def test_update_ok(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
 ):
     sample_translation_workbook['General']['B8'].value = 'new description'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -109,13 +112,20 @@ def test_update_ok(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
 def test_update_fail(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
 ):
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(
@@ -136,13 +146,22 @@ def test_update_fail(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
 
 
 def test_create_asks_confirmation(
-    fs, capsys, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    capsys,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
@@ -165,8 +184,8 @@ def test_create_asks_confirmation(
     synchronizer.sync()
 
     captured = capsys.readouterr()
-    assert "A new translation will be created." in captured.out
-    assert "Do you want to continue?" in captured.out
+    assert 'A new translation will be created.' in captured.out
+    assert 'Do you want to continue?' in captured.out
 
 
 def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker):
@@ -188,8 +207,12 @@ def test_abort_create(fs, mocked_responses, sample_translation_workbook, mocker)
 
 
 def test_create_always_yes(
-    always_yes_console, fs, capsys, mocked_responses,
-    mocked_translation_response, sample_translation_workbook,
+    always_yes_console,
+    fs,
+    capsys,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
 ):
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -210,16 +233,23 @@ def test_create_always_yes(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
     captured = capsys.readouterr()
-    assert "A new translation will be created." not in captured.out
-    assert "Do you want to continue?" not in captured.out
+    assert 'A new translation will be created.' not in captured.out
+    assert 'Do you want to continue?' not in captured.out
 
 
 def test_create_fail(
-    fs, mocked_responses, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B1'].value = 'TRN-NON-EXISTENT'
@@ -241,13 +271,21 @@ def test_create_fail(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
 
 
 def test_change_locale_causes_creation(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B4'].value = 'DE'
@@ -269,13 +307,21 @@ def test_change_locale_causes_creation(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
 def test_different_account_causes_creation(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook.save(f'{fs.root_path}/test.xlsx')
@@ -297,15 +343,23 @@ def test_different_account_causes_creation(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
 @pytest.mark.parametrize('ctx_instance_id', ['PRD-999-999-999', ''])
 def test_change_context_causes_creation(
-    fs, ctx_instance_id, mocked_responses, mocked_translation_response,
-    sample_translation_workbook, mocker,
+    fs,
+    ctx_instance_id,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
@@ -321,7 +375,8 @@ def test_change_context_causes_creation(
         url=f'{localization_base}/contexts/LCX-9999-9999-9999',
         json={
             'id': 'LCX-9999-9999-9999',
-            'instance_id': 'PRD-999-999-999', 'name': 'another product',
+            'instance_id': 'PRD-999-999-999',
+            'name': 'another product',
         },
     )
     mocked_responses.add(
@@ -336,13 +391,21 @@ def test_change_context_causes_creation(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
 def test_change_context_instance_causes_creation(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = ''
@@ -359,10 +422,13 @@ def test_change_context_instance_causes_creation(
         headers={
             'Content-Range': 'items 0-0/1',
         },
-        json=[{
-            'id': 'LCX-9999-9999-9999',
-            'instance_id': 'PRD-999-999-999', 'name': 'another product',
-        }],
+        json=[
+            {
+                'id': 'LCX-9999-9999-9999',
+                'instance_id': 'PRD-999-999-999',
+                'name': 'another product',
+            },
+        ],
     )
     mocked_responses.add(
         method='POST',
@@ -376,13 +442,21 @@ def test_change_context_instance_causes_creation(
     synchronizer.sync()
 
     assert synchronizer._mstats.get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
 def test_change_context_ambiguity_fail(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-9999-9999-9999'
@@ -398,7 +472,8 @@ def test_change_context_ambiguity_fail(
         url=f'{localization_base}/contexts/LCX-9999-9999-9999',
         json={
             'id': 'LCX-9999-9999-9999',
-            'instance_id': 'PRD-999-999-999', 'name': 'another product',
+            'instance_id': 'PRD-999-999-999',
+            'name': 'another product',
         },
     )
     client = get_client()
@@ -410,17 +485,25 @@ def test_change_context_ambiguity_fail(
 
     assert str(e.value) == (
         "The Instance ID (PRD-DIFFERENT-PRODUCT) doesn't correspond "
-        "to the Context ID (LCX-9999-9999-9999)"
+        'to the Context ID (LCX-9999-9999-9999)'
     )
 
 
-@pytest.mark.parametrize('status,error_msg', [
-    (404, "The Context ID (LCX-TRIGGER-ERROR) doesn't exist"),
-    (500, "500 - Internal Server Error: unexpected error."),
-])
+@pytest.mark.parametrize(
+    'status,error_msg',
+    [
+        (404, "The Context ID (LCX-TRIGGER-ERROR) doesn't exist"),
+        (500, '500 - Internal Server Error: unexpected error.'),
+    ],
+)
 def test_change_context_fail(
-    fs, status, error_msg, mocked_responses, mocked_translation_response,
-    sample_translation_workbook, mocker,
+    fs,
+    status,
+    error_msg,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = 'LCX-TRIGGER-ERROR'
@@ -447,7 +530,11 @@ def test_change_context_fail(
 
 
 def test_change_context_instance_not_exists_fail(
-    fs, mocked_responses, mocked_translation_response, sample_translation_workbook, mocker,
+    fs,
+    mocked_responses,
+    mocked_translation_response,
+    sample_translation_workbook,
+    mocker,
 ):
     mocker.patch('builtins.input', lambda *args: 'y')
     sample_translation_workbook['General']['B5'].value = ''

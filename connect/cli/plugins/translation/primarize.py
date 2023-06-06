@@ -5,7 +5,8 @@ from connect.cli.core.http import RequestLogger, format_http_status, handle_http
 
 
 def primarize_translation(
-    api_url, api_key,
+    api_url,
+    api_key,
     translation_id,
 ):
     try:

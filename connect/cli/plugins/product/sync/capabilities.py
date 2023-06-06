@@ -58,7 +58,7 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             if data.value == 'Enabled':
                                 raise Exception(
                                     "Dynamic items support can't be enabled without Pay-as-you-go "
-                                    "support",
+                                    'support',
                                 )
                             update = False
                         else:
@@ -66,12 +66,12 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                                 product['capabilities']['ppu']['dynamic'] = True
                             else:
                                 product['capabilities']['ppu']['dynamic'] = False
-                    if data.capability == "Pay-as-you-go future charges support":
+                    if data.capability == 'Pay-as-you-go future charges support':
                         if not product['capabilities'].get('ppu', False):
                             if data.value == 'Enabled':
                                 raise Exception(
                                     "Report of future charges can't be enabled without Pay-as-you-go "
-                                    "support",
+                                    'support',
                                 )
                             update = False
 
@@ -122,65 +122,25 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             product['capabilities']['tiers']['validation'] = False
                     if data.capability == 'Editable Ordering Parameters in Change Request':
                         if data.value == 'Enabled':
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
+                            product['capabilities']['subscription']['change'][
                                 'editable_ordering_parameters'
                             ] = True
                         else:
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
+                            product['capabilities']['subscription']['change'][
                                 'editable_ordering_parameters'
                             ] = False
                     if data.capability == 'Validation of Draft Change Request':
                         if data.value == 'Enabled':
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
-                                'validation'
-                            ] = True
+                            product['capabilities']['subscription']['change']['validation'] = True
                         else:
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
-                                'validation'
-                            ] = False
+                            product['capabilities']['subscription']['change']['validation'] = False
                     if data.capability == 'Validation of inquiring form for Change Requests':
                         if data.value == 'Enabled':
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
+                            product['capabilities']['subscription']['change'][
                                 'inquiring_validation'
                             ] = True
                         else:
-                            product[
-                                'capabilities'
-                            ][
-                                'subscription'
-                            ][
-                                'change'
-                            ][
+                            product['capabilities']['subscription']['change'][
                                 'inquiring_validation'
                             ] = False
                     if update:
@@ -200,12 +160,18 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
             )
         if data.capability == 'Pay-as-you-go support and schema':
             if data.value not in (
-                'Disabled', 'QT', 'TR', 'PR', 'CR',
+                'Disabled',
+                'QT',
+                'TR',
+                'PR',
+                'CR',
             ):
                 errors.append(f'Schema {data.value} is not supported')
             return errors
         if data.capability == 'Reseller Authorization Level' and data.value not in (
-            'Disabled', 1, 2,
+            'Disabled',
+            1,
+            2,
         ):
             errors.append(f'{data.value } is not valid for Reseller Authorization level capability')
             return errors

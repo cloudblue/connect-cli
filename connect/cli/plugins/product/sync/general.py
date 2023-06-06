@@ -52,19 +52,18 @@ class GeneralSynchronizer(ProductSynchronizer):
                 'A9 must be `Product Icon file name` and B9 contain the value',
             )
         if (ws['B9'] and ws['B9'].value) and not os.path.isfile(
-                os.path.join(
-                    self._media_path,
-                    'media',
-                    ws['B9'].value,
-                ),
+            os.path.join(
+                self._media_path,
+                'media',
+                ws['B9'].value,
+            ),
         ):
             errors.append(
                 f'File {ws["B9"].value} does not exist in the media folder',
             )
-        if (
-            (ws['A10'] and ws['A10'].value != 'Product Short Description')
-            or len(ws['B10'].value) > 512
-        ):
+        if (ws['A10'] and ws['A10'].value != 'Product Short Description') or len(
+            ws['B10'].value,
+        ) > 512:
             errors.append(
                 'Short description is mandatory and must be on B10, short description can not '
                 'exceed 512 characters',
@@ -111,7 +110,7 @@ class GeneralSynchronizer(ProductSynchronizer):
                 'media',
                 ws['B9'].value,
             ),
-            "rb",
+            'rb',
         )
         image_type, _ = guess_type(image_name)
         data = {

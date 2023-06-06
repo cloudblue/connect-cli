@@ -39,7 +39,6 @@ def setup_script_command(cls):
     @pass_config
     @pass_arg(cls)
     def cmd_play_custom(script_class, config, **kwargs):
-
         Context.context_file_name = PlayOptions.context_file
         ctx = Context.create(**kwargs)
 
@@ -62,7 +61,7 @@ def load_one_script(scripts, filename):
     modname = filename[0:-3]
 
     try:
-        mod = __import__(modname, globals={"__name__": __name__}, fromlist=['*'])
+        mod = __import__(modname, globals={'__name__': __name__}, fromlist=['*'])
 
         if not hasattr(mod, '__all__'):
             print(f'Warning: {filename} has no __all__ defined', file=sys.stderr)

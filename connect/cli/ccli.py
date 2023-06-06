@@ -17,6 +17,7 @@ def main():
     _ignore_openpyxl_warnings()
     try:
         import uvloop
+
         uvloop.install()
     except ImportError:
         pass
@@ -45,6 +46,7 @@ def _ignore_openpyxl_warnings():
     To avoid losing data validation, it should be re-created each time the file is saved by the cli.
     """
     import warnings
+
     warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl.worksheet._reader')
 
 

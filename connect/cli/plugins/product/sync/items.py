@@ -37,7 +37,7 @@ class ItemSynchronizer(ProductSynchronizer):
         super().__init__(client, progress)
 
     def sync(self):  # noqa: CCR001
-        ws = self._wb["Items"]
+        ws = self._wb['Items']
 
         task = self._progress.add_task('Processing item', total=ws.max_row - 1)
         for row_idx in range(2, ws.max_row + 1):
@@ -57,12 +57,7 @@ class ItemSynchronizer(ProductSynchronizer):
 
             if data.action == 'create':
                 rql = R().mpn.eq(data.mpn)
-                item = (
-                    self._client.products[self._product_id]
-                    .items
-                    .filter(rql)
-                    .first()
-                )
+                item = self._client.products[self._product_id].items.filter(rql).first()
                 if item:
                     self._mstats.error(
                         f'Cannot create item: item with MPN `{data.mpn}`'
@@ -164,8 +159,7 @@ class ItemSynchronizer(ProductSynchronizer):
 
         if row.type == 'ppu' and row.commitment != '-':
             return [
-                f'the commitment `{row.commitment}` '
-                'is invalid for `ppu` items.',
+                f'the commitment `{row.commitment}` ' 'is invalid for `ppu` items.',
             ]
 
         allowed_commitments = ALLOWED_COMMITMENTS.get(row.billing_period, [])
@@ -190,15 +184,13 @@ class ItemSynchronizer(ProductSynchronizer):
                 return errors
         if row.status == 'published' and row.action == 'delete':
             errors.append(
-                'the item status must be `draft` '
-                'for the `delete` action.',
+                'the item status must be `draft` for the `delete` action.',
             )
             return errors
 
         if row.action == 'create' and row.id:
             errors.append(
-                'the `ID` must not be specified '
-                'for the `create` action.',
+                'the `ID` must not be specified for the `create` action.',
             )
             return errors
 

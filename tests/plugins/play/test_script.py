@@ -9,7 +9,6 @@ from connect.cli.plugins.play.script import OptionWrapper, Script
 
 
 def test_script():
-
     ow = OptionWrapper(1, 2, 3, a=1, b=2, c=3)
     assert ow.args == (1, 2, 3)
     assert ow.kwargs == {'a': 1, 'b': 2, 'c': 3}

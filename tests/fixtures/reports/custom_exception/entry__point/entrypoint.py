@@ -8,4 +8,4 @@ from connect.client import ClientError
 
 
 def generate(client, parameters, progress_callback):
-    raise RuntimeError("Custom error")
+    raise RuntimeError('Custom error')

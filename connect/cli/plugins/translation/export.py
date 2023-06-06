@@ -10,7 +10,10 @@ from connect.cli.plugins.shared.export import alter_attributes_sheet, get_transl
 
 
 def dump_translation(
-    client, translation_id, output_file, output_path=None,
+    client,
+    translation_id,
+    output_file,
+    output_path=None,
 ):
     output_file = validate_output_options(output_path, output_file, default_dir_name=translation_id)
     wb = get_translation_workbook(client, translation_id)

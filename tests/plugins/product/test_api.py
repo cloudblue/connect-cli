@@ -13,8 +13,8 @@ from connect.cli.plugins.product.api import (
 
 
 def test_get_item(
-        mocked_responses,
-        mocked_items_response,
+    mocked_responses,
+    mocked_items_response,
 ):
     client = ConnectClient(
         api_key='ApiKey SU:123',
@@ -37,7 +37,7 @@ def test_get_item(
 
 
 def test_get_item_exception_404(
-        mocked_responses,
+    mocked_responses,
 ):
     client = ConnectClient(
         api_key='ApiKey SU:123',
@@ -60,7 +60,7 @@ def test_get_item_exception_404(
 
 
 def test_get_item_exception_500(
-        mocked_responses,
+    mocked_responses,
 ):
     client = ConnectClient(
         api_key='ApiKey SU:123',
@@ -79,18 +79,18 @@ def test_get_item_exception_500(
             product_id='PRD-276-377-545',
             item_id='PRD-276-377-545-0001',
         )
-    assert str(e.value) == "500 - Internal Server Error: unexpected error."
+    assert str(e.value) == '500 - Internal Server Error: unexpected error.'
 
 
 def test_create_unit(
-        mocked_responses,
+    mocked_responses,
 ):
     mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/settings/units',
         json={
-            "id": "unit",
-            "name": "unit-k",
+            'id': 'unit',
+            'name': 'unit-k',
         },
         status=200,
     )
@@ -103,7 +103,7 @@ def test_create_unit(
     result = create_unit(
         client=client,
         data={
-            "name": "unit-k",
+            'name': 'unit-k',
         },
     )
     assert result['id'] == 'unit'
@@ -111,7 +111,7 @@ def test_create_unit(
 
 
 def test_create_unit_500(
-        mocked_responses,
+    mocked_responses,
 ):
     mocked_responses.add(
         method='POST',
@@ -128,20 +128,20 @@ def test_create_unit_500(
         create_unit(
             client=client,
             data={
-                "name": "unit-k",
+                'name': 'unit-k',
             },
         )
-    assert str(e.value) == "500 - Internal Server Error: unexpected error."
+    assert str(e.value) == '500 - Internal Server Error: unexpected error.'
 
 
 def test_get_item_by_mpn(
-        mocked_responses,
-        mocked_items_response,
+    mocked_responses,
+    mocked_items_response,
 ):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
         status=200,
     )
@@ -162,7 +162,7 @@ def test_get_item_by_mpn(
 
 
 def test_get_item_by_mpn_500(
-        mocked_responses,
+    mocked_responses,
 ):
     mocked_responses.add(
         method='GET',
@@ -182,16 +182,16 @@ def test_get_item_by_mpn_500(
             product_id='PRD-276-377-545',
             mpn='MPN-R-001',
         )
-    assert str(e.value) == "500 - Internal Server Error: unexpected error."
+    assert str(e.value) == '500 - Internal Server Error: unexpected error.'
 
 
 def test_get_item_by_mpn_404(
-        mocked_responses,
+    mocked_responses,
 ):
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
         status=404,
     )
@@ -212,8 +212,8 @@ def test_get_item_by_mpn_404(
 
 
 def test_create_item(
-        mocked_responses,
-        mocked_items_response,
+    mocked_responses,
+    mocked_items_response,
 ):
     mocked_responses.add(
         method='POST',
@@ -238,17 +238,17 @@ def test_create_item(
 
 
 def test_create_item_409(
-        mocked_responses,
-        mocked_items_response,
+    mocked_responses,
+    mocked_items_response,
 ):
     mocked_responses.add(
         method='POST',
         url='https://localhost/public/v1/products/PRD-276-377-545/items',
         json={
-            "error_code": "VAL_001",
-            "errors": [
-                "name: Item with same name already exists for the product.",
-                "mpn: Item with same mpn already exists for the product.",
+            'error_code': 'VAL_001',
+            'errors': [
+                'name: Item with same name already exists for the product.',
+                'mpn: Item with same mpn already exists for the product.',
             ],
         },
         status=400,
@@ -267,7 +267,7 @@ def test_create_item_409(
             data=mocked_items_response[0],
         )
 
-    assert "400 - Bad Request: VAL_001 " in str(e.value)
+    assert '400 - Bad Request: VAL_001 ' in str(e.value)
 
 
 def test_update_item(
@@ -305,9 +305,9 @@ def test_update_item_mpn_exists(
         method='PUT',
         url='https://localhost/public/v1/products/PRD-276-377-545/items/PRD-276-377-545-0001',
         json={
-            "error_code": "VAL_001",
-            "errors": [
-                "mpn: Item with same mpn already exists for the product.",
+            'error_code': 'VAL_001',
+            'errors': [
+                'mpn: Item with same mpn already exists for the product.',
             ],
         },
         status=400,
@@ -362,9 +362,9 @@ def test_delete_item_published(
         method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/items/PRD-276-377-545-0001',
         json={
-            "error_code": "PRD_038",
-            "errors": [
-                "Only draft Item can be deleted.",
+            'error_code': 'PRD_038',
+            'errors': [
+                'Only draft Item can be deleted.',
             ],
         },
         status=400,

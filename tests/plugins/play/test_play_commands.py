@@ -24,7 +24,6 @@ def test_play_commands(fs, mocker):
 
 
 def test_play_commands_rel(fs, mocker):
-
     os.environ['CCLI_SCRIPTS'] = 'tests/plugins/play/scripts'
 
     unimport()

@@ -43,16 +43,16 @@ class StaticResourcesSynchronizer(ProductSynchronizer):
             if data.type == 'Download':
                 download.append(
                     {
-                        "title": data.title,
-                        "url": data.url,
-                        "visible_for": "admin",
+                        'title': data.title,
+                        'url': data.url,
+                        'visible_for': 'admin',
                     },
                 )
-            if data.type == "Documentation":
+            if data.type == 'Documentation':
                 documentation.append(
                     {
-                        "title": data.title,
-                        "url": data.url,
+                        'title': data.title,
+                        'url': data.url,
                     },
                 )
             if data.action == '-':

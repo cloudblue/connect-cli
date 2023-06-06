@@ -52,7 +52,11 @@ def test_export_silent(config_mocker, mocker, ccli):
 
 
 def test_list_translations(
-    config_mocker, console_80_columns, mocked_responses, mocked_translation_response, ccli,
+    config_mocker,
+    console_80_columns,
+    mocked_responses,
+    mocked_translation_response,
+    ccli,
 ):
     mocked_responses.add(
         method='GET',
@@ -172,7 +176,10 @@ def test_force_activate_translation(config_mocker, mocker, mocked_translation_re
     assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
 
     assert result.exit_code == 0
-    assert 'Are you sure you want to Activate the translation TRN-8100-3865-4869 ? [y/N]:' not in result.output
+    assert (
+        'Are you sure you want to Activate the translation TRN-8100-3865-4869 ? [y/N]:'
+        not in result.output
+    )
     assert (
         'The translation TRN-8100-3865-4869 on translation test '
         'product has been successfully activated.' in result.output
@@ -273,7 +280,10 @@ def test_force_primarize_translation(config_mocker, mocker, mocked_translation_r
     assert mock.mock_calls[0][1][1] == 'TRN-8100-3865-4869'
 
     assert result.exit_code == 0
-    assert 'Are you sure you want to Primarize the translation TRN-8100-3865-4869 ?' not in result.output
+    assert (
+        'Are you sure you want to Primarize the translation TRN-8100-3865-4869 ?'
+        not in result.output
+    )
     assert (
         'The translation TRN-8100-3865-4869 on translation test '
         'product has been successfully primarize.' in result.output

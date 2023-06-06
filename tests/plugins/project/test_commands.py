@@ -34,7 +34,9 @@ def test_validate_report_command(ccli, mocker, capsys, config_mocker):
     with tempfile.TemporaryDirectory() as tmpdir:
         mocked_validate_project = mocker.patch(
             'connect.cli.plugins.project.commands.validate_report_project',
-            side_effect=print('Report Project connect/.data/logan has been successfully validated.'),
+            side_effect=print(
+                'Report Project connect/.data/logan has been successfully validated.',
+            ),
         )
         os.mkdir(f'{tmpdir}/project')
         runner = CliRunner()
@@ -52,7 +54,10 @@ def test_validate_report_command(ccli, mocker, capsys, config_mocker):
         assert result.exit_code == 0
         mocked_validate_project.assert_called_once_with(f'{tmpdir}/project')
         captured = capsys.readouterr()
-        assert 'Report Project connect/.data/logan has been successfully validated.' == captured.out.strip()
+        assert (
+            'Report Project connect/.data/logan has been successfully validated.'
+            == captured.out.strip()
+        )
 
 
 def test_add_report_command(ccli, mocker, capsys, config_mocker):

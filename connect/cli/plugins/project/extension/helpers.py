@@ -25,7 +25,11 @@ from connect.cli.plugins.project.validators import ProjectDirValidator
 
 
 def bootstrap_extension_project(  # noqa: CCR001
-        config, output_dir, overwrite, save_answers, load_answers,
+    config,
+    output_dir,
+    overwrite,
+    save_answers,
+    load_answers,
 ):
     console.secho('Bootstraping extension project...\n', fg='blue')
 
@@ -102,36 +106,42 @@ def bootstrap_extension_project(  # noqa: CCR001
     application_types = answers.get('application_types', [])
 
     if answers.get('webapp_supports_ui') != 'y':
-        exclude.extend([
-            os.path.join('${package_name}', 'static', '.gitkeep'),
-            'ui',
-            'ui/**/*',
-            'package.json.j2',
-            'webpack.config.js.j2',
-            '__mocks__',
-            '__mocks__/*',
-            '.eslintrc.yaml.j2',
-            'babel.config.json.j2',
-            'jest.config.js.j2',
-        ])
+        exclude.extend(
+            [
+                os.path.join('${package_name}', 'static', '.gitkeep'),
+                'ui',
+                'ui/**/*',
+                'package.json.j2',
+                'webpack.config.js.j2',
+                '__mocks__',
+                '__mocks__/*',
+                '.eslintrc.yaml.j2',
+                'babel.config.json.j2',
+                'jest.config.js.j2',
+            ],
+        )
 
     elif 'tfnapp' not in application_types:
-        exclude.extend([
-            'ui/pages/transformations',
-            'ui/pages/transformations/*',
-            'ui/src/pages/transformations',
-            'ui/src/pages/transformations/*',
-            'ui/styles/manual.css.j2',
-        ])
+        exclude.extend(
+            [
+                'ui/pages/transformations',
+                'ui/pages/transformations/*',
+                'ui/src/pages/transformations',
+                'ui/src/pages/transformations/*',
+                'ui/styles/manual.css.j2',
+            ],
+        )
     else:
-        exclude.extend([
-            'ui/pages/index.html.j2',
-            'ui/pages/settings.html.j2',
-            'ui/src/pages/index.js.j2',
-            'ui/src/pages/settings.js.j2',
-            'ui/tests/pages.spec.js.j2',
-            'ui/tests/utils.spec.js.j2',
-        ])
+        exclude.extend(
+            [
+                'ui/pages/index.html.j2',
+                'ui/pages/settings.html.j2',
+                'ui/src/pages/index.js.j2',
+                'ui/src/pages/settings.js.j2',
+                'ui/tests/pages.spec.js.j2',
+                'ui/tests/utils.spec.js.j2',
+            ],
+        )
 
     for app_type in ['anvil', 'events', 'webapp', 'tfnapp']:
         if app_type not in application_types:
@@ -198,7 +208,10 @@ def validate_extension_project(config, project_dir):  # noqa: CCR001
             fg='yellow',
         )
     else:
-        console.secho(f'Extension Project {project_dir} has been successfully validated.', fg='green')
+        console.secho(
+            f'Extension Project {project_dir} has been successfully validated.',
+            fg='green',
+        )
 
 
 def _update_docker_file_runner_from(dockerfile: str, latest_version: str):
@@ -234,7 +247,9 @@ def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
     latest_runner_version = f'cloudblueconnect/connect-extension-runner:{latest_version}'
     docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
     if not os.path.isfile(docker_compose_file):
-        raise ClickException(f'Mandatory `docker-compose.yml` file on directory `{project_dir}` is missing.')
+        raise ClickException(
+            f'Mandatory `docker-compose.yml` file on directory `{project_dir}` is missing.',
+        )
     try:
         with open(docker_compose_file, 'r') as file_reader:
             data = yaml.load(file_reader, Loader=yaml.FullLoader)
@@ -259,9 +274,9 @@ def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
                             f'The expected dockerfile `{dockerfile_path}` specified in '
                             f'{docker_compose_file} is missing.',
                         )
-                    if (
-                        dockerfile_path not in updated_files
-                        and _update_docker_file_runner_from(dockerfile_path, latest_version)
+                    if dockerfile_path not in updated_files and _update_docker_file_runner_from(
+                        dockerfile_path,
+                        latest_version,
                     ):
                         updated_files.add(dockerfile_path)
         with open(docker_compose_file, 'w') as file_writer:

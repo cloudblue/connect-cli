@@ -127,12 +127,12 @@ def execute_report(config, reports_dir, report_id, output_file, output_format):
 
     if config.active.is_vendor() and 'vendor' not in report.audience:
         raise ClickException(
-            "This report is not expected to be executed on vendor accounts",
+            'This report is not expected to be executed on vendor accounts',
         )
 
     if config.active.is_provider() and 'provider' not in report.audience:
         raise ClickException(
-            "This report is not expected to be executed on provider accounts",
+            'This report is not expected to be executed on provider accounts',
         )
 
     available_renderers = [r.id for r in report.renderers]

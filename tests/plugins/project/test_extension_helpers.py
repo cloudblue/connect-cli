@@ -130,9 +130,12 @@ def test_bootstrap_extension_project_background(
         }
 
         if with_github_actions:
-            assert os.path.exists(
-                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
-            ) is True
+            assert (
+                os.path.exists(
+                    os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
+                )
+                is True
+            )
 
         parser = configparser.ConfigParser()
         parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
@@ -149,10 +152,12 @@ def test_bootstrap_extension_project_background(
             exclude=parser['flake8']['exclude'],
         )
 
-        report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+                os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
+            ],
+        )
         assert report.total_errors == 0
 
         extension_py = open(
@@ -165,10 +170,13 @@ def test_bootstrap_extension_project_background(
         )
 
         assert expected_imports in extension_py
-        assert extension_class_declaration(
-            classname_prefix,
-            with_variables=with_variables,
-        ) in extension_py
+        assert (
+            extension_class_declaration(
+                classname_prefix,
+                with_variables=with_variables,
+            )
+            in extension_py
+        )
 
         assert extension_bg_event(async_impl=async_impl) in extension_py
 
@@ -291,9 +299,12 @@ def test_bootstrap_extension_project_interactive(
         }
 
         if with_github_actions:
-            assert os.path.exists(
-                os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
-            ) is True
+            assert (
+                os.path.exists(
+                    os.path.join(tmpdir, data['project_slug'], '.github', 'workflows', 'test.yml'),
+                )
+                is True
+            )
 
         parser = configparser.ConfigParser()
         parser.read(os.path.join(tmpdir, data['project_slug'], '.flake8'))
@@ -310,10 +321,12 @@ def test_bootstrap_extension_project_interactive(
             exclude=parser['flake8']['exclude'],
         )
 
-        report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+                os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
+            ],
+        )
         assert report.total_errors == 0
 
         extension_py = open(
@@ -328,7 +341,10 @@ def test_bootstrap_extension_project_interactive(
         )
 
         assert expected_imports in extension_py
-        assert extension_class_declaration(classname_prefix, with_variables=with_variables) in extension_py
+        assert (
+            extension_class_declaration(classname_prefix, with_variables=with_variables)
+            in extension_py
+        )
 
         assert extension_interactive_event(async_impl=async_impl) in extension_py
 
@@ -456,11 +472,13 @@ def test_bootstrap_extension_project_multiaccount(
             exclude=parser['flake8']['exclude'],
         )
 
-        report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
-            os.path.join(tmpdir, data['project_slug'], 'tests', 'test_anvil.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+                os.path.join(tmpdir, data['project_slug'], 'tests', 'test_events.py'),
+                os.path.join(tmpdir, data['project_slug'], 'tests', 'test_anvil.py'),
+            ],
+        )
         assert report.total_errors == 0
 
         events_py = open(
@@ -482,9 +500,12 @@ def test_bootstrap_extension_project_multiaccount(
 
         assert test_bg_event(classname_prefix, async_impl=False) in test_py
 
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
-        ) is False
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
+            )
+            is False
+        )
 
         saved_answers = json.load(open(os.path.join(tmpdir, 'sample.json')))
         assert saved_answers == data
@@ -601,9 +622,11 @@ def test_bootstrap_extension_project_webapp(
             ignore=parser['flake8']['ignore'],
             exclude=parser['flake8']['exclude'],
         )
-        report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
+            ],
+        )
         assert report.total_errors == 0
 
         webapp_py = open(
@@ -617,18 +640,36 @@ def test_bootstrap_extension_project_webapp(
         assert f'class {classname_prefix}WebApplication(WebApplicationBase):' in webapp_py
         assert 'icon' in extension_json
 
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static', '.gitkeep'),
-        ) is True
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
-        ) is True
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-        ) is False
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
-        ) is False
+        assert (
+            os.path.exists(
+                os.path.join(
+                    tmpdir,
+                    data['project_slug'],
+                    data['package_name'],
+                    'static',
+                    '.gitkeep',
+                ),
+            )
+            is True
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
+            )
+            is True
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+            )
+            is False
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
+            )
+            is False
+        )
 
 
 def test_bootstrap_extension_project_tfnapp(
@@ -727,8 +768,7 @@ def test_bootstrap_extension_project_tfnapp(
         assert ext_entrypoint == {
             'webapp': f"{data['package_name']}.webapp:{classname_prefix}WebApplication",
             'tfnapp': (
-                f"{data['package_name']}.tfnapp:{classname_prefix}"
-                "TransformationsApplication"
+                f"{data['package_name']}.tfnapp:{classname_prefix}" 'TransformationsApplication'
             ),
         }
 
@@ -746,10 +786,12 @@ def test_bootstrap_extension_project_tfnapp(
             ignore=parser['flake8']['ignore'],
             exclude=parser['flake8']['exclude'],
         )
-        report = flake8_style_guide.check_files([
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'tfnapp.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'webapp.py'),
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'tfnapp.py'),
+            ],
+        )
         assert report.total_errors == 0
 
         tfnapp_py = open(
@@ -763,18 +805,36 @@ def test_bootstrap_extension_project_tfnapp(
         assert 'Application(TransformationsApplicationBase):' in tfnapp_py
         assert 'icon' in extension_json
 
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'static', '.gitkeep'),
-        ) is True
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
-        ) is True
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
-        ) is False
-        assert os.path.exists(
-            os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
-        ) is False
+        assert (
+            os.path.exists(
+                os.path.join(
+                    tmpdir,
+                    data['project_slug'],
+                    data['package_name'],
+                    'static',
+                    '.gitkeep',
+                ),
+            )
+            is True
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'schemas.py'),
+            )
+            is True
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'events.py'),
+            )
+            is False
+        )
+        assert (
+            os.path.exists(
+                os.path.join(tmpdir, data['project_slug'], data['package_name'], 'anvil.py'),
+            )
+            is False
+        )
 
 
 def test_bootstrap_extension_project_wizard_cancel(mocker):
@@ -791,7 +851,10 @@ def test_bootstrap_extension_project_wizard_cancel(mocker):
 
 def test_bootstrap_extension_project_if_destination_exists(mocker):
     with tempfile.TemporaryDirectory() as tmpdir:
-        mocker.patch('connect.cli.plugins.project.extension.helpers.get_event_definitions', return_value=[])
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_event_definitions',
+            return_value=[],
+        )
         mocker.patch('connect.cli.plugins.project.extension.helpers.get_questions')
         mocker.patch('connect.cli.plugins.project.extension.helpers.get_summary')
         mocker.patch('connect.cli.plugins.project.extension.helpers.get_pypi_runner_version')
@@ -833,9 +896,18 @@ def test_bump_runner_version(mocker, capsys):
         os.mkdir(project_dir)
         docker_compose = {
             'services': {
-                'dev': {'container_name': 'ext_dev', 'image': 'cloudblueconnect/connect-extension-runner:0.5'},
-                'test': {'container_name': 'ext_test', 'image': 'cloudblueconnect/connect-extension-runner:0.5'},
-                'si': {'container_name': 'ext_si', 'build': {'dockerfile': f'{project_dir}/OtherDockerfile'}},
+                'dev': {
+                    'container_name': 'ext_dev',
+                    'image': 'cloudblueconnect/connect-extension-runner:0.5',
+                },
+                'test': {
+                    'container_name': 'ext_test',
+                    'image': 'cloudblueconnect/connect-extension-runner:0.5',
+                },
+                'si': {
+                    'container_name': 'ext_si',
+                    'build': {'dockerfile': f'{project_dir}/OtherDockerfile'},
+                },
                 'prod': {'container_name': 'ext_prod', 'build': {'context': '.'}},
             },
         }
@@ -861,9 +933,18 @@ def test_bump_runner_version_no_update_required(mocker, capsys):
         os.mkdir(project_dir)
         docker_compose = {
             'services': {
-                'dev': {'container_name': 'ext_dev', 'image': 'cloudblueconnect/connect-extension-runner:1.0'},
-                'test': {'container_name': 'ext_test', 'image': 'cloudblueconnect/connect-extension-runner:1.0'},
-                'si': {'container_name': 'ext_si', 'build': {'dockerfile': f'{project_dir}/OtherDockerfile'}},
+                'dev': {
+                    'container_name': 'ext_dev',
+                    'image': 'cloudblueconnect/connect-extension-runner:1.0',
+                },
+                'test': {
+                    'container_name': 'ext_test',
+                    'image': 'cloudblueconnect/connect-extension-runner:1.0',
+                },
+                'si': {
+                    'container_name': 'ext_si',
+                    'build': {'dockerfile': f'{project_dir}/OtherDockerfile'},
+                },
                 'prod': {'container_name': 'ext_prod', 'build': {}},
             },
         }
@@ -899,8 +980,7 @@ def test_bump_runner_version_invalid_dockerfile(mocker):
         with pytest.raises(ClickException) as exc:
             bump_runner_extension_project(project_dir)
         assert (
-            f'The expected dockerfile `{project_dir}/invalidfile` specified in '
-            f'{dc} is missing.'
+            f'The expected dockerfile `{project_dir}/invalidfile` specified in ' f'{dc} is missing.'
         ) in str(exc)
 
 
@@ -998,7 +1078,13 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
         assert 'has been successfully validated.' in captured.out.replace('\n', ' ')
 
 
-def test_validate_extension_project_error_exit(mocker, faker, mocked_responses, config_vendor, capsys):
+def test_validate_extension_project_error_exit(
+    mocker,
+    faker,
+    mocked_responses,
+    config_vendor,
+    capsys,
+):
     runner_version = f'{faker.random_number()}.{faker.random_number()}'
     mocker.patch('connect.cli.plugins.project.extension.helpers.console.echo')
     mocker.patch(

@@ -132,15 +132,17 @@ def test_create_product(
         method='POST',
         url='https://localhost/public/v1/products',
         match=[
-            matchers.json_params_matcher({
-                'name': 'Clone of PRD-123 2022-04-05-20:15:00',
-                'category': {
-                    'id': 'CAT-59128',
+            matchers.json_params_matcher(
+                {
+                    'name': 'Clone of PRD-123 2022-04-05-20:15:00',
+                    'category': {
+                        'id': 'CAT-59128',
+                    },
+                    'translations': [
+                        {'locale': {'id': 'FA'}, 'primary': True},
+                    ],
                 },
-                'translations': [
-                    {'locale': {'id': 'FA'}, 'primary': True},
-                ],
-            }),
+            ),
         ],
         json=mocked_product_response,
     )

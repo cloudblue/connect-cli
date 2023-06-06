@@ -114,19 +114,17 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
     )
     ws['A14'].value = 'Primary Translation Locale'
     primary_translation = (
-        client.ns('localization').translations
-        .filter(context__instance_id=product['id'], primary=True).first()
+        client.ns('localization')
+        .translations.filter(context__instance_id=product['id'], primary=True)
+        .first()
     )
-    ws['B14'].value = (
-        f'{ primary_translation["locale"]["id"] } '
-        f'({ primary_translation["locale"]["name"] })'
-    )
+    ws[
+        'B14'
+    ].value = f'{ primary_translation["locale"]["id"] } ({ primary_translation["locale"]["name"] })'
 
     categories = client.categories.all()
     unassignable_cat = ['Cloud Services', 'All Categories']
-    categories_list = [
-        cat['name'] for cat in categories if cat['name'] not in unassignable_cat
-    ]
+    categories_list = [cat['name'] for cat in categories if cat['name'] not in unassignable_cat]
     ws['AA1'].value = 'Categories'
     for idx, cat in enumerate(categories_list, 2):
         ws[f'AA{idx}'].value = cat
@@ -145,7 +143,7 @@ def _dump_image(image_location, image_name, media_path):
         with open(os.path.join(media_path, image_name), 'wb') as f:
             f.write(image.content)
     else:
-        raise ClickException(f"Error obtaining image from {image_location}")
+        raise ClickException(f'Error obtaining image from {image_location}')
 
 
 def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
@@ -154,9 +152,11 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
 
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
-    cels = ws['A1': '{cell}1'.format(
-        cell=get_col_limit_by_ws_type(ws_type),
-    )]
+    cels = ws[
+        'A1' : '{cell}1'.format(
+            cell=get_col_limit_by_ws_type(ws_type),
+        )
+    ]
     col_headers = get_col_headers_by_ws_type(ws_type)
     if ws_type == '_attributes':
         col_headers = {c.column_letter: c.value for c in next(ws.iter_rows(min_row=1, max_row=1))}
@@ -244,41 +244,49 @@ def _fill_param_row(ws, row_idx, param):
         vertical='top',
     )
     ws.cell(
-        row_idx, 9,
+        row_idx,
+        9,
         value=param['constraints']['required'] if param['constraints']['required'] else '-',
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
     ws.cell(
-        row_idx, 10,
+        row_idx,
+        10,
         value=param['constraints']['unique'] if param['constraints']['unique'] else '-',
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
     ws.cell(
-        row_idx, 11,
+        row_idx,
+        11,
         value=param['constraints']['hidden'] if param['constraints']['hidden'] else '-',
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
     ws.cell(
-        row_idx, 12,
+        row_idx,
+        12,
         value=get_json_object_for_param(param),
     ).alignment = Alignment(
         wrap_text=True,
     )
     events = param.get('events', {})
     ws.cell(
-        row_idx, 13, value=events.get('created', {}).get('at', '-'),
+        row_idx,
+        13,
+        value=events.get('created', {}).get('at', '-'),
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
     ws.cell(
-        row_idx, 14, value=events.get('updated', {}).get('at', '-'),
+        row_idx,
+        14,
+        value=events.get('updated', {}).get('at', '-'),
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
@@ -317,7 +325,9 @@ def _fill_template_row(ws, row_idx, template):
         vertical='top',
     )
     ws.cell(
-        row_idx, 5, value=template['type'] if 'type' in template else 'fulfillment',
+        row_idx,
+        5,
+        value=template['type'] if 'type' in template else 'fulfillment',
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
@@ -327,13 +337,17 @@ def _fill_template_row(ws, row_idx, template):
     )
     events = template.get('events', {})
     ws.cell(
-        row_idx, 7, value=events.get('created', {}).get('at', '-'),
+        row_idx,
+        7,
+        value=events.get('created', {}).get('at', '-'),
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
     )
     ws.cell(
-        row_idx, 8, value=events.get('updated', {}).get('at', '-'),
+        row_idx,
+        8,
+        value=events.get('updated', {}).get('at', '-'),
     ).alignment = Alignment(
         horizontal='left',
         vertical='top',
@@ -360,9 +374,16 @@ def _fill_configuration_row(ws, row_idx, configuration, conf_id):
     ws.cell(row_idx, 4, value='-')
     ws.cell(row_idx, 5, value=configuration['item']['id'] if 'item' in configuration else '-')
     ws.cell(row_idx, 6, value=configuration['item']['name'] if 'item' in configuration else '-')
-    ws.cell(row_idx, 7, value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-')
-    ws.cell(row_idx, 8,
-            value=configuration['marketplace']['name'] if 'marketplace' in configuration else '-')
+    ws.cell(
+        row_idx,
+        7,
+        value=configuration['marketplace']['id'] if 'marketplace' in configuration else '-',
+    )
+    ws.cell(
+        row_idx,
+        8,
+        value=configuration['marketplace']['name'] if 'marketplace' in configuration else '-',
+    )
     if 'structured_value' in configuration:
         value = configuration['structured_value']
         value = json.dumps(value, indent=4, sort_keys=True)
@@ -466,7 +487,11 @@ def _dump_configuration(ws, client, product_id, progress):
 
     for configuration in configurations:
         conf_id = _calculate_configuration_id(configuration)
-        progress.update(task, description=f'Processing parameter configuration {conf_id}', advance=1)
+        progress.update(
+            task,
+            description=f'Processing parameter configuration {conf_id}',
+            advance=1,
+        )
         _fill_configuration_row(ws, row_idx, configuration, conf_id)
         action_validation.add(f'D{row_idx}')
         row_idx += 1
@@ -654,25 +679,19 @@ def _dump_capabilities(ws, product, progress):  # noqa: CCR001
 
     ws['A2'].value = 'Pay-as-you-go support and schema'
     ws['B2'].value = '-'
-    ws['C2'].value = (ppu['schema'] if ppu else 'Disabled')
+    ws['C2'].value = ppu['schema'] if ppu else 'Disabled'
     ppu_validation.add(ws['C2'])
     ws['A3'].value = 'Pay-as-you-go dynamic items support'
     ws['B3'].value = '-'
-    ws['C3'].value = (
-        'Enabled' if ppu and 'dynamic' in ppu and ppu['dynamic'] else 'Disabled'
-    )
+    ws['C3'].value = 'Enabled' if ppu and 'dynamic' in ppu and ppu['dynamic'] else 'Disabled'
     disabled_enabled.add(ws['C3'])
     ws['A4'].value = 'Pay-as-you-go future charges support'
     ws['B4'].value = '-'
-    ws['C4'].value = (
-        'Enabled' if ppu and 'future' in ppu and ppu['future'] else 'Disabled'
-    )
+    ws['C4'].value = 'Enabled' if ppu and 'future' in ppu and ppu['future'] else 'Disabled'
     disabled_enabled.add(ws['C4'])
     ws['A5'].value = 'Consumption reporting for Reservation Items'
     ws['B5'].value = '-'
-    ws['C5'].value = (
-        'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
-    )
+    ws['C5'].value = 'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
     disabled_enabled.add(ws['C5'])
 
     def _get_reporting_consumption(reservation_cap):
@@ -689,6 +708,7 @@ def _dump_capabilities(ws, product, progress):  # noqa: CCR001
         if 'validation' in capabilities_cart and capabilities['cart']['validation']:
             return 'Enabled'
         return 'Disabled'
+
     ws['C6'].value = _get_dynamic_validation_draft(capabilities['cart'])
     disabled_enabled.add(ws['C6'])
     ws['A7'].value = 'Dynamic Validation of the Inquiring Form'
@@ -713,18 +733,14 @@ def _dump_capabilities(ws, product, progress):  # noqa: CCR001
     tier_validation.add(ws['C8'])
     ws['A9'].value = 'Tier Accounts Sync'
     ws['B9'].value = '-'
-    ws['C9'].value = (
-        'Enabled' if tiers and 'updates' in tiers and tiers['updates'] else 'Disabled'
-    )
+    ws['C9'].value = 'Enabled' if tiers and 'updates' in tiers and tiers['updates'] else 'Disabled'
     disabled_enabled.add(ws['C9'])
     ws['A10'].value = 'Administrative Hold'
     ws['B10'].value = '-'
 
     ws['A11'].value = 'Dynamic Validation of Tier Requests'
     ws['B11'].value = '-'
-    ws['C11'].value = (
-        'Enabled' if capabilities['tiers']['validation'] else 'Disabled'
-    )
+    ws['C11'].value = 'Enabled' if capabilities['tiers']['validation'] else 'Disabled'
     disabled_enabled.add(ws['C11'])
     ws['A12'].value = 'Editable Ordering Parameters in Change Request'
     ws['B12'].value = '-'
@@ -734,14 +750,14 @@ def _dump_capabilities(ws, product, progress):  # noqa: CCR001
     disabled_enabled.add(ws['C12'])
     ws['A13'].value = 'Validation of Draft Change Request'
     ws['B13'].value = '-'
-    ws['C13'].value = (
-        'Enabled' if 'validation' in change and change['validation'] else 'Disabled'
-    )
+    ws['C13'].value = 'Enabled' if 'validation' in change and change['validation'] else 'Disabled'
     disabled_enabled.add(ws['C13'])
     ws['A14'].value = 'Validation of inquiring form for Change Requests'
     ws['B14'].value = '-'
     ws['C14'].value = (
-        'Enabled' if 'inquiring_validation' in change and change['inquiring_validation'] else 'Disabled'
+        'Enabled'
+        if 'inquiring_validation' in change and change['inquiring_validation']
+        else 'Disabled'
     )
     disabled_enabled.add(ws['C14'])
 
@@ -871,11 +887,7 @@ def _dump_translations(wb, client, product_id, progress):
 
     rql = R().context.instance_id.eq(product_id)
 
-    translations = (
-        client.ns('localization')
-        .translations
-        .filter(rql)
-    )
+    translations = client.ns('localization').translations.filter(rql)
     count = translations.count()
 
     action_validation = DataValidation(
@@ -925,14 +937,17 @@ def _dump_translation_attr(wb, client, translation):
 
 
 def dump_product(  # noqa: CCR001
-    client, product_id, output_file, progress, output_path=None,
+    client,
+    product_id,
+    output_file,
+    progress,
+    output_path=None,
 ):
     output_file = validate_output_options(output_path, output_file, default_dir_name=product_id)
     media_path = os.path.join(os.path.dirname(output_file), 'media')
     if not os.path.exists(media_path):
         os.mkdir(media_path)
     try:
-
         product = client.products[product_id].get()
         wb = Workbook()
 
@@ -948,7 +963,11 @@ def dump_product(  # noqa: CCR001
             media_path,
         )
         _dump_capabilities(wb.create_sheet('Capabilities'), product, progress)
-        _dump_external_static_links(wb.create_sheet('Embedding Static Resources'), product, progress)
+        _dump_external_static_links(
+            wb.create_sheet('Embedding Static Resources'),
+            product,
+            progress,
+        )
         _dump_media(
             wb.create_sheet('Media'),
             client,

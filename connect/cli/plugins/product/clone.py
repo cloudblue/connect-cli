@@ -23,8 +23,8 @@ class ProductCloner:
     def __init__(self, config, source_account, destination_account, product_id, progress, stats):
         self.fs = TempFS(identifier=f'_clone_{product_id}')
         self.config = config
-        self.source_account = (source_account if source_account else config.active.id)
-        self.destination_account = (destination_account if destination_account else config.active.id)
+        self.source_account = source_account if source_account else config.active.id
+        self.destination_account = destination_account if destination_account else config.active.id
         self.product_id = product_id
         self.stats = stats
         self.progress = progress
@@ -98,13 +98,13 @@ class ProductCloner:
                 self.stats,
             )
 
-            synchronizer.open(input_file, "Ordering Parameters")
+            synchronizer.open(input_file, 'Ordering Parameters')
             synchronizer.sync()
 
-            synchronizer.open(input_file, "Fulfillment Parameters")
+            synchronizer.open(input_file, 'Fulfillment Parameters')
             synchronizer.sync()
 
-            synchronizer.open(input_file, "Configuration Parameters")
+            synchronizer.open(input_file, 'Configuration Parameters')
             synchronizer.sync()
 
             synchronizer = ActionsSynchronizer(
@@ -136,7 +136,7 @@ class ProductCloner:
 
             self.config.activate(self.source_account)
         except ClientError as e:
-            raise ClickException(f"Error while cloning product: {str(e)}")
+            raise ClickException(f'Error while cloning product: {str(e)}')
 
     def load_wb(self):
         self.wb = load_workbook(
@@ -147,7 +147,7 @@ class ProductCloner:
     def create_product(self, name=None):
         if not name:
             time = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-            name = f"Clone of {self.product_id} {time}"
+            name = f'Clone of {self.product_id} {time}'
         ws = self.wb['General Information']
         ws['B6'].value = name
         self.config.activate(self.destination_account)
@@ -157,12 +157,12 @@ class ProductCloner:
             primary_locale_id = self._get_primary_locale_id(ws['B14'].value)
             product = self.config.active.client.products.create(
                 {
-                    "name": name,
-                    "category": {
-                        "id": category,
+                    'name': name,
+                    'category': {
+                        'id': category,
                     },
-                    "translations": [
-                        {"locale": {"id": primary_locale_id}, "primary": True},
+                    'translations': [
+                        {'locale': {'id': primary_locale_id}, 'primary': True},
                     ],
                 },
             )

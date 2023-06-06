@@ -26,7 +26,8 @@ def get_renderer_by_id(report, renderer_id):
         return next(filter(lambda r: r.id == renderer_id, report.renderers))
     except StopIteration:
         raise ClickException(
-            f'The output format `{renderer_id}` is not available for report {report.local_id}.')
+            f'The output format `{renderer_id}` is not available for report {report.local_id}.',
+        )
 
 
 def get_report_entrypoint(report):

@@ -16,7 +16,6 @@ from connect.cli.plugins.project.utils import purge_dir
 
 
 class BoilerplateRenderer:
-
     def __init__(
         self,
         context,
@@ -57,18 +56,26 @@ class BoilerplateRenderer:
         excludes = []
         for pattern in exclude:
             excludes.extend(
-                [
-                    str(p) for p in Path(os.path.join(template_dir, '${project_slug}')).glob(pattern)
-                ],
+                [str(p) for p in Path(os.path.join(template_dir, '${project_slug}')).glob(pattern)],
             )
         return excludes
 
     @staticmethod
-    def _validate_args(context, template_folder, output_dir, overwrite, pre_render, post_render, exclude):
+    def _validate_args(
+        context,
+        template_folder,
+        output_dir,
+        overwrite,
+        pre_render,
+        post_render,
+        exclude,
+    ):
         if not isinstance(context, dict):
             raise TypeError('The parameter context is invalid, it must be a dict.')
         if not isinstance(template_folder, str) or not os.path.exists(template_folder):
-            raise TypeError('The parameter template_folder is invalid, it must be a valid path string.')
+            raise TypeError(
+                'The parameter template_folder is invalid, it must be a valid path string.',
+            )
         if not isinstance(output_dir, str):
             raise TypeError('The parameter output_dir is invalid, it must be a valid path string.')
         if not isinstance(overwrite, bool):
@@ -82,7 +89,10 @@ class BoilerplateRenderer:
 
     def _create_directories(self, output_dir):
         for element in Path(self.template_folder).rglob('*'):
-            directory = os.path.join(output_dir, os.path.relpath(str(element), self.template_folder))
+            directory = os.path.join(
+                output_dir,
+                os.path.relpath(str(element), self.template_folder),
+            )
             directory = Template(directory).safe_substitute(self.context)
             if element.is_dir() and not fnmatch.filter(self.excluded_patterns, element):
                 os.makedirs(directory, exist_ok=True)
@@ -127,7 +137,10 @@ class BoilerplateRenderer:
             self.context,
         )
 
-        if not fnmatch.filter(self.excluded_patterns, os.path.join(self.template_folder, template_name)):
+        if not fnmatch.filter(
+            self.excluded_patterns,
+            os.path.join(self.template_folder, template_name),
+        ):
             file_destination = os.path.join(
                 destination,
                 evaluated_template_path[:-3],

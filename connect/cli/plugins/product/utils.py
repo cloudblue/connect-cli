@@ -5,7 +5,10 @@ from copy import deepcopy
 def cleanup_product_for_update(product):
     del product['icon']
     ppu = product['capabilities'].get('ppu', False)
-    if product['capabilities']['subscription'] and 'schema' in product['capabilities']['subscription']:
+    if (
+        product['capabilities']['subscription']
+        and 'schema' in product['capabilities']['subscription']
+    ):
         del product['capabilities']['subscription']['schema']
     if ppu and 'predictive' in ppu:
         del product['capabilities']['ppu']['predictive']

@@ -67,7 +67,7 @@ def test_get_code_context_module(mocker, faker):
     assert result['file'] == 'path/file.py'
     assert result['start_line'] == 1
     assert result['lineno'] == 7
-    assert result['code'] == ''.join(code.splitlines(keepends=True)[0:7 + 3])
+    assert result['code'] == ''.join(code.splitlines(keepends=True)[0 : 7 + 3])
 
 
 def test_get_code_context_function(mocker, faker):

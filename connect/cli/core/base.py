@@ -23,6 +23,7 @@ class CCliCommand(click.Command):
 class CCliGroup(click.Group):
     def command(self, *args, **kwargs):
         from click.decorators import command
+
         kwargs['cls'] = CCliCommand
 
         def decorator(f):
@@ -34,6 +35,7 @@ class CCliGroup(click.Group):
 
     def group(self, *args, **kwargs):
         from click.decorators import group
+
         kwargs['cls'] = CCliGroup
 
         def decorator(f):
@@ -45,7 +47,7 @@ class CCliGroup(click.Group):
 
 
 def group(name=None, **attrs):
-    attrs.setdefault("cls", CCliGroup)
+    attrs.setdefault('cls', CCliGroup)
     return click.command(name, **attrs)
 
 
@@ -65,10 +67,13 @@ def print_version(ctx, param, value):
     is_eager=True,
     callback=print_version,
 )
-@click.option('-c', '--config-dir',
-              default=os.path.join(os.path.expanduser('~'), '.ccli'),
-              type=click.Path(file_okay=False),
-              help='set the config directory.')
+@click.option(
+    '-c',
+    '--config-dir',
+    default=os.path.join(os.path.expanduser('~'), '.ccli'),
+    type=click.Path(file_okay=False),
+    help='set the config directory.',
+)
 @click.option(
     '-s',
     '--silent',

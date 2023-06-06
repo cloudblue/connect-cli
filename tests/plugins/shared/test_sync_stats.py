@@ -10,7 +10,12 @@ def test_synchronizer_stats_module_get_counts():
     stats['module 1'].error('error message', 5)
 
     assert stats['module 1'].get_counts_as_dict() == {
-        'processed': 5, 'created': 1, 'updated': 1, 'deleted': 1, 'skipped': 1, 'errors': 1,
+        'processed': 5,
+        'created': 1,
+        'updated': 1,
+        'deleted': 1,
+        'skipped': 1,
+        'errors': 1,
     }
 
 
@@ -45,12 +50,15 @@ def test_synchronizer_stats_print(capsys, mocker):
     captured = capsys.readouterr()
 
     assert 'Sync operation had 1 errors, do you want to see them?' in captured.out
-    assert """
+    assert (
+        """
 Module module 2:
 
   Errors at row #3
     - error message
-""" in captured.out
+"""
+        in captured.out
+    )
 
 
 def test_synchronizer_stats_print_no_errors(capsys, mocker):
@@ -117,7 +125,8 @@ def test_synchronizer_stats_print_multi_errors(capsys, mocker):
 
     assert 'Sync operation had 5 errors, do you want to see them?' in captured.out
 
-    assert """
+    assert (
+        """
 Module module 1:
 
   Errors at row #1
@@ -141,7 +150,9 @@ Module module 3:
   Errors
     - the only error
 
-""" in captured.out
+"""
+        in captured.out
+    )
 
 
 def test_synchronizer_stats_print_repeated_errors(capsys, console_80_columns, mocker):
@@ -171,14 +182,17 @@ def test_synchronizer_stats_print_repeated_errors(capsys, console_80_columns, mo
 
     assert 'Sync operation had 2 errors, do you want to see them?' in captured.out
 
-    assert """
+    assert (
+        """
 Module module 1:
 
   Errors at rows #1 to #2
     - first error
     - second error
 
-""" in captured.out
+"""
+        in captured.out
+    )
 
 
 def test_synchronizer_stats_initial_modules_reset():
@@ -220,10 +234,13 @@ def test_synchronizer_stats_single_module_print(capsys, mocker):
 
     assert 'Sync operation had 1 errors, do you want to see them?' in captured.out
 
-    assert """
+    assert (
+        """
 Module module A:
 
   Errors at row #2
     - error message
 
-""" in captured.out
+"""
+        in captured.out
+    )

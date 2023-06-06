@@ -216,10 +216,15 @@ def test_get_available_event_types_full_no_interactive():
     ),
 )
 def test_check_webapp_feature_not_selected(app_types, extension_type, expected):
-    assert check_webapp_feature_not_selected({
-        'application_types': app_types,
-        'extension_type': extension_type,
-    }) is expected
+    assert (
+        check_webapp_feature_not_selected(
+            {
+                'application_types': app_types,
+                'extension_type': extension_type,
+            },
+        )
+        is expected
+    )
 
 
 @pytest.mark.parametrize(

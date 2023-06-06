@@ -27,7 +27,7 @@ class TemplatesSynchronizer(ProductSynchronizer):
         }
 
     def sync(self):
-        ws = self._wb["Templates"]
+        ws = self._wb['Templates']
 
         task = self._progress.add_task('Processing Template', total=ws.max_row - 1)
         for row_idx in range(2, ws.max_row + 1):
@@ -103,10 +103,12 @@ class TemplatesSynchronizer(ProductSynchronizer):
             'body': data.content,
         }
         if data.scope == 'asset':
-            template_payload.update({
-                'title': data.title,
-                'type': data.type,
-            })
+            template_payload.update(
+                {
+                    'title': data.title,
+                    'type': data.type,
+                },
+            )
         return template_payload
 
     @staticmethod

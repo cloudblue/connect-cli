@@ -10,12 +10,12 @@ def test_list_locales(config_mocker, mocked_responses, mocked_locales_response, 
         },
         json=[
             {
-                "id": "EN-AU",
-                "name": "Australian English",
-                "local_name": "Australian English",
-                "auto_translation": False,
-                "stats": {
-                    "translations": 0,
+                'id': 'EN-AU',
+                'name': 'Australian English',
+                'local_name': 'Australian English',
+                'auto_translation': False,
+                'stats': {
+                    'translations': 0,
                 },
             },
         ],
@@ -45,4 +45,7 @@ def test_list_with_page_size_less_than_zero(config_mocker, ccli):
         ],
     )
     assert result.exit_code == 2
-    assert "Error: Invalid value for '--page-size' / '-p': -1 is not in the range x>=1." in result.output
+    assert (
+        "Error: Invalid value for '--page-size' / '-p': -1 is not in the range x>=1."
+        in result.output
+    )

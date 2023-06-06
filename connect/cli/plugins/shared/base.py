@@ -40,7 +40,7 @@ class ProductSynchronizer:
         return self._product_id
 
     def sync(self):
-        raise NotImplementedError("Not implemented")
+        raise NotImplementedError('Not implemented')
 
     def save(self, output_file):
         self._wb.save(output_file)
@@ -61,7 +61,7 @@ class ProductSynchronizer:
         ws_type = get_ws_type_by_worksheet_name(worksheet)
         max_letter = get_col_limit_by_ws_type(ws_type)
         col_headers = get_col_headers_by_ws_type(ws_type)
-        cels = ws['A1': f'{max_letter}1']
+        cels = ws['A1':f'{max_letter}1']
         for cel in cels[0]:
             if cel.value != col_headers[cel.column_letter]:
                 raise ClickException(

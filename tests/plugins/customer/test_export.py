@@ -7,8 +7,7 @@ from connect.cli.plugins.customer.export import dump_customers
 
 
 def test_dump_customers(fs, mocked_responses, mocked_customer, mocked_reseller):
-
-    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings('ignore', category=UserWarning)
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/tier/accounts',
@@ -38,8 +37,7 @@ def test_dump_customers(fs, mocked_responses, mocked_customer, mocked_reseller):
 
 
 def test_dump_customers_client_error(mocker, fs, mocked_responses):
-
-    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings('ignore', category=UserWarning)
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/tier/accounts',

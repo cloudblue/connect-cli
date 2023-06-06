@@ -46,7 +46,7 @@ def test_bootstrap_report_project(mocker, capsys, with_github_actions):
 
         bootstrap_report_project(output_dir=tmpdir, overwrite=True)
 
-        project_dir = os.path.join(tmpdir, data["project_slug"])
+        project_dir = os.path.join(tmpdir, data['project_slug'])
         mocked_open.assert_called_with(os.path.join(project_dir, 'HOWTO.md'), 'r')
         captured = capsys.readouterr()
 
@@ -78,14 +78,17 @@ def test_bootstrap_report_project(mocker, capsys, with_github_actions):
             f"--cov={data['package_name']} --cov-report=term-missing:skip-covered --cov-report=html --cov-report=xml"
         )
 
-        assert os.path.exists(
-            os.path.join(
-                project_dir,
-                '.github',
-                'workflows',
-                'build.yml',
-            ),
-        ) is with_github_actions
+        assert (
+            os.path.exists(
+                os.path.join(
+                    project_dir,
+                    '.github',
+                    'workflows',
+                    'build.yml',
+                ),
+            )
+            is with_github_actions
+        )
 
         parser = configparser.ConfigParser()
         parser.read(
@@ -108,27 +111,27 @@ def test_bootstrap_report_project(mocker, capsys, with_github_actions):
             exclude=parser['flake8']['exclude'],
         )
 
-        report = flake8_style_guide.check_files([
-            os.path.join(project_dir, data['package_name'], 'reports.json'),
-            os.path.join(project_dir, 'tests', f'test_{data["project_slug"]}.py'),
-        ])
+        report = flake8_style_guide.check_files(
+            [
+                os.path.join(project_dir, data['package_name'], 'reports.json'),
+                os.path.join(project_dir, 'tests', f'test_{data["project_slug"]}.py'),
+            ],
+        )
         assert report.total_errors == 0
 
-        report_folder = (
-            f"{project_dir}/{data['package_name']}/{data['initial_report_slug']}"
-        )
+        report_folder = f"{project_dir}/{data['package_name']}/{data['initial_report_slug']}"
 
         for path in (
-            f"{report_folder}/templates",
-            f"{report_folder}/templates/pdf",
-            f"{report_folder}/templates/pdf/template.css",
-            f"{report_folder}/templates/pdf/template.html.j2",
-            f"{report_folder}/templates/xml",
-            f"{report_folder}/templates/xml/template.xml.j2",
-            f"{report_folder}/templates/xlsx",
-            f"{report_folder}/__init__.py",
-            f"{report_folder}/entrypoint.py",
-            f"{report_folder}/README.md",
+            f'{report_folder}/templates',
+            f'{report_folder}/templates/pdf',
+            f'{report_folder}/templates/pdf/template.css',
+            f'{report_folder}/templates/pdf/template.html.j2',
+            f'{report_folder}/templates/xml',
+            f'{report_folder}/templates/xml/template.xml.j2',
+            f'{report_folder}/templates/xlsx',
+            f'{report_folder}/__init__.py',
+            f'{report_folder}/entrypoint.py',
+            f'{report_folder}/README.md',
         ):
             assert os.path.exists(
                 path,
@@ -195,7 +198,10 @@ def test_validate_report_project_with_error(capsys, mocker):
     assert f'Validating project {project_dir}...' in captured.out
     assert 'ERROR' in captured.out
     assert 'error_message' in captured.out
-    assert f'Warning/errors have been found while validating the Report Project {project_dir}.' in captured.out
+    assert (
+        f'Warning/errors have been found while validating the Report Project {project_dir}.'
+        in captured.out
+    )
 
 
 def test_validate_report_project_with_error_must_exit(capsys, mocker):
@@ -234,7 +240,10 @@ def test_validate_report_project_with_error_must_exit(capsys, mocker):
     assert 'error_message' in captured.out
     assert 'ERROR2' not in captured.out
     assert 'error2_message' not in captured.out
-    assert f'Warning/errors have been found while validating the Report Project {project_dir}.' in captured.out
+    assert (
+        f'Warning/errors have been found while validating the Report Project {project_dir}.'
+        in captured.out
+    )
 
 
 def test_add_report_no_package_dir(fs):
@@ -322,16 +331,16 @@ def test_add_report(mocker):
 
         for path in (
             report_dir,
-            f"{report_dir}/templates",
-            f"{report_dir}/templates/pdf",
-            f"{report_dir}/templates/pdf/template.css",
-            f"{report_dir}/templates/pdf/template.html.j2",
-            f"{report_dir}/templates/xml",
-            f"{report_dir}/templates/xml/template.xml.j2",
-            f"{report_dir}/templates/xlsx",
-            f"{report_dir}/__init__.py",
-            f"{report_dir}/entrypoint.py",
-            f"{report_dir}/README.md",
+            f'{report_dir}/templates',
+            f'{report_dir}/templates/pdf',
+            f'{report_dir}/templates/pdf/template.css',
+            f'{report_dir}/templates/pdf/template.html.j2',
+            f'{report_dir}/templates/xml',
+            f'{report_dir}/templates/xml/template.xml.j2',
+            f'{report_dir}/templates/xlsx',
+            f'{report_dir}/__init__.py',
+            f'{report_dir}/entrypoint.py',
+            f'{report_dir}/README.md',
         ):
             assert os.path.exists(
                 path,
@@ -339,10 +348,10 @@ def test_add_report(mocker):
 
         for path in (
             report_dir,
-            f"{report_dir}/templates",
-            f"{report_dir}/templates/pdf",
-            f"{report_dir}/templates/xml",
-            f"{report_dir}/templates/xlsx",
+            f'{report_dir}/templates',
+            f'{report_dir}/templates/pdf',
+            f'{report_dir}/templates/xml',
+            f'{report_dir}/templates/xlsx',
         ):
             assert os.path.isdir(
                 path,

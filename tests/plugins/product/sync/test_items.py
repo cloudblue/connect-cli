@@ -6,7 +6,6 @@ from connect.cli.plugins.shared.sync_stats import SynchronizerStats
 
 
 def test_init(mocker, get_sync_items_env):
-
     stats = SynchronizerStats()
     synchronizer = ItemSynchronizer(
         client=ConnectClient(
@@ -24,7 +23,6 @@ def test_init(mocker, get_sync_items_env):
 
 
 def test_skipped(mocker, get_sync_items_env):
-
     stats = SynchronizerStats()
     synchronizer = ItemSynchronizer(
         client=ConnectClient(
@@ -40,16 +38,20 @@ def test_skipped(mocker, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 1, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 1,
+        'errors': 0,
     }
 
 
 @pytest.mark.parametrize(
     ('row_action',),
     (
-        ("delete",),
-        ("update",),
+        ('delete',),
+        ('update',),
     ),
 )
 def test_validate_row_errors_no_row_id(mocker, fs, get_sync_items_env, row_action):
@@ -72,8 +74,12 @@ def test_validate_row_errors_no_row_id(mocker, fs, get_sync_items_env, row_actio
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: [f'one between the item `ID` or `MPN` is required for the `{row_action}` action.'],
@@ -98,8 +104,12 @@ def test_validate_delete_published_item(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the item status must be `draft` for the `delete` action.'],
@@ -124,8 +134,12 @@ def test_validate_create_published_item(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the `ID` must not be specified for the `create` action.'],
@@ -152,8 +166,12 @@ def test_validate_create_no_mpn(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the item `MPN` is required.'],
@@ -180,8 +198,12 @@ def test_validate_create_no_nome(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the item `Name` is required for the `create` action.'],
@@ -208,8 +230,12 @@ def test_validate_create_no_description(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the item `Description` is required for the `create` action.'],
@@ -236,8 +262,12 @@ def test_validate_create_strange_type(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the item `Type` must be one between `reservation` or `ppu`, not `license`.'],
@@ -264,8 +294,12 @@ def test_validate_wrong_precision_reservation(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['for items of type `reservation` the `Precision` must be `integer`, not `decimal`.'],
@@ -293,12 +327,18 @@ def test_validate_wrong_precision_ppu(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['the item `Precision` must be one between `integer`, `decimal(1)`, `decimal(2)`, '
-            '`decimal(4)`, `decimal(8)`, not `decimal(12)`.'],
+        2: [
+            'the item `Precision` must be one between `integer`, `decimal(1)`, `decimal(2)`, '
+            '`decimal(4)`, `decimal(8)`, not `decimal(12)`.',
+        ],
     }
 
 
@@ -323,8 +363,12 @@ def test_validate_wrong_period_ppu(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['for items of type `ppu` the `Billing period` must be `monthly`, not `yearly`.'],
@@ -351,12 +395,18 @@ def test_validate_wrong_period_reservation(mocker, fs, get_sync_items_env):
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['the item `Billing period` must be one between `onetime`, `monthly`, `yearly`, '
-            '`2 years`, `3 years`, `4 years`, `5 years`, `6 years`, not `century`.'],
+        2: [
+            'the item `Billing period` must be one between `onetime`, `monthly`, `yearly`, '
+            '`2 years`, `3 years`, `4 years`, `5 years`, `6 years`, not `century`.',
+        ],
     }
 
 
@@ -374,7 +424,7 @@ def test_create_item_exists_in_connect(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
     )
     stats = SynchronizerStats()
@@ -392,12 +442,18 @@ def test_create_item_exists_in_connect(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['Cannot create item: item with MPN `MPN-R-001` already exists with ID '
-            '`PRD-276-377-545-0001`.'],
+        2: [
+            'Cannot create item: item with MPN `MPN-R-001` already exists with ID '
+            '`PRD-276-377-545-0001`.',
+        ],
     }
 
 
@@ -415,7 +471,7 @@ def test_create_item_connect_exception(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -440,8 +496,12 @@ def test_create_item_connect_exception(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['500 - Internal Server Error: unexpected error.'],
@@ -462,7 +522,7 @@ def test_create_item(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -487,8 +547,12 @@ def test_create_item(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -507,7 +571,7 @@ def test_create_item_one_time(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -532,8 +596,12 @@ def test_create_item_one_time(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -552,7 +620,7 @@ def test_create_item_yearly(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -577,8 +645,12 @@ def test_create_item_yearly(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -598,7 +670,7 @@ def test_create_item_1_to_1_yearly(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -623,8 +695,12 @@ def test_create_item_1_to_1_yearly(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -657,12 +733,18 @@ def test_create_item_validate_commitment(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['the item `Commitment` must be one between `-`, `1 year`, `2 years`, `3 years`, '
-            '`4 years`, `5 years`, `6 years`, not `commitment`.'],
+        2: [
+            'the item `Commitment` must be one between `-`, `1 year`, `2 years`, `3 years`, '
+            '`4 years`, `5 years`, `6 years`, not `commitment`.',
+        ],
     }
 
 
@@ -696,8 +778,12 @@ def test_create_item_validate_commitment_ppu(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['the commitment `1 year` is invalid for `ppu` items.'],
@@ -734,8 +820,12 @@ def test_create_item_validate_commitment_onetime(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['for a `onetime` billing period the commitment must be one of `-`, not `1 year`.'],
@@ -772,12 +862,18 @@ def test_create_item_validate_commitment_wrong_multiyear(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['for a `2 years` billing period the commitment must be one of `-`, `4 years`'
-            ', `6 years`, not `3 years`.'],
+        2: [
+            'for a `2 years` billing period the commitment must be one of `-`, `4 years`'
+            ', `6 years`, not `3 years`.',
+        ],
     }
 
 
@@ -811,11 +907,17 @@ def test_create_item_validate_commitment_wrong_multiyear_vs_commitment(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['for a `3 years` billing period the commitment must be one of `-`, `6 years`, not `5 years`.'],
+        2: [
+            'for a `3 years` billing period the commitment must be one of `-`, `6 years`, not `5 years`.',
+        ],
     }
 
 
@@ -833,7 +935,7 @@ def test_update_item(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
     )
 
@@ -858,8 +960,12 @@ def test_update_item(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -878,7 +984,7 @@ def test_delete_item(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
     )
 
@@ -903,8 +1009,12 @@ def test_delete_item(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 1, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 1,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -922,7 +1032,7 @@ def test_update_item_no_connect_item(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -941,8 +1051,12 @@ def test_update_item_no_connect_item(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['Cannot update item: item with MPN `MPN-R-001` the item does not exist.'],
@@ -964,7 +1078,7 @@ def test_update_item_no_item_connect(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -983,8 +1097,12 @@ def test_update_item_no_item_connect(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['Cannot update item: item with MPN `MPN-R-001` the item does not exist.'],
@@ -1008,7 +1126,7 @@ def test_update_item_draft(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[item],
     )
 
@@ -1033,8 +1151,12 @@ def test_update_item_draft(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -1057,7 +1179,7 @@ def test_update_item_draft_ppu(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[item],
     )
 
@@ -1082,8 +1204,12 @@ def test_update_item_draft_ppu(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -1104,7 +1230,7 @@ def test_update_item_draft_connect_exception(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[item],
     )
 
@@ -1129,8 +1255,12 @@ def test_update_item_draft_connect_exception(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['500 - Internal Server Error: unexpected error.'],
@@ -1152,7 +1282,7 @@ def test_delete_item_not_exists(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -1171,8 +1301,12 @@ def test_delete_item_not_exists(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['Cannot update item: item with MPN `MPN-R-001` the item does not exist.'],
@@ -1194,7 +1328,7 @@ def test_delete_item_connect_error(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[mocked_items_response[0]],
     )
 
@@ -1219,8 +1353,12 @@ def test_delete_item_connect_error(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Items']._row_errors == {
         2: ['500 - Internal Server Error: unexpected error.'],
@@ -1242,7 +1380,7 @@ def test_create_item_custom_uom(
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
-            'MPN-R-001)&limit=1&offset=0',
+        'MPN-R-001)&limit=1&offset=0',
         json=[],
     )
 
@@ -1275,6 +1413,10 @@ def test_create_item_custom_uom(
     synchronizer.sync()
 
     assert stats['Items'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }

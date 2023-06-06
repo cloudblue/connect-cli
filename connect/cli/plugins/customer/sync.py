@@ -57,7 +57,7 @@ class CustomerSynchronizer:
 
     @staticmethod
     def _validate_worksheet_sheet(ws):
-        cels = ws['A1': 'T1']
+        cels = ws['A1':'T1']
         for cel in cels[0]:
             if cel.value != COL_HEADERS[cel.column_letter]:
                 raise ClickException(
@@ -90,27 +90,30 @@ class CustomerSynchronizer:
                     self.stats.error(row_errors, row_idx)
                     continue
                 if data.parent_search_criteria and not data.parent_search_value:
-                    self.stats.error("Parent search value is needed if criteria is set", row_idx)
+                    self.stats.error('Parent search value is needed if criteria is set', row_idx)
                     continue
                 if data.hub_id and (data.hub_id != '' or data.hub_id != '-'):
                     if data.hub_id not in self.hubs:
-                        self.stats.error(f"Accounts on hub {data.hub_id} can not be modified", row_idx)
+                        self.stats.error(
+                            f'Accounts on hub {data.hub_id} can not be modified',
+                            row_idx,
+                        )
                         continue
                 name = f'{data.technical_contact_first_name} {data.technical_contact_last_name}'
                 model = {
-                    "type": data.type,
-                    "name": data.company_name if data.company_name else name,
-                    "contact_info": {
-                        "address_line1": data.address_line_1,
-                        "address_line2": data.address_line_2,
-                        "city": data.city,
-                        "country": data.country,
-                        "postal_code": data.zip,
-                        "state": data.state,
-                        "contact": {
-                            "first_name": data.technical_contact_first_name,
-                            "last_name": data.technical_contact_last_name,
-                            "email": data.technical_contact_email,
+                    'type': data.type,
+                    'name': data.company_name if data.company_name else name,
+                    'contact_info': {
+                        'address_line1': data.address_line_1,
+                        'address_line2': data.address_line_2,
+                        'city': data.city,
+                        'country': data.country,
+                        'postal_code': data.zip,
+                        'state': data.state,
+                        'contact': {
+                            'first_name': data.technical_contact_first_name,
+                            'last_name': data.technical_contact_last_name,
+                            'email': data.technical_contact_email,
                         },
                     },
                 }
@@ -124,9 +127,9 @@ class CustomerSynchronizer:
                     try:
                         phone = phonenumbers.parse(data.technical_contact_phone, data.country)
                         phone_number = {
-                            "country_code": f'+{str(phone.country_code)}',
-                            "area_code": '',
-                            "extension": str(phone.extension) if phone.extension else '-',
+                            'country_code': f'+{str(phone.country_code)}',
+                            'area_code': '',
+                            'extension': str(phone.extension) if phone.extension else '-',
                             'phone_number': str(phone.national_number),
                         }
                         model['contact_info']['contact']['phone_number'] = phone_number
@@ -137,7 +140,9 @@ class CustomerSynchronizer:
                     if data.parent_search_criteria == 'id':
                         if data.parent_search_value not in parent_id:
                             try:
-                                pacc = self._client.ns('tier').accounts[data.parent_search_value].get()
+                                pacc = (
+                                    self._client.ns('tier').accounts[data.parent_search_value].get()
+                                )
                                 parent_id.append(pacc['id'])
                             except ClientError:
                                 self.stats.error(
@@ -167,7 +172,8 @@ class CustomerSynchronizer:
                                 parent_external_id[data.parent_search_value] = pacc[0]['id']
                             except ClientError:
                                 self.stats.error(
-                                    'Error when obtaining parent data from Connect', row_idx,
+                                    'Error when obtaining parent data from Connect',
+                                    row_idx,
                                 )
                                 continue
                         model['parent']['id'] = parent_external_id[data.parent_search_value]
@@ -191,7 +197,8 @@ class CustomerSynchronizer:
                                 parent_uuid[data.parent_search_value] = pacc[0]['id']
                             except ClientError:
                                 self.stats.error(
-                                    'Error when obtaining parent data from Connect', row_idx,
+                                    'Error when obtaining parent data from Connect',
+                                    row_idx,
                                 )
                                 continue
                         model['parent']['id'] = parent_uuid[data.parent_search_value]
@@ -200,7 +207,8 @@ class CustomerSynchronizer:
                         account = self._client.ns('tier').accounts.create(model)
                     except ClientError as e:
                         self.stats.error(
-                            f'Error when creating account: {str(e)}', row_idx,
+                            f'Error when creating account: {str(e)}',
+                            row_idx,
                         )
                         continue
                     self.stats.created()
@@ -211,7 +219,8 @@ class CustomerSynchronizer:
                         account = self._client.ns('tier').accounts[data.id].update(model)
                     except ClientError as e:
                         self.stats.error(
-                            f'Error when updating account: {str(e)}', row_idx,
+                            f'Error when updating account: {str(e)}',
+                            row_idx,
                         )
                         continue
                     self.stats.updated()
@@ -235,23 +244,25 @@ class CustomerSynchronizer:
             errors.append(f'Customer type must be customer or reseller, not {row.type}')
             return errors
         if not all(
-                [
-                    row.address_line_1,
-                    row.city,
-                    row.state,
-                    row.zip,
-                    row.technical_contact_first_name,
-                    row.technical_contact_last_name,
-                    row.technical_contact_email,
-                ],
+            [
+                row.address_line_1,
+                row.city,
+                row.state,
+                row.zip,
+                row.technical_contact_first_name,
+                row.technical_contact_last_name,
+                row.technical_contact_email,
+            ],
         ):
             errors.append('Address line 1, city, state and zip are mandatory')
             return errors
         if row.action == 'create' and row.id is not None:
             errors.append(f'Create action must not have account id, is set to {row.id}')
             return errors
-        if row.action == 'create' and row.type == 'customer' and (
-                row.parent_search_criteria == '' or row.parent_search_criteria == '-'
+        if (
+            row.action == 'create'
+            and row.type == 'customer'
+            and (row.parent_search_criteria == '' or row.parent_search_criteria == '-')
         ):
             errors.append('Customers requires a parent account')
             return errors

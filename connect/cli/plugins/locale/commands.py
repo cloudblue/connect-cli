@@ -41,10 +41,10 @@ def cmd_list_locales(config, query):
         ],
         rows=[
             (
-                resource["id"],
-                resource["name"],
-                field_to_check_mark(resource["auto_translation"], false_value='\u2716'),
-                resource["stats"]["translations"] or '-',
+                resource['id'],
+                resource['name'],
+                field_to_check_mark(resource['auto_translation'], false_value='\u2716'),
+                resource['stats']['translations'] or '-',
             )
             for resource in query_locales
         ],

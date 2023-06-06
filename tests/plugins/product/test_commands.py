@@ -169,7 +169,6 @@ def test_list_products_provider(mocker, fs, mocked_responses, ccli):
 
 
 def test_export(config_mocker, mocker, ccli):
-
     mock = mocker.patch(
         'connect.cli.plugins.product.commands.dump_product',
         side_effect=lambda *args: 'PRD-000.xlsx',
@@ -212,7 +211,10 @@ def test_export_custom_file(config_mocker, mocker, ccli):
     assert mock.mock_calls[0][1][1] == 'PRD-000'
     assert mock.mock_calls[0][1][2] == '/tmp/my_product.xlsx'
     assert result.exit_code == 0
-    assert 'The product PRD-000 has been successfully exported to /tmp/my_product.xlsx.\n' in result.output
+    assert (
+        'The product PRD-000 has been successfully exported to /tmp/my_product.xlsx.\n'
+        in result.output
+    )
 
 
 def test_export_product_not_exists(mocker, fs, mocked_responses):
@@ -264,7 +266,7 @@ def test_export_product(
     mocked_responses.add(
         method='GET',
         url='https://localhost/media/VA-392-495/PRD-276-377-545/media/PRD-276-377-545'
-            '-logo_aJD74iQ.png',
+        '-logo_aJD74iQ.png',
         body=open('./tests/fixtures/image.png', 'rb').read(),
         status=200,
     )
@@ -410,7 +412,9 @@ def test_export_product(
     )
     mocked_responses.add(
         method='GET',
-        url=re.compile('https://localhost/public/v1/localization/translations/TRN-1079-0833-989(0|1)/attributes'),
+        url=re.compile(
+            'https://localhost/public/v1/localization/translations/TRN-1079-0833-989(0|1)/attributes',
+        ),
         body=mocked_translation_attributes_xlsx_response.read(),
         headers={
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

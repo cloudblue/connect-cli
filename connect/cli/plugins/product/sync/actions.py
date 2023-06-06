@@ -24,7 +24,7 @@ class ActionsSynchronizer(ProductSynchronizer):
         self._mstats = stats['Actions']
 
     def sync(self):  # noqa: CCR001
-        ws = self._wb["Actions"]
+        ws = self._wb['Actions']
         task = self._progress.add_task('Processing action', total=ws.max_row - 1)
         actions = self._get_actions()
         for row_idx in range(2, ws.max_row + 1):
@@ -56,18 +56,20 @@ class ActionsSynchronizer(ProductSynchronizer):
                     continue
 
             payload = {
-                "action": data.id,
-                "type": "button",
-                "scope": data.scope,
-                "description": data.description,
-                "title": data.title,
+                'action': data.id,
+                'type': 'button',
+                'scope': data.scope,
+                'description': data.description,
+                'title': data.title,
             }
 
             if data.action == 'update':
                 try:
-                    action = self._client.products[self._product_id].actions[
-                        data.verbose_id
-                    ].update(payload)
+                    action = (
+                        self._client.products[self._product_id]
+                        .actions[data.verbose_id]
+                        .update(payload)
+                    )
                     self._update_sheet_row(ws, row_idx, action)
                     self._mstats.updated()
                 except Exception as e:
@@ -75,8 +77,10 @@ class ActionsSynchronizer(ProductSynchronizer):
 
             if data.action == 'create':
                 try:
+
                     def _check_if_matches(data, x):
                         return x['action'] == data.id
+
                     original_action = list(filter(partial(_check_if_matches, data), actions))
                     if original_action:
                         self._updated_or_skipped(ws, row_idx, original_action[0], payload)
@@ -119,7 +123,7 @@ class ActionsSynchronizer(ProductSynchronizer):
             )
             return errors
 
-        id_pattern = "^[A-Za-z0-9_-]*$"
+        id_pattern = '^[A-Za-z0-9_-]*$'
 
         if not bool(re.match(id_pattern, data.id)):
             errors.append(
@@ -135,13 +139,7 @@ class ActionsSynchronizer(ProductSynchronizer):
         return errors
 
     def _get_actions(self):
-        return (
-            self._client
-            .products[
-                self._product_id
-            ]
-            .actions
-        ).all()
+        return (self._client.products[self._product_id].actions).all()
 
     def _updated_or_skipped(self, ws, row_idx, original, payload):
         original_filter = {k: v for k, v in original.items() if k in payload.keys()}
@@ -149,10 +147,12 @@ class ActionsSynchronizer(ProductSynchronizer):
             self._update_sheet_row(ws, row_idx)
             self._mstats.skipped()
         else:
-            action = self._client.products[self._product_id].actions[
-                original["id"]
-            ].update(
-                payload,
+            action = (
+                self._client.products[self._product_id]
+                .actions[original['id']]
+                .update(
+                    payload,
+                )
             )
             self._update_sheet_row(ws, row_idx, action)
             self._mstats.updated()

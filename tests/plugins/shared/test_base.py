@@ -25,7 +25,8 @@ def test_open(fs, mocked_responses, mocked_product_response):
         json=mocked_product_response,
     )
     product_id = synchronizer.open(
-        './tests/fixtures/comparation_product.xlsx', 'Items',
+        './tests/fixtures/comparation_product.xlsx',
+        'Items',
     )
 
     assert product_id == 'PRD-276-377-545'
@@ -82,9 +83,10 @@ def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
     )
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            './tests/fixtures/comparation_product.xlsx', 'Items',
+            './tests/fixtures/comparation_product.xlsx',
+            'Items',
         )
-    assert str(e.value) == "Product PRD-276-377-545 not found, create it first."
+    assert str(e.value) == 'Product PRD-276-377-545 not found, create it first.'
 
 
 def test_sheet_not_found(fs):
@@ -103,7 +105,8 @@ def test_sheet_not_found(fs):
 
     with pytest.raises(SheetNotFoundError) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'Items',
+            f'{fs.root_path}/test.xlsx',
+            'Items',
         )
 
     assert str(e.value) == 'File does not contain Items to synchronize, skipping'
@@ -132,7 +135,8 @@ def test_invalid_items_sheet(fs, mocked_responses, mocked_product_response):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'Items',
+            f'{fs.root_path}/test.xlsx',
+            'Items',
         )
 
     assert str(e.value) == 'Invalid input file: column A must be ID'
@@ -151,11 +155,10 @@ def test_no_sync():
     with pytest.raises(NotImplementedError) as e:
         synchronizer.sync()
 
-    assert str(e.value) == "Not implemented"
+    assert str(e.value) == 'Not implemented'
 
 
 def test_save(fs, mocked_responses, mocked_product_response):
-
     synchronizer = ProductSynchronizer(
         client=ConnectClient(
             use_specs=False,
@@ -172,7 +175,8 @@ def test_save(fs, mocked_responses, mocked_product_response):
     )
 
     synchronizer.open(
-        './tests/fixtures/comparation_product.xlsx', 'Items',
+        './tests/fixtures/comparation_product.xlsx',
+        'Items',
     )
 
     synchronizer.save(f'{fs.root_path}//test.xlsx')

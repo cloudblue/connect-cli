@@ -228,10 +228,13 @@ REPORT_SUMMARY = """<b><blue>Report</blue></b>
     <b>Use Asyncio:</b> ${use_asyncio}
 """
 
-BOOTSTRAP_SUMMARY = """<b><blue>Project</blue></b>
+BOOTSTRAP_SUMMARY = (
+    """<b><blue>Project</blue></b>
     <b>Project Name:</b> ${project_name} - <b>Package Name:</b> ${package_name}
     <b>Description:</b> ${description}
     <b>Author:</b> ${author}
     <b>Version:</b> ${version} - <b>License:</b> ${license}
     <b>Use Github Actions:</b> ${use_github_actions}
-""" + REPORT_SUMMARY
+"""
+    + REPORT_SUMMARY
+)
