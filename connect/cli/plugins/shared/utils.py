@@ -53,7 +53,7 @@ def get_col_limit_by_ws_type(ws_type):
 def get_ws_type_by_worksheet_name(ws_name):
     if ws_name == 'Items':
         return 'items'
-    elif ws_name == "Ordering Parameters":
+    elif ws_name == 'Ordering Parameters':
         return 'params'
     elif ws_name == 'Fulfillment Parameters':
         return 'params'
@@ -160,16 +160,16 @@ def fill_translation_row(ws, row_idx, translation, update_mode=False):
     ws.cell(row_idx, 14, value=translation['events'].get('updated', {}).get('at', '-'))
     if not update_mode:
         ws.cell(row_idx, 2, value='-')
-        ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(wrap_text=True)
+        ws.cell(row_idx, 8, value=translation.get('description', '-') or '-').alignment = Alignment(
+            wrap_text=True,
+        )
         ws.cell(row_idx, 9, value='Enabled' if translation['auto']['enabled'] else 'Disabled')
 
 
 def _calculate_translation_completion(translation):
     stats = translation['stats']
     try:
-        return (
-            stats.get('translated') / stats.get('total')
-        )
+        return stats.get('translated') / stats.get('total')
     except TypeError:
         return '-'
 

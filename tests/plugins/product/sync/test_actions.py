@@ -20,8 +20,12 @@ def test_skipped(mocker, get_sync_actions_env):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 1, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 1,
+        'errors': 0,
     }
 
 
@@ -44,12 +48,18 @@ def test_validate_wrong_action(mocker, fs, get_sync_actions_env):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {
-        2: ['Allowed action values are `-`, `create`, `update` or `delete`. test is not valid '
-            'action.'],
+        2: [
+            'Allowed action values are `-`, `create`, `update` or `delete`. test is not valid '
+            'action.',
+        ],
     }
 
 
@@ -73,8 +83,12 @@ def test_validate_no_verbose_id(mocker, fs, get_sync_actions_env):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {2: ['Verbose ID is required for update action.']}
 
@@ -99,8 +113,12 @@ def test_validate_wrong_id(mocker, fs, get_sync_actions_env):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {
         2: ['Actions ID must contain only letters, numbers and `_`, provided wrong id'],
@@ -127,8 +145,12 @@ def test_validate_wrong_scope(mocker, fs, get_sync_actions_env):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {
         2: ['Action scope must be one of `asset`, `tier1` or `tier2`. Provided tier3'],
@@ -160,8 +182,12 @@ def test_delete(mocker, fs, get_sync_actions_env, mocked_responses):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 1, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 1,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -190,8 +216,12 @@ def test_delete_404(mocker, fs, get_sync_actions_env, mocked_responses):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 1, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 1,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -220,8 +250,12 @@ def test_delete_500(mocker, fs, get_sync_actions_env, mocked_responses):
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
@@ -254,8 +288,12 @@ def test_update(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actio
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -285,8 +323,12 @@ def test_update_500(mocker, fs, get_sync_actions_env, mocked_responses, mocked_a
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
@@ -329,8 +371,12 @@ def test_create(mocker, fs, get_sync_actions_env, mocked_responses, mocked_actio
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 1, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }
 
 
@@ -370,14 +416,22 @@ def test_create_500(mocker, fs, get_sync_actions_env, mocked_responses, mocked_a
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 0, 'errors': 1,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
     }
     assert stats['Actions']._row_errors == {2: ['500 Internal Server Error']}
 
 
 def test_create_skip_if_action_id_already_exists(
-    mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+    mocker,
+    fs,
+    get_sync_actions_env,
+    mocked_responses,
+    mocked_actions_response,
 ):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
@@ -407,13 +461,21 @@ def test_create_skip_if_action_id_already_exists(
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 1, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 1,
+        'errors': 0,
     }
 
 
 def test_skip_create_if_action_id_exists_but_update_if_differs_from_source(
-    mocker, fs, get_sync_actions_env, mocked_responses, mocked_actions_response,
+    mocker,
+    fs,
+    get_sync_actions_env,
+    mocked_responses,
+    mocked_actions_response,
 ):
     get_sync_actions_env['Actions']['A2'] = None
     get_sync_actions_env['Actions']['C2'] = 'create'
@@ -451,6 +513,10 @@ def test_skip_create_if_action_id_exists_but_update_if_differs_from_source(
     synchronizer.sync()
 
     assert stats['Actions'].get_counts_as_dict() == {
-        'processed': 1, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 0, 'errors': 0,
+        'processed': 1,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
     }

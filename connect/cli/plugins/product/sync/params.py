@@ -30,11 +30,11 @@ class ParamsSynchronizer(ProductSynchronizer):
         super(ParamsSynchronizer, self).__init__(client, progress)
 
     def open(self, input_file, worksheet):
-        if worksheet == "Ordering Parameters":
+        if worksheet == 'Ordering Parameters':
             self._param_type = 'ordering'
-        elif worksheet == "Fulfillment Parameters":
+        elif worksheet == 'Fulfillment Parameters':
             self._param_type = 'fulfillment'
-        elif worksheet == "Configuration Parameters":
+        elif worksheet == 'Configuration Parameters':
             self._param_type = 'configuration'
         self._worksheet_name = worksheet
         self._mstats = self.__stats[self._worksheet_name]
@@ -89,10 +89,12 @@ class ParamsSynchronizer(ProductSynchronizer):
                     if original_param:
                         self._compare_param(original_param, data)
 
-                    param = self._client.products[self._product_id].parameters[
-                        data.verbose_id
-                    ].update(
-                        param_payload,
+                    param = (
+                        self._client.products[self._product_id]
+                        .parameters[data.verbose_id]
+                        .update(
+                            param_payload,
+                        )
                     )
                     self._update_sheet_row(ws, row_idx, param)
                     self._mstats.updated()
@@ -146,14 +148,13 @@ class ParamsSynchronizer(ProductSynchronizer):
             raise ParamSwitchNotSupported('switching phase is not supported')
 
     def _validate_row(self, data):  # noqa: CCR001
-
         errors = []
         if not data.id:
             errors.append(
                 'Parameter must have an id',
             )
             return errors
-        id_pattern = "^[A-Za-z0-9_-]*$"
+        id_pattern = '^[A-Za-z0-9_-]*$'
 
         if not bool(re.match(id_pattern, data.id)):
             errors.append(
@@ -166,7 +167,7 @@ class ParamsSynchronizer(ProductSynchronizer):
                 f'{self._worksheet_name}. Has been provided {data.phase}.',
             )
         elif data.action in ('update', 'delete') and (
-                not data.verbose_id or not data.verbose_id.startswith('PRM-')
+            not data.verbose_id or not data.verbose_id.startswith('PRM-')
         ):
             errors.append(
                 'Verbose ID is required on update and delete actions.',
@@ -177,13 +178,18 @@ class ParamsSynchronizer(ProductSynchronizer):
                 f'{",".join(PARAM_TYPES)}',
             )
         elif self._param_type in ('ordering', 'fulfillment') and data.scope not in (
-            'asset', 'tier1', 'tier2',
+            'asset',
+            'tier1',
+            'tier2',
         ):
             errors.append(
                 f'Only asset, tier1 and tier2 scopes are supported for {self._worksheet_name}',
             )
         elif self._param_type == 'configuration' and data.scope not in (
-            'item', 'item_marketplace', 'marketplace', 'product',
+            'item',
+            'item_marketplace',
+            'marketplace',
+            'product',
         ):
             errors.append(
                 'Only item, item_marketplace, marketplace and product scopes are supported for '
@@ -220,11 +226,7 @@ class ParamsSynchronizer(ProductSynchronizer):
             filter_kwargs['id'] = data.verbose_id
         else:
             filter_kwargs['name'] = data.id
-        return (
-            self._client.products[self._product_id].parameters
-            .filter(**filter_kwargs)
-            .first()
-        )
+        return self._client.products[self._product_id].parameters.filter(**filter_kwargs).first()
 
     def _updated_or_skipped(self, ws, row_idx, original, payload):
         original_filter = {k: v for k, v in original.items() if k in payload.keys()}
@@ -233,10 +235,12 @@ class ParamsSynchronizer(ProductSynchronizer):
             self._update_sheet_row(ws, row_idx)
             self._mstats.skipped()
         else:
-            param = self._client.products[self._product_id].parameters[
-                original["id"]
-            ].update(
-                payload,
+            param = (
+                self._client.products[self._product_id]
+                .parameters[original['id']]
+                .update(
+                    payload,
+                )
             )
             self._update_sheet_row(ws, row_idx, param)
             self._mstats.updated()

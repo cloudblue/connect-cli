@@ -18,8 +18,13 @@ EXCEL_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetm
 
 def get_translation_workbook(client, translation_id):
     try:
-        xls_data = client.ns('localization').translations[translation_id].action('attributes').get(
-            headers={'Accept': EXCEL_CONTENT_TYPE},
+        xls_data = (
+            client.ns('localization')
+            .translations[translation_id]
+            .action('attributes')
+            .get(
+                headers={'Accept': EXCEL_CONTENT_TYPE},
+            )
         )
         return load_workbook(filename=BytesIO(xls_data))
     except ClientError as error:

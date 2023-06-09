@@ -21,7 +21,9 @@ def purge_dir(dir):
 
 
 def slugify(name):
-    return name.lower().strip().replace(' ', '_').replace('-', '_').replace('.', '_').replace(',', '')
+    return (
+        name.lower().strip().replace(' ', '_').replace('-', '_').replace('.', '_').replace(',', '')
+    )
 
 
 def show_validation_result_table(validation_items):
@@ -46,6 +48,8 @@ def show_validation_result_table(validation_items):
                 line_numbers=True,
                 start_line=item.start_line,
                 highlight_lines={item.lineno},
-            ) if item.code else '-',
+            )
+            if item.code
+            else '-',
         )
         console.print(table)

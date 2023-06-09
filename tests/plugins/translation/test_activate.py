@@ -33,9 +33,9 @@ def test_translation_already_activated(mocked_responses):
         method='POST',
         url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/activate',
         json={
-            "error_code": "TRE_003",
-            "errors": [
-                "This translation is already activated.",
+            'error_code': 'TRE_003',
+            'errors': [
+                'This translation is already activated.',
             ],
         },
         status=400,

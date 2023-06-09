@@ -30,11 +30,7 @@ def get_item_by_mpn(client, product_id, mpn):
     rql = R().mpn.eq(mpn)
 
     try:
-        res = (
-            client.products[product_id]
-            .items
-            .filter(rql)
-        )
+        res = client.products[product_id].items.filter(rql)
         return res.first()
 
     except ClientError as error:
@@ -45,11 +41,7 @@ def get_item_by_mpn(client, product_id, mpn):
 
 def create_item(client, product_id, data):
     try:
-        res = (
-            client.products[product_id]
-            .items
-            .create(data)
-        )
+        res = client.products[product_id].items.create(data)
     except ClientError as error:
         handle_http_error(error)
 

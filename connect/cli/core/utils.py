@@ -69,7 +69,7 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
 
     output_path = output_path or os.getcwd()
     if not os.path.exists(output_path):
-        raise click.ClickException("Output Path does not exist")
+        raise click.ClickException('Output Path does not exist')
 
     output_path = os.path.join(output_path, default_dir_name)
     if not os.path.exists(output_path):
@@ -77,7 +77,7 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
     elif not os.path.isdir(output_path):  # pragma: no branch
         raise click.ClickException(
             f"Exists a file with name '{os.path.basename(output_path)}' but a directory is "
-            "expected, please rename it",
+            'expected, please rename it',
         )
 
     output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
@@ -88,12 +88,10 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
 def field_to_check_mark(predicate, false_value=''):
     """Change the value of a field to a check mark base on a predicate.
 
-        :param predicate: bool value / expression.
-        :param false_value: customizable value if predicate evaluates to false.
-        """
-    return (
-        '\u2713' if predicate else false_value
-    )
+    :param predicate: bool value / expression.
+    :param false_value: customizable value if predicate evaluates to false.
+    """
+    return '\u2713' if predicate else false_value
 
 
 def iter_entry_points(group, name=None):

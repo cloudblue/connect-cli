@@ -17,8 +17,10 @@ def test_add_account(mocker, mocked_responses):
     )
     acc_id, acc_name = add_account(config, 'api_key', 'https://localhost/public/v1')
     config.add_account.assert_called_once_with(
-        'VA-000', 'Test account',
-        'api_key', 'https://localhost/public/v1',
+        'VA-000',
+        'Test account',
+        'api_key',
+        'https://localhost/public/v1',
     )
     assert acc_id == 'VA-000'
     assert acc_name == 'Test account'
@@ -32,9 +34,9 @@ def test_add_account_invalid_api_key(mocked_responses):
         'https://localhost/public/v1/accounts',
         status=401,
         json={
-            "error_code": "AUTH_001",
-            "errors": [
-                "API request is unauthorized.",
+            'error_code': 'AUTH_001',
+            'errors': [
+                'API request is unauthorized.',
             ],
         },
     )

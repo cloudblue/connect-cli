@@ -17,7 +17,6 @@ from connect.cli.plugins.report.utils import convert_to_utc_input
 
 
 class ObjectValidator(Validator):
-
     def validate(self, value, context=None):
         if not value:
             return
@@ -32,14 +31,15 @@ def required_validator(param, validators=None):
         validators = []
 
     if param.get('required', False):
-        validators.append(RequiredValidator(
-            message='Please select at least one value',
-        ))
+        validators.append(
+            RequiredValidator(
+                message='Please select at least one value',
+            ),
+        )
     return validators
 
 
 def single_line(param):
-
     return {
         'name': param['id'],
         'label': param['name'],
@@ -84,10 +84,11 @@ def date_range(param):
 
 
 def date(param):
-
-    date_validator = [DateTimeValidator(
-        format_pattern='%Y-%m-%d',
-    )]
+    date_validator = [
+        DateTimeValidator(
+            format_pattern='%Y-%m-%d',
+        ),
+    ]
 
     return {
         'name': param['id'],
@@ -105,10 +106,7 @@ def marketplace_list(config, client, param):
         'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]} ({param["id"]})',
-        'values': [
-            (m['id'], f'{m["name"]} ({m["id"]})')
-            for m in marketplaces
-        ],
+        'values': [(m['id'], f'{m["name"]} ({m["id"]})') for m in marketplaces],
         'formatting_template': '${label}',
         'validators': required_validator(param),
     }
@@ -130,10 +128,7 @@ def hub_list(config, client, param):
         'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]}',
-        'values': [
-            (h['id'], f'{h["name"]} ({h["id"]})')
-            for h in hubs
-        ],
+        'values': [(h['id'], f'{h["name"]} ({h["id"]})') for h in hubs],
         'formatting_template': '${label}',
         'validators': required_validator(param),
     }
@@ -150,10 +145,7 @@ def product_list(config, client, param):
         'label': param['name'],
         'type': 'selectmany',
         'description': f'{param["description"]}',
-        'values': [
-            (p['id'], f'{p["name"]} ({p["id"]})')
-            for p in products
-        ],
+        'values': [(p['id'], f'{p["name"]} ({p["id"]})') for p in products],
         'formatting_template': '${label}',
         'validators': required_validator(param),
     }
@@ -216,10 +208,7 @@ def handle_param_input(config, client, param):
 
 
 def generate_intro(config, report, output_format):
-    output_formats = {
-        format.id: format.description
-        for format in report.renderers
-    }
+    output_formats = {format.id: format.description for format in report.renderers}
     intro = """Welcome to the Connect CLI Report execution utility.
 
 <b><blue>Account</blue></b>

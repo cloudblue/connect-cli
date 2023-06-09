@@ -9,7 +9,6 @@ from interrogatio.validators import Validator
 
 
 class PythonIdentifierValidator(Validator):
-
     def validate(self, value, context=None):
         if not value:
             return
@@ -18,7 +17,6 @@ class PythonIdentifierValidator(Validator):
 
 
 class ProjectDirValidator(Validator):
-
     def __init__(
         self,
         output_dir,
@@ -65,7 +63,7 @@ def get_code_context(obj, pattern):
             break
 
     if inspect.ismodule(obj):
-        code = ''.join(code.splitlines(keepends=True)[0:lineno + 3])
+        code = ''.join(code.splitlines(keepends=True)[0 : lineno + 3])
 
     return {
         'file': file,

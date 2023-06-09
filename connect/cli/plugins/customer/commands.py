@@ -57,7 +57,6 @@ def cmd_export_customers(config, output_path, output_file):
     name='sync',
     short_help='Synchronize customers from an excel file.',
 )
-
 @click.argument('input_file', metavar='input_file', nargs=1, required=True)  # noqa: E304
 @pass_config
 def cmd_sync_customers(config, input_file):
@@ -70,7 +69,7 @@ def cmd_sync_customers(config, input_file):
         client=config.active.client,
         account_id=acc_id,
     )
-    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings('ignore', category=UserWarning)
     synchronizer.open(input_file, 'Customers')
     synchronizer.sync()
     synchronizer.save(input_file)

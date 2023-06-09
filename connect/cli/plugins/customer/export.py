@@ -13,7 +13,10 @@ from connect.cli.plugins.customer.constants import COL_HEADERS
 
 def dump_customers(client, account_id, output_file, output_path=None):  # noqa: CCR001
     output_file = validate_output_options(
-        output_path, output_file, default_dir_name=account_id, default_file_name='customers',
+        output_path,
+        output_file,
+        default_dir_name=account_id,
+        default_file_name='customers',
     )
     try:
         wb = Workbook()
@@ -26,7 +29,11 @@ def dump_customers(client, account_id, output_file, output_path=None):  # noqa: 
         with console.progress() as progress:
             task = progress.add_task('Processing customer', total=count)
             for customer in customers:
-                progress.update(task, description=f'Processing customer {customer["id"]}', advance=1)
+                progress.update(
+                    task,
+                    description=f'Processing customer {customer["id"]}',
+                    advance=1,
+                )
                 _fill_customer_row(wb['Customers'], row_idx, customer)
                 row_idx += 1
             progress.update(task, completed=count)
@@ -83,7 +90,9 @@ def _fill_customer_row(ws, row_idx, customer):
     ws.cell(row_idx, 18, value=customer['contact_info']['contact'].get('last_name', '-'))
     ws.cell(row_idx, 19, value=customer['contact_info']['contact'].get('email', '-'))
     ws.cell(
-        row_idx, 20, value=_get_phone_number(
+        row_idx,
+        20,
+        value=_get_phone_number(
             customer['contact_info']['contact'].get(
                 'phone_number',
                 '-',
@@ -113,7 +122,7 @@ def _get_phone_number(number):
 def _prepare_worksheet(ws):
     color = Color('d3d3d3')
     fill = PatternFill('solid', color)
-    cels = ws['A1': 'T1']
+    cels = ws['A1':'T1']
     for cel in cels[0]:
         if cel.column_letter in ['J', 'K', 'L']:
             ws.column_dimensions[cel.column_letter].width = 50
@@ -136,7 +145,7 @@ def _add_countries(ws):
     ws.column_dimensions['A'].width = 15
     ws.column_dimensions['A'].auto_size = True
     ws.column_dimensions['B'].width = 50
-    cels = ws['A1': 'B1']
+    cels = ws['A1':'B1']
     for cel in cels[0]:
         cel.fill = fill
         cel.value = col_headers[cel.column_letter]

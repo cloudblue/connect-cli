@@ -20,13 +20,13 @@ from connect.cli.plugins.project.report.helpers import (
 
 class Mutex(click.Option):
     def __init__(self, *args, **kwargs):
-        self.conflict_with: list = kwargs.pop("conflict_with")
+        self.conflict_with: list = kwargs.pop('conflict_with')
 
         assert self.conflict_with, "'conflict_with' parameter required"
 
-        help_str = kwargs.get("help", "")
+        help_str = kwargs.get('help', '')
         help_str += f' This option is mutually exclusive with {", ".join(self.conflict_with)}.'
-        kwargs["help"] = help_str.strip()
+        kwargs['help'] = help_str.strip()
         super(Mutex, self).__init__(*args, **kwargs)
 
     def handle_parse_result(self, ctx, opts, args):
@@ -61,14 +61,16 @@ def grp_project_report():
     short_help='Bootstrap new report project.',
 )
 @click.option(
-    '--output-dir', '-o',
+    '--output-dir',
+    '-o',
     default=os.getcwd(),
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
     required=True,
     help='Directory where the new report project will be created.',
 )
 @click.option(
-    '--force-overwrite', '-f',
+    '--force-overwrite',
+    '-f',
     is_flag=True,
     help='Overwrite the destination project directory if exists.',
     default=False,
@@ -82,7 +84,8 @@ def cmd_bootstrap_report_project(output_dir, force_overwrite):
     short_help='Validate given report project.',
 )
 @click.option(
-    '--project-dir', '-p',
+    '--project-dir',
+    '-p',
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Project directory.',
@@ -96,13 +99,15 @@ def cmd_validate_report_project(project_dir):
     short_help='Add new report to the given project.',
 )
 @click.option(
-    '--project-dir', '-p',
+    '--project-dir',
+    '-p',
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Project directory.',
 )
 @click.option(
-    '--package-name', '-n',
+    '--package-name',
+    '-n',
     default='reports',
     help='Package directory.',
 )
@@ -124,20 +129,23 @@ def grp_project_extension():
     short_help='Bootstrap new extension project.',
 )
 @click.option(
-    '--output-dir', '-o',
+    '--output-dir',
+    '-o',
     default=os.getcwd(),
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
     required=False,
     help='Directory where the new extension project will be created.',
 )
 @click.option(
-    '--force-overwrite', '-f',
+    '--force-overwrite',
+    '-f',
     is_flag=True,
     help='Overwrite the destination project directory if exists.',
     default=False,
 )
 @click.option(
-    '--save-answers', '-s',
+    '--save-answers',
+    '-s',
     default=None,
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
     required=False,
@@ -146,7 +154,8 @@ def grp_project_extension():
     conflict_with=['load_answers'],
 )
 @click.option(
-    '--load-answers', '-l',
+    '--load-answers',
+    '-l',
     default=None,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     required=False,
@@ -156,7 +165,11 @@ def grp_project_extension():
 )
 @pass_config
 def cmd_bootstrap_extension_project(
-        config, output_dir, force_overwrite, save_answers, load_answers,
+    config,
+    output_dir,
+    force_overwrite,
+    save_answers,
+    load_answers,
 ):
     bootstrap_extension_project(
         config,
@@ -188,7 +201,8 @@ def cmd_validate_extension_project(config, project_dir):
     short_help='Update runner version to the latest one.',
 )
 @click.option(
-    '--project-dir', '-p',
+    '--project-dir',
+    '-p',
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help='Project directory.',

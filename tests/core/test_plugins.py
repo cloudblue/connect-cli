@@ -6,7 +6,6 @@ from connect.cli.core.plugins import load_plugins
 
 
 def test_load_plugins(mocker):
-
     cli = click.Group()
 
     grp_internal = click.MultiCommand('internal')
@@ -22,10 +21,12 @@ def test_load_plugins(mocker):
     )
     mocker.patch(
         'connect.cli.core.plugins.iter_entry_points',
-        return_value=iter([
-            EntryPoint('internal', 'connect.cli.plugins.internal', None),
-            EntryPoint('external', 'external.cli.plugin', None),
-        ]),
+        return_value=iter(
+            [
+                EntryPoint('internal', 'connect.cli.plugins.internal', None),
+                EntryPoint('external', 'external.cli.plugin', None),
+            ],
+        ),
     )
 
     load_plugins(cli)
@@ -48,9 +49,11 @@ def test_load_no_external(mocker):
     )
     mocker.patch(
         'connect.cli.core.plugins.iter_entry_points',
-        return_value=iter([
-            EntryPoint('internal', 'connect.cli.plugins.internal', None),
-        ]),
+        return_value=iter(
+            [
+                EntryPoint('internal', 'connect.cli.plugins.internal', None),
+            ],
+        ),
     )
 
     load_plugins(cli)

@@ -82,7 +82,7 @@ def test_validate_reports_json_no_file():
 def test_validate_reports_json_invalid_file():
     with tempfile.TemporaryDirectory() as tmp:
         with open(os.path.join(tmp, 'reports.json'), 'a') as f:
-            f.write("content")
+            f.write('content')
             f.close()
             assert validate_reports_json(tmp, None) == (
                 ValidationResult(
@@ -147,7 +147,9 @@ def test_validate_repository_definition_validate_error(mocker):
                 ValidationItem(
                     level='ERROR',
                     message=error,
-                ) for error in ['error1']],
+                )
+                for error in ['error1']
+            ],
             must_exit=True,
         )
     )

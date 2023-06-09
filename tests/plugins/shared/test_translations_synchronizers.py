@@ -50,9 +50,14 @@ def test_translation_attributes_sync(mocker, save):
     is_clone = mocker.MagicMock()
 
     translation_attributes_sync(
-        worksheet, translation, client,
-        progress, input_file, stats,
-        save, is_clone,
+        worksheet,
+        translation,
+        client,
+        progress,
+        input_file,
+        stats,
+        save,
+        is_clone,
     )
 
     mocked_sync.assert_called_once_with(client, progress, stats)
@@ -160,5 +165,7 @@ def test_sync_product_translations_wait_autotranslation(mocker):
     )
 
     mocked_wait_autotrans.assert_called_once_with(
-        client, progress, 'TRN-000',
+        client,
+        progress,
+        'TRN-000',
     )

@@ -86,7 +86,6 @@ class Config(object):
             data = json.load(f)
             active_account_id = data['active']
             for account_data in data['accounts']:
-
                 account = Account(
                     **account_data,
                     client=ConnectClient(

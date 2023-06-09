@@ -52,11 +52,11 @@ def test_required_validator(mocked_reports):
 
 def test_single_line():
     param = {
-        "id": "date",
-        "type": "single_line",
-        "name": "Report period",
-        "description": "Provide the time period to create the report",
-        "required": True,
+        'id': 'date',
+        'type': 'single_line',
+        'name': 'Report period',
+        'description': 'Provide the time period to create the report',
+        'required': True,
     }
 
     result = single_line(param)
@@ -68,11 +68,11 @@ def test_single_line():
 
 def test_object_param():
     param = {
-        "id": "id",
-        "type": "object",
-        "name": "Report period",
-        "description": "Provide the time period to create the report",
-        "required": True,
+        'id': 'id',
+        'type': 'object',
+        'name': 'Report period',
+        'description': 'Provide the time period to create the report',
+        'required': True,
     }
 
     result = object_param(param)
@@ -86,11 +86,11 @@ def test_object_param():
 
 def test_date_range():
     param = {
-        "id": "date",
-        "type": "date_range",
-        "name": "Report period",
-        "description": "Provide the time period to create the report",
-        "required": True,
+        'id': 'date',
+        'type': 'date_range',
+        'name': 'Report period',
+        'description': 'Provide the time period to create the report',
+        'required': True,
     }
 
     result = date_range(param)
@@ -101,11 +101,11 @@ def test_date_range():
 
 def test_date():
     param = {
-        "id": "date",
-        "type": "date",
-        "name": "Report date",
-        "description": "Provide the time period to create the report",
-        "required": True,
+        'id': 'date',
+        'type': 'date',
+        'name': 'Report date',
+        'description': 'Provide the time period to create the report',
+        'required': True,
     }
 
     result = date(param)
@@ -116,30 +116,30 @@ def test_date():
 
 def test_checkbox():
     param = {
-        "id": "rr_type",
-        "type": "checkbox",
-        "name": "Types of requests",
-        "description": "Select the requests types you want to include in report",
-        "choices": [
+        'id': 'rr_type',
+        'type': 'checkbox',
+        'name': 'Types of requests',
+        'description': 'Select the requests types you want to include in report',
+        'choices': [
             {
-                "value": "purchase",
-                "label": "Purchase",
+                'value': 'purchase',
+                'label': 'Purchase',
             },
             {
-                "value": "change",
-                "label": "Change",
+                'value': 'change',
+                'label': 'Change',
             },
             {
-                "value": "suspend",
-                "label": "Suspend",
+                'value': 'suspend',
+                'label': 'Suspend',
             },
             {
-                "value": "resume",
-                "label": "Resume",
+                'value': 'resume',
+                'label': 'Resume',
             },
             {
-                "value": "cancel",
-                "label": "Cancel",
+                'value': 'cancel',
+                'label': 'Cancel',
             },
         ],
     }
@@ -152,30 +152,30 @@ def test_checkbox():
 
 def test_checkbox_2():
     param = {
-        "id": "rr_type",
-        "type": "choice",
-        "name": "Types of requests",
-        "description": "Select the requests types you want to include in report",
-        "choices": [
+        'id': 'rr_type',
+        'type': 'choice',
+        'name': 'Types of requests',
+        'description': 'Select the requests types you want to include in report',
+        'choices': [
             {
-                "value": "purchase",
-                "label": "Purchase",
+                'value': 'purchase',
+                'label': 'Purchase',
             },
             {
-                "value": "change",
-                "label": "Change",
+                'value': 'change',
+                'label': 'Change',
             },
             {
-                "value": "suspend",
-                "label": "Suspend",
+                'value': 'suspend',
+                'label': 'Suspend',
             },
             {
-                "value": "resume",
-                "label": "Resume",
+                'value': 'resume',
+                'label': 'Resume',
             },
             {
-                "value": "cancel",
-                "label": "Cancel",
+                'value': 'cancel',
+                'label': 'Cancel',
             },
         ],
     }
@@ -188,10 +188,10 @@ def test_checkbox_2():
 
 def test_marketplace_list(mocked_responses):
     param = {
-        "id": "mkp",
-        "type": "marketplace",
-        "name": "Marketplaces",
-        "description": "Select the marketplaces you want to include in report",
+        'id': 'mkp',
+        'type': 'marketplace',
+        'name': 'Marketplaces',
+        'description': 'Select the marketplaces you want to include in report',
     }
 
     config = Config()
@@ -209,8 +209,8 @@ def test_marketplace_list(mocked_responses):
         method='GET',
         json=[
             {
-                "id": "MKP-1",
-                "name": "Marketplace",
+                'id': 'MKP-1',
+                'name': 'Marketplace',
             },
         ],
     )
@@ -223,10 +223,10 @@ def test_marketplace_list(mocked_responses):
 
 def test_hub_list(mocked_responses):
     param = {
-        "id": "mkp",
-        "type": "marketplace",
-        "name": "Marketplaces",
-        "description": "Select the marketplaces you want to include in report",
+        'id': 'mkp',
+        'type': 'marketplace',
+        'name': 'Marketplaces',
+        'description': 'Select the marketplaces you want to include in report',
     }
 
     config = Config()
@@ -244,13 +244,13 @@ def test_hub_list(mocked_responses):
         method='GET',
         json=[
             {
-                "id": "MKP-1",
-                "name": "Marketplace",
-                "hubs": [
+                'id': 'MKP-1',
+                'name': 'Marketplace',
+                'hubs': [
                     {
-                        "hub": {
-                            "id": "hub1",
-                            "name": "my_hub",
+                        'hub': {
+                            'id': 'hub1',
+                            'name': 'my_hub',
                         },
                     },
                 ],
@@ -273,10 +273,10 @@ def test_hub_list(mocked_responses):
 )
 def test_product(mocked_responses, mocked_product_response, account_type):
     param = {
-        "id": "product",
-        "type": "product",
-        "name": "Product list",
-        "description": "Select the products you want to include in report",
+        'id': 'product',
+        'type': 'product',
+        'name': 'Product list',
+        'description': 'Select the products you want to include in report',
     }
 
     config = Config()
@@ -383,10 +383,12 @@ def test_generate_summary():
     }
 
     summary = generate_summary(info)
-    assert summary == '\n'.join([
-        '<b>Test summary: </b>a value',
-        '<b>Test summary 2: </b>All',
-    ])
+    assert summary == '\n'.join(
+        [
+            '<b>Test summary: </b>a value',
+            '<b>Test summary 2: </b>All',
+        ],
+    )
 
 
 def test_generate_summary_some():
@@ -418,10 +420,12 @@ def test_generate_summary_some():
     }
 
     summary = generate_summary(info)
-    assert summary == '\n'.join([
-        '<b>Test summary: </b>a value',
-        '<b>Test summary 2: </b>A',
-    ])
+    assert summary == '\n'.join(
+        [
+            '<b>Test summary: </b>a value',
+            '<b>Test summary 2: </b>A',
+        ],
+    )
 
 
 def test_handle_param_inputs_dynamic(mocker, mocked_responses, mocked_product_response):
@@ -454,7 +458,6 @@ def test_handle_param_inputs_dynamic(mocker, mocked_responses, mocked_product_re
 
 
 def test_handle_param_inputs_unknown():
-
     with pytest.raises(ClickException) as cv:
         handle_param_input(None, None, {'type': 'unknown'})
 

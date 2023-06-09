@@ -33,7 +33,7 @@ def test_context(fs):
         print(context_src, file=f)
 
     ctx = Context.create_from_file(filename=cfile)
-    assert ctx.program_agreement_id == "AGP-927-440-678"
+    assert ctx.program_agreement_id == 'AGP-927-440-678'
     assert ctx.program_contract_id == 'CRP-41033-36725-76650'
     assert len(ctx.distribution_agreements) == 2
     assert str(ctx) == context_src
@@ -42,7 +42,7 @@ def test_context(fs):
     assert len(ctx) == 0
 
     ctx = Context.create(filename=cfile)
-    assert ctx.program_agreement_id == "AGP-927-440-678"
+    assert ctx.program_agreement_id == 'AGP-927-440-678'
     assert ctx.program_contract_id == 'CRP-41033-36725-76650'
     assert len(ctx.distribution_agreements) == 2
     assert str(ctx) == context_src
@@ -51,11 +51,11 @@ def test_context(fs):
     assert len(ctx) == 0
 
     ctx = Context.create(args=['program_agreement_id=AGP-xxx-xxx-xxx'], filename=cfile)
-    assert ctx.program_agreement_id == "AGP-xxx-xxx-xxx"
+    assert ctx.program_agreement_id == 'AGP-xxx-xxx-xxx'
     assert str(ctx) != context_src
 
     ctx = Context.create(program_agreement_id='AGP-yyy-yyy-yyy', filename=cfile)
-    assert ctx.program_agreement_id == "AGP-yyy-yyy-yyy"
+    assert ctx.program_agreement_id == 'AGP-yyy-yyy-yyy'
     assert str(ctx) != context_src
 
     ctx = Context.create(program_contract_id=None, filename=cfile)
@@ -63,7 +63,7 @@ def test_context(fs):
     assert str(ctx) == context_src
 
     ctx = Context.create(filename=cfile)
-    ctx.program_agreement_id = "AGP-123-456-789"
+    ctx.program_agreement_id = 'AGP-123-456-789'
     ctx.save(filename=sfile)
 
     xtx = Context.create(filename=sfile)

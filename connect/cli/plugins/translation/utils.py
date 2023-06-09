@@ -15,9 +15,8 @@ def insert_column_ws(ws, column, width=None):
 
 def _get_column_widths(ws, total_columns):
     return [
-        ws.column_dimensions[
-            get_column_letter(column)
-        ].width for column in range(1, total_columns + 1)
+        ws.column_dimensions[get_column_letter(column)].width
+        for column in range(1, total_columns + 1)
     ]
 
 

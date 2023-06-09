@@ -26,8 +26,17 @@ class Script:
 
     @classmethod
     def command(cls) -> str:
-        return str(re.sub(r'^([A-Z])', lambda x: x.group(1).lower(),
-                   re.sub(r'([a-z])([A-Z])', lambda x: f'{x.group(1)}-{x.group(2).lower()}', cls.__name__)))
+        return str(
+            re.sub(
+                r'^([A-Z])',
+                lambda x: x.group(1).lower(),
+                re.sub(
+                    r'([a-z])([A-Z])',
+                    lambda x: f'{x.group(1)}-{x.group(2).lower()}',
+                    cls.__name__,
+                ),
+            ),
+        )
 
     @classmethod
     def help(cls) -> str:

@@ -49,12 +49,8 @@ def get_wheels_and_sdists():  # noqa: CCR001
             required_version = pkg_info['releases'][version.strip()]
             sdist_url = None
             for pkg_file_info in required_version:
-                if (
-                    pkg_file_info['packagetype'] == 'bdist_wheel'
-                    and (
-                        'win_amd64' in pkg_file_info['filename']
-                        or 'any' in pkg_file_info['filename']
-                    )
+                if pkg_file_info['packagetype'] == 'bdist_wheel' and (
+                    'win_amd64' in pkg_file_info['filename'] or 'any' in pkg_file_info['filename']
                 ):
                     wheels.add(package_with_ver)
                     break

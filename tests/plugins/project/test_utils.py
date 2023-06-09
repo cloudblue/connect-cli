@@ -12,7 +12,10 @@ def test_force_delete(mocker):
 
 
 def test_purge_dir(mocker):
-    mocked_os_isdir = mocker.patch('connect.cli.plugins.project.utils.os.path.isdir', return_value=True)
+    mocked_os_isdir = mocker.patch(
+        'connect.cli.plugins.project.utils.os.path.isdir',
+        return_value=True,
+    )
     mocked_shutil_rmtree = mocker.patch('connect.cli.plugins.project.utils.shutil.rmtree')
     mocked_force_delete = mocker.patch('connect.cli.plugins.project.utils.force_delete')
     purge_dir('somepath')

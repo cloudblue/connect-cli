@@ -31,7 +31,6 @@ EXTENSION_BOOTSTRAP_WIZARD_INTRO = (
 
 
 def get_summary(data):  # pragma: no cover
-
     def value(variable_name, formatted=False):
         if not data.get(variable_name):
             return ''
@@ -273,8 +272,7 @@ def get_questions(config, definitions):
             'label': 'Extension: Background events',
             'type': 'selectmany',
             'description': (
-                'What types of background'
-                'events do you want your Extension to process?'
+                'What types of background events do you want your Extension to process?'
             ),
             'values': partial(get_background_events, definitions),
             'formatting_template': '${label}',
@@ -286,8 +284,7 @@ def get_questions(config, definitions):
             'label': 'Extension: Interactive events',
             'type': 'selectmany',
             'description': (
-                'What types of interactive'
-                'events do you want your Extension to process?'
+                'What types of interactive events do you want your Extension to process?'
             ),
             'values': partial(get_interactive_events, definitions),
             'disabled': partial(check_event_type_applicable, 'interactive'),

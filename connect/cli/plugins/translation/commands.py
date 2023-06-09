@@ -54,15 +54,15 @@ def cmd_list_translations(config, query):
         ),
         rows=[
             (
-                resource["id"],
-                resource["context"]["instance_id"],
-                resource["context"]["type"],
-                resource["context"]["name"],
-                resource["locale"]["name"],
-                resource["auto"]["status"],
-                resource["status"],
-                field_to_check_mark(resource["primary"]),
-                field_to_check_mark(acc_id == resource["owner"]["id"]),
+                resource['id'],
+                resource['context']['instance_id'],
+                resource['context']['type'],
+                resource['context']['name'],
+                resource['locale']['name'],
+                resource['auto']['status'],
+                resource['status'],
+                field_to_check_mark(resource['primary']),
+                field_to_check_mark(acc_id == resource['owner']['id']),
             )
             for resource in query_translations
         ],
@@ -208,7 +208,11 @@ def cmd_sync_translation(config, input_file):
         with console.progress() as progress:
             if should_wait_for_autotranslation:
                 wait_for_autotranslation(config.active.client, progress, translation_id)
-            attributes_sync = TranslationAttributesSynchronizer(config.active.client, progress, stats)
+            attributes_sync = TranslationAttributesSynchronizer(
+                config.active.client,
+                progress,
+                stats,
+            )
             attributes_sync.open(input_file, 'Attributes')
             attributes_sync.sync(translation_id)
             attributes_sync.save(input_file)

@@ -85,7 +85,7 @@ class ConfigurationValuesSynchronizer(ProductSynchronizer):
             errors.append(
                 'Value is required for update operation',
             )
-        id_pattern = "^[A-Za-z0-9_#-]*$"
+        id_pattern = '^[A-Za-z0-9_#-]*$'
 
         if not bool(re.match(id_pattern, data.id)):
             errors.append(

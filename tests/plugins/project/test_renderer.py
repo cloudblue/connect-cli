@@ -27,7 +27,9 @@ def test_render_invalid_parameter_template_folder(template_folder):
             template_folder=template_folder,
             output_dir=None,
         )
-    assert 'The parameter template_folder is invalid, it must be a valid path string.' in str(exc.value)
+    assert 'The parameter template_folder is invalid, it must be a valid path string.' in str(
+        exc.value,
+    )
 
 
 @pytest.mark.parametrize('output_dir', (True, [], {}))
@@ -40,7 +42,9 @@ def test_render_invalid_parameter_output_dir(output_dir):
                 template_folder=os.path.join(tmpdir, 'template_folder'),
                 output_dir=output_dir,
             )
-        assert 'The parameter output_dir is invalid, it must be a valid path string.' in str(exc.value)
+        assert 'The parameter output_dir is invalid, it must be a valid path string.' in str(
+            exc.value,
+        )
 
 
 @pytest.mark.parametrize('overwrite', ('Si', [], {}))

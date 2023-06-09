@@ -42,7 +42,9 @@ def test_load_repo_descriptor_unparseable(mocker):
     with pytest.raises(ClickException) as cv:
         load_repo('./tests/fixtures/reports/basic_report')
 
-    assert str(cv.value) == 'The reports project descriptor `reports.json` is not a valid json file.'
+    assert (
+        str(cv.value) == 'The reports project descriptor `reports.json` is not a valid json file.'
+    )
 
 
 def test_load_repo_descriptor_invalid_json(mocker):
@@ -92,7 +94,6 @@ def test_show_report_info(mocker):
     (
         ('VA-000', 'provider', 'This report is not expected to be executed on vendor accounts'),
         ('PA-000', 'vendor', 'This report is not expected to be executed on provider accounts'),
-
     ),
 )
 def test_execute_report_invalid_account(mocker, account_id, audience, expected_error):
@@ -172,8 +173,11 @@ def test_execute_report_v1(mocker):
     config.activate('VA-000')
 
     execute_report(
-        config, './tests/fixtures/reports/basic_report',
-        'entrypoint', 'out_file', None,
+        config,
+        './tests/fixtures/reports/basic_report',
+        'entrypoint',
+        'out_file',
+        None,
     )
 
     assert mocked_input.mock_calls[0].args[0] == config
@@ -218,8 +222,11 @@ def test_execute_report_v2(mocker):
     config.activate('PA-000')
 
     execute_report(
-        config, './tests/fixtures/reports/report_v2',
-        'test_v2', 'out_file', None,
+        config,
+        './tests/fixtures/reports/report_v2',
+        'test_v2',
+        'out_file',
+        None,
     )
 
     assert mocked_input.mock_calls[0].args[0] == config
@@ -254,8 +261,11 @@ def test_execute_report_fail(mocker):
     config.activate('VA-000')
 
     execute_report(
-        config, './tests/fixtures/reports/basic_report',
-        'entrypoint', 'out_file', None,
+        config,
+        './tests/fixtures/reports/basic_report',
+        'entrypoint',
+        'out_file',
+        None,
     )
 
     mocked_handle_exc.assert_called_once()
@@ -325,7 +335,9 @@ def test_execute_report_v2_async(mocker, entrypoint, check_is):
         return_value=entrypoint,
     )
 
-    mocked_execute_report_async = mocker.patch('connect.cli.plugins.report.helpers.execute_report_async')
+    mocked_execute_report_async = mocker.patch(
+        'connect.cli.plugins.report.helpers.execute_report_async',
+    )
 
     config = Config()
     config.add_account(
@@ -393,6 +405,7 @@ def test_execute_report_async_render_async(mocker, entrypoint):
             assert [item async for item in data] == ['a']
         else:
             assert data == ['a']
+
     renderer_mock.render_async = mock_render_async
     mocker.patch(
         'connect.cli.plugins.report.helpers.get_renderer',

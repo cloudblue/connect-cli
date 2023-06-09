@@ -89,7 +89,6 @@ class Status(_Status):
 
 
 class Console(_Console):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._skip_confirm = False
@@ -133,7 +132,7 @@ class Console(_Console):
     def progress(self):
         return Progress(
             SpinnerColumn(),
-            TextColumn("[progress.description]{task.description:<80}"),
+            TextColumn('[progress.description]{task.description:<80}'),
             BarColumn(style='cyan', finished_style='green3'),
             MofNCompleteColumn(),
             TaskProgressColumn(),
@@ -159,7 +158,8 @@ class Console(_Console):
 
         self.print()
         prompt = Confirm(
-            message, console=self,
+            message,
+            console=self,
         )
 
         result = prompt(default=False)
@@ -236,10 +236,11 @@ class Console(_Console):
         if not (columns and rows):
             return
 
-        chunks = [
-            rows[i:i + self.page_size]
-            for i in range(0, len(rows), self.page_size)
-        ] if not self.skip_confirm else [rows]
+        chunks = (
+            [rows[i : i + self.page_size] for i in range(0, len(rows), self.page_size)]
+            if not self.skip_confirm
+            else [rows]
+        )
 
         for chunk_count, chunk in enumerate(chunks):
             table = Table(

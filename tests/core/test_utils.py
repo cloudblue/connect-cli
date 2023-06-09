@@ -91,7 +91,7 @@ def test_validate_output_options_output_path_is_file(fs):
 
     assert (
         "Exists a file with name 'XX-000-000' but a directory is "
-        "expected, please rename it" in str(e)
+        'expected, please rename it' in str(e)
     )
 
 
@@ -182,7 +182,13 @@ def test_field_to_check_mark_with_false_value():
             OrderedDict({'21.9': 'cmt4', '21.10': 'cmt2', '21.11': 'cmt3'}),
         ),
         (
-            {'v21.10not-a-tag': 'cmt5', '01.1': 'cmt1', '21.11': 'cmt3', '21.10': 'cmt2', 'v21.11': 'cmt4'},
+            {
+                'v21.10not-a-tag': 'cmt5',
+                '01.1': 'cmt1',
+                '21.11': 'cmt3',
+                '21.10': 'cmt2',
+                'v21.11': 'cmt4',
+            },
             OrderedDict(
                 {
                     '21.10': 'cmt2',

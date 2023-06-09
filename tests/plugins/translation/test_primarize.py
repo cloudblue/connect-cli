@@ -30,9 +30,9 @@ def test_translation_already_primary(mocked_responses):
         method='POST',
         url='https://localhost/public/v1/localization/translations/TRN-8100-3865-4869/primarize',
         json={
-            "error_code": "TRE_005",
-            "errors": [
-                "This translation is already a primary translation.",
+            'error_code': 'TRE_005',
+            'errors': [
+                'This translation is already a primary translation.',
             ],
         },
         status=400,
@@ -45,7 +45,10 @@ def test_translation_already_primary(mocked_responses):
             translation_id='TRN-8100-3865-4869',
         )
 
-    assert str(e.value) == '400 - Bad Request: TRE_005 - This translation is already a primary translation.'
+    assert (
+        str(e.value)
+        == '400 - Bad Request: TRE_005 - This translation is already a primary translation.'
+    )
 
 
 def test_primarize_translation_not_exists(mocked_responses):

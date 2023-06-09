@@ -8,4 +8,4 @@ from connect.client import ClientError
 
 
 def generate(client, parameters, progress_callback):
-    raise Exception("Some error")
+    raise Exception('Some error')

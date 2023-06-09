@@ -8,7 +8,7 @@ from openpyxl import load_workbook
 from connect.cli.plugins.product.sync.general import GeneralSynchronizer
 
 
-GENERAL_ERROR = "Errors has been detected on General Information tab:"
+GENERAL_ERROR = 'Errors has been detected on General Information tab:'
 
 
 def test_sheet_not_found(fs):
@@ -27,7 +27,8 @@ def test_sheet_not_found(fs):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
 
     assert str(e.value) == 'File does not contain General Information to synchronize'
@@ -50,7 +51,8 @@ def test_no_product_id(fs):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
 
     assert str(e.value) == 'Input file has invalid format and could not read product id from it'
@@ -73,9 +75,10 @@ def test_open_product_not_found(fs, mocked_responses, mocked_product_response):
     )
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            './tests/fixtures/comparation_product.xlsx', 'General Information',
+            './tests/fixtures/comparation_product.xlsx',
+            'General Information',
         )
-    assert str(e.value) == "Product PRD-276-377-545 not found, create it first."
+    assert str(e.value) == 'Product PRD-276-377-545 not found, create it first.'
 
 
 def test_validate_no_prod_category(fs, get_general_env, mocked_responses):
@@ -97,7 +100,8 @@ def test_validate_no_prod_category(fs, get_general_env, mocked_responses):
     )
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == f'{GENERAL_ERROR} A8 must be `Product Category` and B8 contain the value'
 
@@ -116,7 +120,8 @@ def test_validate_invalid_prod_category(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == f'{GENERAL_ERROR} Product category invalid is a not known category'
 
@@ -135,7 +140,8 @@ def test_validate_invalid_icon(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == (
         f'{GENERAL_ERROR} A9 must be `Product Icon file name` and B9 contain the value'
@@ -156,15 +162,16 @@ def test_validate_invalid_icon_file(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
-    assert str(e.value) == (
-        f'{GENERAL_ERROR} File invalid.png does not exist in the media folder'
-    )
+    assert str(e.value) == (f'{GENERAL_ERROR} File invalid.png does not exist in the media folder')
 
 
 def test_validate_long_short_description(fs, get_general_env):
-    get_general_env['General Information']['B10'] = get_general_env['General Information']['B11'].value
+    get_general_env['General Information']['B10'] = get_general_env['General Information'][
+        'B11'
+    ].value
     get_general_env.save(f'{fs.root_path}/test.xlsx')
     synchronizer = GeneralSynchronizer(
         client=ConnectClient(
@@ -177,7 +184,8 @@ def test_validate_long_short_description(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == (
         f'{GENERAL_ERROR} Short description is mandatory and must be on B10, short description '
@@ -199,7 +207,8 @@ def test_validate_detailed_description(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == f'{GENERAL_ERROR} Product detailed description is required'
 
@@ -218,7 +227,8 @@ def test_validate_embedding_description(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == f'{GENERAL_ERROR} Embedding description is required'
 
@@ -237,7 +247,8 @@ def test_validate_embedding_long_description(fs, get_general_env):
 
     with pytest.raises(ClickException) as e:
         synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
     assert str(e.value) == f'{GENERAL_ERROR} Embedding getting started is required'
 
@@ -253,7 +264,8 @@ def test_open(fs, get_general_env):
         progress=None,
     )
     product_id = synchronizer.open(
-        f'{fs.root_path}/test.xlsx', 'General Information',
+        f'{fs.root_path}/test.xlsx',
+        'General Information',
     )
 
     assert product_id == 'PRD-276-377-545'
@@ -270,7 +282,8 @@ def test_sync_409(fs, get_general_env, mocked_responses):
         progress=None,
     )
     product_id = synchronizer.open(
-        f'{fs.root_path}/test.xlsx', 'General Information',
+        f'{fs.root_path}/test.xlsx',
+        'General Information',
     )
 
     mocked_responses.add(
@@ -302,7 +315,8 @@ def test_sync(fs, get_general_env, mocked_responses):
             progress=None,
         )
         product_id = synchronizer.open(
-            f'{fs.root_path}/test.xlsx', 'General Information',
+            f'{fs.root_path}/test.xlsx',
+            'General Information',
         )
 
         errors = synchronizer.sync()

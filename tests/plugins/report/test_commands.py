@@ -33,7 +33,10 @@ def test_not_valid_report_dir(fs, ccli):
     )
 
     assert result.exit_code == 1
-    assert f"The directory `{fs.root_path}/tmp2` is not a reports project root directory." in result.output
+    assert (
+        f'The directory `{fs.root_path}/tmp2` is not a reports project root directory.'
+        in result.output
+    )
 
 
 def test_no_reports(fs, ccli):
@@ -91,7 +94,7 @@ def test_report_client_exception(fs, ccli):
     )
 
     assert result.exit_code == 1
-    assert "Error returned by Connect when executing the report" in result.output
+    assert 'Error returned by Connect when executing the report' in result.output
 
 
 def test_report_generic_exception(fs, ccli):
@@ -121,7 +124,7 @@ def test_report_generic_exception(fs, ccli):
     )
 
     assert result.exit_code == 1
-    assert "Unexpected error while executing the report" in result.output
+    assert 'Unexpected error while executing the report' in result.output
 
 
 def test_report_custom_exception(fs, ccli):
@@ -151,7 +154,7 @@ def test_report_custom_exception(fs, ccli):
     )
 
     assert result.exit_code == 1
-    assert "Custom error" in result.output
+    assert 'Custom error' in result.output
 
 
 def test_input_parameters(mocker, fs, ccli):
@@ -219,11 +222,10 @@ def test_basic_report(fs, ccli):
         ],
     )
 
-    assert "Connect Reports Fixture version 1.0.0" in result.output
+    assert 'Connect Reports Fixture version 1.0.0' in result.output
 
 
 def test_basic_report_2(fs, ccli):
-
     config = Config()
     config.load(fs.root_path)
     config.add_account(
@@ -249,7 +251,7 @@ def test_basic_report_2(fs, ccli):
     )
 
     assert result.exit_code == 0
-    assert "Basic report info" in result.output
+    assert 'Basic report info' in result.output
 
 
 def test_basic_report_3(fs, ccli):
@@ -304,13 +306,12 @@ def test_basic_report_4(fs, ccli):
             'entrypoint',
             '-d',
             './tests/fixtures/reports/basic_report',
-            '-o'
-            f'{fs.root_path}/report/report',
+            '-o' f'{fs.root_path}/report/report',
         ],
     )
 
     assert result.exit_code == 0
-    assert "Processing report test report" in result.output
+    assert 'Processing report test report' in result.output
 
     wb = load_workbook(f'{fs.root_path}/report/report.xlsx')
 

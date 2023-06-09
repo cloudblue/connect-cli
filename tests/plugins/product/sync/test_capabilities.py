@@ -23,8 +23,12 @@ def test_no_action(mocker, get_sync_capabilities_env):
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 9, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 9,
+        'errors': 0,
     }
 
 
@@ -48,8 +52,12 @@ def test_invalid_capability(mocker, fs, get_sync_capabilities_env):
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {2: ['Capability Invented is not valid capability']}
 
@@ -74,8 +82,12 @@ def test_invalid_usage_schema(mocker, fs, get_sync_capabilities_env):
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {2: ['Schema magic is not supported']}
 
@@ -100,8 +112,12 @@ def test_invalid_tier_level(mocker, fs, get_sync_capabilities_env):
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {
         8: ['magic is not valid for Reseller Authorization level capability'],
@@ -128,8 +144,12 @@ def test_invalid_value(mocker, fs, get_sync_capabilities_env):
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {
         10: ['Administrative Hold may be Enabled or Disabled, but not magic'],
@@ -173,8 +193,12 @@ def test_ppu_enable_qt(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -215,8 +239,12 @@ def test_ppu_change_schema(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -257,8 +285,12 @@ def test_ppu_disable(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -287,8 +319,12 @@ def test_ppu_dynamic_items_no_ppu(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {
         3: ["Dynamic items support can't be enabled without Pay-as-you-go support"],
@@ -320,8 +356,12 @@ def test_ppu_dynamic_items_no_ppu_no_enabled(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -362,8 +402,12 @@ def test_ppu_enable_dynamic(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -404,8 +448,12 @@ def test_ppu_disable_dynamic(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -434,8 +482,12 @@ def test_ppu_future_no_ppu(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 0,
-        'deleted': 0, 'skipped': 8, 'errors': 1,
+        'processed': 9,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 1,
     }
     assert stats['Capabilities']._row_errors == {
         4: ["Report of future charges can't be enabled without Pay-as-you-go support"],
@@ -467,8 +519,12 @@ def test_ppu_future_no_ppu_no_enabled(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -509,8 +565,12 @@ def test_ppu_enable_future(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -551,8 +611,12 @@ def test_ppu_disable_future(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -600,8 +664,12 @@ def test_ppu_disable_feature(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -648,8 +716,12 @@ def test_features_enable_future(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }
 
 
@@ -693,6 +765,10 @@ def test_tier_level_feature(
     synchronizer.sync()
 
     assert stats['Capabilities'].get_counts_as_dict() == {
-        'processed': 9, 'created': 0, 'updated': 1,
-        'deleted': 0, 'skipped': 8, 'errors': 0,
+        'processed': 9,
+        'created': 0,
+        'updated': 1,
+        'deleted': 0,
+        'skipped': 8,
+        'errors': 0,
     }

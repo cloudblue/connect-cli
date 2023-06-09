@@ -20,6 +20,7 @@ class TranslationAttributesSynchronizer:
     """
     Synchronize the attributes of a translation from excel file.
     """
+
     _MAX_BATCH_SIZE = 10
 
     def __init__(self, client, progress, stats=None):
@@ -38,7 +39,9 @@ class TranslationAttributesSynchronizer:
     def open(self, input_file, worksheet):
         self._open_workbook(input_file)
         if worksheet not in self._wb.sheetnames:
-            raise SheetNotFoundError(f"File does not contain worksheet '{worksheet}' to synchronize, skipping")
+            raise SheetNotFoundError(
+                f"File does not contain worksheet '{worksheet}' to synchronize, skipping",
+            )
         self._ws = self._wb[worksheet]
         self._validate_attributes_worksheet(self._ws)
 
@@ -115,7 +118,9 @@ class TranslationAttributesSynchronizer:
             chunk = 0
             # bulk update only support 10 items at a time
             for _ in range((math.ceil(len(attributes) / max_batch_size))):
-                translation_res.attributes.bulk_update(attr_value_list[chunk:chunk + max_batch_size])
+                translation_res.attributes.bulk_update(
+                    attr_value_list[chunk : chunk + max_batch_size],
+                )
                 chunk += max_batch_size
             self._mstats.updated(len(attributes))
             for row_idx in attributes.keys():

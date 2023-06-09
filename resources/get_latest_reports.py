@@ -39,8 +39,12 @@ def get_latest_reports():
 
     result = subprocess.run(
         [
-            'git', '-C', REPO_EMBED_DIR,
-            'rev-list', '--tags', '--max-count=1',
+            'git',
+            '-C',
+            REPO_EMBED_DIR,
+            'rev-list',
+            '--tags',
+            '--max-count=1',
         ],
         capture_output=True,
         stdin=subprocess.DEVNULL,

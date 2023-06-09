@@ -67,7 +67,7 @@ class MediaSynchronizer(ProductSynchronizer):
                     'media',
                     data.image_file,
                 ),
-                "rb",
+                'rb',
             )
             image_type, _ = guess_type(data.image_file)
             body = {
@@ -85,8 +85,12 @@ class MediaSynchronizer(ProductSynchronizer):
 
             try:
                 if data.action == 'update':
-                    media = self._client.products[self._product_id].media[data.id].update(
-                        files=payload,
+                    media = (
+                        self._client.products[self._product_id]
+                        .media[data.id]
+                        .update(
+                            files=payload,
+                        )
                     )
                     self._update_sheet_row(ws, row_idx, media)
                     self._mstats.updated()
@@ -108,11 +112,11 @@ class MediaSynchronizer(ProductSynchronizer):
     def _validate_row(self, data):
         errors = []
         if not data.position or not str(data.position).isdigit() or int(data.position) > 8:
-            errors.append("Position is required and must be an integer between 1 and 8")
+            errors.append('Position is required and must be an integer between 1 and 8')
         elif data.action != 'create' and not data.id.startswith('PRDM-'):
             errors.append('ID does not seam to be valid.')
         elif not data.image_file:
-            errors.append("Image file is required")
+            errors.append('Image file is required')
         elif data.action not in ('-', 'create', 'update', 'delete'):
             errors.append(
                 f'Supported actions are `-`, `create`, `update` or `delete`. Provided {data.action}',

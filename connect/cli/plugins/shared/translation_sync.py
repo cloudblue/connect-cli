@@ -40,7 +40,9 @@ class TranslationsSynchronizer(ProductSynchronizer):
     def sync(self):
         rows_data = defaultdict(dict)
         for row_idx, data in self._iterate_rows():
-            self._set_process_description(f'Processing Product translation {data.translation_id or data.locale}')
+            self._set_process_description(
+                f'Processing Product translation {data.translation_id or data.locale}',
+            )
             if data.action == '-' or data.is_primary == 'Yes':
                 self._mstats.skipped()
                 continue
@@ -80,9 +82,9 @@ class TranslationsSynchronizer(ProductSynchronizer):
         if data.action in ('update', 'delete') and not data.translation_id:
             errors.append('Translation ID is required to update or delete a translation')
 
-        if (
-            data.action in ('update', 'create')
-            and data.autotranslation not in ('Enabled', 'Disabled')
+        if data.action in ('update', 'create') and data.autotranslation not in (
+            'Enabled',
+            'Disabled',
         ):
             errors.append(
                 'Autotranslation must be `Enabled` or `Disabled`. '
@@ -106,9 +108,13 @@ class TranslationsSynchronizer(ProductSynchronizer):
         if len(rows_data['create']) > 0:
             # if there are any translations to create, then the context_id is needed
             try:
-                ctx = self._client.ns('localization').contexts.filter(
-                    instance_id=self._product_id,
-                ).first()
+                ctx = (
+                    self._client.ns('localization')
+                    .contexts.filter(
+                        instance_id=self._product_id,
+                    )
+                    .first()
+                )
                 for row_idx, data in rows_data['create'].items():
                     self._handle_action(partial(self._action_create, ctx['id']), row_idx, data)
             except ClientError as e:
@@ -134,12 +140,14 @@ class TranslationsSynchronizer(ProductSynchronizer):
     def _action_update(self, data):
         self._set_process_description(f'Updating translation {data.translation_id}')
         payload = {
-            'description': data.description or "",
+            'description': data.description or '',
             'auto': {
                 'enabled': data.autotranslation == 'Enabled',
             },
         }
-        translation = self._client.ns('localization').translations[data.translation_id].update(payload)
+        translation = (
+            self._client.ns('localization').translations[data.translation_id].update(payload)
+        )
         self._mstats.updated()
         if translation['auto']['enabled']:
             self._translations_autotranslating.append(translation['id'])
@@ -149,8 +157,8 @@ class TranslationsSynchronizer(ProductSynchronizer):
         self._set_process_description('Creating new translation')
         payload = {
             'context': {'id': context_id},
-            "locale": {'id': data.locale.split()[0]},
-            'description': data.description or "",
+            'locale': {'id': data.locale.split()[0]},
+            'description': data.description or '',
             'auto': {
                 'enabled': data.autotranslation == 'Enabled',
             },

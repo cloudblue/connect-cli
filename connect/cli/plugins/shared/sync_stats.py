@@ -92,14 +92,14 @@ class SynchronizerStats(dict):
 
             if module_stats._errors:
                 console.echo('  Errors')
-                console.echo("\n".join(f'    - {msg}' for msg in module_stats._errors))
+                console.echo('\n'.join(f'    - {msg}' for msg in module_stats._errors))
                 console.echo('')
 
             # group rows with same error message to avoid long prints in bulk errors
             first_row = None
             current_error = None
             for row_idx, messages in module_stats._row_errors.items():
-                error = "\n".join(f'    - {msg}' for msg in messages)
+                error = '\n'.join(f'    - {msg}' for msg in messages)
                 if not first_row:
                     first_row = row_idx
                 if not current_error:
@@ -121,7 +121,6 @@ class SynchronizerStats(dict):
 
 
 class _SynchronizerStatsModule:
-
     def __init__(self, name):
         self.name = name
         self.reset()
@@ -163,8 +162,12 @@ class _SynchronizerStatsModule:
 
     def get_processed_count(self):
         return (
-            self._updated + self._created + self._deleted + self._skipped
-            + len(self._errors) + len(self._row_errors)
+            self._updated
+            + self._created
+            + self._deleted
+            + self._skipped
+            + len(self._errors)
+            + len(self._row_errors)
         )
 
     def get_counts_as_dict(self):

@@ -74,6 +74,7 @@ uvloop = { version = "^0.16.0", markers = "sys_platform == \"linux\" or sys_plat
 fs = "^2.4.12"
 
 [tool.poetry.group.test.dependencies]
+black = "23.*"
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
@@ -81,6 +82,7 @@ freezegun = "^1.2.1"
 coverage = {extras = ["toml"], version = "^5.3"}
 responses = "^0.20.0"
 flake8 = "^5.0"
+flake8-black = "0.*"
 flake8-bugbear = "^22"
 flake8-cognitive-complexity = "^0.1"
 flake8-commas = "^2.1"
@@ -150,6 +152,7 @@ exclude = [
 show_source = true
 max_line_length = 120
 max_cognitive_complexity = 15
+select = "B"
 ignore = ["FI1", "W503"]
 
 
@@ -164,3 +167,8 @@ use_parentheses = true
 include_trailing_comma = true
 line_length = 100
 lines_after_imports = 2
+
+
+[tool.black]
+line_length = 100
+skip-string-normalization = true

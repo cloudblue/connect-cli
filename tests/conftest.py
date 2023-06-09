@@ -38,6 +38,7 @@ def patch_console():
 def ccli():
     from connect.cli.core.base import cli
     from connect.cli.core.plugins import load_plugins
+
     load_plugins(cli)
     return cli
 
@@ -45,6 +46,7 @@ def ccli():
 @pytest.fixture(scope='function')
 def config_vendor():
     from connect.cli.core.config import Config
+
     config = Config()
     config.add_account('VA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
@@ -53,6 +55,7 @@ def config_vendor():
 @pytest.fixture(scope='function')
 def config_provider():
     from connect.cli.core.config import Config
+
     config = Config()
     config.add_account('PA-001-002', 'name', 'api_key', 'https://localhost/public/v1')
     return config
@@ -355,11 +358,11 @@ def mocked_translation_attributes_response():
 def extension_class_declaration():
     def _declaration(extension_name, with_variables=True):
         if with_variables:
-            return (
-                EXTENSION_VARIABLES_DECLARATION
-                + EXTENSION_CLASS_DECLARATION.format(extension_name=extension_name)
+            return EXTENSION_VARIABLES_DECLARATION + EXTENSION_CLASS_DECLARATION.format(
+                extension_name=extension_name,
             )
         return EXTENSION_CLASS_DECLARATION.format(extension_name=extension_name)
+
     return _declaration
 
 
@@ -397,6 +400,7 @@ def extension_imports():
             background_response=background_response,
             interactive_response=interactive_response,
         )
+
     return _imports
 
 
@@ -461,12 +465,13 @@ def test_schedulable_event():
 
 @pytest.fixture(scope='function')
 def console_80_columns(mocker):
-    mocker.patch.dict(os.environ, {"COLUMNS": "80"})
+    mocker.patch.dict(os.environ, {'COLUMNS': '80'})
 
 
 @pytest.fixture
 def always_yes_console():
     from connect.cli.core.terminal import console
+
     console.skip_confirm = True
     yield
     console.skip_confirm = False
@@ -475,6 +480,7 @@ def always_yes_console():
 @pytest.fixture
 def client():
     from connect.client import ConnectClient
+
     return ConnectClient(
         api_key='ApiKey',
         endpoint='https://localhost/public/v1',

@@ -18,7 +18,16 @@ def translations_sync(client, progress, input_file, stats, save):
     return synchronizer
 
 
-def translation_attributes_sync(worksheet, translation, client, progress, input_file, stats, save, is_clone):
+def translation_attributes_sync(
+    worksheet,
+    translation,
+    client,
+    progress,
+    input_file,
+    stats,
+    save,
+    is_clone,
+):
     synchronizer = TranslationAttributesSynchronizer(client, progress, stats)
     synchronizer.open(input_file, worksheet)
     synchronizer.sync(translation, is_clone)
@@ -44,6 +53,12 @@ def sync_product_translations(client, progress, input_file, stats, save=True, is
         if translation in translations_autotranslating:
             wait_for_autotranslation(client, progress, translation)
         translation_attributes_sync(
-            sheetname, translation, client,
-            progress, input_file, stats, save, is_clone,
+            sheetname,
+            translation,
+            client,
+            progress,
+            input_file,
+            stats,
+            save,
+            is_clone,
         )

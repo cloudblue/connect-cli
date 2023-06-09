@@ -23,6 +23,7 @@ class TranslationSynchronizer:
     Synchronize a translation from excel file. It may update an existing
     translation or create a new one depending on some checks.
     """
+
     def __init__(self, client, account_id, stats=None):
         self._client = client
         self._wb = None
@@ -34,7 +35,9 @@ class TranslationSynchronizer:
     def open(self, input_file):
         self._open_workbook(input_file)
         if 'General' not in self._wb.sheetnames:
-            raise SheetNotFoundError("File does not contain worksheet 'General' to synchronize, skipping")
+            raise SheetNotFoundError(
+                "File does not contain worksheet 'General' to synchronize, skipping",
+            )
         self._validate_general_worksheet(self._wb['General'])
 
     def save(self, output_file):
@@ -49,10 +52,7 @@ class TranslationSynchronizer:
         ws = self._wb['General']
         general_data = self._read_general_data(ws)
         current_translation = self._get_translation(general_data.translation_id)
-        do_create = (
-            not current_translation
-            or self._check_create(current_translation, general_data)
-        )
+        do_create = not current_translation or self._check_create(current_translation, general_data)
         translation_id = None
         if do_create:
             new_translation = self._try_create_translation(current_translation, general_data)
@@ -60,12 +60,13 @@ class TranslationSynchronizer:
                 self._update_general_sheet(ws, new_translation)
                 translation_id = new_translation['id']
 
-                console.secho(f"\nCreated new translation {translation_id}\n", fg='yellow')
+                console.secho(f'\nCreated new translation {translation_id}\n', fg='yellow')
         else:
             translation_id = self._update_translation(general_data)
 
         should_wait_for_autotranslation = (
-            translation_id and general_data.auto_enabled == 'Enabled'
+            translation_id
+            and general_data.auto_enabled == 'Enabled'
             and (do_create or not current_translation['auto']['enabled'])
         )
         return translation_id, should_wait_for_autotranslation
@@ -106,34 +107,33 @@ class TranslationSynchronizer:
         )
 
     def _try_create_translation(self, current_translation, general_data):
-        if (
-            current_translation
-            and self._is_different_context(current_translation, general_data)
-        ):
+        if current_translation and self._is_different_context(current_translation, general_data):
             self._resolve_new_context(general_data)
 
         console.confirm(
-            click.style("A new translation will be created.\n", fg='yellow')
-            + "The owner will be the current active account, "
-            f"locale {general_data.locale_id} "
+            click.style('A new translation will be created.\n', fg='yellow')
+            + 'The owner will be the current active account, '
+            f'locale {general_data.locale_id} '
             f"and context '{general_data.context_name}' ({general_data.context_id}).\n"
-            "Do you want to continue?",
+            'Do you want to continue?',
             abort=True,
         )
 
         try:
-            translation = self._client.ns('localization').translations.create({
-                'context': {
-                    'id': general_data.context_id,
+            translation = self._client.ns('localization').translations.create(
+                {
+                    'context': {
+                        'id': general_data.context_id,
+                    },
+                    'locale': {
+                        'id': general_data.locale_id,
+                    },
+                    'description': general_data.description,
+                    'auto': {
+                        'enabled': general_data.auto_enabled == 'Enabled',
+                    },
                 },
-                'locale': {
-                    'id': general_data.locale_id,
-                },
-                'description': general_data.description,
-                'auto': {
-                    'enabled': general_data.auto_enabled == 'Enabled',
-                },
-            })
+            )
             self._mstats.created()
             return translation
         except ClientError as e:
@@ -143,7 +143,8 @@ class TranslationSynchronizer:
 
     def _is_different_context(self, translation, general_data):
         return (
-            general_data.context_id and general_data.context_id != translation['context']['id']
+            general_data.context_id
+            and general_data.context_id != translation['context']['id']
             or (
                 general_data.context_instance_id
                 and general_data.context_instance_id != translation['context']['instance_id']
@@ -166,13 +167,17 @@ class TranslationSynchronizer:
                 ):
                     raise click.ClickException(
                         f"The Instance ID ({general_data.context_instance_id}) doesn't correspond "
-                        f"to the Context ID ({general_data.context_id})",
+                        f'to the Context ID ({general_data.context_id})',
                     )
                 general_data.context_name = ctx['name']
             elif general_data.context_instance_id:  # pragma: no branch
-                ctx = self._client.ns('localization').contexts.filter(
-                    instance_id=general_data.context_instance_id,
-                ).first()
+                ctx = (
+                    self._client.ns('localization')
+                    .contexts.filter(
+                        instance_id=general_data.context_instance_id,
+                    )
+                    .first()
+                )
                 if not ctx:
                     raise click.ClickException(
                         f"The Instance ID ({general_data.context_instance_id}) doesn't exist",
@@ -201,13 +206,17 @@ class TranslationSynchronizer:
 
     def _update_translation(self, general_data):
         try:
-            translation_resource = self._client.ns('localization').translations[general_data.translation_id]
-            translation = translation_resource.update({
-                'description': general_data.description,
-                'auto': {
-                    'enabled': general_data.auto_enabled == 'Enabled',
+            translation_resource = self._client.ns('localization').translations[
+                general_data.translation_id
+            ]
+            translation = translation_resource.update(
+                {
+                    'description': general_data.description,
+                    'auto': {
+                        'enabled': general_data.auto_enabled == 'Enabled',
+                    },
                 },
-            })
+            )
             self._mstats.updated()
             return translation['id']
         except ClientError as e:
@@ -217,6 +226,9 @@ class TranslationSynchronizer:
 
     @staticmethod
     def _read_general_data(ws):
-        return SimpleNamespace(**{
-            field: ws.cell(settings.row_idx, 2).value for field, settings in GENERAL_SHEET_FIELDS.items()
-        })
+        return SimpleNamespace(
+            **{
+                field: ws.cell(settings.row_idx, 2).value
+                for field, settings in GENERAL_SHEET_FIELDS.items()
+            }
+        )

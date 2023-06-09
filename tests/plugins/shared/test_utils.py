@@ -54,7 +54,12 @@ def get_client():
         {'id': 'TRN-8100-3865-4869'},
     ),
 )
-def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translation_response, translation):
+def test_wait_for_autotranslation_ok(
+    mocker,
+    mocked_responses,
+    mocked_translation_response,
+    translation,
+):
     mocked_translation_response['auto']['status'] = 'on'
     mocked_responses.add(
         method='GET',
@@ -69,20 +74,29 @@ def test_wait_for_autotranslation_ok(mocker, mocked_responses, mocked_translatio
         pytest.fail(f'Unexpected error: {str(e)}')
 
 
-@pytest.mark.parametrize('wait_response_auto,expected_error_msg', [
-    (
-        {'status': 'processing'},
-        "Timeout waiting for pending translation tasks",
-    ), (
-        {'status': 'error', 'error_message': 'The auto-translation service failed'},
-        "The auto-translation task failed with error: The auto-translation service failed",
-    ), (
-        {'status': 'unknown_status'},
-        "Unknown auto-translation status: unknown_status",
-    ),
-])
+@pytest.mark.parametrize(
+    'wait_response_auto,expected_error_msg',
+    [
+        (
+            {'status': 'processing'},
+            'Timeout waiting for pending translation tasks',
+        ),
+        (
+            {'status': 'error', 'error_message': 'The auto-translation service failed'},
+            'The auto-translation task failed with error: The auto-translation service failed',
+        ),
+        (
+            {'status': 'unknown_status'},
+            'Unknown auto-translation status: unknown_status',
+        ),
+    ],
+)
 def test_update_wait_autotranslate_fails(
-    mocker, mocked_responses, mocked_translation_response, wait_response_auto, expected_error_msg,
+    mocker,
+    mocked_responses,
+    mocked_translation_response,
+    wait_response_auto,
+    expected_error_msg,
 ):
     mocked_translation_response['auto'] = wait_response_auto
     mocked_responses.add(
@@ -93,7 +107,12 @@ def test_update_wait_autotranslate_fails(
     client = get_client()
 
     with pytest.raises(click.ClickException) as e:
-        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
+        wait_for_autotranslation(
+            client,
+            mocker.MagicMock(),
+            'TRN-8100-3865-4869',
+            wait_seconds=0.001,
+        )
 
     assert str(e.value) == expected_error_msg
 
@@ -107,9 +126,14 @@ def test_update_wait_autotranslate_error(mocker, mocked_responses, mocked_transl
     client = get_client()
 
     with pytest.raises(click.ClickException) as e:
-        wait_for_autotranslation(client, mocker.MagicMock(), 'TRN-8100-3865-4869', wait_seconds=0.001)
+        wait_for_autotranslation(
+            client,
+            mocker.MagicMock(),
+            'TRN-8100-3865-4869',
+            wait_seconds=0.001,
+        )
 
-    assert str(e.value) == "500 - Internal Server Error: unexpected error."
+    assert str(e.value) == '500 - Internal Server Error: unexpected error.'
 
 
 @pytest.mark.parametrize(
@@ -117,6 +141,7 @@ def test_update_wait_autotranslate_error(mocker, mocked_responses, mocked_transl
     (
         ({'stats': {'translated': 1, 'total': 4}}, 0.25),
         ({'stats': {'translated': 'a', 'total': 3}}, '-'),
-    ))
+    ),
+)
 def test__calculate_translation_completion(translation, result):
     assert _calculate_translation_completion(translation) == result

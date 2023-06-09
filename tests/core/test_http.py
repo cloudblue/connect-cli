@@ -53,7 +53,6 @@ def test_handle_http_error_others(mocker, code, description, message):
 
 
 def test_get_user_agent():
-
     user_agent_header = get_user_agent()
     ua = user_agent_header['User-Agent']
 
