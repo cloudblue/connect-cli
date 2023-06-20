@@ -4,6 +4,8 @@ import os
 
 import yaml
 from click.exceptions import ClickException
+from connect.eaas.core.deployment.install import install_extension
+from connect.eaas.core.deployment.update import update_extension
 from connect.eaas.core.validation.validators import get_validators
 from interrogatio.core.dialog import dialogus
 
@@ -295,3 +297,19 @@ def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
         )
     else:
         console.secho(f'Nothing to update to {latest_version}', fg='yellow')
+
+
+def install_extension_project(config, repo_url):
+    install_extension(
+        repo=repo_url,
+        client=config.active.client,
+        log=console.secho,
+    )
+
+
+def update_extension_project(config, repo_url):
+    update_extension(
+        repo=repo_url,
+        client=config.active.client,
+        log=console.secho,
+    )
