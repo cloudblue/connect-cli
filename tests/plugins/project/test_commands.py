@@ -185,10 +185,9 @@ def test_bump_extension_command(ccli, mocker, capsys, config_mocker):
         assert 'Runner version has been successfully updated' == captured.out.strip()
 
 
-def test_install_extension_command(ccli, mocker, capsys):
+def test_install_extension_command(ccli, mocker, config_mocker):
     mocked_install_runner = mocker.patch(
         'connect.cli.plugins.project.commands.install_extension_project',
-        side_effect=print('Extension successfully installed.'),
     )
 
     runner = CliRunner()
@@ -203,14 +202,12 @@ def test_install_extension_command(ccli, mocker, capsys):
     )
 
     mocked_install_runner.assert_called_once()
-    captured = capsys.readouterr()
-    assert 'Extension successfully installed.' == captured.out.strip()
+    assert result.exit_code == 0
 
 
-def test_update_extension_command(ccli, mocker, capsys):
+def test_update_extension_command(ccli, mocker, config_mocker):
     mocked_update_runner = mocker.patch(
         'connect.cli.plugins.project.commands.update_extension_project',
-        side_effect=print('Extension successfully updated.'),
     )
 
     runner = CliRunner()
@@ -225,5 +222,4 @@ def test_update_extension_command(ccli, mocker, capsys):
     )
 
     mocked_update_runner.assert_called_once()
-    captured = capsys.readouterr()
-    assert 'Extension successfully updated.' == captured.out.strip()
+    assert result.exit_code == 0
