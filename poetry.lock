@@ -576,13 +576,13 @@ test = ["flake8 (==3.7.8)", "hypothesis (==3.55.3)"]
 
 [[package]]
 name = "connect-eaas-core"
-version = "27.15"
+version = "28.4"
 description = "Connect Eaas Core"
 optional = false
 python-versions = ">=3.8,<4"
 files = [
-    {file = "connect_eaas_core-27.15-py3-none-any.whl", hash = "sha256:792295e2ba3018a94826513243721c0c9312ed3f20c3d478f999c8a53558dbc2"},
-    {file = "connect_eaas_core-27.15.tar.gz", hash = "sha256:fdede963a946819682518f36069d1d327baa118b18fe7ded6f90cf3d0a697cb8"},
+    {file = "connect_eaas_core-28.4-py3-none-any.whl", hash = "sha256:d3b67cc413a7719968229fd5a6ba17c268be894d0662a5bfc478cefcad83de45"},
+    {file = "connect_eaas_core-28.4.tar.gz", hash = "sha256:322105195efc1cd74dd474db433fe10d29093f879df5a32b9972df54ec6784c7"},
 ]
 
 [package.dependencies]
@@ -2866,4 +2866,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "04d1b27c97feaa0679c80ae7b7f72e04ffa62cdf7711063ad7339225a382161a"
+content-hash = "df8ddb127147c0fce619b572ccc4b4b94e3fb107ed1278860de6ca81d1612897"
