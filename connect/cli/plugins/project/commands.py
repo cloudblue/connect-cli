@@ -9,8 +9,7 @@ from connect.cli.core.config import pass_config
 from connect.cli.plugins.project.extension.helpers import (
     bootstrap_extension_project,
     bump_runner_extension_project,
-    install_extension_project,
-    update_extension_project,
+    deploy_extension_project,
     validate_extension_project,
 )
 from connect.cli.plugins.project.report.helpers import (
@@ -214,23 +213,21 @@ def cmd_bump_extension_project(project_dir):
 
 
 @grp_project_extension.command(
-    name='install',
-    short_help='Install extension.',
+    name='deploy',
+    short_help='Deploy extension.',
 )
 @click.argument('repo', metavar='repo', nargs=1, required=True)
-@pass_config
-def cmd_install_extension(config, repo):
-    install_extension_project(config, repo)
-
-
-@grp_project_extension.command(
-    name='update',
-    short_help='Update extension.',
+@click.option(
+    '--tag',
+    '-t',
+    required=False,
+    default=None,
+    type=str,
+    help='Repository tag.',
 )
-@click.argument('repo', metavar='repo', nargs=1, required=True)
 @pass_config
-def cmd_update_extension(config, repo):
-    update_extension_project(config, repo)
+def cmd_deploy_extension(config, repo, tag):
+    deploy_extension_project(config, repo, tag)
 
 
 def get_group():

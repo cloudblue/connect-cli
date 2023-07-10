@@ -55,26 +55,30 @@ $ ccli project extension bump -p /my/project/folder
 
 The docker-compose.yml will be updated with the last version.
 
-### Install project
+### Deploy project
 
-To install extension project from a specific repository:
+To install or update extension project from a specific repository:
 
 ```sh
-$ ccli project extension install https://repository/url
+$ ccli project extension deploy https://repository/url [--tag TAG]
 ```
 
-This command will create a new extension and deploy one of its environment in cloud mode.
-All configurations are taken from _.connect_deployment.yaml_ file inside root directory
+This command will create a new extension and deploy one of its environment in cloud mode if it doesn't
+exist or update an existing one. Specify tag to deploy certain repository version, otherwise latest version
+will be used. All configurations are taken from _connect-deployment.yaml_ file inside root directory
 of repository. Owner of extension will be current active user.
 
-Structure of .connect_deployment.yaml
+Structure of connect_deployment.yaml
 ```yaml
 package_id: package.id
-icon: path/to/icon.png          # absolute path from root directory
+icon: path/to/icon.png              # absolute path from root directory
 name: Extension name
-env: development                # one of [development, test, production]
-type: multiaccount              # one of [multiaccount, transformations]
-tag: 1.3
+env: development                    # one of [development, test, production]
+type: multiaccount                  # one of [multiaccount, transformations]
+description: Short description 
+overview: path/to/overview          # absolute path from root directory
+category: Category                  
+website: https://www.example.com    
 var:
   SOME_VAR:
     value: VALUE
@@ -84,25 +88,11 @@ var:
 ```
 
 The only mandatory attribute is `package_id`. If you haven't specified
-`env` - default value is `production`, if `tag` is missing - latest version will be 
-installed. In case of missing extension `type` - it will be calculated automatically
-based on `package.json` file inside repository.
+`env` - default value is `production`. In case of missing extension `type` - it will be calculated automatically
+based on `pyproject.toml` file inside repository. In case you specified `category` search for such 
+will be executed and in case of match category will be set.
 
 To use environment variable - add its name to `var` section and skip `value`.
-
-### Update project
-
-To update extension project installed from a specific repository:
-
-```sh
-$ ccli project extension update https://repository/url
-```
-
-This command will update an existing extension's up to specified tag, create or update provided variables and redeploy 
-selected environment in cloud mode (current active user must be an owner of extension). 
-
-All configurations are taken from .connect_deployment.yaml file inside root directory of repository, default values are
-the same as in install extension.
 
 ### Validate project.
 
