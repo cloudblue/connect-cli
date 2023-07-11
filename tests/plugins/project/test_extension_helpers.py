@@ -14,8 +14,7 @@ from flake8.api import legacy as flake8
 from connect.cli.plugins.project.extension.helpers import (
     bootstrap_extension_project,
     bump_runner_extension_project,
-    install_extension_project,
-    update_extension_project,
+    deploy_extension_project,
     validate_extension_project,
 )
 from connect.cli.plugins.project.utils import slugify
@@ -1223,11 +1222,6 @@ def test_bootstrap_extension_project_corrupted_load_answers(
         assert 'Can not load or parse answers' in str(e.value)
 
 
-def test_install_extension_project(config_vendor, mocker):
-    mocker.patch('connect.cli.plugins.project.extension.helpers.install_extension')
-    install_extension_project(config_vendor, 'https://github.com/dummy/repo.git')
-
-
-def test_update_extension_project(config_vendor, mocker):
-    mocker.patch('connect.cli.plugins.project.extension.helpers.update_extension')
-    update_extension_project(config_vendor, 'https://github.com/dummy/repo.git')
+def test_deploy_extension_project(config_vendor, mocker):
+    mocker.patch('connect.cli.plugins.project.extension.helpers.deploy_extension')
+    deploy_extension_project(config_vendor, 'https://github.com/dummy/repo.git', None)
