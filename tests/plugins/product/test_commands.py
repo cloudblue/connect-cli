@@ -683,7 +683,7 @@ def test_clone_invalid_name(fs, ccli):
     )
 
     assert result.exit_code != 0
-    assert 'New product name can not exceed 32 chracters, provided as name' in result.output
+    assert 'New product name can not exceed 32 characters, provided as name' in result.output
 
 
 def test_clone_product_does_not_exist(fs, ccli, mocker, mocked_responses):

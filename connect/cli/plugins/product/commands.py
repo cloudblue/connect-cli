@@ -191,7 +191,7 @@ def cmd_clone_products(config, source_product_id, source_account, destination_ac
         )
     if name and len(name) > 32:
         raise ClickException(
-            f'New product name can not exceed 32 chracters, provided as name {name}',
+            f'New product name can not exceed 32 characters, provided as name {name}',
         )
     if destination_account:
         if not config.exists(destination_account):
