@@ -32,7 +32,15 @@ _RowData = namedtuple('RowData', fields)
 
 class ItemSynchronizer(ProductSynchronizer):
     def __init__(self, client, progress, stats):
-        self._units = list(client.ns('settings').units.all())
+        self._units = []
+        self._shared_units = []
+
+        for unit in client.ns('settings').units.all():
+            if 'owner' in unit:
+                self._units.append(unit)
+            else:
+                self._shared_units.append(unit)
+
         self._mstats = stats['Items']
         super().__init__(client, progress)
 
@@ -269,6 +277,12 @@ class ItemSynchronizer(ProductSynchronizer):
 
     def _get_or_create_unit(self, data):
         for unit in self._units:
+            if unit['id'] == data.unit:
+                return unit['id']
+            if unit['type'] == data.type and unit['description'] == data.unit:
+                return unit['id']
+
+        for unit in self._shared_units:
             if unit['id'] == data.unit:
                 return unit['id']
             if unit['type'] == data.type and unit['description'] == data.unit:

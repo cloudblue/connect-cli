@@ -250,5 +250,13 @@
     "description": "Websites",
     "type": "reservation",
     "cumulative": false
+  },
+  {
+    "id": "CU-000-000",
+    "unit": "unit",
+    "description": "Units",
+    "type": "reservation",
+    "cumulative": false,
+    "owner": {"id": "VA-000-000"}
   }
 ]
