@@ -1,0 +1,137 @@
+[
+    {
+        "id": "STR-4047-7247-4594",
+        "name": "My simple pricing stream",
+        "status": "configuring",
+        "description": "Some description",
+        "sources": [],
+        "visibility": "private",
+        "samples": {
+            "input": {
+                "id": "MFL-8463-2536-6370",
+                "name": "/public/v1/media/folders/streams_samples/STR-4047-7247-4594/files/MFL-8463-2536-6370/demo_styles.xlsx"
+            },
+            "output": {
+                "id": "MFL-1578-8917-0820",
+                "name": "/public/v1/media/folders/streams_samples/STR-4047-7247-4594/files/MFL-1578-8917-0820/STR-4047-7247-4594-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "VA-000",
+            "name": "Provider account 01"
+        },
+        "type": "pricing",
+        "context": {
+            "account": {
+                "id": "VA-050-000",
+                "name": "Vendor account 00 for galonso"
+            },
+            "product": {
+                "id": "PRD-054-258-626",
+                "name": "Product P03",
+                "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+            },
+            "marketplace": {
+                "id": "MP-05011",
+                "name": "Marketplace M11 for galonso",
+                "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+                "currency": "USD"
+            },
+            "listing": {
+                "id": "LST-760-660-960"
+            }
+        }
+    },
+    {
+        "id": "STR-5066-5885-2990",
+        "name": "My computed pricing from pricing stream",
+        "status": "active",
+        "description": "Some description",
+        "sources": [
+            {
+                "id": "STR-7755-7115-2464",
+                "name": "Simple pricing stream",
+                "type": "stream",
+                "status": "active"
+            }
+        ],
+        "visibility": "private",
+        "samples": {
+            "input": {
+                "id": "MFL-7908-1914-3192",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-7908-1914-3192/STR-7755-7115-2464-out.xlsx"
+            },
+            "output": {
+                "id": "MFL-6928-7852-4876",
+                "name": "/public/v1/media/folders/streams_samples/STR-5066-5885-2990/files/MFL-6928-7852-4876/STR-5066-5885-2990-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "PA-050-101",
+            "name": "Provider account 01"
+        },
+        "type": "pricing",
+        "context": {
+            "account": {
+                "id": "VA-050-000",
+                "name": "Vendor account 00"
+            },
+            "product": {
+                "id": "PRD-054-258-626",
+                "name": "Product P03",
+                "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+            },
+            "marketplace": {
+                "id": "MP-05011",
+                "name": "Marketplace M11 for galonso",
+                "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+                "currency": "USD"
+            },
+            "listing": {
+                "id": "LST-760-660-960"
+            }
+        }
+    },
+    {
+        "id": "STR-7755-7115-2464",
+        "name": "Simple pricing stream",
+        "status": "active",
+        "description": "Some description",
+        "visibility": "published",
+        "samples": {
+            "input": {
+                "id": "MFL-9059-7665-2037",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-9059-7665-2037/for_test.xlsx"
+            },
+            "output": {
+                "id": "MFL-7908-1914-3192",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-7908-1914-3192/STR-7755-7115-2464-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "VA-050-000",
+            "name": "Vendor account 00"
+        },
+        "type": "pricing",
+        "context": {
+            "account": {
+                "id": "PA-050-101",
+                "name": "Provider account 01"
+            },
+            "product": {
+                "id": "PRD-054-258-626",
+                "name": "Product P03",
+                "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+            },
+            "marketplace": {
+                "id": "MP-05011",
+                "name": "Marketplace M11",
+                "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+                "currency": "USD"
+            },
+            "listing": {
+                "id": "LST-760-660-960"
+            }
+        }
+    }
+]

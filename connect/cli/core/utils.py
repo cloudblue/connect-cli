@@ -82,6 +82,13 @@ def validate_output_options(output_path, output_file, default_dir_name, default_
 
     output_file = os.path.join(output_path, output_file or f'{default_file_name}.xlsx')
 
+    if os.path.exists(output_file):
+        console.confirm(
+            f'Are you sure you want to override the file {output_file} ?',
+            abort=True,
+        )
+        console.echo('')
+
     return output_file
 
 
