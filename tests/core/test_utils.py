@@ -6,36 +6,182 @@ from click import ClickException
 from requests import RequestException
 
 from connect.cli.core import utils
-from connect.cli.core.constants import PYPI_JSON_API_URL
+from connect.cli.core.constants import DEFAULT_ENDPOINT, PYPI_JSON_API_URL
 from connect.cli.core.utils import iter_entry_points, sort_and_filter_tags
 
 
 def test_check_for_updates_ok(mocker, capsys, mocked_responses):
     mocker.patch('connect.cli.core.utils.get_version', return_value='1.0.0')
-    mocked_responses.add('GET', PYPI_JSON_API_URL, json={'info': {'version': '2.0.0'}})
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '2.0.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '1.6.0': ['release info'],
+                '1.7.1': ['release info'],
+                '2.0.0': ['release info'],
+                '2.1.0': ['release info'],
+                '2.1.1': ['release info'],
+            },
+        },
+    )
 
     utils.check_for_updates()
 
     captured = capsys.readouterr()
 
-    assert 'You are running CloudBlue Connect CLI version 1.0.0. ' in captured.out
-    assert 'A newer version is available: 2.0.0' in captured.out
+    assert 'You are running outdated version (1.0.0)' in captured.out
+    assert '2.1.1' in captured.out
 
 
 def test_check_for_updates_is_latest(mocker, capsys, mocked_responses):
     mocker.patch('connect.cli.core.utils.get_version', return_value='2.0.0')
-    mocked_responses.add('GET', PYPI_JSON_API_URL, json={'info': {'version': '2.0.0'}})
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '2.0.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '2.0.0': ['release info'],
+            },
+        },
+    )
 
     utils.check_for_updates()
 
     captured = capsys.readouterr()
 
-    assert 'You are running CloudBlue Connect CLI version 1.0.0. ' not in captured.out
-    assert 'A newer version is available: 2.0.0' not in captured.out
+    assert 'upgrade your version up to' not in captured.out
+
+
+def test_check_for_updates_no_update_needed(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='2.0.0')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '3.0.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '2.0.0': ['release info'],
+            },
+        },
+    )
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+
+    assert 'upgrade your version up to' not in captured.out
+
+
+def test_check_for_updates_need_downgrade(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='4.0.0')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '2.2.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '4.1.0': ['release info'],
+                '3.0.0': ['release info'],
+                '2.1.1': ['release info'],
+            },
+        },
+    )
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+
+    assert 'You are running mismatched version (4.0.0)' in captured.out
+    assert 'upgrade your version up to 2.1.1' in captured.out
+
+
+def test_check_for_updates_no_matching_version_downgrade(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='4.0.0')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '2.2.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '3.0.0': ['release info'],
+                '1.1.1': ['release info'],
+            },
+        },
+    )
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+
+    assert 'upgrade your version up to 1.1.1' in captured.out
+
+
+def test_check_for_updates_no_matching_version_upgrade(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.get_version', return_value='3.0.0')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '12.2.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_JSON_API_URL,
+        json={
+            'releases': {
+                '3.0.0': ['release info'],
+                '1.1.1': ['release info'],
+            },
+        },
+    )
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+
+    assert 'upgrade your version up to' not in captured.out
+
+
+def test_check_for_updates_version_exception(mocker, capsys, mocked_responses):
+    mocker.patch('connect.cli.core.utils.requests.get', side_effect=RequestException())
+
+    utils.check_for_updates()
+
+    captured = capsys.readouterr()
+    assert captured.out == ''
 
 
 def test_check_for_updates_exception(mocker, capsys, mocked_responses):
     mocker.patch('connect.cli.core.utils.get_version', return_value='1.0.0')
+    mocker.patch('connect.cli.core.utils.get_connect_version', return_value='1.0.0')
     mocker.patch('connect.cli.core.utils.requests.get', side_effect=RequestException())
 
     utils.check_for_updates()
@@ -46,6 +192,12 @@ def test_check_for_updates_exception(mocker, capsys, mocked_responses):
 
 def test_check_for_updates_invalid_response(mocker, capsys, mocked_responses):
     mocker.patch('connect.cli.core.utils.get_version', return_value='1.0.0')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '3.0.1-abc'},
+    )
     mocked_responses.add('GET', PYPI_JSON_API_URL, status=400)
 
     utils.check_for_updates()

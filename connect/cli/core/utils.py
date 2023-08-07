@@ -5,13 +5,14 @@
 import os
 from collections import OrderedDict
 from importlib.metadata import entry_points
+from distutils.version import StrictVersion
 
 import click
 import requests
 from packaging.version import InvalidVersion, Version
 
 from connect.cli import get_version
-from connect.cli.core.constants import PYPI_JSON_API_URL
+from connect.cli.core.constants import DEFAULT_ENDPOINT, PYPI_JSON_API_URL
 from connect.cli.core.terminal import console
 
 
@@ -37,6 +38,18 @@ def sort_and_filter_tags(tags, desired_major):
     return sorted_tags
 
 
+def get_last_version_by_major(tags, major):
+    major = int(major)
+
+    while major >= 0:
+        result = sort_and_filter_tags(tags, str(major))
+        if result:
+            return result.popitem()[0]
+        major -= 1
+
+    return None
+
+
 def get_last_cli_version():
     try:
         res = requests.get(PYPI_JSON_API_URL)
@@ -47,14 +60,40 @@ def get_last_cli_version():
         pass
 
 
+def get_connect_version():
+    try:
+        response = requests.get(DEFAULT_ENDPOINT)
+        return response.headers.get('Connect-Version')
+    except requests.RequestException:
+        return
+
+
 def check_for_updates(*args):
+    connect_version = get_connect_version()
+    if not connect_version:
+        return
+
     current = get_version()
-    last_version = get_last_cli_version()
+    last_version = None
+    try:
+        res = requests.get(PYPI_JSON_API_URL)
+        if res.status_code == 200:
+            data = res.json()
+            last_version = get_last_version_by_major(
+                data['releases'],
+                connect_version.split('.', 1)[0],
+            )
+    except requests.RequestException:
+        return
+
     if last_version and last_version != current:
+        need_downgrade = int(current.split('.', 1)[0]) > int(last_version.split('.', 1)[0])
         console.echo()
         console.secho(
-            f'You are running CloudBlue Connect CLI version {current}. '
-            f'A newer version is available: {last_version}',
+            f'WARNING: You are running {"mismatched" if need_downgrade else "outdated"} '
+            f'version ({current}) of CloudBlue Connect CLI. '
+            f'A {"matching latest" if need_downgrade else "newer"} version {last_version} '
+            f'is available. Please, upgrade your version up to {last_version}.',
             fg='yellow',
         )
         console.echo()

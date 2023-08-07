@@ -7,7 +7,11 @@ from click import ClickException
 from connect.client import ClientError
 
 from connect.cli import get_version
-from connect.cli.core.utils import sort_and_filter_tags
+from connect.cli.core.utils import (
+    get_connect_version,
+    get_last_version_by_major,
+    sort_and_filter_tags,
+)
 from connect.cli.plugins.project.extension.constants import (
     PRE_COMMIT_HOOK,
     PYPI_EXTENSION_RUNNER_URL,
@@ -32,6 +36,18 @@ def get_pypi_runner_version():
     if tags:
         return tags.popitem()[0]
     return content['info']['version']
+
+
+def get_pypi_runner_version_by_connect_version():
+    connect_version = get_connect_version()
+    res = requests.get(PYPI_EXTENSION_RUNNER_URL)
+    if res.status_code != 200 or not connect_version:
+        raise ClickException(
+            f'We can not retrieve the current connect-extension-runner version from {PYPI_EXTENSION_RUNNER_URL}.',
+        )
+    content = res.json()
+    version = get_last_version_by_major(content['releases'], connect_version.split('.', 1)[0])
+    return version or content['info']['version']
 
 
 def get_extension_types(config):
