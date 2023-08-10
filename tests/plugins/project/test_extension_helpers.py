@@ -11,6 +11,8 @@ import yaml
 from click import ClickException
 from flake8.api import legacy as flake8
 
+from connect.cli.core.constants import DEFAULT_ENDPOINT
+from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
 from connect.cli.plugins.project.extension.helpers import (
     bootstrap_extension_project,
     bump_runner_extension_project,
@@ -890,8 +892,20 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
         assert 'Answers cannot be saved' in str(cv.value)
 
 
-def test_bump_runner_version(mocker, capsys):
-    _mock_pypi_version(mocker)
+def test_bump_runner_version(mocker, mocked_responses, capsys):
+    mocker.patch('connect.cli.plugins.project.extension.utils.get_version', return_value='0.5')
+    mocked_responses.add(
+        'GET',
+        DEFAULT_ENDPOINT,
+        status=401,
+        headers={'Connect-Version': '1.0.1-abc'},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_EXTENSION_RUNNER_URL,
+        json={'releases': {'1.0': ['release info']}},
+    )
+
     with tempfile.TemporaryDirectory() as tmp_data:
         project_dir = f'{tmp_data}/project'
         os.mkdir(project_dir)
@@ -1008,9 +1022,17 @@ def test_bump_runner_docker_yaml_error(mocker):
         assert 'not properly formatted' in str(error.value)
 
 
+def test_bump_runner_get_version_error(mocker, mocked_responses):
+    mocker.patch('connect.cli.plugins.project.extension.utils.get_connect_version')
+    mocked_responses.add('GET', PYPI_EXTENSION_RUNNER_URL, status=400)
+    with pytest.raises(ClickException) as error:
+        bump_runner_extension_project('project_dir')
+    assert 'We can not retrieve the current connect-extension-runner' in str(error.value)
+
+
 def _mock_pypi_version(mocker):
     mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
+        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version_by_connect_version',
         return_value='1.0',
     )
 

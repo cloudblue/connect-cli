@@ -13,6 +13,7 @@ from connect.cli.core.terminal import console
 from connect.cli.plugins.project.extension.utils import (
     get_event_definitions,
     get_pypi_runner_version,
+    get_pypi_runner_version_by_connect_version,
     initialize_git_repository,
 )
 from connect.cli.plugins.project.extension.wizard import (
@@ -244,7 +245,7 @@ def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
     console.secho(f'Bumping runner version on project {project_dir}...\n', fg='blue')
 
     updated_files = set()
-    latest_version = get_pypi_runner_version()
+    latest_version = get_pypi_runner_version_by_connect_version()
     latest_runner_version = f'cloudblueconnect/connect-extension-runner:{latest_version}'
     docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
     if not os.path.isfile(docker_compose_file):
