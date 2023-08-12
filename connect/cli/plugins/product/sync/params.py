@@ -27,6 +27,8 @@ class ParamsSynchronizer(ProductSynchronizer):
         self._worksheet_name = None
         self.__stats = stats
         self._mstats = None
+        self._id_mapping = {}
+        self._param_deps = {}
         super(ParamsSynchronizer, self).__init__(client, progress)
 
     def open(self, input_file, worksheet):
@@ -69,6 +71,7 @@ class ParamsSynchronizer(ProductSynchronizer):
                 continue
 
             param_payload = {}
+            dependency = None
             if data.json_properties:
                 param_payload = json.loads(data.json_properties)
             param_payload['name'] = data.id
@@ -79,6 +82,9 @@ class ParamsSynchronizer(ProductSynchronizer):
             param_payload['type'] = data.type
             if 'constraints' not in param_payload:
                 param_payload['constraints'] = {}
+            if 'dependency' in param_payload['constraints']:
+                dependency = param_payload['constraints']['dependency']
+                del param_payload['constraints']['dependency']
             param_payload['constraints']['required'] = False if data.required == '-' else True
             param_payload['constraints']['unique'] = False if data.unique == '-' else True
             param_payload['constraints']['hidden'] = False if data.hidden == '-' else True
@@ -98,6 +104,9 @@ class ParamsSynchronizer(ProductSynchronizer):
                     )
                     self._update_sheet_row(ws, row_idx, param)
                     self._mstats.updated()
+                    self._id_mapping[data.id] = param['id']
+                    if dependency:
+                        self._param_deps[param['id']] = dependency
                 except Exception as e:
                     self._mstats.error(str(e), row_idx)
 
@@ -106,15 +115,23 @@ class ParamsSynchronizer(ProductSynchronizer):
                     original_param = self._get_original_param(data)
                     if original_param:
                         self._updated_or_skipped(ws, row_idx, original_param, param_payload)
+                        self._id_mapping[data.id] = original_param['id']
                         continue
                     param = self._client.products[self._product_id].parameters.create(
                         param_payload,
                     )
                     self._update_sheet_row(ws, row_idx, param)
                     self._mstats.created()
+                    self._id_mapping[data.id] = param['id']
+                    if dependency:
+                        self._param_deps[param['id']] = dependency
                 except Exception as e:
                     self._mstats.error(str(e), row_idx)
+
         self._progress.update(task, completed=ws.max_row - 1)
+
+        if self._param_type == 'ordering':
+            self._process_constraints_dependency(ws)
 
     @staticmethod
     def _update_sheet_row(ws, row_idx, param=None):
@@ -244,3 +261,43 @@ class ParamsSynchronizer(ProductSynchronizer):
             )
             self._update_sheet_row(ws, row_idx, param)
             self._mstats.updated()
+
+    def _process_constraints_dependency(self, ws):
+        task = self._progress.add_task(
+            'Processing param dependencies',
+            total=len(self._param_deps.keys()),
+        )
+        for row_idx in range(2, ws.max_row + 1):
+            data = _RowData(*[ws.cell(row_idx, col_idx).value for col_idx in range(1, 15)])
+            if data.verbose_id not in self._param_deps:
+                continue
+
+            self._progress.update(
+                task,
+                description=f'Processing param dependency {data.id}',
+                advance=1,
+            )
+
+            param_payload = {'constraints': json.loads(data.json_properties)['constraints']}
+            param_payload['constraints']['required'] = False if data.required == '-' else True
+            param_payload['constraints']['unique'] = False if data.unique == '-' else True
+            param_payload['constraints']['hidden'] = False if data.hidden == '-' else True
+
+            dependency = self._param_deps[data.verbose_id]
+            dependency['parameter']['id'] = self._id_mapping[dependency['parameter']['name']]
+            param_payload['constraints']['dependency'] = dependency
+
+            try:
+                param = (
+                    self._client.products[self._product_id]
+                    .parameters[data.verbose_id]
+                    .update(
+                        param_payload,
+                    )
+                )
+                self._update_sheet_row(ws, row_idx, param)
+                self._mstats.updated()
+            except Exception as e:
+                self._mstats.error(str(e), row_idx)
+
+        self._progress.update(task, completed=len(self._param_deps.keys()))

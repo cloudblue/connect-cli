@@ -651,9 +651,9 @@ def test_validate_update(
     synchronizer.sync()
 
     assert stats['Ordering Parameters'].get_counts_as_dict() == {
-        'processed': 1,
+        'processed': 2,
         'created': 0,
-        'updated': 1,
+        'updated': 2,
         'deleted': 0,
         'skipped': 0,
         'errors': 0,
@@ -695,16 +695,23 @@ def test_validate_create(
         json=response,
     )
 
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/products/PRD-276-377-545/parameters/PRM-276-377-545-0008',
+        json={},
+        status=400,
+    )
+
     synchronizer.open(f'{fs.root_path}/test.xlsx', 'Ordering Parameters')
     synchronizer.sync()
 
     assert stats['Ordering Parameters'].get_counts_as_dict() == {
-        'processed': 1,
+        'processed': 2,
         'created': 1,
         'updated': 0,
         'deleted': 0,
         'skipped': 0,
-        'errors': 0,
+        'errors': 1,
     }
 
 
