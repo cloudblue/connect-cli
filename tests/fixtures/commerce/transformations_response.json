@@ -1,0 +1,117 @@
+[
+    {
+        "id": "STRA-872-286-830-414-001",
+        "function": {
+            "id": "TRF-169-730-052",
+            "name": "Copy Column(s)",
+            "status": "active",
+            "icon": "/files/media/public/eaas_icons/SRVC-2374-4386/43b90a3205f5eb7d4b06.png"
+        },
+        "description": "Some description",
+        "overview": "id → iddos",
+        "columns": {
+            "input": [
+                {
+                    "id": "SCOL-7755-7115-2464-001",
+                    "name": "Customer Name",
+                    "type": "string",
+                    "position": 10000,
+                    "nullable": true,
+                    "required": false,
+                    "output": true
+                },
+                {
+                    "id": "SCOL-7755-7115-2464-002",
+                    "name": "Subscription ID",
+                    "type": "string",
+                    "position": 20000,
+                    "nullable": true,
+                    "required": false,
+                    "output": true,
+                    "description": "Subscription ID column"
+                }
+            ],
+            "output": [
+                {
+                    "id": "SCOL-8722-8683-0414-003",
+                    "name": "iddos",
+                    "type": "string",
+                    "description": "",
+                    "position": 30000,
+                    "nullable": true,
+                    "required": false
+                },
+                {
+                    "id": "SCOL-8722-8683-0414-004",
+                    "name": "iddos",
+                    "type": "string",
+                    "description": "",
+                    "position": 30000,
+                    "nullable": true,
+                    "required": false
+                }
+            ]
+        },
+        "settings": [
+            {
+                "to": "iddos",
+                "from": "id",
+                "other": {
+                    "verybigfield": "sasdasdasdasdasdasdasdasd",
+                    "another1": "asdasdasdasdasdasd",
+                    "another2": "asdasdasdasdasdasd",
+                    "another3": "asdasdasdasdasdasd",
+                    "another4": "asdasdasdasdasdasdddd"
+                },
+                "another": {
+                    "another1": "asdasdasdasdasdasd",
+                    "another2": "asdasdasdasdasdasd",
+                    "another3": "asdasdasdasdasdasd",
+                    "another4": "asdasdasdasdasdasdddd"
+                }
+            }
+        ],
+        "position": 10000
+    },
+    {
+        "id": "STRA-872-286-830-415-001",
+        "function": {
+            "id": "TRF-169-730-053",
+            "name": "Split Column(s)",
+            "status": "active",
+            "icon": "/files/media/public/eaas_icons/SRVC-2374-4386/43b90a3205f5eb7d4b06.png"
+        },
+        "overview": "id → iddos",
+        "columns": {
+            "input": [
+                {
+                    "id": "SCOL-7755-7115-2464-011",
+                    "name": "datetime",
+                    "type": "datetime",
+                    "position": 110000,
+                    "nullable": true,
+                    "required": false,
+                    "output": true
+                }
+            ],
+            "output": [
+                {
+                    "id": "SCOL-8722-8683-0415-003",
+                    "name": "iddos",
+                    "type": "string",
+                    "description": "",
+                    "position": 30000,
+                    "nullable": true,
+                    "required": false
+                }
+            ]
+        },
+        "settings": [
+            {
+                "to": "iddos",
+                "from": "id"
+            }
+        ],
+        "position": 10001
+    }
+]

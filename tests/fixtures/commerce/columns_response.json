@@ -1,0 +1,96 @@
+[
+    {
+        "id": "SCOL-7755-7115-2464-001",
+        "name": "Customer Name",
+        "type": "string",
+        "position": 10000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-002",
+        "name": "Subscription ID",
+        "type": "string",
+        "position": 20000,
+        "nullable": true,
+        "required": false,
+        "output": true,
+        "description": "Subscription ID column"
+    },
+    {
+        "id": "SCOL-7755-7115-2464-003",
+        "name": "Unexpected Column",
+        "type": "string",
+        "position": 30000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-004",
+        "name": "copy column",
+        "type": "string",
+        "position": 40000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-005",
+        "name": "split column",
+        "type": "string",
+        "position": 50000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-006",
+        "name": "currency converter",
+        "type": "decimal",
+        "constraints": {
+            "precision": 2
+        },
+        "position": 60000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-007",
+        "name": "decimal string",
+        "type": "string",
+        "position": 70000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-008",
+        "name": "integer",
+        "type": "integer",
+        "position": 80000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-009",
+        "name": "string",
+        "type": "string",
+        "position": 90000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    },
+    {
+        "id": "SCOL-7755-7115-2464-010",
+        "name": "datetime",
+        "type": "datetime",
+        "position": 100000,
+        "nullable": true,
+        "required": false,
+        "output": true
+    }
+]

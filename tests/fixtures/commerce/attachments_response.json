@@ -1,0 +1,76 @@
+[
+    {
+        "id": "MFL-2481-0572-9001",
+        "file": "/public/v1/media/folders/streams_attachments/STR-7755-7115-2464/files/MFL-2481-0572-9001/for_testing_auxiliar_1.xlsx",
+        "size": 9599,
+        "folder": {
+            "name": "STR-7755-7115-2464",
+            "type": "streams_attachments"
+        },
+        "owner": {
+            "id": "VA-050-000",
+            "name": "Vendor account 00"
+        },
+        "name": "for_testing_auxiliar_1.xlsx",
+        "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "events": {
+            "created": {
+                "at": "2023-07-31T15:24:18+00:00",
+                "by": {
+                    "id": "UR-050-000-003",
+                    "name": "Gerard"
+                }
+            },
+            "confirmed": {
+                "at": "2023-07-31T15:24:18+00:00",
+                "by": {
+                    "id": "UR-050-000-003",
+                    "name": "Gerard"
+                }
+            }
+        },
+        "access": {
+            "VA-050-000": {
+                "view": true,
+                "delete": true
+            }
+        }
+    },
+    {
+        "id": "MFL-8784-6884-8192",
+        "file": "/public/v1/media/folders/streams_attachments/STR-7755-7115-2464/files/MFL-8784-6884-8192/demo_styles.xlsx",
+        "size": 10005,
+        "folder": {
+            "name": "STR-7755-7115-2464",
+            "type": "streams_attachments"
+        },
+        "owner": {
+            "id": "VA-050-000",
+            "name": "Vendor account 00"
+        },
+        "name": "demo_styles.xlsx",
+        "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "events": {
+            "created": {
+                "at": "2023-07-31T15:25:58+00:00",
+                "by": {
+                    "id": "UR-050-000-003",
+                    "name": "Gerard"
+                }
+            },
+            "confirmed": {
+                "at": "2023-07-31T15:25:58+00:00",
+                "by": {
+                    "id": "UR-050-000-003",
+                    "name": "Gerard"
+                }
+            }
+        },
+        "access": {
+            "VA-050-000": {
+                "view": true,
+                "delete": true
+            }
+        }
+    }
+]

@@ -1,0 +1,118 @@
+[
+    {
+        "id": "STR-6250-2064-0382",
+        "name": "My simple billing from source",
+        "status": "configuring",
+        "description": "Some description",
+        "sources": [
+            {
+                "id": "STR-8722-8683-0414",
+                "name": "Simple Billing stream",
+                "type": "stream",
+                "status": "active"
+            }
+        ],
+        "visibility": "private",
+        "samples": {
+            "input": {
+                "id": "MFL-1959-8863-6077",
+                "name": "/public/v1/media/folders/streams_samples/STR-8722-8683-0414/files/MFL-1959-8863-6077/STR-8722-8683-0414-out.xlsx"
+            },
+            "output": {
+                "id": "MFL-4465-0608-6466",
+                "name": "/public/v1/media/folders/streams_samples/STR-6250-2064-0382/files/MFL-4465-0608-6466/STR-6250-2064-0382-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "PA-050-101",
+            "name": "Provider account 01"
+        },
+        "type": "billing",
+        "context": {
+            "account": {
+                "id": "VA-050-000",
+                "name": "Vendor account 00"
+            },
+            "product": {
+                "id": "PRD-054-258-626",
+                "name": "Product P03",
+                "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+            },
+            "marketplace": {
+                "id": "MP-05011",
+                "name": "Marketplace M11",
+                "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+                "currency": "USD"
+            },
+            "listing": {
+                "id": "LST-760-660-960"
+            }
+        }
+    },
+    {
+        "id": "STR-7755-0103-9379",
+        "name": "My simple billing stream",
+        "status": "active",
+        "description": "Some description",
+        "sources": [],
+        "visibility": "private",
+        "samples": {
+            "input": {
+                "id": "MFL-7603-5277-2030",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-0103-9379/files/MFL-7603-5277-2030/demo_styles.xlsx"
+            },
+            "output": {
+                "id": "MFL-4878-5295-3893",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-0103-9379/files/MFL-4878-5295-3893/STR-7755-0103-9379-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "VA-000",
+            "name": "Provider account 01"
+        },
+        "type": "billing",
+        "context": {}
+    },
+    {
+        "id": "STR-8722-8683-0414",
+        "name": "Simple Billing stream",
+        "status": "active",
+        "description": "Some description",
+        "visibility": "published",
+        "samples": {
+            "input": {
+                "id": "MFL-9059-7665-2037",
+                "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-9059-7665-2037/for_test.xlsx"
+            },
+            "output": {
+                "id": "MFL-1959-8863-6077",
+                "name": "/public/v1/media/folders/streams_samples/STR-8722-8683-0414/files/MFL-1959-8863-6077/STR-8722-8683-0414-out.xlsx"
+            }
+        },
+        "owner": {
+            "id": "VA-050-000",
+            "name": "Vendor account 00"
+        },
+        "type": "billing",
+        "context": {
+            "account": {
+                "id": "PA-050-101",
+                "name": "Provider account 01 for galonso"
+            },
+            "product": {
+                "id": "PRD-054-258-626",
+                "name": "Product P03",
+                "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+            },
+            "marketplace": {
+                "id": "MP-05011",
+                "name": "Marketplace M11 for galonso",
+                "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+                "currency": "USD"
+            },
+            "listing": {
+                "id": "LST-760-660-960"
+            }
+        }
+    }
+]

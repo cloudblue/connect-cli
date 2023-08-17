@@ -51,6 +51,7 @@ ccli = 'connect.cli.ccli:main'
 "report" = "connect.cli.plugins.report.commands:get_group"
 "play" = "connect.cli.plugins.play.commands:get_group"
 "translation" = "connect.cli.plugins.translation.commands:get_group"
+"commerce" = "connect.cli.plugins.commerce.commands:get_group"
 
 
 [tool.poetry.dependencies]
@@ -76,7 +77,7 @@ pyyaml = "^6.0"
 
 [tool.poetry.group.test.dependencies]
 black = "23.*"
-pytest = "^6.1.2"
+pytest = "7.2.*"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
 freezegun = "^1.2.1"

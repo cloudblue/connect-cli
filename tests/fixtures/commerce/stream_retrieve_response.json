@@ -1,0 +1,74 @@
+[{
+    "id": "STR-7755-7115-2464",
+    "name": "Simple pricing stream",
+    "status": "active",
+    "description": "Some description",
+    "sources": [],
+    "visibility": "published",
+    "samples": {
+        "input": {
+            "id": "MFL-9059-7665-2037",
+            "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-9059-7665-2037/for_test.xlsx?session=f4dccfe4-7c86-4e16-b990-b68c6f9d40ce"
+        },
+        "output": {
+            "id": "MFL-7908-1914-3192",
+            "name": "/public/v1/media/folders/streams_samples/STR-7755-7115-2464/files/MFL-7908-1914-3192/STR-7755-7115-2464-out.xlsx?session=f4dccfe4-7c86-4e16-b990-b68c6f9d40ce"
+        }
+    },
+    "owner": {
+        "id": "VA-050-000",
+        "name": "Vendor account 00"
+    },
+    "type": "pricing",
+    "events": {
+        "created": {
+            "at": "2023-07-26T13:47:56+00:00",
+            "by": {
+                "id": "UR-050-000-003",
+                "name": "Gerardu"
+            }
+        },
+        "updated": {
+            "at": "2023-07-31T09:02:45+00:00",
+            "by": {
+                "id": "UR-050-000-003",
+                "name": "Gerardu"
+            }
+        },
+        "activated": {
+            "at": "2023-07-31T09:02:45+00:00",
+            "by": {
+                "id": "UR-050-000-003",
+                "name": "Gerardu"
+            }
+        }
+    },
+    "validation": {
+        "id": "BAT-6217-6818-2034",
+        "name": "Stream STR-7755-7115-2464 configuration test",
+        "status": "published"
+    },
+    "context": {
+        "account": {
+            "id": "PA-050-101",
+            "name": "Provider account 01"
+        },
+        "product": {
+            "id": "PRD-054-258-626",
+            "name": "Product P03",
+            "icon": "/media/VA-050-000/PRD-054-258-626/media/PRD-054-258-626-logo.png"
+        },
+        "marketplace": {
+            "id": "MP-05011",
+            "name": "Marketplace M11 for galonso",
+            "icon": "/media/PA-050-101/marketplaces/MP-05011/icon.png",
+            "currency": "USD"
+        },
+        "pricelist": {
+            "id": "PL-123"
+        },
+        "listing": {
+            "id": "LST-760-660-960"
+        }
+    }
+}]
