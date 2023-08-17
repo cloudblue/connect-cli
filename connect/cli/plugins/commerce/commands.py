@@ -10,8 +10,11 @@ from connect.cli.core import group
 from connect.cli.core.config import pass_config
 from connect.cli.core.terminal import console
 from connect.cli.plugins.commerce.utils import (
+    clone_stream,
     display_streams_table,
     export_stream,
+    get_destination_account,
+    print_results,
 )
 
 
@@ -100,6 +103,66 @@ def cmd_export_stream(config, stream_id, output_file, output_path):
         output_file=output_file,
         output_path=output_path,
     )
+
+
+@grp_commerce_streams.command(
+    name='clone',
+    short_help='Create a clone of a stream.',
+)
+@click.argument('source_stream_id', metavar='stream_id', nargs=1, required=True)  # noqa: E304
+@click.option(
+    '--destination_account',
+    '-d',
+    'destination_account',
+    help='Destination account ID',
+)
+@click.option(
+    '--new-stream-name',
+    '-n',
+    'name',
+    help='Cloned stream name',
+)
+@click.option(
+    '--validate',
+    '-v',
+    is_flag=True,
+    help='Executes the validate action after the clone.',
+    default=False,
+)
+@pass_config
+def cmd_clone_stream(
+    config,
+    source_stream_id,
+    destination_account,
+    name,
+    validate,
+):
+    destination_account_instance = get_destination_account(config, destination_account)
+
+    console.confirm(
+        'Are you sure you want to Clone ' f'the stream {source_stream_id} ?',
+        abort=True,
+    )
+    console.echo('')
+
+    stream_id, results = clone_stream(
+        origin_account=config.active,
+        stream_id=source_stream_id,
+        destination_account=destination_account_instance,
+        stream_name=name,
+        validate=validate,
+    )
+
+    console.echo('')
+
+    console.secho(
+        f'Stream {source_stream_id} cloned properly to {stream_id}.',
+        fg='green',
+    )
+
+    console.echo('')
+
+    print_results(results)
 
 
 def get_group():
