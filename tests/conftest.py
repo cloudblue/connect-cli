@@ -486,3 +486,11 @@ def client():
         endpoint='https://localhost/public/v1',
         use_specs=False,
     )
+
+
+@pytest.fixture
+def load_stream_sync():
+    return load_workbook(
+        './tests/fixtures/commerce/stream_sync.xlsx',
+        read_only=True,
+    )

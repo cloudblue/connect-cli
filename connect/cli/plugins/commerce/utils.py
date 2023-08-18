@@ -9,7 +9,7 @@ from mimetypes import guess_type
 from click import ClickException
 from connect.cli.core.terminal import console
 from connect.client import ClientError
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.colors import WHITE, Color
 
@@ -145,7 +145,7 @@ def fill_transformations(ws, transformations, progress):
             'Function Name',
             'Description',
             'Overview',
-            'Input columns',
+            'Input Columns',
             'Output Columns',
             'Position',
             'Settings',
@@ -348,6 +348,8 @@ def export_stream(
         )
 
         wb.save(output_file)
+
+    console.echo('')
 
     console.secho(
         f'Stream {stream_id} exported properly to {output_file}.',
@@ -634,6 +636,20 @@ def print_results(results):
     )
 
 
+def print_errors(errors):
+    if errors:
+        console.confirm(
+            'Are you sure you want to display errors?',
+            abort=True,
+        )
+        console.echo('')
+        for error in errors:
+            console.secho(
+                error,
+                fg='red',
+            )
+
+
 def clone_stream(
     origin_account,
     stream_id,
@@ -761,3 +777,332 @@ def clone_stream(
         )
 
     return destination_stream_id, results
+
+
+def validate_sheet_names(wb):
+    for sheet in (
+        'General Information',
+        'Columns',
+        'Transformations',
+        'Attachments',
+    ):
+        if sheet not in wb.sheetnames:
+            raise ClickException(
+                'The file must contain `General Information`, `Columns`, `Transformations` and '
+                '`Attachments` sheets.'
+            )
+
+
+def _validate_header(
+    current_headers,
+    expected_headers,
+    sheet_name,
+):
+    for header in expected_headers:
+        if header not in current_headers:
+            raise ClickException(
+                f'The {sheet_name} sheet header does not contain `{header}` header.'
+            )
+
+
+def validate_headers(wb):
+    _validate_header(
+        [c.value for c in wb['General Information'][1]],
+        (
+            'Stream information',
+            None,
+        ),
+        'General Information',
+    )
+    _validate_header(
+        [c.value for c in wb['Columns'][1]],
+        (
+            'ID',
+            'Name',
+            'Description',
+            'Type',
+            'Position',
+            'Required',
+            'Output',
+        ),
+        'Columns',
+    )
+    _validate_header(
+        [c.value for c in wb['Transformations'][1]],
+        (
+            'ID',
+            'Function ID',
+            'Function Name',
+            'Description',
+            'Overview',
+            'Input Columns',
+            'Output Columns',
+            'Position',
+            'Settings',
+        ),
+        'Transformations',
+    )
+    _validate_header(
+        [c.value for c in wb['Attachments'][1]],
+        (
+            'ID',
+            'Name',
+        ),
+        'Attachments',
+    )
+
+
+def get_work_book(input_file):
+    if not os.path.exists(input_file):
+        raise ClickException(f'The file {input_file} does not exists.')
+    if 'xlsx' not in input_file:
+        raise ClickException(f'The file {input_file} has invalid format, must be xlsx.')
+    wb = load_workbook(input_file, read_only=True)
+
+    validate_sheet_names(wb)
+
+    validate_headers(wb)
+
+    return wb
+
+
+def update_general_information(
+    client,
+    collection,
+    stream_id,
+    sheet,
+    results,
+    errors,
+    progress,
+):
+    task = progress.add_task('Updating general information', total=5)
+    stream = (
+        client.ns(collection)
+        .streams.filter(id=stream_id)
+        .select(
+            'context',
+            'samples',
+            'sources',
+        )
+        .first()
+    )
+    body = {}
+    updated = 0
+    errors_on_update = 0
+    for n in range(2, sheet.max_row + 1):
+        h, v = sheet[n]
+        if h.value == 'Stream Name' and stream['name'] != v.value:
+            body['name'] = v.value
+            updated += 1
+        elif h.value == 'Stream Description' and stream['description'] != v.value:
+            body['description'] = v.value
+            updated += 1
+        elif (
+            h.value == 'Product ID'
+            and stream.get('context', {}).get('product', {}).get('id', None) != v.value
+        ):
+            if 'context' in body:
+                body['context'].update({'product': {'id': v.value}})
+            else:
+                body['context'] = {'product': {'id': v.value}}
+            updated += 1
+        elif (
+            h.value == 'Partner ID'
+            and stream.get('context', {}).get('account', {}).get('id', None) != v.value
+        ):
+            if 'context' in body:
+                body['context'].update({'account': {'id': v.value}})
+            else:
+                body['context'] = {'account': {'id': v.value}}
+            updated += 1
+        elif (
+            h.value == 'Marketplace ID'
+            and stream.get('context', {}).get('marketplace', {}).get('id', None) != v.value
+        ):
+            if 'context' in body:
+                body['context'].update({'marketplace': {'id': v.value}})
+            else:
+                body['context'] = {'marketplace': {'id': v.value}}
+            updated += 1
+
+    if updated:
+        try:
+            client.ns(collection).streams[stream_id].update(
+                json=body,
+            )
+        except ClientError as e:
+            errors.append(str(e))
+            updated = 0
+            errors_on_update = 5
+
+    results.append(('General information', 5, 0, updated, 0, 0, errors_on_update))
+    progress.update(task, advance=5)
+
+
+def update_transformations(
+    client,
+    collection,
+    stream_id,
+    sheet,
+    results,
+    errors,
+    progress,
+):
+    task = progress.add_task('Updating transformation information', total=sheet.max_row - 1)
+
+    updated = 0
+    deleted = 0
+    ids = []
+    for n in range(2, sheet.max_row + 1):
+        id, fid, fname, descr, over, input, output, position, settings = sheet[n]
+        ids.append(id.value)
+        origin_trf = None
+        try:
+            origin_trf = client.ns(collection).streams[stream_id].transformations[id.value].get()
+        except ClientError as e:
+            errors.append(
+                f'The transformation {id.value} cannot be updated because it does not exist.'
+            )
+            progress.update(task, advance=1)
+            continue
+
+        try:
+            to_update = {}
+            if origin_trf['settings'] != settings.value:
+                to_update['settings'] = settings.value
+            if descr.value and (
+                'description' not in origin_trf or origin_trf['description'] != descr.value
+            ):
+                to_update['description'] = descr.value
+            if origin_trf['position'] != position.value:
+                to_update['position'] = position.value
+
+            if to_update:
+                client.ns(collection).streams[stream_id].transformations[id.value].update(
+                    json=to_update,
+                )
+                updated += 1
+            progress.update(task, advance=1)
+        except ClientError as e:
+            errors.append(f'Error updating the transformation {id.value} with data {to_update}.')
+
+    try:
+        current_ids = [
+            t['id'] for t in list(client.ns(collection).streams[stream_id].transformations.all())
+        ]
+        for cid in current_ids:
+            if cid not in ids:
+                client.ns(collection).streams[stream_id].transformations[cid].delete()
+                deleted += 1
+    except ClientError as e:
+        errors.append(f'Error deleting the transformation {id.value}.')
+
+    results.append(('Transformations', sheet.max_row - 1, 0, updated, deleted, 0, len(errors)))
+
+
+def update_attachments(
+    client,
+    stream_id,
+    sheet,
+    results,
+    errors,
+    progress,
+):
+    task = progress.add_task('Updating attachment files', total=sheet.max_row - 1)
+
+    created = 0
+    deleted = 0
+    errored = 0
+    skipped = 0
+    ids = []
+    for n in range(2, sheet.max_row + 1):
+        id, file_name = sheet[n]
+        try:
+            if (
+                client.ns('media')
+                .ns('folders')
+                .collection('streams_attachments')[stream_id]
+                .collection('files')
+                .filter(id=id.value)
+                .count()
+                == 0
+            ):
+                response = upload_attachment(
+                    client,
+                    stream_id,
+                    os.path.join(stream_id, 'attachments', file_name.value),
+                )
+                ids.append(response['id'])
+                created += 1
+            else:
+                ids.append(id.value)
+                skipped += 1
+
+        except ClientError as e:
+            errors.append(str(e))
+            errored += 1
+
+    for attachment in list(
+        client.ns('media').ns('folders').collection('streams_attachments')[stream_id].files.all()
+    ):
+        try:
+            if attachment['id'] not in ids:
+                client.ns('media').ns('folders').collection('streams_attachments')[stream_id].files[
+                    attachment['id']
+                ].delete()
+                deleted += 1
+        except ClientError as e:
+            errors.append(str(e))
+            errored += 1
+    progress.update(task, advance=sheet.max_row - 1)
+    results.append(('Attachment files', sheet.max_row - 1, created, 0, deleted, skipped, errored))
+
+
+def sync_stream(
+    account,
+    stream_id,
+    input_file,
+):
+    wb = get_work_book(input_file)
+
+    collection = guess_if_billing_or_pricing_stream(account.client, stream_id)
+    if not collection:
+        raise ClickException(f'Stream {stream_id} not found for the current account {account.id}.')
+
+    results = []
+    errors = []
+    with console.status_progress() as (status, progress):
+        status.update('Updating general information', fg='blue')
+        update_general_information(
+            client=account.client,
+            collection=collection,
+            stream_id=stream_id,
+            sheet=wb['General Information'],
+            results=results,
+            errors=errors,
+            progress=progress,
+        )
+
+        status.update('Updating transformations', fg='blue')
+        update_transformations(
+            client=account.client,
+            collection=collection,
+            stream_id=stream_id,
+            sheet=wb['Transformations'],
+            results=results,
+            errors=errors,
+            progress=progress,
+        )
+
+        status.update('Updating attachments', fg='blue')
+        if wb['Attachments'].max_row > 1:
+            update_attachments(
+                client=account.client,
+                stream_id=stream_id,
+                sheet=wb['Attachments'],
+                results=results,
+                errors=errors,
+                progress=progress,
+            )
+
+    return results, errors
