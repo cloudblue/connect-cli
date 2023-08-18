@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 import string
 from urllib.parse import urlparse
+import tempfile
+from mimetypes import guess_type
 
 from click import ClickException
 from connect.cli.core.terminal import console
@@ -351,3 +353,411 @@ def export_stream(
         f'Stream {stream_id} exported properly to {output_file}.',
         fg='green',
     )
+
+
+def get_destination_account(
+    config,
+    destination_account_id,
+):
+    if not destination_account_id or destination_account_id == config.active.id:
+        return config.active
+    if destination_account_id in config.accounts:
+        return config.accounts[destination_account_id]
+    else:
+        raise ClickException(f'Error obtaining the destination account id {destination_account_id}')
+
+
+def create_stream_from_origin(
+    client,
+    origin_stream,
+    collection,
+    stream_name=None,
+    validate_context_objects=False,
+):
+    context = origin_stream['context']
+    if validate_context_objects:
+        for obj, ns in (
+            ('product', 'products'),
+            ('marketplace', 'marketplaces'),
+            ('account', 'accounts'),
+            ('pricelist', 'pricelists'),
+        ):
+            if obj in context:
+                if client.collection(ns).filter(id=context[obj]['id']).count() == 0:
+                    console.secho(
+                        f'The {obj} {context[obj]["id"]} does not exists.',
+                        fg='yellow',
+                    )
+                    del context[obj]
+    body = {
+        'name': (
+            stream_name
+            or f'Clone of {origin_stream["name"]} {origin_stream["id"]}) {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}'
+        ),
+        'description': origin_stream.get('description', ''),
+        'context': context,
+        'sources': origin_stream['sources'],
+        'status': 'configuring',
+        'type': collection,
+        'visibility': 'private',
+    }
+    try:
+        destination_stream = client.ns(collection).streams.create(
+            json=body,
+        )
+    except ClientError as e:
+        raise ClickException(e.errors[0])
+    return destination_stream['id']
+
+
+def _upload_file(
+    client,
+    folder,
+    stream_id,
+    file,
+):
+    with open(file, 'rb') as f:
+        name = f.name
+        data = {
+            'file': (name, f, guess_type(name)),
+        }
+        return (
+            client.ns(
+                'media',
+            )
+            .ns(
+                'folders',
+            )
+            .collection(
+                folder,
+            )[stream_id]
+            .files.create(
+                files=data,
+            )
+        )
+
+
+def upload_sample(
+    client,
+    collection,
+    stream_id,
+    file,
+):
+    response = _upload_file(client, 'streams_samples', stream_id, file)
+    body = {'samples': {'input': {'id': response['id']}}}
+    client.ns(collection).streams[stream_id].update(
+        json=body,
+    )
+    return response['id']
+
+
+def clone_sample(
+    origin_client,
+    destination_client,
+    destination_stream_id,
+    collection,
+    origin_stream_input_sample,
+    progress,
+):
+    task_sample = progress.add_task('Processing input sample', total=1)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        sample_path = os.path.join(tmpdir, 'sample')
+        os.makedirs(sample_path)
+        name = urlparse(origin_stream_input_sample['name']).path.split('/')[-1]
+        stream = urlparse(origin_stream_input_sample['name']).path.split('/')[-4]
+        destination = os.path.join(sample_path, name)
+        _download_file(
+            origin_client,
+            'streams_samples',
+            stream,
+            origin_stream_input_sample['id'],
+            destination,
+        )
+        upload_sample(
+            destination_client,
+            collection,
+            destination_stream_id,
+            destination,
+        )
+    progress.update(task_sample, completed=1)
+
+
+def upload_attachment(
+    client,
+    stream_id,
+    attachment,
+):
+    return _upload_file(client, 'streams_attachments', stream_id, attachment)
+
+
+def clone_attachments(
+    origin_client,
+    destination_client,
+    attachments,
+    stream_id,
+    destination_stream_id,
+    progress,
+):
+    file_mapping = {}
+    task_attachment = progress.add_task('Processing attachments', total=len(attachments))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for attachment in attachments:
+            destination = os.path.join(
+                tmpdir,
+                attachment['name'],
+            )
+            _download_file(
+                client=origin_client,
+                folder_type=attachment['folder']['type'],
+                folder_name=attachment['folder']['name'],
+                file_id=attachment['id'],
+                file_destination=destination,
+            )
+            response = upload_attachment(
+                destination_client,
+                destination_stream_id,
+                destination,
+            )
+            file_mapping[
+                f'/public/v1/media/folders/streams_attachments/{stream_id}/files/{attachment["id"]}'
+            ] = f'/public/v1/media/folders/streams_attachments/{destination_stream_id}/files/{response["id"]}'
+            progress.update(task_attachment, advance=1)
+    return file_mapping
+
+
+def _sort_list_by_id(list_to_sort):
+    return sorted(list_to_sort, key=lambda c: c['id'])
+
+
+def generate_column_mapping(client, collection, stream_id):
+    mapping_by_name = {}
+    columns_by_id = {}
+    columns = _sort_list_by_id(list(client.ns(collection).streams[stream_id].columns.all()))
+    for col in columns:
+        if col['name'] in mapping_by_name:
+            mapping_by_name[col['name']].append(col['id'])
+        else:
+            mapping_by_name[col['name']] = [col['id']]
+        columns_by_id[col['id']] = col
+    return mapping_by_name, columns_by_id
+
+
+def clone_transformations(
+    destination_client,
+    destination_stream_id,
+    collection,
+    file_mapping,
+    transformations,
+    o_mapping_by_name,
+    progress,
+):
+    transformation_task = progress.add_task(
+        'Processing transformations', total=len(transformations)
+    )
+    for transformation in transformations:
+        d_mapping_by_name, columns_by_id = generate_column_mapping(
+            destination_client,
+            collection,
+            destination_stream_id,
+        )
+        input_columns = []
+        for col in transformation['columns']['input']:
+            column_ids = d_mapping_by_name[col['name']]
+            position = 0
+            if len(column_ids) > 1:
+                for id in o_mapping_by_name[col['name']]:
+                    if id == col['id']:
+                        break
+                    position += 1
+            input_column_id = column_ids[position]
+            input_columns.append(columns_by_id[input_column_id])
+        payload = {
+            'description': transformation.get('description', ''),
+            'function': {'id': transformation['function']['id']},
+            'settings': transformation['settings'],
+            'overview': transformation['overview'],
+            'position': transformation['position'],
+            'columns': {
+                'input': input_columns,
+                'output': transformation['columns']['output'],
+            },
+        }
+
+        if transformation['function']['name'] == 'Lookup Data from a stream attached Excel':
+            if 'file' in payload['settings']:
+                payload['settings']['file'] = file_mapping[payload['settings']['file']]
+        destination_client.ns(
+            collection,
+        ).streams[destination_stream_id].transformations.create(
+            payload=payload,
+        )
+        progress.update(transformation_task, advance=1)
+
+
+def align_column_output(
+    collection, origin_client, origin_stream_id, destination_client, destination_stream_id, progress
+):
+    origin_columns = _sort_list_by_id(
+        list(origin_client.ns(collection).streams[origin_stream_id].columns.all())
+    )
+    columns_task = progress.add_task('Processing columns', total=len(origin_columns))
+    dest_columns = _sort_list_by_id(
+        list(destination_client.ns(collection).streams[destination_stream_id].columns.all())
+    )
+    updated = 0
+    for n in range(len(origin_columns)):
+        if origin_columns[n]['output'] is False and dest_columns[n]['output'] is True:
+            destination_client.ns(collection).streams[destination_stream_id].columns[
+                dest_columns[n]['id']
+            ].update(
+                payload={'output': False},
+            )
+            updated += 1
+        progress.update(columns_task, advance=1)
+    return len(origin_columns), updated
+
+
+def print_results(results):
+    COLUMNS = (
+        'Module',
+        ('right', 'Processed'),
+        ('right', 'Created'),
+        ('right', 'Updated'),
+        ('right', 'Deleted'),
+        ('right', 'Skipped'),
+        ('right', 'Errors'),
+    )
+    console.table(
+        columns=COLUMNS,
+        rows=results,
+        expand=True,
+    )
+
+
+def clone_stream(
+    origin_account,
+    stream_id,
+    destination_account,
+    stream_name=None,
+    validate=False,
+):
+    results = []
+
+    with console.progress() as progress:
+        collection = guess_if_billing_or_pricing_stream(origin_account.client, stream_id)
+        if not collection:
+            raise ClickException(
+                f'Stream {stream_id} not found for the current account {origin_account.id}.'
+            )
+
+        origin_stream = (
+            origin_account.client.ns(collection)
+            .streams.filter(id=stream_id)
+            .select(
+                'context',
+                'samples',
+                'sources',
+            )
+            .first()
+        )
+
+        stream_type = (
+            'Computed' if 'sources' in origin_stream and origin_stream['sources'] else 'Simple'
+        )
+
+        if stream_type == 'Computed' and origin_account != destination_account:
+            raise ClickException('You cannot clone a Computed stream between different accounts.')
+
+        category = 'Inbound' if origin_stream['owner']['id'] != origin_account.id else 'Outbound'
+
+        if category == 'Inbound':
+            raise ClickException('Inbound streams cannot be cloned.')
+
+        destination_stream_id = create_stream_from_origin(
+            destination_account.client,
+            origin_stream,
+            collection,
+            stream_name,
+            origin_account != destination_account,
+        )
+
+        file_mapping = {}
+        if (
+            stream_type == 'Simple'
+            and 'samples' in origin_stream
+            and 'input' in origin_stream['samples']
+        ):
+            clone_sample(
+                origin_account.client,
+                destination_account.client,
+                destination_stream_id,
+                collection,
+                origin_stream['samples']['input'],
+                progress,
+            )
+            results.append(('Sample input', 1, 1, 0, 0, 0, 0))
+
+        attachments = list(
+            origin_account.client.ns('media')
+            .ns('folders')
+            .collection('streams_attachments')[stream_id]
+            .files.all()
+        )
+        if attachments:
+            file_mapping = clone_attachments(
+                origin_account.client,
+                destination_account.client,
+                attachments,
+                stream_id,
+                destination_stream_id,
+                progress,
+            )
+            results.append(('Attachments', len(attachments), len(attachments), 0, 0, 0, 0))
+
+        transformations = list(
+            origin_account.client.ns(
+                collection,
+            )
+            .streams[stream_id]
+            .transformations.all()
+            .select(
+                'columns',
+            )
+        )
+
+        if transformations:
+            o_mapping_by_name, _ = generate_column_mapping(
+                origin_account.client, collection, stream_id
+            )
+            clone_transformations(
+                destination_account.client,
+                destination_stream_id,
+                collection,
+                file_mapping,
+                transformations,
+                o_mapping_by_name,
+                progress,
+            )
+            results.append(
+                ('Transformations', len(transformations), len(transformations), 0, 0, 0, 0)
+            )
+
+        processed, updated = align_column_output(
+            collection,
+            origin_account.client,
+            stream_id,
+            destination_account.client,
+            destination_stream_id,
+            progress,
+        )
+        results.append(('Columns', processed, 0, updated, 0, 0, 0))
+
+    if validate:
+        console.secho('')
+        destination_account.client.ns(collection).streams[destination_stream_id]('validate').post()
+        console.secho(
+            f'Stream {destination_stream_id} validation executed properly.',
+            fg='green',
+        )
+
+    return destination_stream_id, results
