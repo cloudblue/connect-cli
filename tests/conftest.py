@@ -337,6 +337,11 @@ def sample_translation_workbook(fs):
 
 
 @pytest.fixture(scope='function')
+def sample_stream_workbook(fs):
+    return load_workbook('./tests/fixtures/commerce/stream_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
 def mocked_translation_response():
     with open('./tests/fixtures/translation_response.json') as response:
         return json.load(response)

@@ -942,3 +942,30 @@ def test_sync_stream(
 
     assert result.exit_code == 0
     assert mocked_cmd_console.echo.call_count == 2
+
+
+def test_sync_stream_no_stream(
+    mocker,
+    ccli,
+    config_mocker,
+):
+    mocker.patch('connect.cli.plugins.commerce.commands.console')
+    mocker.patch('connect.cli.plugins.commerce.utils.get_work_book')
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.guess_if_billing_or_pricing_stream',
+        return_value=None,
+    )
+    runner = CliRunner()
+    cmd = [
+        'commerce',
+        'stream',
+        'sync',
+        'STR-7748-7021-7449',
+    ]
+    result = runner.invoke(
+        ccli,
+        cmd,
+    )
+
+    assert result.exit_code == 1
+    assert 'Stream STR-7748-7021-7449 not found for the current account VA-000.' in result.output

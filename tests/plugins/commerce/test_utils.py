@@ -1,17 +1,23 @@
+import json
 import os
 import tempfile
-import json
 
 import pytest
 from click import ClickException
-from openpyxl import Workbook
+from connect.client import ConnectClient, ClientError
+from openpyxl import Workbook, load_workbook
 
 from connect.cli.plugins.commerce.utils import (
-    fill_and_download_attachments,
-    guess_if_billing_or_pricing_stream,
+    _validate_header,
     clone_stream,
-    create_stream_from_origin,
     clone_transformations,
+    create_stream_from_origin,
+    fill_and_download_attachments,
+    get_work_book,
+    guess_if_billing_or_pricing_stream,
+    update_attachments,
+    update_general_information,
+    update_transformations,
 )
 
 
@@ -279,3 +285,318 @@ def test_clone_transformations_fix_file_mapping(
     mocked_col_mapping.assert_called()
     mocked_progress.add_task.assert_called_with('Processing transformations', total=1)
     assert mocked_progress.update.call_count == 1
+
+
+def test_get_work_book():
+    wb = get_work_book('./tests/fixtures/commerce/stream_sync.xlsx')
+
+    general_info = wb['General Information']
+    assert general_info['B2'].value == 'STR-7748-7021-7449'
+
+    wb.close()
+
+
+def test_get_work_book_invalid_sheets():
+    with pytest.raises(ClickException) as ce:
+        get_work_book('./tests/fixtures/actions_sync.xlsx')
+
+    assert str(ce.value) == (
+        'The file must contain `General Information`, `Columns`, `Transformations` and '
+        '`Attachments` sheets.'
+    )
+
+
+def test_get_work_book_non_existing_file():
+    with pytest.raises(ClickException) as ce:
+        get_work_book('non_existing_file.xlsx')
+
+    assert str(ce.value) == 'The file non_existing_file.xlsx does not exists.'
+
+
+def test_get_work_book_invalid_format():
+    with pytest.raises(ClickException) as ce:
+        get_work_book('./tests/fixtures/image.png')
+
+    assert str(ce.value) == 'The file ./tests/fixtures/image.png has invalid format, must be xlsx.'
+
+
+def test_validate_header_missing():
+    with pytest.raises(ClickException) as ce:
+        _validate_header(['ID', 'Name'], ['ID', 'Name', 'Description'], 'Streams')
+
+    assert str(ce.value) == 'The Streams sheet header does not contain `Description` header.'
+
+
+def test_update_general_information_error(sample_stream_workbook, mocker, mocked_responses):
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams?'
+        'eq(id,STR-7755-7115-2464)&select(context,samples,sources)&limit=1&offset=0',
+        json=[{'name': 'Name', 'description': 'Description'}],
+    )
+
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464',
+        status=400,
+    )
+
+    results = []
+    update_general_information(
+        client=client,
+        collection='billing',
+        stream_id='STR-7755-7115-2464',
+        sheet=sample_stream_workbook['General Information'],
+        results=results,
+        errors=[],
+        progress=mocker.MagicMock(),
+    )
+
+    sample_stream_workbook.close()
+    assert len(results) == 1
+    assert results[0] == ('General information', 5, 0, 0, 0, 0, 5)
+
+
+def test_update_transformations(sample_stream_workbook, mocker, mocked_responses):
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464/transformations',
+        json=[
+            {'id': 'STRA-774-870-217-449-001'},
+            {'id': 'STRA-774-870-217-449-002'},
+        ],
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-001',
+        json={
+            'id': 'STRA-774-870-217-449-001',
+            'settings': {
+                'from': 'id',
+                'regex': {
+                    'groups': {'1': {'name': 'first_name', 'type': 'string'}},
+                    'pattern': '(?P<first_name>\\w+)',
+                },
+            },
+            'description': 'Old description',
+            'position': 10000,
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-002',
+        json={
+            'id': 'STRA-774-870-217-449-002',
+            'settings': {
+                'additional_values': [],
+                'from': 'position',
+                'match_condition': True,
+                'value': '200',
+            },
+            'description': 'edeeasd',
+            'position': 20000,
+        },
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-001',
+        status=200,
+    )
+
+    results = []
+    errors = []
+    update_transformations(
+        client=client,
+        collection='billing',
+        stream_id='STR-7755-7115-2464',
+        sheet=sample_stream_workbook['Transformations'],
+        results=results,
+        errors=errors,
+        progress=mocker.MagicMock(),
+    )
+
+    assert len(errors) == 0
+    assert len(results) == 1
+    assert results[0] == ('Transformations', 2, 0, 1, 0, 0, 0)
+
+
+def test_update_transformations_not_exists(sample_stream_workbook, mocker, mocked_responses):
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-001',
+        status=404,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-002',
+        status=404,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464/transformations',
+        json=[],
+    )
+
+    results = []
+    errors = []
+    update_transformations(
+        client=client,
+        collection='billing',
+        stream_id='STR-7755-7115-2464',
+        sheet=sample_stream_workbook['Transformations'],
+        results=results,
+        errors=errors,
+        progress=mocker.MagicMock(),
+    )
+
+    assert len(errors) == 2
+    assert (
+        'The transformation STRA-774-870-217-449-001'
+        ' cannot be updated because it does not exist.'
+    ) in errors
+    assert (
+        'The transformation STRA-774-870-217-449-002'
+        ' cannot be updated because it does not exist.'
+    ) in errors
+
+    assert results[0] == ('Transformations', 2, 0, 0, 0, 0, 2)
+
+
+def test_update_transformations_with_errors(sample_stream_workbook, mocker, mocked_responses):
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-001',
+        json={
+            'id': 'STRA-774-870-217-449-001',
+            'settings': {
+                'from': 'id',
+                'regex': {
+                    'groups': {'1': {'name': 'first_name', 'type': 'string'}},
+                    'pattern': '(?P<first_name>\\w+)',
+                },
+            },
+            'description': 'Old description',
+            'position': 10000,
+        },
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-001',
+        status=400,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-002',
+        status=404,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464/transformations',
+        json=[{'id': 'STRA-774-870-217-449-003'}],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/billing/streams/STR-7755-7115-2464'
+        '/transformations/STRA-774-870-217-449-003',
+        status=500,
+    )
+
+    results = []
+    errors = []
+    update_transformations(
+        client=client,
+        collection='billing',
+        stream_id='STR-7755-7115-2464',
+        sheet=sample_stream_workbook['Transformations'],
+        results=results,
+        errors=errors,
+        progress=mocker.MagicMock(),
+    )
+
+    assert len(errors) == 3
+    assert results[0] == ('Transformations', 2, 0, 0, 0, 0, 3)
+
+
+def test_update_attachments_with_errors(sample_stream_workbook, mocker, mocked_responses):
+    client = ConnectClient(
+        api_key='ApiKey X',
+        endpoint='https://localhost/public/v1',
+        use_specs=False,
+    )
+
+    mocker.patch('connect.cli.plugins.commerce.utils.upload_attachment', side_effect=ClientError())
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7755-7115-2464'
+        '/files?eq(id,ID)&limit=0&offset=0',
+        headers={'Content-Range': 'items 0-0/0'},
+        status=200,
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7755-7115-2464'
+        '/files?eq(id,ID-EXISTS)&limit=0&offset=0',
+        headers={'Content-Range': 'items 0-0/0'},
+        status=200,
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/'
+        'STR-7755-7115-2464/files',
+        json=[{'id': 'MLF-123'}],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7755-7115-2464'
+        '/files/MLF-123',
+        status=400,
+    )
+
+    results = []
+    errors = []
+    update_attachments(
+        client=client,
+        stream_id='STR-7755-7115-2464',
+        sheet=sample_stream_workbook['Attachments'],
+        results=results,
+        errors=errors,
+        progress=mocker.MagicMock(),
+    )
+
+    assert len(errors) == 3
+    assert results[0] == ('Attachment files', 2, 0, 0, 0, 0, 3)

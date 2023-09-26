@@ -68,6 +68,7 @@ You can download its zip file from the [Github Releases](https://github.com/clou
 * [Reports](docs/reports_usage.md)
 * [Translations](docs/translations_usage.md)
 * [Projects](docs/project_usage.md)
+* [Streams](docs/stream_usage.md)
 
 
 ## Development

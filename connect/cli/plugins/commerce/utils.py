@@ -636,7 +636,7 @@ def print_results(results):
     )
 
 
-def print_errors(errors):
+def print_errors(errors):  # pragma: no cover
     if errors:
         console.confirm(
             'Are you sure you want to display errors?',
@@ -886,7 +886,7 @@ def update_general_information(
         )
         .first()
     )
-    body = {}
+    body = {'context': {}}
     updated = 0
     errors_on_update = 0
     for n in range(2, sheet.max_row + 1):
@@ -901,31 +901,24 @@ def update_general_information(
             h.value == 'Product ID'
             and stream.get('context', {}).get('product', {}).get('id', None) != v.value
         ):
-            if 'context' in body:
-                body['context'].update({'product': {'id': v.value}})
-            else:
-                body['context'] = {'product': {'id': v.value}}
+            body['context']['product'] = {'id': v.value}
             updated += 1
         elif (
             h.value == 'Partner ID'
             and stream.get('context', {}).get('account', {}).get('id', None) != v.value
         ):
-            if 'context' in body:
-                body['context'].update({'account': {'id': v.value}})
-            else:
-                body['context'] = {'account': {'id': v.value}}
+            body['context']['account'] = {'id': v.value}
             updated += 1
         elif (
             h.value == 'Marketplace ID'
             and stream.get('context', {}).get('marketplace', {}).get('id', None) != v.value
         ):
-            if 'context' in body:
-                body['context'].update({'marketplace': {'id': v.value}})
-            else:
-                body['context'] = {'marketplace': {'id': v.value}}
+            body['context']['marketplace'] = {'id': v.value}
             updated += 1
 
     if updated:
+        if not body['context']:
+            del body['context']
         try:
             client.ns(collection).streams[stream_id].update(
                 json=body,
@@ -959,7 +952,7 @@ def update_transformations(
         origin_trf = None
         try:
             origin_trf = client.ns(collection).streams[stream_id].transformations[id.value].get()
-        except ClientError as e:
+        except ClientError:
             errors.append(
                 f'The transformation {id.value} cannot be updated because it does not exist.'
             )
@@ -968,14 +961,14 @@ def update_transformations(
 
         try:
             to_update = {}
-            if origin_trf['settings'] != settings.value:
-                to_update['settings'] = settings.value
+            if origin_trf['settings'] != json.loads(settings.value):
+                to_update['settings'] = json.loads(settings.value)
             if descr.value and (
                 'description' not in origin_trf or origin_trf['description'] != descr.value
             ):
                 to_update['description'] = descr.value
-            if origin_trf['position'] != position.value:
-                to_update['position'] = position.value
+            if int(origin_trf['position']) != position.value:
+                to_update['position'] = int(position.value)
 
             if to_update:
                 client.ns(collection).streams[stream_id].transformations[id.value].update(
@@ -983,7 +976,7 @@ def update_transformations(
                 )
                 updated += 1
             progress.update(task, advance=1)
-        except ClientError as e:
+        except ClientError:
             errors.append(f'Error updating the transformation {id.value} with data {to_update}.')
 
     try:
@@ -995,7 +988,7 @@ def update_transformations(
                 client.ns(collection).streams[stream_id].transformations[cid].delete()
                 deleted += 1
     except ClientError as e:
-        errors.append(f'Error deleting the transformation {id.value}.')
+        errors.append(f'Error deleting the transformation {e}.')
 
     results.append(('Transformations', sheet.max_row - 1, 0, updated, deleted, 0, len(errors)))
 
