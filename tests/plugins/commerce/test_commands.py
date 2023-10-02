@@ -847,9 +847,10 @@ def test_sync_stream(
 
     with open('./tests/fixtures/commerce/stream_retrieve_response.json') as content:
         response = json.load(content)[0]
+        response['status'] = 'configuring'
         mocked_responses.add(
             method='GET',
-            url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&select(context,samples,sources)&limit=1&offset=0',
+            url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&select(context,samples,sources,validation)&limit=1&offset=0',
             json=[response],
         )
     mocked_responses.add(
@@ -969,3 +970,50 @@ def test_sync_stream_no_stream(
 
     assert result.exit_code == 1
     assert 'Stream STR-7748-7021-7449 not found for the current account VA-000.' in result.output
+
+
+def test_sync_stream_active_stream(
+    mocker,
+    ccli,
+    mocked_responses,
+    config_mocker,
+    load_stream_sync,
+):
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.get_work_book',
+        return_value=load_stream_sync,
+    )
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.upload_attachment',
+        return_value={'id': 'ID'},
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&limit=0&offset=0',
+        headers={
+            'Content-Range': 'items 0-1/1',
+        },
+    )
+
+    with open('./tests/fixtures/commerce/stream_retrieve_response.json') as content:
+        response = json.load(content)[0]
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&select(context,samples,sources,validation)&limit=1&offset=0',
+            json=[response],
+        )
+
+    runner = CliRunner()
+    cmd = [
+        'commerce',
+        'stream',
+        'sync',
+        'STR-7748-7021-7449',
+    ]
+    result = runner.invoke(
+        ccli,
+        cmd,
+    )
+
+    assert result.exit_code == 1
+    assert 'Stream STR-7748-7021-7449 cannot be updated because it is in "active"' in result.output

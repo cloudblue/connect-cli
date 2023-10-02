@@ -337,7 +337,7 @@ def test_update_general_information_error(sample_stream_workbook, mocker, mocked
         method='GET',
         url='https://localhost/public/v1/billing/streams?'
         'eq(id,STR-7755-7115-2464)&select(context,samples,sources)&limit=1&offset=0',
-        json=[{'name': 'Name', 'description': 'Description'}],
+        json=[{'name': 'Name', 'description': 'Description', 'status': 'configuring'}],
     )
 
     mocked_responses.add(

@@ -280,7 +280,7 @@ def export_stream(
             data={
                 'Stream ID': stream_id,
                 'Stream Name': response['name'],
-                'Stream Description': response['description'],
+                'Stream Description': response.get('description'),
                 'Stream Type': stream_type,
                 'Stream Category': 'Inbound'
                 if response['owner']['id'] != active_account_id
@@ -883,9 +883,17 @@ def update_general_information(
             'context',
             'samples',
             'sources',
+            'validation',
         )
         .first()
     )
+
+    if stream['status'] == 'active' or stream.get('validation', {}).get('status') == 'processing':
+        raise ClickException(
+            f'Stream {stream_id} cannot be updated because it is in "active" status '
+            f'or validation is processing.',
+        )
+
     body = {'context': {}}
     updated = 0
     errors_on_update = 0
@@ -894,7 +902,7 @@ def update_general_information(
         if h.value == 'Stream Name' and stream['name'] != v.value:
             body['name'] = v.value
             updated += 1
-        elif h.value == 'Stream Description' and stream['description'] != v.value:
+        elif h.value == 'Stream Description' and stream.get('description') != v.value:
             body['description'] = v.value
             updated += 1
         elif (
@@ -963,9 +971,7 @@ def update_transformations(
             to_update = {}
             if origin_trf['settings'] != json.loads(settings.value):
                 to_update['settings'] = json.loads(settings.value)
-            if descr.value and (
-                'description' not in origin_trf or origin_trf['description'] != descr.value
-            ):
+            if origin_trf.get('description') != descr.value:
                 to_update['description'] = descr.value
             if int(origin_trf['position']) != position.value:
                 to_update['position'] = int(position.value)
