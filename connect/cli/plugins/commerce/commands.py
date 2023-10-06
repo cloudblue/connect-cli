@@ -14,7 +14,9 @@ from connect.cli.plugins.commerce.utils import (
     display_streams_table,
     export_stream,
     get_destination_account,
+    print_errors,
     print_results,
+    sync_stream,
 )
 
 
@@ -163,6 +165,34 @@ def cmd_clone_stream(
     console.echo('')
 
     print_results(results)
+
+
+@grp_commerce_streams.command(
+    name='sync',
+    short_help='Synchronize a stream from an excel file.',
+)
+@click.argument('input_file', metavar='input_file', nargs=1, required=True)  # noqa: E304
+@pass_config
+def cmd_sync_stream(config, input_file):
+    stream_id = None
+    if '.xlsx' not in input_file:
+        stream_id = input_file
+        input_file = f'{input_file}/{input_file}.xlsx'
+    else:
+        stream_id = input_file.split('/')[-1].split('.')[0]
+    results, errors = sync_stream(
+        account=config.active,
+        stream_id=stream_id,
+        input_file=input_file,
+    )
+
+    console.echo('')
+
+    print_results(results)
+
+    console.echo('')
+
+    print_errors(errors)
 
 
 def get_group():

@@ -820,3 +820,200 @@ def test_clone_destination_account_not_found(
     assert result.output == (
         'Current active account: VA-000 - Account 0\n\nError: Error obtaining the destination account id VA-666\n'
     )
+
+
+def test_sync_stream(
+    mocker,
+    ccli,
+    mocked_responses,
+    config_mocker,
+    load_stream_sync,
+):
+    mocked_get_work_book = mocker.patch(
+        'connect.cli.plugins.commerce.utils.get_work_book',
+        return_value=load_stream_sync,
+    )
+    mocked_upload_attachment = mocker.patch(
+        'connect.cli.plugins.commerce.utils.upload_attachment',
+        return_value={'id': 'ID'},
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&limit=0&offset=0',
+        headers={
+            'Content-Range': 'items 0-1/1',
+        },
+    )
+
+    with open('./tests/fixtures/commerce/stream_retrieve_response.json') as content:
+        response = json.load(content)[0]
+        response['status'] = 'configuring'
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&select(context,samples,sources,validation)&limit=1&offset=0',
+            json=[response],
+        )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449',
+        json=[],
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations/STRA-774-870-217-449-001',
+        json={'settings': {'some': 'settings'}, 'description': 'description', 'position': 50},
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations/STRA-774-870-217-449-001',
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations/STRA-774-870-217-449-002',
+        json={'settings': {'some': 'settings'}, 'description': 'description', 'position': 60},
+    )
+    mocked_responses.add(
+        method='PUT',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations/STRA-774-870-217-449-002',
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations',
+        json=[
+            {'id': 'STRA-774-870-217-449-001'},
+            {'id': 'STRA-774-870-217-449-002'},
+            {'id': 'STRA-774-870-217-449-003'},
+        ],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/billing/streams/STR-7748-7021-7449/transformations/STRA-774-870-217-449-003',
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7748-7021-7449/files?eq(id,ID)&limit=0&offset=0',
+        headers={
+            'Content-Range': 'items 0-0/0',
+        },
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7748-7021-7449/files?eq(id,ID-EXISTS)&limit=0&offset=0',
+        headers={
+            'Content-Range': 'items 0-1/1',
+        },
+    )
+
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7748-7021-7449/files?limit=100&offset=0',
+        json=[{'id': 'ID-EXISTS'}, {'id': 'DO-NOT-EXIST'}],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/media/folders/streams_attachments/STR-7748-7021-7449/files/DO-NOT-EXIST',
+        status=204,
+    )
+
+    mocked_cmd_console = mocker.patch(
+        'connect.cli.plugins.commerce.commands.console',
+    )
+    runner = CliRunner()
+    cmd = [
+        'commerce',
+        'stream',
+        'sync',
+        'STR-7748-7021-7449',
+    ]
+    result = runner.invoke(
+        ccli,
+        cmd,
+    )
+
+    mocked_upload_attachment.assert_called_with(
+        mocker.ANY,
+        'STR-7748-7021-7449',
+        'STR-7748-7021-7449/attachments/attachment.xlsx',
+    )
+
+    assert result.exit_code == 0
+    assert mocked_cmd_console.echo.call_count == 2
+
+
+def test_sync_stream_no_stream(
+    mocker,
+    ccli,
+    config_mocker,
+):
+    mocker.patch('connect.cli.plugins.commerce.commands.console')
+    mocker.patch('connect.cli.plugins.commerce.utils.get_work_book')
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.guess_if_billing_or_pricing_stream',
+        return_value=None,
+    )
+    runner = CliRunner()
+    cmd = [
+        'commerce',
+        'stream',
+        'sync',
+        'STR-7748-7021-7449',
+    ]
+    result = runner.invoke(
+        ccli,
+        cmd,
+    )
+
+    assert result.exit_code == 1
+    assert 'Stream STR-7748-7021-7449 not found for the current account VA-000.' in result.output
+
+
+def test_sync_stream_active_stream(
+    mocker,
+    ccli,
+    mocked_responses,
+    config_mocker,
+    load_stream_sync,
+):
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.get_work_book',
+        return_value=load_stream_sync,
+    )
+    mocker.patch(
+        'connect.cli.plugins.commerce.utils.upload_attachment',
+        return_value={'id': 'ID'},
+    )
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&limit=0&offset=0',
+        headers={
+            'Content-Range': 'items 0-1/1',
+        },
+    )
+
+    with open('./tests/fixtures/commerce/stream_retrieve_response.json') as content:
+        response = json.load(content)[0]
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/billing/streams?eq(id,STR-7748-7021-7449)&select(context,samples,sources,validation)&limit=1&offset=0',
+            json=[response],
+        )
+
+    runner = CliRunner()
+    cmd = [
+        'commerce',
+        'stream',
+        'sync',
+        'STR-7748-7021-7449',
+    ]
+    result = runner.invoke(
+        ccli,
+        cmd,
+    )
+
+    assert result.exit_code == 1
+    assert 'Stream STR-7748-7021-7449 cannot be updated because it is in "active"' in result.output
