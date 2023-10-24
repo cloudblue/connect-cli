@@ -681,95 +681,112 @@ def _dump_capabilities(ws, product, progress):  # noqa: CCR001
     ws['B2'].value = '-'
     ws['C2'].value = ppu['schema'] if ppu else 'Disabled'
     ppu_validation.add(ws['C2'])
+
     ws['A3'].value = 'Pay-as-you-go dynamic items support'
     ws['B3'].value = '-'
     ws['C3'].value = 'Enabled' if ppu and 'dynamic' in ppu and ppu['dynamic'] else 'Disabled'
     disabled_enabled.add(ws['C3'])
+
     ws['A4'].value = 'Pay-as-you-go future charges support'
     ws['B4'].value = '-'
     ws['C4'].value = 'Enabled' if ppu and 'future' in ppu and ppu['future'] else 'Disabled'
     disabled_enabled.add(ws['C4'])
-    ws['A5'].value = 'Consumption reporting for Reservation Items'
+
+    ws['A5'].value = 'Pay-as-you-go late charges support'
     ws['B5'].value = '-'
-    ws['C5'].value = 'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
+    ws['C5'].value = 'Enabled' if ppu and 'late' in ppu and ppu['late'] else 'Disabled'
     disabled_enabled.add(ws['C5'])
+
+    ws['A6'].value = 'Consumption reporting for Reservation Items'
+    ws['B6'].value = '-'
+    ws['C6'].value = 'Enabled' if capabilities['reservation']['consumption'] else 'Disabled'
+    disabled_enabled.add(ws['C6'])
 
     def _get_reporting_consumption(reservation_cap):
         if 'consumption' in reservation_cap and reservation_cap['consumption']:
             return 'Enabled'
         return 'Disabled'
 
-    ws['C5'].value = _get_reporting_consumption(capabilities['reservation'])
-    disabled_enabled.add(ws['C5'])
-    ws['A6'].value = 'Dynamic Validation of the Draft Requests'
-    ws['B6'].value = '-'
+    ws['C6'].value = _get_reporting_consumption(capabilities['reservation'])
+    disabled_enabled.add(ws['C6'])
+
+    ws['A7'].value = 'Dynamic Validation of the Draft Requests'
+    ws['B7'].value = '-'
 
     def _get_dynamic_validation_draft(capabilities_cart):
         if 'validation' in capabilities_cart and capabilities['cart']['validation']:
             return 'Enabled'
         return 'Disabled'
 
-    ws['C6'].value = _get_dynamic_validation_draft(capabilities['cart'])
-    disabled_enabled.add(ws['C6'])
-    ws['A7'].value = 'Dynamic Validation of the Inquiring Form'
-    ws['B7'].value = '-'
+    ws['C7'].value = _get_dynamic_validation_draft(capabilities['cart'])
+    disabled_enabled.add(ws['C7'])
+
+    ws['A8'].value = 'Dynamic Validation of the Inquiring Form'
+    ws['B8'].value = '-'
 
     def _get_validation_inquiring(capabilities_inquiring):
         if 'validation' in capabilities_inquiring and capabilities_inquiring['validation']:
             return 'Enabled'
         return 'Disabled'
 
-    ws['C7'].value = _get_validation_inquiring(capabilities['inquiring'])
-    disabled_enabled.add(ws['C7'])
-    ws['A8'].value = 'Reseller Authorization Level'
-    ws['B8'].value = '-'
+    ws['C8'].value = _get_validation_inquiring(capabilities['inquiring'])
+    disabled_enabled.add(ws['C8'])
+
+    ws['A9'].value = 'Reseller Authorization Level'
+    ws['B9'].value = '-'
 
     def _get_reseller_authorization_level(tiers):
         if tiers and 'configs' in tiers and tiers['configs']:
             return tiers['configs']['level']
         return 'Disabled'
 
-    ws['C8'].value = _get_reseller_authorization_level(tiers)
-    tier_validation.add(ws['C8'])
-    ws['A9'].value = 'Tier Accounts Sync'
-    ws['B9'].value = '-'
-    ws['C9'].value = 'Enabled' if tiers and 'updates' in tiers and tiers['updates'] else 'Disabled'
-    disabled_enabled.add(ws['C9'])
-    ws['A10'].value = 'Administrative Hold'
-    ws['B10'].value = '-'
+    ws['C9'].value = _get_reseller_authorization_level(tiers)
+    tier_validation.add(ws['C9'])
 
-    ws['A11'].value = 'Dynamic Validation of Tier Requests'
+    ws['A10'].value = 'Tier Accounts Sync'
+    ws['B10'].value = '-'
+    ws['C10'].value = 'Enabled' if tiers and 'updates' in tiers and tiers['updates'] else 'Disabled'
+    disabled_enabled.add(ws['C10'])
+
+    ws['A11'].value = 'Administrative Hold'
     ws['B11'].value = '-'
-    ws['C11'].value = 'Enabled' if capabilities['tiers']['validation'] else 'Disabled'
-    disabled_enabled.add(ws['C11'])
-    ws['A12'].value = 'Editable Ordering Parameters in Change Request'
-    ws['B12'].value = '-'
-    ws['C12'].value = (
-        'Enabled' if subscription['change']['editable_ordering_parameters'] else 'Disabled'
-    )
-    disabled_enabled.add(ws['C12'])
-    ws['A13'].value = 'Validation of Draft Change Request'
-    ws['B13'].value = '-'
-    ws['C13'].value = 'Enabled' if 'validation' in change and change['validation'] else 'Disabled'
-    disabled_enabled.add(ws['C13'])
-    ws['A14'].value = 'Validation of inquiring form for Change Requests'
-    ws['B14'].value = '-'
-    ws['C14'].value = (
-        'Enabled'
-        if 'inquiring_validation' in change and change['inquiring_validation']
-        else 'Disabled'
-    )
-    disabled_enabled.add(ws['C14'])
 
     def _get_administrative_hold(capabilities):
         if 'hold' in capabilities['subscription'] and capabilities['subscription']['hold']:
             return 'Enabled'
         return 'Disabled'
 
-    ws['C10'].value = _get_administrative_hold(capabilities)
-    disabled_enabled.add(ws['C10'])
+    ws['C11'].value = _get_administrative_hold(capabilities)
+    disabled_enabled.add(ws['C11'])
+
+    ws['A12'].value = 'Dynamic Validation of Tier Requests'
+    ws['B12'].value = '-'
+    ws['C12'].value = 'Enabled' if capabilities['tiers']['validation'] else 'Disabled'
+    disabled_enabled.add(ws['C12'])
+
+    ws['A13'].value = 'Editable Ordering Parameters in Change Request'
+    ws['B13'].value = '-'
+    ws['C13'].value = (
+        'Enabled' if subscription['change']['editable_ordering_parameters'] else 'Disabled'
+    )
+    disabled_enabled.add(ws['C13'])
+
+    ws['A14'].value = 'Validation of Draft Change Request'
+    ws['B14'].value = '-'
+    ws['C14'].value = 'Enabled' if 'validation' in change and change['validation'] else 'Disabled'
+    disabled_enabled.add(ws['C14'])
+
+    ws['A15'].value = 'Validation of inquiring form for Change Requests'
+    ws['B15'].value = '-'
+    ws['C15'].value = (
+        'Enabled'
+        if 'inquiring_validation' in change and change['inquiring_validation']
+        else 'Disabled'
+    )
+    disabled_enabled.add(ws['C15'])
+
     idx = 2
-    while idx < 11:
+    while idx < 12:
         action_validation.add(f'B{idx}')
         idx = idx + 1
 
