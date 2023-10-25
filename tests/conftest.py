@@ -285,6 +285,7 @@ def get_sync_capabilities_env_ppu_enabled(fs, mocked_responses):
             'schema': 'QT',
             'dynamic': False,
             'future': False,
+            'late': False,
             'predictive': False,
         }
         mocked_responses.add(

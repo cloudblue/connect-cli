@@ -48,11 +48,13 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                                     'schema': data.value,
                                     'dynamic': False,
                                     'future': False,
+                                    'late': False,
                                 }
                             else:
                                 product['capabilities']['ppu']['schema'] = data.value
                         else:
                             product['capabilities']['ppu'] = None
+
                     if data.capability == 'Pay-as-you-go dynamic items support':
                         if not product['capabilities'].get('ppu', False):
                             if data.value == 'Enabled':
@@ -66,6 +68,7 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                                 product['capabilities']['ppu']['dynamic'] = True
                             else:
                                 product['capabilities']['ppu']['dynamic'] = False
+
                     if data.capability == 'Pay-as-you-go future charges support':
                         if not product['capabilities'].get('ppu', False):
                             if data.value == 'Enabled':
@@ -80,6 +83,22 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                                 product['capabilities']['ppu']['future'] = True
                             else:
                                 product['capabilities']['ppu']['future'] = False
+
+                    if data.capability == 'Pay-as-you-go late charges support':
+                        if not product['capabilities'].get('ppu', False):
+                            if data.value == 'Enabled':
+                                raise Exception(
+                                    "Report of late charges can't be enabled without Pay-as-you-go "
+                                    'support',
+                                )
+                            update = False
+
+                        else:
+                            if data.value == 'Enabled':
+                                product['capabilities']['ppu']['late'] = True
+                            else:
+                                product['capabilities']['ppu']['late'] = False
+
                     if data.capability == 'Consumption reporting for Reservation Items':
                         if data.value == 'Enabled':
                             product['capabilities']['reservation']['consumption'] = True
@@ -105,21 +124,25 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             product['capabilities']['tiers']['configs'] = {
                                 'level': data.value,
                             }
+
                     if data.capability == 'Tier Accounts Sync':
                         if data.value == 'Enabled':
                             product['capabilities']['tiers']['updates'] = True
                         else:
                             product['capabilities']['tiers']['updates'] = False
+
                     if data.capability == 'Administrative Hold':
                         if data.value == 'Enabled':
                             product['capabilities']['subscription']['hold'] = True
                         else:
                             product['capabilities']['subscription']['hold'] = False
+
                     if data.capability == 'Dynamic Validation of Tier Requests':
                         if data.value == 'Enabled':
                             product['capabilities']['tiers']['validation'] = True
                         else:
                             product['capabilities']['tiers']['validation'] = False
+
                     if data.capability == 'Editable Ordering Parameters in Change Request':
                         if data.value == 'Enabled':
                             product['capabilities']['subscription']['change'][
@@ -129,11 +152,13 @@ class CapabilitiesSynchronizer(ProductSynchronizer):
                             product['capabilities']['subscription']['change'][
                                 'editable_ordering_parameters'
                             ] = False
+
                     if data.capability == 'Validation of Draft Change Request':
                         if data.value == 'Enabled':
                             product['capabilities']['subscription']['change']['validation'] = True
                         else:
                             product['capabilities']['subscription']['change']['validation'] = False
+
                     if data.capability == 'Validation of inquiring form for Change Requests':
                         if data.value == 'Enabled':
                             product['capabilities']['subscription']['change'][

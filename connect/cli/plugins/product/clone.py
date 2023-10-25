@@ -176,7 +176,7 @@ class ProductCloner:
 
     def clean_wb(self):
         ws = self.wb['Capabilities']
-        for row in range(2, 11):
+        for row in range(2, 12):
             ws[f'B{row}'].value = 'update'
 
         ws = self.wb['Embedding Static Resources']
