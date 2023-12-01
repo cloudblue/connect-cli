@@ -82,7 +82,7 @@ class TranslationAttributesSynchronizer:
         new_attrs = None
         if is_clone and translation is not None:
             translation_res = self._client.ns('localization').translations[translation['id']]
-            new_attrs = translation_res.attributes.all()
+            new_attrs = list(translation_res.attributes.all())
         attributes = {}
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
             row = AttributeRow(*row)
