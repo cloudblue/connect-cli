@@ -11,7 +11,7 @@ export const prepareMarketplaces = (marketplaces) => {
           <img src="${marketplace.icon}" alt="Thumbnail">
         </div>
         <div class="list-item-content">
-          <h4>${marketplace.id} - ${marketplace.name}</h4>
+          <h4><a class="marketplace-link" id="${marketplace.id}">${marketplace.id}</a> - ${marketplace.name}</h4>
           <p>${marketplace.description}</p>
         </div>
       </li>`, '');
@@ -25,7 +25,7 @@ export const prepareMarketplacesWithSwitch = (marketplaces) => {
           <img src="${marketplace.icon}" alt="Thumbnail">
         </div>
         <div class="list-item-content">
-          <h4>${marketplace.name}</h4>
+          <h4><a class="marketplace-link" id="${marketplace.id}">${marketplace.name}</a></h4>
           <p>${marketplace.description}</p>
         </div>
         <div class="list-item switch">

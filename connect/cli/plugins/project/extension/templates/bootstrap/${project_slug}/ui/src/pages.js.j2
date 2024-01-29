@@ -2,6 +2,12 @@
 Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
+{%- if extension_type != 'transformations' %}
+import {
+  connectPortalRoutes,
+} from '@cloudblueconnect/connect-ui-toolkit';
+
+{%- endif %}
 import {
   {%- if 'tfnapp' in application_types %}
   validate,
@@ -57,7 +63,7 @@ export const saveSettingsData = async (app) => {
   enableButton('save', 'Save');
 };
 
-export const index = async () => {
+export const index = async (app) => {
   hideComponent('app');
   showComponent('loader');
   const settings = await getSettings();
@@ -68,6 +74,13 @@ export const index = async () => {
   showComponent('app');
   renderChart(chart);
   renderMarketplaces(marketplaces);
+
+  // Add navigation to each marketplace element
+  document.querySelectorAll('.marketplace-link').forEach(el => {
+    el.addEventListener('click', () => {
+      app.navigateTo(connectPortalRoutes.marketplaceDetails, el.id);
+    });
+  });
 };
 
 export const settings = async (app) => {
@@ -84,6 +97,13 @@ export const settings = async (app) => {
     enableButton('save', 'Save');
     addEventListener('save', 'click', saveSettingsData.bind(null, app));
     showComponent('app');
+
+    // Add navigation to each marketplace element
+    document.querySelectorAll('.marketplace-link').forEach(el => {
+      el.addEventListener('click', () => {
+        app.navigateTo(connectPortalRoutes.marketplaceDetails, el.id);
+      });
+    });
   } catch (error) {
     app.emit('snackbar:error', error);
     showComponent('error');

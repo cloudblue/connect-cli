@@ -2,12 +2,14 @@
 Copyright (c) {% now 'utc', '%Y' %}, {{ author }}
 All rights reserved.
 */
+/* global __dirname */
 const path = require('path');
 const htmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 
 const generateHtmlPlugin = (title) => {
   const moduleName = title.toLowerCase();
@@ -16,44 +18,41 @@ const generateHtmlPlugin = (title) => {
     title,
     filename: `${moduleName}.html`,
     template: `./ui/pages/${moduleName}.html`,
-    chunks: [moduleName]
+    chunks: [moduleName],
   });
-}
+};
 
-const populateHtmlPlugins = (pagesArray) => {
-  res = [];
-  pagesArray.forEach(page => {
-    res.push(generateHtmlPlugin(page));
-  })
-  return res;
-}
+const populateHtmlPlugins = (pagesArray) => pagesArray.map(page => generateHtmlPlugin(page));
 
 const pages = populateHtmlPlugins([
   {%- if 'tfnapp' in application_types %}
-  "Transformations/Copy",
-  "Transformations/Manual",
+  'Transformations/Copy',
+  'Transformations/Manual',
   {%- else %}
-  "Index",
-  "Settings",
+  'Index',
+  'Settings',
   {%- endif %}
- ]);
+]);
 
 module.exports = {
   mode: 'production',
+
   entry: {
     {%- if 'tfnapp' in application_types %}
-    ['transformations/copy']: __dirname + "/ui/src/pages/transformations/copy.js",
-    ['transformations/manual']: __dirname + "/ui/src/pages/transformations/manual.js",
+    'transformations/copy': path.resolve(__dirname, '/ui/src/pages/transformations/copy.js'),
+    'transformations/manual': path.resolve(__dirname, '/ui/src/pages/transformations/manual.js'),
     {%- else %}
-    index: __dirname + "/ui/src/pages/index.js",
-    settings: __dirname + "/ui/src/pages/settings.js",
+    index: path.resolve(__dirname, '/ui/src/pages/index.js'),
+    settings: path.resolve(__dirname, '/ui/src/pages/settings.js'),
     {%- endif %}
   },
+
   output: {
     filename: '[name].[contenthash].js',
     path: path.resolve(__dirname, '{{ package_name }}/static'),
     clean: true,
   },
+
   optimization: {
     splitChunks: {
       cacheGroups: {
@@ -64,41 +63,43 @@ module.exports = {
         },
       },
     },
-     minimizer: [
+
+    minimizer: [
       new CssMinimizerPlugin(),
     ],
   },
+
   plugins: [
     ...pages,
+
     new CopyWebpackPlugin({
-      patterns: [
-        { from: __dirname + "/ui/images", to: "images" },
-      ],
+      patterns: [{
+        from: __dirname + '/ui/images',
+        to: 'images',
+      }],
     }),
+
     new MiniCssExtractPlugin({
-      filename: "[name].[contenthash].css",
-      chunkFilename: "[id].css",
+      filename: '[name].[contenthash].css',
+      chunkFilename: '[id].css',
     }),
+
     new ESLintPlugin(),
   ],
+
   module: {
     rules: [
       {
         test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, "css-loader"],
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
       {
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[name].[ext]',
-              outputPath: 'fonts/'
-            },
-          },
-        ],
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name].[ext]',
+        },
       },
     ],
   },
-}
+};
