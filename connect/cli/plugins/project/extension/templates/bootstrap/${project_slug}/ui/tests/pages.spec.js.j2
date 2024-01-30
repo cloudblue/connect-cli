@@ -61,7 +61,7 @@ describe('pages.js', () => {
   describe('index', () => {
     beforeAll(() => {
       document.body.innerHTML = `<div id="app">
-        <main-card title="Distribution of active subscriptions per marketplace">
+        <ui-card title="Distribution of active subscriptions per marketplace">
             <div class="main-container">
                 <div id="chart">
                 </div>
@@ -72,7 +72,7 @@ describe('pages.js', () => {
                     </div>
                 </div>
             </div>
-        </main-card>
+        </ui-card>
     </div>`;
     });
     beforeEach(async () => {
@@ -114,13 +114,13 @@ describe('pages.js', () => {
   describe('settings', () => {
     beforeAll(() => {
       document.body.innerHTML = `<div id="app">
-        <main-card title="Settings">
+        <ui-card title="Settings">
             <div class="main-container">
                 <div id="settings">
                 </div>
             </div>
             <button id="save" class="btn btn-primary">Save</button>
-        </main-card>
+        </ui-card>
     </div>`;
     });
     describe('app is not passed', () => {
