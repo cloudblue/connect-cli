@@ -310,6 +310,18 @@ def get_sync_translations_env(fs, mocked_responses):
 
 
 @pytest.fixture(scope='function')
+def get_sync_messages_env(fs, mocked_responses):
+    with open('./tests/fixtures/product_response.json') as prod_response:
+        mocked_responses.add(
+            method='GET',
+            url='https://localhost/public/v1/products/PRD-276-377-545',
+            json=json.load(prod_response),
+        )
+
+        return load_workbook('./tests/fixtures/messages_sync.xlsx')
+
+
+@pytest.fixture(scope='function')
 def mocked_reports(fs):
     with open('./tests/fixtures/reports.json') as response:
         return json.load(response)
@@ -357,6 +369,12 @@ def mocked_translation_attributes_xlsx_response():
 @pytest.fixture(scope='function')
 def mocked_translation_attributes_response():
     with open('./tests/fixtures/translation_attributes_response.json') as response:
+        return json.load(response)
+
+
+@pytest.fixture(scope='function')
+def mocked_product_messages_response():
+    with open('./tests/fixtures/product_messages_response.json') as response:
         return json.load(response)
 
 

@@ -12,6 +12,7 @@ from connect.cli.plugins.product.sync import (
     GeneralSynchronizer,
     ItemSynchronizer,
     MediaSynchronizer,
+    MessageSynchronizer,
     ParamsSynchronizer,
     TemplatesSynchronizer,
 )
@@ -134,6 +135,14 @@ class ProductCloner:
                 is_clone=True,
             )
 
+            synchronizer = MessageSynchronizer(
+                self.config.active.client,
+                self.progress,
+                self.stats,
+            )
+            synchronizer.open(input_file, 'Messages')
+            synchronizer.sync()
+
             self.config.activate(self.source_account)
         except ClientError as e:
             raise ClickException(f'Error while cloning product: {str(e)}')
@@ -229,6 +238,12 @@ class ProductCloner:
                 value = '-'
             for row in range(2, ws.max_row + 1):
                 ws[f'C{row}'].value = value
+
+        ws = self.wb['Messages']
+        for row in range(2, ws.max_row + 1):
+            ws[f'A{row}'].value = ''
+            ws[f'B{row}'].value = 'create'
+
         self.wb.save(f'{self.fs.root_path}/{self.product_id}/{self.product_id}.xlsx')
 
     @staticmethod

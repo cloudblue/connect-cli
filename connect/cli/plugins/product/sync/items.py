@@ -135,7 +135,7 @@ class ItemSynchronizer(ProductSynchronizer):
                     field = 'ID' if data.id else 'MPN'
                     value = data.id if data.id else data.mpn
                     self._mstats.error(
-                        f'Cannot update item: item with {field} `{value}` '
+                        f'Cannot delete item: item with {field} `{value}` '
                         f'the item does not exist.',
                         row_idx,
                     )

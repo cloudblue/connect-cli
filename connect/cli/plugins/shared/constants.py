@@ -113,3 +113,11 @@ TRANSLATION_HEADERS = {
     'M': 'Created',
     'N': 'Updated',
 }
+
+MESSAGES_HEADERS = {
+    'A': 'ID',
+    'B': 'Action',
+    'C': 'External ID',
+    'D': 'Value',
+    'E': 'Auto',
+}

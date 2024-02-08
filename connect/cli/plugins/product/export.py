@@ -174,11 +174,12 @@ def _setup_ws_header(ws, ws_type=None):  # noqa: CCR001
         elif ws_type == 'templates':
             if cel.value == 'Content':
                 ws.column_dimensions[cel.column_letter].width = 100
-            if cel.value == 'Title':
+            elif cel.value == 'Title':
                 ws.column_dimensions[cel.column_letter].width = 50
-        elif ws_type == '_attributes':
-            if cel.column_letter in ['A', 'B', 'D']:
-                ws.column_dimensions[cel.column_letter].width = 100
+        elif ws_type == '_attributes' and cel.column_letter in ['A', 'B', 'D']:
+            ws.column_dimensions[cel.column_letter].width = 100
+        elif ws_type == 'messages' and cel.column_letter == 'D':
+            ws.column_dimensions[cel.column_letter].width = 70
 
 
 def _calculate_commitment(item):
@@ -953,6 +954,42 @@ def _dump_translation_attr(wb, client, translation):
     _setup_ws_header(attr_ws, '_attributes')
 
 
+def _fill_product_message_row(ws, row_idx, msg):
+    ws.cell(row_idx, 1, value=msg['id'])
+    ws.cell(row_idx, 2, value='-')
+    ws.cell(row_idx, 3, value=msg['external_id'])
+    ws.cell(row_idx, 4, value=msg['value'])
+    ws.cell(row_idx, 5, value=msg['auto'])
+
+
+def _dump_product_messages(ws, client, product_id, progress):
+    _setup_ws_header(ws, 'messages')
+
+    row_idx = 2
+
+    messages = client.products[product_id].messages.all()
+    count = messages.count()
+
+    action_validation = DataValidation(
+        type='list',
+        formula1='"-,create,update,delete"',
+        allow_blank=False,
+    )
+
+    if count > 0:
+        ws.add_data_validation(action_validation)
+
+    task = progress.add_task('Processing message', total=count)
+
+    for msg in messages:
+        progress.update(task, description=f'Processing message {msg["id"]}', advance=1)
+        _fill_product_message_row(ws, row_idx, msg)
+        action_validation.add(f'B{row_idx}')
+        row_idx += 1
+
+    progress.update(task, completed=count)
+
+
 def dump_product(  # noqa: CCR001
     client,
     product_id,
@@ -1019,6 +1056,7 @@ def dump_product(  # noqa: CCR001
         _dump_actions(wb.create_sheet('Actions'), client, product_id, progress)
         _dump_configuration(wb.create_sheet('Configuration'), client, product_id, progress)
         _dump_translations(wb, client, product_id, progress)
+        _dump_product_messages(wb.create_sheet('Messages'), client, product_id, progress)
         wb.save(output_file)
 
     except ClientError as error:

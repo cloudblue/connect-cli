@@ -289,15 +289,26 @@ def test_inject(
     mocker.patch(
         'connect.cli.plugins.product.clone.sync_product_translations',
     )
+    mocker.patch(
+        'connect.cli.plugins.product.clone.MessageSynchronizer',
+    )
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/items',
-        json=[],
+        json=[{'id': 'ITEM-ID'}],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items/ITEM-ID',
     )
     mocked_responses.add(
         method='GET',
         url='https://localhost/public/v1/products/PRD-276-377-545/templates?limit=100&offset=0',
-        json=[],
+        json=[{'id': 'TMP-ID'}],
+    )
+    mocked_responses.add(
+        method='DELETE',
+        url='https://localhost/public/v1/products/PRD-276-377-545/templates/TMP-ID',
     )
     cloner.inject()
 

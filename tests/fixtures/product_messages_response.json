@@ -1,0 +1,26 @@
+[
+	{
+		"id": "PRDMSG-276-377-545-0001",
+		"product": {
+			"id": "PRD-276-377-545",
+			"icon": "/media/VA-050-000/PRD-276-377-545/media/PRD-276-377-545-logo.png",
+			"name": "ProductCLI",
+			"status": "published"
+		},
+		"external_id": "error1",
+		"value": "The value does not exists",
+		"auto": true
+	},
+	{
+		"id": "PRDMSG-276-377-545-0002",
+		"product": {
+			"id": "PRD-276-377-545",
+			"icon": "/media/VA-050-000/PRD-276-377-545/media/PRD-276-377-545-logo.png",
+			"name": "ProductCLI",
+			"status": "published"
+		},
+		"external_id": "error2",
+		"value": "The operation is not possible",
+		"auto": false
+	}
+]

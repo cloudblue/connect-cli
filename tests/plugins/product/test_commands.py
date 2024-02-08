@@ -256,6 +256,7 @@ def test_export_product(
     mocked_locales_response,
     mocked_product_translations_response,
     mocked_translation_attributes_xlsx_response,
+    mocked_product_messages_response,
     sample_product_workbook,
 ):
     mocked_responses.add(
@@ -418,6 +419,16 @@ def test_export_product(
         body=mocked_translation_attributes_xlsx_response.read(),
         headers={
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+    )
+    mocked_responses.add(
+        method='GET',
+        url=re.compile(
+            'https://localhost/public/v1/products/PRD-276-377-545/messages',
+        ),
+        json=mocked_product_messages_response,
+        headers={
+            'Content-Range': 'items 0-2/2',
         },
     )
     output_file = dump_product(

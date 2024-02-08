@@ -1309,7 +1309,7 @@ def test_delete_item_not_exists(
         'errors': 1,
     }
     assert stats['Items']._row_errors == {
-        2: ['Cannot update item: item with MPN `MPN-R-001` the item does not exist.'],
+        2: ['Cannot delete item: item with MPN `MPN-R-001` the item does not exist.'],
     }
 
 

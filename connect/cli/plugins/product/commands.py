@@ -21,6 +21,7 @@ from connect.cli.plugins.product.sync import (
     GeneralSynchronizer,
     ItemSynchronizer,
     MediaSynchronizer,
+    MessageSynchronizer,
     ParamsSynchronizer,
     StaticResourcesSynchronizer,
     TemplatesSynchronizer,
@@ -90,7 +91,7 @@ def cmd_list_products(config, query):
     help='Directory where to store the export.',
 )
 @pass_config
-def cmd_dump_products(config, product_id, output_file, output_path):
+def cmd_export_products(config, product_id, output_file, output_path):
     with console.progress() as progress:
         outfile = dump_product(
             config.active.client,
@@ -120,7 +121,7 @@ def cmd_sync_products(config, input_file):
     product_id = synchronizer.open(input_file, 'General Information')
 
     console.confirm(
-        'Are you sure you want to synchronize ' f'the product {product_id} ?',
+        f'Are you sure you want to synchronize the product {product_id} ?',
         abort=True,
     )
     console.echo('')
@@ -148,6 +149,7 @@ def cmd_sync_products(config, input_file):
             actions_sync,
             media_sync,
             config_values_sync,
+            messages_sync,
         ]
         for task in sync_tasks:
             try:
@@ -320,6 +322,13 @@ def config_values_sync(client, progress, input_file, stats):
 def item_sync(client, progress, input_file, stats):
     synchronizer = ItemSynchronizer(client, progress, stats)
     synchronizer.open(input_file, 'Items')
+    synchronizer.sync()
+    synchronizer.save(input_file)
+
+
+def messages_sync(client, progress, input_file, stats):
+    synchronizer = MessageSynchronizer(client, progress, stats)
+    synchronizer.open(input_file, 'Messages')
     synchronizer.sync()
     synchronizer.save(input_file)
 

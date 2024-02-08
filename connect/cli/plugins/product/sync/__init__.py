@@ -6,6 +6,7 @@ from connect.cli.plugins.product.sync.configuration_values import (  # noqa: F40
 from connect.cli.plugins.product.sync.general import GeneralSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.items import ItemSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.media import MediaSynchronizer  # noqa: F401
+from connect.cli.plugins.product.sync.messages import MessageSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.params import ParamsSynchronizer  # noqa: F401
 from connect.cli.plugins.product.sync.static_resources import (  # noqa: F401
     StaticResourcesSynchronizer,
