@@ -19,6 +19,7 @@ from connect.cli.plugins.shared.constants import (
     CONFIGURATION_HEADERS,
     ITEMS_COLS_HEADERS,
     MEDIA_COLS_HEADERS,
+    MESSAGES_HEADERS,
     PARAMS_COLS_HEADERS,
     STATIC_LINK_HEADERS,
     TEMPLATES_HEADERS,
@@ -47,6 +48,8 @@ def get_col_limit_by_ws_type(ws_type):
         return 'N'
     elif ws_type == '_attributes':
         return 'F'
+    elif ws_type == 'messages':
+        return 'E'
     return 'Z'
 
 
@@ -73,6 +76,8 @@ def get_ws_type_by_worksheet_name(ws_name):
         return 'actions'
     elif ws_name == 'Translations':
         return 'translations'
+    elif ws_name == 'Messages':
+        return 'messages'
     return None
 
 
@@ -95,6 +100,8 @@ def get_col_headers_by_ws_type(ws_type):
         return ACTIONS_HEADERS
     elif ws_type == 'translations':
         return TRANSLATION_HEADERS
+    elif ws_type == 'messages':
+        return MESSAGES_HEADERS
 
 
 def wait_for_autotranslation(client, progress, translation, wait_seconds=1, max_counts=5):
