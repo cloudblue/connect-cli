@@ -51,6 +51,10 @@ def _build_f1_options(option_list):
     return '"{options}"'.format(options=','.join(option_list))
 
 
+def _primary_translation_str(trans):
+    return f'{trans["locale"]["id"]} ({trans["locale"]["name"]})' if trans else ''
+
+
 def _setup_cover_sheet(ws, product, location, client, media_path):
     ws.title = 'General Information'
     ws.column_dimensions['A'].width = 50
@@ -118,9 +122,8 @@ def _setup_cover_sheet(ws, product, location, client, media_path):
         .translations.filter(context__instance_id=product['id'], primary=True)
         .first()
     )
-    ws[
-        'B14'
-    ].value = f'{ primary_translation["locale"]["id"] } ({ primary_translation["locale"]["name"] })'
+
+    ws['B14'].value = _primary_translation_str(primary_translation)
 
     categories = client.categories.all()
     unassignable_cat = ['Cloud Services', 'All Categories']
