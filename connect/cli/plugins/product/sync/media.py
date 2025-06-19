@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2025 CloudBlue. All Rights Reserved.
 import json
 import os
 from collections import namedtuple

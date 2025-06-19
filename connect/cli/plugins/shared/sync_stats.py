@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2022 Ingram Micro. All Rights Reserved.
+# Copyright (c) 2019-2025 CloudBlue. All Rights Reserved.
 
 from collections import defaultdict
 
