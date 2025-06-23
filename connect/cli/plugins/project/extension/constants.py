@@ -1,4 +1,4 @@
-#  Copyright © 2021 CloudBlue. All rights reserved.
+#  Copyright © 2025 CloudBlue. All rights reserved.
 
 
 PYPI_EXTENSION_RUNNER_URL = 'https://pypi.org/pypi/connect-extension-runner/json'

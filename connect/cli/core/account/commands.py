@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# This file is part of the Ingram Micro Cloud Blue Connect connect-cli.
-# Copyright (c) 2019-2021 Ingram Micro. All Rights Reserved.
+# This file is part of the CloudBlue Connect connect-cli.
+# Copyright (c) 2025 CloudBlue. All rights reserved.
 
 import click
 from click import ClickException
