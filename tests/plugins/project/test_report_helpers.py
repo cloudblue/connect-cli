@@ -1,4 +1,4 @@
-#  Copyright © 2022 CloudBlue. All rights reserved.
+#  Copyright © 2025 CloudBlue. All rights reserved.
 
 import configparser
 import json
