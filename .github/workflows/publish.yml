@@ -136,7 +136,7 @@ jobs:
       run: |
         & { compress-archive -path '.\resources\build\nsis\connect-cli_${{ steps.tag.outputs.result }}_setup.exe' -destinationpath '.\connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip' }
     - name: Upload distro package to artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: windows_distro
         path: connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
