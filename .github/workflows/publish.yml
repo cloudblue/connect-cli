@@ -183,3 +183,10 @@ jobs:
         asset_path: ./connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
         asset_name: connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
         asset_content_type: application/zip
+    - name: Trigger Homebrew Rebuild (CLI)
+      env:
+        GH_TOKEN: ${{ secrets.PAT_HOMEBREW_CONNECT }}
+      run: |
+        gh workflow run update.yml \
+          --repo cloudblue/homebrew-connect \
+          -f sleep=300
