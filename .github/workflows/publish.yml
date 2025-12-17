@@ -94,6 +94,8 @@ jobs:
       with:
         fetch-depth: 0
         submodules: true
+    - name: Install NSIS
+      run: choco install nsis
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
