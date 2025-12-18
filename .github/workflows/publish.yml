@@ -172,7 +172,7 @@ jobs:
         draft: false
         prerelease: false
     - name: Download windows artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v6
       with:
         name: windows_distro
         path: ./
