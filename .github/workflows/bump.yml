@@ -34,6 +34,10 @@ jobs:
             echo "has_updates=true" >> $GITHUB_OUTPUT
             echo "Outdated packages found:"
             cat outdated.txt
+            
+            echo "outdated<<EOF" >> $GITHUB_OUTPUT
+            cat outdated.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "has_updates=false" >> $GITHUB_OUTPUT
             echo "No outdated packages found"
@@ -64,6 +68,8 @@ jobs:
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
+          # Remove the temporary file so it is not included in the PR
+          rm outdated.txt
 
       - name: Create Pull Request
         if: steps.check-outdated.outputs.has_updates == 'true' && steps.check-changes.outputs.has_changes == 'true'
@@ -92,3 +98,4 @@ jobs:
           labels: |
             dependencies
             automated
+          reviewers: ${{ vars.PR_REVIEWERS }}
