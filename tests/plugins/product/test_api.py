@@ -336,7 +336,6 @@ def test_delete_item(
     mocked_responses.add(
         method='DELETE',
         url='https://localhost/public/v1/products/PRD-276-377-545/items/PRD-276-377-545-0001',
-        json={},
         status=204,
     )
 
