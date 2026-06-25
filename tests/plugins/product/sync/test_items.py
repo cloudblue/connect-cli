@@ -404,8 +404,49 @@ def test_validate_wrong_period_reservation(mocker, fs, get_sync_items_env):
     }
     assert stats['Items']._row_errors == {
         2: [
-            'the item `Billing period` must be one between `onetime`, `monthly`, `yearly`, '
-            '`2 years`, `3 years`, `4 years`, `5 years`, `6 years`, not `century`.',
+            'the item `Billing period` must be one between `onetime`, `monthly`, `monthly_trial`, '
+            '`yearly`, `2 years`, `3 years`, `4 years`, `5 years`, `6 years`, not `century`.',
+        ],
+    }
+
+
+def test_validate_monthly_trial_period_wrong_commitment(
+    mocker,
+    fs,
+    get_sync_items_env,
+):
+    get_sync_items_env['Items']['A2'].value = None
+    get_sync_items_env['Items']['C2'].value = 'create'
+    get_sync_items_env['Items']['F2'].value = 'reservation'
+    get_sync_items_env['Items']['I2'].value = 'monthly_trial'
+    get_sync_items_env['Items']['J2'].value = '1 year'
+    get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
+
+    stats = SynchronizerStats()
+    synchronizer = ItemSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        progress=mocker.MagicMock(),
+        stats=stats,
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Items')
+    synchronizer.sync()
+
+    assert stats['Items'].get_counts_as_dict() == {
+        'processed': 1,
+        'created': 0,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 1,
+    }
+    assert stats['Items']._row_errors == {
+        2: [
+            'for a `monthly_trial` billing period the commitment must be one of `-`, not `1 year`.',
         ],
     }
 
@@ -566,6 +607,105 @@ def test_create_item_one_time(
     get_sync_items_env['Items']['A2'].value = None
     get_sync_items_env['Items']['C2'].value = 'create'
     get_sync_items_env['Items']['I2'].value = 'onetime'
+
+    get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
+        'MPN-R-001)&limit=1&offset=0',
+        json=[],
+    )
+
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items',
+        json=mocked_items_response[0],
+    )
+
+    stats = SynchronizerStats()
+    synchronizer = ItemSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        progress=mocker.MagicMock(),
+        stats=stats,
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Items')
+    synchronizer.sync()
+
+    assert stats['Items'].get_counts_as_dict() == {
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
+    }
+
+
+def test_create_item_monthly_trial(
+    mocker,
+    fs,
+    get_sync_items_env,
+    mocked_responses,
+    mocked_items_response,
+):
+    get_sync_items_env['Items']['A2'].value = None
+    get_sync_items_env['Items']['C2'].value = 'create'
+    get_sync_items_env['Items']['I2'].value = 'monthly_trial'
+
+    get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
+    mocked_responses.add(
+        method='GET',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items?eq(mpn,'
+        'MPN-R-001)&limit=1&offset=0',
+        json=[],
+    )
+
+    mocked_responses.add(
+        method='POST',
+        url='https://localhost/public/v1/products/PRD-276-377-545/items',
+        json=mocked_items_response[0],
+    )
+
+    stats = SynchronizerStats()
+    synchronizer = ItemSynchronizer(
+        client=ConnectClient(
+            use_specs=False,
+            api_key='ApiKey SU:123',
+            endpoint='https://localhost/public/v1',
+        ),
+        progress=mocker.MagicMock(),
+        stats=stats,
+    )
+
+    synchronizer.open(f'{fs.root_path}/test.xlsx', 'Items')
+    synchronizer.sync()
+
+    assert stats['Items'].get_counts_as_dict() == {
+        'processed': 1,
+        'created': 1,
+        'updated': 0,
+        'deleted': 0,
+        'skipped': 0,
+        'errors': 0,
+    }
+
+
+def test_create_item_multi_year(
+    mocker,
+    fs,
+    get_sync_items_env,
+    mocked_responses,
+    mocked_items_response,
+):
+    get_sync_items_env['Items']['A2'].value = None
+    get_sync_items_env['Items']['C2'].value = 'create'
+    get_sync_items_env['Items']['I2'].value = '2 years'
+    get_sync_items_env['Items']['J2'].value = '-'
 
     get_sync_items_env.save(f'{fs.root_path}/test.xlsx')
     mocked_responses.add(

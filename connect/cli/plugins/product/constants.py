@@ -24,6 +24,7 @@ COMMITMENT = ('-', '1 year', '2 years', '3 years', '4 years', '5 years', '6 year
 BILLING_PERIOD = (
     'onetime',
     'monthly',
+    'monthly_trial',
     'yearly',
     '2 years',
     '3 years',
@@ -35,6 +36,7 @@ BILLING_PERIOD = (
 
 ALLOWED_COMMITMENTS = {
     'monthly': COMMITMENT,
+    'monthly_trial': ('-',),
     'yearly': COMMITMENT,
     '2 years': ('-', '4 years', '6 years'),
     '3 years': ('-', '6 years'),
