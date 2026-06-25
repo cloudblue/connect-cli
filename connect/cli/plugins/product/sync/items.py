@@ -270,7 +270,7 @@ class ItemSynchronizer(ProductSynchronizer):
 
     @staticmethod
     def _get_billing_period(data):
-        if data.billing_period in ('onetime', 'monthly', 'yearly'):
+        if data.billing_period in ('onetime', 'monthly', 'monthly_trial', 'yearly'):
             return data.billing_period
         count, _ = data.billing_period.split()
         return f'years_{count}'
