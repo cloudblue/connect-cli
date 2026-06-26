@@ -1,8 +1,8 @@
 from datetime import datetime
+from tempfile import TemporaryDirectory
 
 from click import ClickException
 from connect.client import ClientError
-from fs.tempfs import TempFS
 from openpyxl import load_workbook
 
 from connect.cli.plugins.product.export import dump_product
@@ -20,9 +20,17 @@ from connect.cli.plugins.shared.translations_synchronizers import sync_product_t
 from connect.cli.plugins.shared.utils import get_translation_attributes_sheets
 
 
+class _TempDir:
+    # ponytail: stdlib stand-in for the archived pyfilesystem2 TempFS, which broke
+    # on setuptools>=81 (pkg_resources removed). Cleaned up on garbage collection.
+    def __init__(self, identifier):
+        self._tmp = TemporaryDirectory(suffix=identifier)
+        self.root_path = self._tmp.name
+
+
 class ProductCloner:
     def __init__(self, config, source_account, destination_account, product_id, progress, stats):
-        self.fs = TempFS(identifier=f'_clone_{product_id}')
+        self.fs = _TempDir(f'_clone_{product_id}')
         self.config = config
         self.source_account = source_account if source_account else config.active.id
         self.destination_account = destination_account if destination_account else config.active.id
