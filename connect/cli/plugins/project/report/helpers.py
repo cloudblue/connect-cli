@@ -1,4 +1,4 @@
-#  Copyright © 2022 CloudBlue. All rights reserved.
+#  Copyright © 2025 CloudBlue. All rights reserved.
 
 import functools
 import json

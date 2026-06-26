@@ -6,7 +6,7 @@ on:
     tags:
         - '*'
   pull_request:
-    branches: 
+    branches:
       - master
       - 'release/**'
 
@@ -40,7 +40,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python 3.10
@@ -55,8 +55,8 @@ jobs:
       - name: Generate coverage report
         run: |
           poetry run pytest
-      - name: SonarCloud
-        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: SonarQube Quality Gate check
