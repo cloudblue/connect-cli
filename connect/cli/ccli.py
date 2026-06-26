@@ -14,7 +14,7 @@ from connect.cli.core.plugins import load_plugins
 
 def main():
     _set_stdout_unbuffered()
-    _ignore_openpyxl_warnings()
+    _suppress_warnings()
     try:
         import uvloop
 
@@ -38,16 +38,13 @@ def main():
         print('')
 
 
-def _ignore_openpyxl_warnings():
+def _suppress_warnings():
     """
-    Ignore warning about DataValidation extension not supported. This is shown when a xlsx file
-    with unsupported data validation is opened (tipically after saving the file from Excel, which
-    uses some custom extension).
-    To avoid losing data validation, it should be re-created each time the file is saved by the cli.
+    Suppress all UserWarnings.
     """
     import warnings
 
-    warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl.worksheet._reader')
+    warnings.simplefilter('ignore', category=UserWarning)
 
 
 def _set_stdout_unbuffered():  # pragma: no cover

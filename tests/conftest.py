@@ -5,7 +5,6 @@ from shutil import copy2
 
 import pytest
 import responses
-from fs.tempfs import TempFS
 from openpyxl import load_workbook
 from responses.registries import OrderedRegistry
 
@@ -24,8 +23,22 @@ from tests.data import (
 
 
 @pytest.fixture(scope='function')
-def fs():
-    return TempFS()
+def fs(tmp_path):
+    # ponytail: pytest's tmp_path (auto-cleaned) replaces pyfilesystem2 TempFS;
+    # tests only need root_path plus these three path helpers, relative to the root.
+    class _FS:
+        root_path = str(tmp_path)
+
+        def makedir(self, path):
+            os.mkdir(os.path.join(self.root_path, path))
+
+        def makedirs(self, path):
+            os.makedirs(os.path.join(self.root_path, path))
+
+        def create(self, path):
+            open(os.path.join(self.root_path, path), 'w').close()
+
+    return _FS()
 
 
 @pytest.fixture(scope='session', autouse=True)
