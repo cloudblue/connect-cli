@@ -18,7 +18,7 @@ def test_format_http_status():
     assert format_http_status(404) == '404 - Not Found'
     assert format_http_status(500) == '500 - Internal Server Error'
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         format_http_status(1)
 
 
