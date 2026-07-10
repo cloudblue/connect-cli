@@ -2,7 +2,10 @@ import pytest
 from click import ClickException
 from connect.client import ClientError
 
-from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
+from connect.cli.plugins.project.extension.constants import (
+    PYPI_EXTENSION_RUNNER_RELEASE_URL,
+    PYPI_EXTENSION_RUNNER_URL,
+)
 from connect.cli.plugins.project.extension.utils import (
     check_eventsapp_feature_not_selected,
     check_extension_events_applicable,
@@ -14,37 +17,32 @@ from connect.cli.plugins.project.extension.utils import (
     get_default_application_types,
     get_event_definitions,
     get_interactive_events,
+    get_pypi_runner_eaas_core_version,
     get_pypi_runner_version,
 )
 
 
-def test_get_pypi_runner_version(mocker, mocked_responses):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.utils.get_version',
-        return_value='25.0',
-    )
+def test_get_pypi_runner_version(mocked_responses):
+    """The bootstrap must pin the latest published runner, not one tied to the CLI major.
+
+    The CLI major (26) diverged from the runner line (43), so filtering runner tags by
+    CLI major returned a stale, incompatible image. Confidence: a fresh extension always
+    gets the current runner.
+    """
     mocked_responses.add(
         method='GET',
         url=PYPI_EXTENSION_RUNNER_URL,
         json={
-            'releases': {
-                '26.0': {},
-                '25.1': {},
-                '25.0': {},
-                '24.5': {},
-            },
+            'info': {'version': '43.0'},
+            'releases': {'43.0': {}, '42.0': {}, '26.44': {}},
         },
         status=200,
     )
 
-    assert get_pypi_runner_version() == '25.1'
+    assert get_pypi_runner_version() == '43.0'
 
 
-def test_get_pypi_runner_version_http_error(mocker, mocked_responses):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.utils.get_version',
-        return_value='25.0',
-    )
+def test_get_pypi_runner_version_http_error(mocked_responses):
     mocked_responses.add(
         method='GET',
         url=PYPI_EXTENSION_RUNNER_URL,
@@ -56,22 +54,58 @@ def test_get_pypi_runner_version_http_error(mocker, mocked_responses):
     assert 'We can not retrieve the current connect-extension-runner version' in str(ve.value)
 
 
-def test_get_pypi_runner_version_no_releases(mocker, mocked_responses):
-    mocker.patch(
-        'connect.cli.plugins.project.extension.utils.get_version',
-        return_value='25.0',
-    )
+def test_get_pypi_runner_eaas_core_version(mocked_responses):
+    """The extension must pin the connect-eaas-core the runner image ships.
+
+    If the generated pyproject allows a newer connect-eaas-core than the runner supports,
+    `poetry update` resolves an incompatible version and the extension fails to run.
+    Confidence: the runner↔eaas-core pair is always coherent, so the extension boots.
+    """
     mocked_responses.add(
         method='GET',
-        url=PYPI_EXTENSION_RUNNER_URL,
+        url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
         status=200,
         json={
-            'info': {'version': '26.0'},
-            'releases': {},
+            'info': {
+                'requires_dist': [
+                    'logzio-python-handler>=3.1',
+                    'connect-eaas-core<38,>=37.4',
+                ],
+            },
         },
     )
 
-    assert get_pypi_runner_version() == '26.0'
+    assert get_pypi_runner_eaas_core_version('43.0') == '<38,>=37.4'
+
+
+def test_get_pypi_runner_eaas_core_version_http_error(mocked_responses):
+    mocked_responses.add(
+        method='GET',
+        url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
+        status=500,
+    )
+    with pytest.raises(ClickException) as ve:
+        get_pypi_runner_eaas_core_version('43.0')
+
+    assert 'We can not retrieve the connect-extension-runner 43.0 metadata' in str(ve.value)
+
+
+def test_get_pypi_runner_eaas_core_version_missing_dependency(mocked_responses):
+    """A runner that omits connect-eaas-core must fail loudly, not silently mis-pin.
+
+    Confidence: we never generate a pyproject with an empty/invalid eaas-core constraint.
+    """
+    mocked_responses.add(
+        method='GET',
+        url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
+        status=200,
+        json={'info': {'requires_dist': ['logzio-python-handler>=3.1']}},
+    )
+
+    with pytest.raises(ClickException) as ve:
+        get_pypi_runner_eaas_core_version('43.0')
+
+    assert 'does not declare a connect-eaas-core dependency' in str(ve.value)
 
 
 def test_get_event_definitions_client_error(mocker):

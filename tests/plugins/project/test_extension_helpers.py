@@ -49,6 +49,10 @@ def test_bootstrap_extension_project_background(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
         )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
+        )
         config_vendor.load(config_dir='/tmp')
 
         mocked_responses.add(
@@ -126,6 +130,8 @@ def test_bootstrap_extension_project_background(
         assert f'FROM cloudblueconnect/connect-extension-runner:{runner_version}' in docker_file
 
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
+
+        assert pyproject_toml['tool']['poetry']['dependencies']['connect-eaas-core'] == '>=37.4,<38'
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
@@ -224,6 +230,10 @@ def test_bootstrap_extension_project_interactive(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
         )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
+        )
         config_vendor.load(config_dir='/tmp')
 
         mocked_responses.add(
@@ -295,6 +305,8 @@ def test_bootstrap_extension_project_interactive(
         classname_prefix = data['project_slug'].replace('_', ' ').title().replace(' ', '')
 
         pyproject_toml = toml.load(os.path.join(tmpdir, data['project_slug'], 'pyproject.toml'))
+
+        assert pyproject_toml['tool']['poetry']['dependencies']['connect-eaas-core'] == '>=37.4,<38'
 
         ext_entrypoint = pyproject_toml['tool']['poetry']['plugins']['connect.eaas.ext']
         assert ext_entrypoint == {
@@ -376,6 +388,10 @@ def test_bootstrap_extension_project_multiaccount(
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
         )
         config_vendor.load(config_dir='/tmp')
 
@@ -526,6 +542,10 @@ def test_bootstrap_extension_project_webapp(
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
         )
         config_provider.load(config_dir='/tmp')
 
@@ -687,6 +707,10 @@ def test_bootstrap_extension_project_tfnapp(
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
         )
         config_provider.load(config_dir='/tmp')
 
@@ -893,7 +917,6 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
 
 
 def test_bump_runner_version(mocker, mocked_responses, capsys):
-    mocker.patch('connect.cli.plugins.project.extension.utils.get_version', return_value='0.5')
     mocked_responses.add(
         'GET',
         DEFAULT_ENDPOINT,
@@ -1045,6 +1068,10 @@ def test_validate_extension_project(mocker, faker, mocked_responses, config_vend
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
         )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
+        )
         config_vendor.load(config_dir='/tmp')
 
         mocked_responses.add(
@@ -1113,6 +1140,10 @@ def test_validate_extension_project_error_exit(
     mocker.patch(
         'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         side_effect=runner_version,
+    )
+    mocker.patch(
+        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+        return_value='>=37.4,<38',
     )
     config_vendor.load(config_dir='/tmp')
 
@@ -1183,6 +1214,10 @@ def test_bootstrap_extension_project_corrupted_load_answers(
         mocker.patch(
             'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
             return_value=runner_version,
+        )
+        mocker.patch(
+            'connect.cli.plugins.project.extension.helpers.get_pypi_runner_eaas_core_version',
+            return_value='>=37.4,<38',
         )
         config_provider.load(config_dir='/tmp')
 

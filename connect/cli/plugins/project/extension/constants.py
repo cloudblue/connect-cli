@@ -2,6 +2,7 @@
 
 
 PYPI_EXTENSION_RUNNER_URL = 'https://pypi.org/pypi/connect-extension-runner/json'
+PYPI_EXTENSION_RUNNER_RELEASE_URL = 'https://pypi.org/pypi/connect-extension-runner/{version}/json'
 
 PRE_COMMIT_HOOK = """#! /bin/sh
 
