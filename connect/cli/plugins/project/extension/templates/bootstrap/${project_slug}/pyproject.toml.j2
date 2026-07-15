@@ -24,7 +24,7 @@ readme = "./README.md"
 {%- endif %}
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = "{{ python_version }}"
 connect-eaas-core = "{{ connect_eaas_core_version }}"
 
 [tool.poetry.dev-dependencies]

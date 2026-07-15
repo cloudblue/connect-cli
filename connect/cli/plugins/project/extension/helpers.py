@@ -12,7 +12,7 @@ from connect.cli import get_version
 from connect.cli.core.terminal import console
 from connect.cli.plugins.project.extension.utils import (
     get_event_definitions,
-    get_pypi_runner_eaas_core_version,
+    get_pypi_runner_requirements,
     get_pypi_runner_version,
     get_pypi_runner_version_by_connect_version,
     initialize_git_repository,
@@ -81,12 +81,14 @@ def bootstrap_extension_project(  # noqa: CCR001
         raise ClickException('Aborted by user input')
 
     runner_version = get_pypi_runner_version()
+    connect_eaas_core_version, python_version = get_pypi_runner_requirements(runner_version)
     ctx = {
         'statuses_by_event': statuses_by_event[answers['extension_type']],
         'interactive': [],
         'current_major_version': get_version().split('.')[0],
         'runner_version': runner_version,
-        'connect_eaas_core_version': get_pypi_runner_eaas_core_version(runner_version),
+        'connect_eaas_core_version': connect_eaas_core_version,
+        'python_version': python_version,
     }
 
     for var, answer in answers.items():

@@ -17,7 +17,7 @@ from connect.cli.plugins.project.extension.utils import (
     get_default_application_types,
     get_event_definitions,
     get_interactive_events,
-    get_pypi_runner_eaas_core_version,
+    get_pypi_runner_requirements,
     get_pypi_runner_version,
 )
 
@@ -54,12 +54,13 @@ def test_get_pypi_runner_version_http_error(mocked_responses):
     assert 'We can not retrieve the current connect-extension-runner version' in str(ve.value)
 
 
-def test_get_pypi_runner_eaas_core_version(mocked_responses):
-    """The extension must pin the connect-eaas-core the runner image ships.
+def test_get_pypi_runner_requirements(mocked_responses):
+    """The extension must pin the connect-eaas-core and python range the runner ships.
 
-    If the generated pyproject allows a newer connect-eaas-core than the runner supports,
+    If the generated pyproject allows versions the runner does not support,
     `poetry update` resolves an incompatible version and the extension fails to run.
-    Confidence: the runner↔eaas-core pair is always coherent, so the extension boots.
+    Confidence: the runner↔eaas-core↔python triple is always coherent, so the
+    extension boots.
     """
     mocked_responses.add(
         method='GET',
@@ -67,6 +68,7 @@ def test_get_pypi_runner_eaas_core_version(mocked_responses):
         status=200,
         json={
             'info': {
+                'requires_python': '<3.13,>=3.9',
                 'requires_dist': [
                     'logzio-python-handler>=3.1',
                     'connect-eaas-core<38,>=37.4',
@@ -75,22 +77,37 @@ def test_get_pypi_runner_eaas_core_version(mocked_responses):
         },
     )
 
-    assert get_pypi_runner_eaas_core_version('43.0') == '<38,>=37.4'
+    assert get_pypi_runner_requirements('43.0') == ('<38,>=37.4', '<3.13,>=3.9')
 
 
-def test_get_pypi_runner_eaas_core_version_http_error(mocked_responses):
+def test_get_pypi_runner_requirements_http_error(mocked_responses):
     mocked_responses.add(
         method='GET',
         url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
         status=500,
     )
     with pytest.raises(ClickException) as ve:
-        get_pypi_runner_eaas_core_version('43.0')
+        get_pypi_runner_requirements('43.0')
 
     assert 'We can not retrieve the connect-extension-runner 43.0 metadata' in str(ve.value)
 
 
-def test_get_pypi_runner_eaas_core_version_missing_dependency(mocked_responses):
+def test_get_pypi_runner_requirements_missing_python(mocked_responses):
+    """A runner that omits requires_python must fail loudly, not render an empty pin."""
+    mocked_responses.add(
+        method='GET',
+        url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
+        status=200,
+        json={'info': {'requires_dist': ['connect-eaas-core<38,>=37.4']}},
+    )
+
+    with pytest.raises(ClickException) as ve:
+        get_pypi_runner_requirements('43.0')
+
+    assert 'does not declare a python requirement' in str(ve.value)
+
+
+def test_get_pypi_runner_requirements_missing_dependency(mocked_responses):
     """A runner that omits connect-eaas-core must fail loudly, not silently mis-pin.
 
     Confidence: we never generate a pyproject with an empty/invalid eaas-core constraint.
@@ -99,11 +116,16 @@ def test_get_pypi_runner_eaas_core_version_missing_dependency(mocked_responses):
         method='GET',
         url=PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='43.0'),
         status=200,
-        json={'info': {'requires_dist': ['logzio-python-handler>=3.1']}},
+        json={
+            'info': {
+                'requires_python': '<3.13,>=3.9',
+                'requires_dist': ['logzio-python-handler>=3.1'],
+            },
+        },
     )
 
     with pytest.raises(ClickException) as ve:
-        get_pypi_runner_eaas_core_version('43.0')
+        get_pypi_runner_requirements('43.0')
 
     assert 'does not declare a connect-eaas-core dependency' in str(ve.value)
 
