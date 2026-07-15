@@ -14,7 +14,6 @@ from connect.cli.plugins.project.extension.utils import (
     get_event_definitions,
     get_pypi_runner_requirements,
     get_pypi_runner_version,
-    get_pypi_runner_version_by_connect_version,
     initialize_git_repository,
 )
 from connect.cli.plugins.project.extension.wizard import (
@@ -246,11 +245,37 @@ def _update_docker_file_runner_from(dockerfile: str, latest_version: str):
     return to_be_replaced
 
 
+def _update_pyproject_runner_deps(pyproject_file, latest_version):
+    connect_eaas_core_version, python_version = get_pypi_runner_requirements(latest_version)
+    new_values = {'python': python_version, 'connect-eaas-core': connect_eaas_core_version}
+    to_be_replaced = False
+    section = None
+    lines = []
+    with open(pyproject_file, 'r') as f:
+        for line in f.readlines():
+            stripped = line.strip()
+            if stripped.startswith('['):
+                section = stripped
+            elif section == '[tool.poetry.dependencies]':
+                # ponytail: handles the plain `name = "spec"` form bootstrap emits; a
+                # table form ({ version = ... }) gets rewritten to the plain form
+                key = stripped.split('=', 1)[0].strip()
+                new_value = new_values.get(key)
+                if new_value and stripped != f'{key} = "{new_value}"':
+                    line = f'{key} = "{new_value}"\n'
+                    to_be_replaced = True
+            lines.append(line)
+    if to_be_replaced:
+        with open(pyproject_file, 'w') as f:
+            f.writelines(lines)
+    return to_be_replaced
+
+
 def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
     console.secho(f'Bumping runner version on project {project_dir}...\n', fg='blue')
 
     updated_files = set()
-    latest_version = get_pypi_runner_version_by_connect_version()
+    latest_version = get_pypi_runner_version()
     latest_runner_version = f'cloudblueconnect/connect-extension-runner:{latest_version}'
     docker_compose_file = os.path.join(project_dir, 'docker-compose.yml')
     if not os.path.isfile(docker_compose_file):
@@ -293,6 +318,13 @@ def bump_runner_extension_project(project_dir: str):  # noqa: CCR001
             '`docker_compose.yml` file is not properly formatted. Please review it.\n'
             f'Error: {error}',
         )
+
+    pyproject_file = os.path.join(project_dir, 'pyproject.toml')
+    if os.path.isfile(pyproject_file) and _update_pyproject_runner_deps(
+        pyproject_file,
+        latest_version,
+    ):
+        updated_files.add(pyproject_file)
 
     if updated_files:
         console.secho(

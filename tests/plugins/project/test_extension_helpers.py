@@ -11,8 +11,10 @@ import yaml
 from click import ClickException
 from flake8.api import legacy as flake8
 
-from connect.cli.core.constants import DEFAULT_ENDPOINT
-from connect.cli.plugins.project.extension.constants import PYPI_EXTENSION_RUNNER_URL
+from connect.cli.plugins.project.extension.constants import (
+    PYPI_EXTENSION_RUNNER_RELEASE_URL,
+    PYPI_EXTENSION_RUNNER_URL,
+)
 from connect.cli.plugins.project.extension.helpers import (
     bootstrap_extension_project,
     bump_runner_extension_project,
@@ -918,17 +920,28 @@ def test_bootstrap_extension_project_if_destination_exists(mocker):
         assert 'Answers cannot be saved' in str(cv.value)
 
 
-def test_bump_runner_version(mocker, mocked_responses, capsys):
-    mocked_responses.add(
-        'GET',
-        DEFAULT_ENDPOINT,
-        status=401,
-        headers={'Connect-Version': '1.0.1-abc'},
-    )
+def test_bump_runner_version(mocked_responses, capsys):
+    """`bump` must move the project to the latest published runner and keep the
+    pyproject pins (connect-eaas-core, python) in lockstep with it.
+
+    Bumping only the docker image would recreate the bootstrap mismatch: a new
+    runner with stale pyproject pins fails to resolve/run after `poetry update`.
+    Confidence: one bump leaves the whole project coherent with the runner.
+    """
     mocked_responses.add(
         'GET',
         PYPI_EXTENSION_RUNNER_URL,
-        json={'releases': {'1.0': ['release info']}},
+        json={'info': {'version': '1.0'}},
+    )
+    mocked_responses.add(
+        'GET',
+        PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version='1.0'),
+        json={
+            'info': {
+                'requires_python': '<3.13,>=3.9',
+                'requires_dist': ['connect-eaas-core<38,>=37.4'],
+            },
+        },
     )
 
     with tempfile.TemporaryDirectory() as tmp_data:
@@ -957,6 +970,18 @@ def test_bump_runner_version(mocker, mocked_responses, capsys):
             fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
         with open(f'{project_dir}/OtherDockerfile', 'w') as fp:
             fp.write('FROM cloudblueconnect/connect-extension-runner:0.5')
+        with open(f'{project_dir}/pyproject.toml', 'w') as fp:
+            fp.write(
+                '[tool.poetry]\n'
+                'name = "myext"\n'
+                '\n'
+                '[tool.poetry.dependencies]\n'
+                'python = ">=3.8,<4"\n'
+                'connect-eaas-core = ">=30"\n'
+                '\n'
+                '[tool.poetry.dev-dependencies]\n'
+                'pytest = ">=6.1.2,<8"\n',
+            )
         bump_runner_extension_project(project_dir)
         captured = capsys.readouterr()
         captured_out = ''.join(captured.out.split('\n'))
@@ -964,6 +989,13 @@ def test_bump_runner_version(mocker, mocked_responses, capsys):
         assert f'{os.path.join(project_dir, "docker-compose.yml")}' in captured_out
         assert f'{os.path.join(project_dir, "OtherDockerfile")}' in captured_out
         assert f'{os.path.join(project_dir, "Dockerfile")}' in captured_out
+        assert f'{os.path.join(project_dir, "pyproject.toml")}' in captured_out
+
+        pyproject = open(f'{project_dir}/pyproject.toml').read()
+        assert 'python = "<3.13,>=3.9"' in pyproject
+        assert 'connect-eaas-core = "<38,>=37.4"' in pyproject
+        # dev-dependencies section stays untouched
+        assert 'pytest = ">=6.1.2,<8"' in pyproject
 
 
 def test_bump_runner_version_no_update_required(mocker, capsys):
@@ -1047,8 +1079,7 @@ def test_bump_runner_docker_yaml_error(mocker):
         assert 'not properly formatted' in str(error.value)
 
 
-def test_bump_runner_get_version_error(mocker, mocked_responses):
-    mocker.patch('connect.cli.plugins.project.extension.utils.get_connect_version')
+def test_bump_runner_get_version_error(mocked_responses):
     mocked_responses.add('GET', PYPI_EXTENSION_RUNNER_URL, status=400)
     with pytest.raises(ClickException) as error:
         bump_runner_extension_project('project_dir')
@@ -1057,7 +1088,7 @@ def test_bump_runner_get_version_error(mocker, mocked_responses):
 
 def _mock_pypi_version(mocker):
     mocker.patch(
-        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version_by_connect_version',
+        'connect.cli.plugins.project.extension.helpers.get_pypi_runner_version',
         return_value='1.0',
     )
 
