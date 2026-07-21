@@ -5,15 +5,15 @@ from pathlib import Path
 import requests
 from click import ClickException
 from connect.client import ClientError
+from packaging.requirements import Requirement
 
-from connect.cli import get_version
 from connect.cli.core.utils import (
     get_connect_version,
     get_last_version_by_major,
-    sort_and_filter_tags,
 )
 from connect.cli.plugins.project.extension.constants import (
     PRE_COMMIT_HOOK,
+    PYPI_EXTENSION_RUNNER_RELEASE_URL,
     PYPI_EXTENSION_RUNNER_URL,
 )
 
@@ -31,11 +31,35 @@ def get_pypi_runner_version():
         raise ClickException(
             f'We can not retrieve the current connect-extension-runner version from {PYPI_EXTENSION_RUNNER_URL}.',
         )
-    content = res.json()
-    tags = sort_and_filter_tags(content['releases'], get_version().split('.', 1)[0])
-    if tags:
-        return tags.popitem()[0]
-    return content['info']['version']
+    return res.json()['info']['version']
+
+
+def get_pypi_runner_requirements(runner_version):
+    """Return the (connect-eaas-core, python) version specifiers required by the given runner.
+
+    The bootstrapped extension must pin the same connect-eaas-core and python range
+    the runner image ships, otherwise `poetry update` resolves an incompatible
+    version and the extension fails to run.
+    """
+    url = PYPI_EXTENSION_RUNNER_RELEASE_URL.format(version=runner_version)
+    res = requests.get(url)
+    if res.status_code != 200:
+        raise ClickException(
+            f'We can not retrieve the connect-extension-runner {runner_version} metadata from {url}.',
+        )
+    info = res.json()['info']
+    requires_python = info.get('requires_python')
+    if not requires_python:
+        raise ClickException(
+            f'connect-extension-runner {runner_version} does not declare a python requirement.',
+        )
+    for dist in info.get('requires_dist') or []:
+        requirement = Requirement(dist)
+        if requirement.name == 'connect-eaas-core':
+            return str(requirement.specifier), requires_python
+    raise ClickException(
+        f'connect-extension-runner {runner_version} does not declare a connect-eaas-core dependency.',
+    )
 
 
 def get_pypi_runner_version_by_connect_version():
