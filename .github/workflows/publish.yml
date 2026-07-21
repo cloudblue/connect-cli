@@ -48,11 +48,10 @@ jobs:
         poetry version ${{ steps.tag.outputs.result }}
         poetry build
         if [ "$(curl -s -o /dev/null -w '%{http_code}' https://pypi.org/pypi/connect-cli/${{ steps.tag.outputs.result }}/json)" = "404" ]; then poetry publish -u $TWINE_USERNAME -p $TWINE_PASSWORD; fi
-    - name: Set Connect and CLI major versions
-      id: cnctver
+    - name: Check if tag is the highest version
+      id: latest
       run: |
-        echo connect_major="$(curl -sI https://api.connect.cloudblue.com/public/v1|grep -Fi 'connect-version' | tr -d '\r' | sed -En 's/^Connect-Version: (.*)/\1/p'|cut -f1 -d'.')" >> $GITHUB_OUTPUT
-        echo cli_major="$(echo ${{ steps.tag.outputs.result }}|cut -f1 -d '.')" >> $GITHUB_OUTPUT
+        echo is_latest=$([ "$(git tag | sort -V | tail -1)" = "${{ steps.tag.outputs.result }}" ] && echo true || echo false) >> $GITHUB_OUTPUT
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
       with:
@@ -72,7 +71,7 @@ jobs:
         tags: |
           type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag.outputs.result }}.0
           type=semver,pattern={{major}},value=${{ steps.tag.outputs.result }}.0
-          type=raw,value=latest,enable=${{ steps.cnctver.outputs.connect_major == steps.cnctver.outputs.cli_major }}
+          type=raw,value=latest,enable=${{ steps.latest.outputs.is_latest }}
         flavor: |
           latest=false
     - name: Build and push docker image
@@ -160,6 +159,10 @@ jobs:
         result-encoding: string
         script: |
           return context.payload.ref.replace(/refs\/tags\//, '')
+    - name: Check if tag is the highest version
+      id: latest
+      run: |
+        echo is_latest=$([ "$(git tag | sort -V | tail -1)" = "${{ steps.tag.outputs.result }}" ] && echo true || echo false) >> $GITHUB_OUTPUT
     - name: Create release
       uses: ncipollo/release-action@v1
       id: create_release
@@ -171,6 +174,7 @@ jobs:
         name: Release ${{ steps.tag.outputs.result }}
         draft: false
         prerelease: false
+        makeLatest: ${{ steps.latest.outputs.is_latest }}
     - name: Download windows artifact
       uses: actions/download-artifact@v6
       with:
