@@ -11,3 +11,5 @@ and make sure your PATH environment variable includes also the Cairo shared libr
 """
 
 PYPI_JSON_API_URL = 'https://pypi.org/pypi/connect-cli/json'
+
+VERSION_CHECK_TIMEOUT = 5  # seconds

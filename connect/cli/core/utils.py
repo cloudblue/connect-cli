@@ -11,7 +11,7 @@ import requests
 from packaging.version import InvalidVersion, Version
 
 from connect.cli import get_version
-from connect.cli.core.constants import DEFAULT_ENDPOINT, PYPI_JSON_API_URL
+from connect.cli.core.constants import DEFAULT_ENDPOINT, PYPI_JSON_API_URL, VERSION_CHECK_TIMEOUT
 from connect.cli.core.terminal import console
 
 
@@ -51,7 +51,7 @@ def get_last_version_by_major(tags, major):
 
 def get_last_cli_version():
     try:
-        res = requests.get(PYPI_JSON_API_URL)
+        res = requests.get(PYPI_JSON_API_URL, timeout=VERSION_CHECK_TIMEOUT)
         if res.status_code == 200:
             data = res.json()
             return data['info']['version']
@@ -61,7 +61,7 @@ def get_last_cli_version():
 
 def get_connect_version():
     try:
-        response = requests.get(DEFAULT_ENDPOINT)
+        response = requests.get(DEFAULT_ENDPOINT, timeout=VERSION_CHECK_TIMEOUT)
         return response.headers.get('Connect-Version')
     except requests.RequestException:
         return
@@ -75,7 +75,7 @@ def check_for_updates(*args):
     current = get_version()
     last_version = None
     try:
-        res = requests.get(PYPI_JSON_API_URL)
+        res = requests.get(PYPI_JSON_API_URL, timeout=VERSION_CHECK_TIMEOUT)
         if res.status_code == 200:
             data = res.json()
             last_version = get_last_version_by_major(
