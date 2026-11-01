@@ -5,7 +5,6 @@
 import os
 from collections import OrderedDict
 from importlib.metadata import entry_points
-from distutils.version import StrictVersion
 
 import click
 import requests
@@ -141,12 +140,6 @@ def field_to_check_mark(predicate, false_value=''):
 
 
 def iter_entry_points(group, name=None):
-    group_entrypoints = entry_points().get(group)
-    if not group_entrypoints:
-        return
-    for ep in group_entrypoints:
-        if name:
-            if ep.name == name:
-                yield ep
-        else:
+    for ep in entry_points(group=group):
+        if not name or ep.name == name:
             yield ep
