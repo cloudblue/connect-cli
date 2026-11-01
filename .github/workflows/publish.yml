@@ -189,9 +189,19 @@ jobs:
         asset_path: ./connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
         asset_name: connect-cli_${{ steps.tag.outputs.result }}_windows_amd64.zip
         asset_content_type: application/zip
+    # RELEASE_APP_ID may hold the App ID or the Client ID.
+    - name: Create GitHub App token for Homebrew
+      id: homebrew-token
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      with:
+        client-id: ${{ vars.RELEASE_APP_ID }}
+        private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+        owner: cloudblue
+        repositories: homebrew-connect
+        permission-actions: write
     - name: Trigger Homebrew Rebuild (CLI)
       env:
-        GH_TOKEN: ${{ secrets.PAT_HOMEBREW_CONNECT }}
+        GH_TOKEN: ${{ steps.homebrew-token.outputs.token }}
       run: |
         gh workflow run update.yml \
           --repo cloudblue/homebrew-connect \
