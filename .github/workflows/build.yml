@@ -12,19 +12,29 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.10"]
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: macos-latest
+            python-version: "3.10"
+          - os: macos-latest
+            python-version: "3.14"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         submodules: true
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Pango for the PDF reports (macOS)
+      if: runner.os == 'macOS'
+      run: brew install pango
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -35,6 +45,9 @@ jobs:
         poetry run flake8
     - name: Testing
       run: |
+        # WeasyPrint finds Homebrew's libraries only through this path on Apple Silicon.
+        # It is exported here because macOS drops DYLD_* variables passed to /bin/bash.
+        if [ "$RUNNER_OS" = "macOS" ]; then export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"; fi
         poetry run pytest -v
   sonar:
     needs: [test]
