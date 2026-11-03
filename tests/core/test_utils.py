@@ -385,9 +385,15 @@ def test_iter_entry_points(mocker):
     ep2.name = 'ep2'
     mocker.patch(
         'connect.cli.core.utils.entry_points',
-        return_value={'ep.group': [ep1, ep2]},
+        side_effect=lambda group: {'ep.group': (ep1, ep2)}.get(group, ()),
     )
 
     assert list(iter_entry_points('ep.group', name='ep1')) == [ep1]
     assert list(iter_entry_points('ep.group')) == [ep1, ep2]
     assert list(iter_entry_points('ep.other_group')) == []
+
+
+def test_iter_entry_points_finds_the_installed_plugins():
+    names = {ep.name for ep in iter_entry_points('connect.cli.plugins')}
+
+    assert {'customer', 'product', 'project', 'report'} <= names
