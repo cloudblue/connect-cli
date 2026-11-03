@@ -46,6 +46,50 @@ class CCliGroup(click.Group):
         return decorator
 
 
+class LazyGroup(click.Group):
+    """A group that imports a subgroup only when it is called.
+
+    Until then, `ccli --help` lists the subgroup by the short help it was added with.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lazy_commands = {}
+
+    def add_lazy_command(self, name, short_help, entrypoint):
+        if name not in self.commands:
+            self.lazy_commands[name] = (short_help, entrypoint)
+
+    def list_commands(self, ctx):
+        return sorted({*super().list_commands(ctx), *self.lazy_commands})
+
+    def get_command(self, ctx, cmd_name):
+        if cmd_name in self.lazy_commands:
+            _, entrypoint = self.lazy_commands[cmd_name]
+            self.add_command(entrypoint.load()(), cmd_name)
+            del self.lazy_commands[cmd_name]
+        return super().get_command(ctx, cmd_name)
+
+    def format_commands(self, ctx, formatter):
+        commands = []
+        for name in self.list_commands(ctx):
+            if name in self.lazy_commands:
+                commands.append((name, self.lazy_commands[name][0]))
+                continue
+            cmd = super().get_command(ctx, name)
+            if cmd is not None and not cmd.hidden:
+                commands.append((name, cmd))
+        if commands:
+            limit = formatter.width - 6 - max(len(name) for name, _ in commands)
+            with formatter.section('Commands'):
+                formatter.write_dl(
+                    [
+                        (name, cmd if isinstance(cmd, str) else cmd.get_short_help_str(limit))
+                        for name, cmd in commands
+                    ],
+                )
+
+
 def group(name=None, **attrs):
     attrs.setdefault('cls', CCliGroup)
     return click.command(name, **attrs)
@@ -59,7 +103,7 @@ def print_version(ctx, param, value):
     ctx.exit()
 
 
-@click.group(context_settings={'help_option_names': ['-h', '--help']})
+@click.group(cls=LazyGroup, context_settings={'help_option_names': ['-h', '--help']})
 @click.option(
     '--version',
     is_flag=True,
